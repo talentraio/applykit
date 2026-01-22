@@ -81,6 +81,49 @@ interface LLMKey {
 
 ---
 
+### `services/export-cache.test.ts` (TX030)
+**Status**: ⏸️ Skipped (awaiting service implementation T115-T124)
+
+Tests for export PDF caching and invalidation:
+- ✅ Cache key includes userId + generationId + version
+- ✅ Separate caches for ATS vs Human versions
+- ✅ Cache hit/miss behavior
+- ✅ Cache invalidation on regeneration
+- ✅ Cache isolation between users
+- ✅ Cache TTL (time-to-live) expiration
+- ✅ Cache storage format validation
+- ✅ Concurrent request handling (deduplication)
+- ✅ Error handling (cache service failures)
+- ✅ Graceful degradation on cache corruption
+
+**Required Services**:
+- `packages/nuxt-layer-api/server/services/export/index.ts`
+- `packages/nuxt-layer-api/server/services/cache/index.ts`
+
+**Expected Cache Key Format**:
+```typescript
+// Pattern: export:{userId}:{generationId}:{version}
+// Example ATS: export:user-123:gen-456:ats
+// Example Human: export:user-123:gen-456:human
+
+interface CacheService {
+  get(key: string): Promise<string | null>
+  set(key: string, value: string, ttl?: number): Promise<void>
+  delete(key: string): Promise<void>
+  deleteByPattern(pattern: string): Promise<number>
+}
+
+// Cache value: PDF URL from Vercel Blob storage
+// TTL: Match generation expiration (90 days) or shorter
+```
+
+**Invalidation Strategy**:
+- On regeneration: delete pattern `export:{userId}:{generationId}:*`
+- On generation deletion: same pattern
+- On user deletion: delete pattern `export:{userId}:*`
+
+---
+
 ## Running Tests
 
 ### Run all integration tests (currently skipped):
@@ -95,6 +138,7 @@ Remove `.skip` from `describe.skip()` in each test file.
 ```bash
 pnpm test packages/nuxt-layer-api/tests/integration/services/limits.test.ts
 pnpm test packages/nuxt-layer-api/tests/integration/services/byok-keys.test.ts
+pnpm test packages/nuxt-layer-api/tests/integration/services/export-cache.test.ts
 ```
 
 ## Test Status
@@ -103,8 +147,9 @@ pnpm test packages/nuxt-layer-api/tests/integration/services/byok-keys.test.ts
 |------------|--------|------------------|-------|----------|
 | limits.test.ts | ⏸️ Skipped | T043-T045 | 17 tests | 0% (pending) |
 | byok-keys.test.ts | ⏸️ Skipped | T046-T049, T125-T127 | 18 tests | 0% (pending) |
+| export-cache.test.ts | ⏸️ Skipped | T115-T124 | 50+ tests | 0% (pending) |
 
-**Total**: 35 integration tests ready for implementation
+**Total**: 85+ integration tests ready for implementation
 
 ## Implementation Workflow
 
@@ -147,14 +192,15 @@ The `limits.test.ts` suite ensures:
 
 ## Next Steps
 
-1. ✅ Tests written and documented (TX020, TX021)
-2. ⏳ Implement database layer (T023-T035)
+1. ✅ Tests written and documented (TX020, TX021, TX030)
+2. ✅ Database layer implemented (T023-T035)
 3. ⏳ Implement limits service (T043-T045)
 4. ⏳ Implement LLM service (T046-T049)
 5. ⏳ Implement BYOK API routes (T125-T127)
-6. 🎯 Enable and run these tests
-7. ✅ Verify all tests pass
-8. 🚀 Deploy with confidence
+6. ⏳ Implement export service with caching (T115-T124)
+7. 🎯 Enable and run these tests
+8. ✅ Verify all tests pass
+9. 🚀 Deploy with confidence
 
 ---
 

@@ -34,7 +34,7 @@
 - [x] TX010 [P] Add unit tests for schema helpers (e.g. `getVacancyTitle`) and date format validation in `packages/schema/`
 - [x] TX020 Add integration tests for limits/usage counters (daily per-op per-role, 429 responses) in `packages/nuxt-layer-api/server/services/limits/`
 - [x] TX021 Add integration tests for BYOK key handling (encrypt at rest, hint only, never log full keys) in `packages/nuxt-layer-api/server/services/`
-- [ ] TX030 Add integration tests for export caching + invalidation (cache key includes userId + generationId; invalidates on regeneration) in `packages/nuxt-layer-api/server/services/export/`
+- [x] TX030 Add integration tests for export caching + invalidation (cache key includes userId + generationId; invalidates on regeneration) in `packages/nuxt-layer-api/server/services/export/`
 - [ ] TX040 Add a minimal e2e happy-path smoke test (auth → parse → vacancy → generate → export) (can be skipped/flaky-tagged until stable)
 
 ---
