@@ -1,0 +1,93 @@
+# =========================
+# Dependencies / package managers
+# =========================
+node_modules/
+.pnpm-store/
+.yarn/
+.yarn-cache/
+.npm/
+
+# pnpm / npm / yarn logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# =========================
+# Nuxt / Nitro build outputs
+# =========================
+.nuxt/
+.output/
+dist/
+build/
+.cache/
+.nitro/
+*.tsbuildinfo
+
+# =========================
+# Testing
+# =========================
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+.blobs/
+
+# =========================
+# Environment
+# =========================
+.env
+.env.*
+!.env.example
+!.env.template
+
+# =========================
+# Vercel / Netlify
+# =========================
+.vercel/
+.netlify/
+
+# =========================
+# OS / Editor / IDE
+# =========================
+.DS_Store
+Thumbs.db
+
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+
+# =========================
+# Turborepo / Nx (not used now, but safe)
+# =========================
+.turbo/
+.nx/
+
+# =========================
+# Optional: local-only tooling folders
+# =========================
+.codex/
+.claude/
+.cursor/
+
+# =========================
+# Optional: local playground outputs (Nuxt layer .playground)
+# keep the .playground folder itself tracked, ignore its build artifacts
+# =========================
+**/.playground/.nuxt/
+**/.playground/.output/
+**/.playground/dist/
+**/.playground/.cache/
+**/.playground/.nitro/
+**/.playground/node_modules/
+
+# =========================
+# Misc
+# =========================
+*.tgz
+*.zip
+*.pem
+*.key
