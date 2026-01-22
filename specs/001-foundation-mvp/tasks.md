@@ -3,7 +3,7 @@
 **Input**: Design documents from `/specs/001-foundation-mvp/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
 
-**Tests**: Tests are NOT included in this task list. Add test tasks if explicitly requested.
+**Tests**: Minimal test scaffolding and critical-path tests are included below (IDs `TX***`). Add more tests as needed.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing.
 
@@ -20,6 +20,22 @@
 - **API layer**: `packages/nuxt-layer-api/` (package: `@int/api`)
 - **UI layer**: `packages/nuxt-layer-ui/` (package: `@int/ui`)
 - **App layers**: `apps/site/layers/*/`, `apps/admin/layers/*/`
+
+## Testing policy (MVP)
+
+- Treat tests as part of “done” for risky logic (limits, encryption, caching, auth gating).
+- Use **Vitest** for unit/integration tests and **Playwright** for e2e smoke tests.
+- Test tasks are marked as `TX***` to avoid renumbering the existing `T***` list.
+
+### Test tooling & critical coverage
+
+- [ ] TX001 [P] Setup Vitest at repo root (config + `pnpm test`) and add a first smoke unit test
+- [ ] TX002 [P] Setup Playwright e2e harness (`tests/e2e/` + config + `pnpm e2e`) with a placeholder smoke test
+- [ ] TX010 [P] Add unit tests for schema helpers (e.g. `getVacancyTitle`) and date format validation in `packages/schema/`
+- [ ] TX020 Add integration tests for limits/usage counters (daily per-op per-role, 429 responses) in `packages/nuxt-layer-api/server/services/limits/`
+- [ ] TX021 Add integration tests for BYOK key handling (encrypt at rest, hint only, never log full keys) in `packages/nuxt-layer-api/server/services/`
+- [ ] TX030 Add integration tests for export caching + invalidation (cache key includes userId + generationId; invalidates on regeneration) in `packages/nuxt-layer-api/server/services/export/`
+- [ ] TX040 Add a minimal e2e happy-path smoke test (auth → parse → vacancy → generate → export) (can be skipped/flaky-tagged until stable)
 
 ---
 
@@ -427,7 +443,7 @@ Task: "Create SystemConfig schema in packages/schema/schemas/system.ts"
 6. Complete US4: Vacancy Management
 7. Complete US5: Resume Generation
 8. Complete US6: View & Export
-9. **STOP and VALIDATE**: Complete happy path works
+9. **STOP and VALIDATE**: Run automated checks (typecheck/lint + TX001/TX002 baseline) and ensure happy path works
 10. Deploy MVP
 
 ### Incremental Delivery
@@ -456,3 +472,4 @@ Setup → Foundational → US1 (Auth) → US2/US3/US4 (parallel) → US5 → US6
 - **SSR islands**: ATS/Human views use Nuxt server components for SEO and performance
 - **MCP rule**: Use Nuxt/NuxtUI MCP docs when implementing framework-specific features
 - **VueUse**: Check for existing composables before writing custom ones
+- **Testing**: Prefer completing relevant `TX***` tasks alongside the user-story work (especially limits, caching, encryption)
