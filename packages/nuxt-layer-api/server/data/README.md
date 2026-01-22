@@ -167,15 +167,16 @@ server/data/
 ├── migrations/
 │   ├── 001_init.sql       # Initial migration (T026)
 │   └── meta/              # Drizzle metadata
-└── repositories/          # Data access layer (T028-T035)
-    ├── user.ts            # User repository
-    ├── profile.ts         # Profile repository
-    ├── resume.ts          # Resume repository
-    ├── vacancy.ts         # Vacancy repository
-    ├── generation.ts      # Generation repository
-    ├── llm-key.ts         # LLM Key repository
-    ├── usage-log.ts       # Usage Log repository
-    └── system-config.ts   # System Config repository
+└── repositories/          # Data access layer (T028-T035) ✅
+    ├── index.ts           # Barrel export
+    ├── user.ts            # User repository ✅
+    ├── profile.ts         # Profile repository ✅
+    ├── resume.ts          # Resume repository ✅
+    ├── vacancy.ts         # Vacancy repository ✅
+    ├── generation.ts      # Generation repository ✅
+    ├── llm-key.ts         # LLM Key repository ✅
+    ├── usage-log.ts       # Usage Log repository ✅
+    └── system-config.ts   # System Config repository ✅
 ```
 
 ## Environment Variables
@@ -185,13 +186,60 @@ server/data/
 | `DATABASE_URL` | Production only | - | PostgreSQL connection string |
 | `NODE_ENV` | No | development | Environment mode |
 
+## Repository Methods Summary
+
+Each repository provides standard CRUD operations plus domain-specific methods:
+
+### userRepository (T028)
+- `findById`, `findByEmail`, `findByGoogleId`
+- `create`, `updateRole`, `updateLastLogin`
+- `existsByEmail`, `findByRole`
+
+### profileRepository (T029)
+- `findByUserId`, `findById`
+- `create`, `update`, `delete`
+- `existsForUser`, `isComplete`
+
+### resumeRepository (T030)
+- `findById`, `findByIdAndUserId`, `findByUserId`
+- `create`, `updateContent`, `updateTitle`, `delete`
+- `countByUserId`, `findLatestByUserId`
+
+### vacancyRepository (T031)
+- `findById`, `findByIdAndUserId`, `findByUserId`
+- `create`, `update`, `delete`
+- `countByUserId`, `findLatestByUserId`
+
+### generationRepository (T032)
+- `findById`, `findByVacancyId`, `findLatestByVacancyId`
+- `create`, `delete`, `deleteByVacancyId`, `deleteByResumeId`
+- `findExpired`, `deleteExpired`, `isValidGeneration`
+
+### llmKeyRepository (T033)
+- `findById`, `findByUserAndProvider`, `findByUserId`
+- `upsert` (replaces existing), `delete`, `deleteByUserId`
+- `hasKeyForProvider`, `getKeyHint`
+
+### usageLogRepository (T034)
+- `log`, `getDailyCount` (for rate limiting)
+- `findByUserId`, `findByDateRange`
+- `getTotalCost`, `getTotalTokens`
+- `getOperationBreakdown`, `getProviderTypeBreakdown`
+- `deleteOlderThan` (cleanup)
+
+### systemConfigRepository (T035)
+- `get`, `getBoolean`, `getNumber`, `getPlatformProvider`
+- `set`, `setBoolean`, `setNumber`, `setPlatformProvider`
+- `getAll`, `resetToDefaults`
+- `incrementBudgetUsed`, `canUsePlatformLLM`, `isBYOKEnabled`
+
 ## Next Steps
 
 1. ✅ Database schema created (T023-T027)
-2. ⏳ Create repositories (T028-T035)
-3. ⏳ Implement data access patterns
-4. ⏳ Add repository integration tests
-5. 🚀 Use in API endpoints
+2. ✅ Repositories implemented (T028-T035)
+3. ⏳ Add repository integration tests
+4. ⏳ Use in API endpoints (Phase 3+)
+5. 🚀 Deploy with migrations
 
 ## Related Documentation
 
