@@ -25,3 +25,9 @@ If unsure, open docs/* and follow them.
 - Before implementing any specific functionality, check **VueUse** first.
   If a composable already exists, prefer using it instead of custom code.
 
+
+## Active Technologies
+- TypeScript 5.x (Nuxt 4 / Vue 3) (001-foundation-mvp)
+
+## Recent Changes
+- 001-foundation-mvp: Added TypeScript 5.x (Nuxt 4 / Vue 3)
