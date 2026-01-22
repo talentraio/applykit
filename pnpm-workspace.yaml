@@ -1,0 +1,6 @@
+packages:
+  # Internal shared packages
+  - 'packages/*'
+
+  # Applications
+  - 'apps/*'
