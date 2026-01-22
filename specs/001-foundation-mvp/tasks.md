@@ -79,19 +79,19 @@
 
 ### 2.2 Database & Data Layer
 
-- [ ] T023 Install Drizzle ORM and PostgreSQL driver in `packages/nuxt-layer-api/`
-- [ ] T024 Create DB connection in `packages/nuxt-layer-api/server/data/db.ts` with env-based config (SQLite local, PostgreSQL prod)
-- [ ] T025 Create Drizzle schema with all tables in `packages/nuxt-layer-api/server/data/schema.ts`
-- [ ] T026 Create initial migration SQL in `packages/nuxt-layer-api/server/data/migrations/001_init.sql`
-- [ ] T027 Add `pnpm db:migrate` and `pnpm db:studio` scripts to `packages/nuxt-layer-api/package.json`
-- [ ] T028 [P] Create userRepository in `packages/nuxt-layer-api/server/data/repositories/user.ts`
-- [ ] T029 [P] Create profileRepository in `packages/nuxt-layer-api/server/data/repositories/profile.ts`
-- [ ] T030 [P] Create resumeRepository in `packages/nuxt-layer-api/server/data/repositories/resume.ts`
-- [ ] T031 [P] Create vacancyRepository in `packages/nuxt-layer-api/server/data/repositories/vacancy.ts`
-- [ ] T032 [P] Create generationRepository in `packages/nuxt-layer-api/server/data/repositories/generation.ts`
-- [ ] T033 [P] Create llmKeyRepository in `packages/nuxt-layer-api/server/data/repositories/llm-key.ts`
-- [ ] T034 [P] Create usageLogRepository in `packages/nuxt-layer-api/server/data/repositories/usage-log.ts`
-- [ ] T035 [P] Create systemConfigRepository in `packages/nuxt-layer-api/server/data/repositories/system-config.ts`
+- [x] T023 Install Drizzle ORM and PostgreSQL driver in `packages/nuxt-layer-api/`
+- [x] T024 Create DB connection in `packages/nuxt-layer-api/server/data/db.ts` with env-based config (SQLite local, PostgreSQL prod)
+- [x] T025 Create Drizzle schema with all tables in `packages/nuxt-layer-api/server/data/schema.ts`
+- [x] T026 Create initial migration SQL in `packages/nuxt-layer-api/server/data/migrations/001_init.sql`
+- [x] T027 Add `pnpm db:migrate` and `pnpm db:studio` scripts to `packages/nuxt-layer-api/package.json`
+- [x] T028 [P] Create userRepository in `packages/nuxt-layer-api/server/data/repositories/user.ts`
+- [x] T029 [P] Create profileRepository in `packages/nuxt-layer-api/server/data/repositories/profile.ts`
+- [x] T030 [P] Create resumeRepository in `packages/nuxt-layer-api/server/data/repositories/resume.ts`
+- [x] T031 [P] Create vacancyRepository in `packages/nuxt-layer-api/server/data/repositories/vacancy.ts`
+- [x] T032 [P] Create generationRepository in `packages/nuxt-layer-api/server/data/repositories/generation.ts`
+- [x] T033 [P] Create llmKeyRepository in `packages/nuxt-layer-api/server/data/repositories/llm-key.ts`
+- [x] T034 [P] Create usageLogRepository in `packages/nuxt-layer-api/server/data/repositories/usage-log.ts`
+- [x] T035 [P] Create systemConfigRepository in `packages/nuxt-layer-api/server/data/repositories/system-config.ts`
 
 ### 2.3 Storage Adapter
 
