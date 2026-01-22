@@ -1,0 +1,1207 @@
+openapi: 3.1.0
+info:
+  title: ApplyKit API
+  description: Resume tailoring and generation API
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: API base path
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Profile
+    description: User profile management
+  - name: Resumes
+    description: Resume upload and management
+  - name: Vacancies
+    description: Vacancy management
+  - name: Generations
+    description: Resume generation for vacancies
+  - name: Export
+    description: PDF export
+  - name: Keys
+    description: BYOK API key management
+  - name: Admin
+    description: Admin-only endpoints
+
+paths:
+  # ============ AUTH ============
+  /auth/google:
+    get:
+      tags: [Auth]
+      summary: Initiate Google OAuth
+      description: Redirects to Google OAuth consent screen
+      responses:
+        '302':
+          description: Redirect to Google OAuth
+
+  /auth/google/callback:
+    get:
+      tags: [Auth]
+      summary: Google OAuth callback
+      description: Handles OAuth callback, creates session
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to dashboard on success
+        '401':
+          description: OAuth failed
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Sign out
+      description: Clears session cookie
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      description: Returns current user with profile if exists
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthMeResponse'
+        '401':
+          description: Not authenticated
+
+  # ============ PROFILE ============
+  /profile:
+    get:
+      tags: [Profile]
+      summary: Get profile
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '404':
+          description: Profile not found
+
+    put:
+      tags: [Profile]
+      summary: Update profile
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileInput'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          description: Validation error
+
+  /profile/complete:
+    get:
+      tags: [Profile]
+      summary: Check profile completeness
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Completeness status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  complete:
+                    type: boolean
+                  missingFields:
+                    type: array
+                    items:
+                      type: string
+
+  # ============ RESUMES ============
+  /resumes:
+    get:
+      tags: [Resumes]
+      summary: List resumes
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of resumes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResumeSummary'
+
+    post:
+      tags: [Resumes]
+      summary: Upload and parse resume
+      description: Uploads DOCX/PDF, parses via LLM to JSON
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+              required: [file]
+      responses:
+        '201':
+          description: Created resume
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+        '400':
+          description: Invalid file or parse error
+        '429':
+          description: Parse limit exceeded
+
+  /resumes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Resumes]
+      summary: Get resume
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Resume details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+        '404':
+          description: Not found
+
+    put:
+      tags: [Resumes]
+      summary: Update resume content
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  $ref: '#/components/schemas/ResumeContent'
+      responses:
+        '200':
+          description: Updated resume
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+        '400':
+          description: Invalid content schema
+
+    delete:
+      tags: [Resumes]
+      summary: Delete resume
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+
+  # ============ VACANCIES ============
+  /vacancies:
+    get:
+      tags: [Vacancies]
+      summary: List vacancies
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of vacancies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VacancySummary'
+
+    post:
+      tags: [Vacancies]
+      summary: Create vacancy
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyInput'
+      responses:
+        '201':
+          description: Created vacancy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vacancy'
+
+  /vacancies/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Vacancies]
+      summary: Get vacancy
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Vacancy with latest generation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VacancyDetail'
+        '404':
+          description: Not found
+
+    put:
+      tags: [Vacancies]
+      summary: Update vacancy
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyInput'
+      responses:
+        '200':
+          description: Updated vacancy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vacancy'
+
+    delete:
+      tags: [Vacancies]
+      summary: Delete vacancy
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Deleted
+
+  # ============ GENERATIONS ============
+  /vacancies/{id}/generate:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Generations]
+      summary: Generate tailored resume
+      description: Creates new generation for vacancy using LLM
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resumeId:
+                  type: string
+                  format: uuid
+                  description: Base resume to tailor (optional, uses default if omitted)
+      responses:
+        '201':
+          description: Generated resume
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Generation'
+        '400':
+          description: Profile incomplete or no resume
+        '429':
+          description: Generation limit exceeded
+
+  /vacancies/{id}/generations:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Generations]
+      summary: List generation history
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Generation history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenerationSummary'
+
+  /vacancies/{id}/generations/latest:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Generations]
+      summary: Get latest generation
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Latest generation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Generation'
+        '404':
+          description: No generation exists
+
+  # ============ EXPORT ============
+  /vacancies/{id}/export:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Export]
+      summary: Export PDF
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [ats, human]
+              required: [type]
+      responses:
+        '200':
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: No generation to export
+        '429':
+          description: Export limit exceeded
+
+  # ============ KEYS (BYOK) ============
+  /keys:
+    get:
+      tags: [Keys]
+      summary: List stored key hints
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Key hints (not actual keys)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LLMKeyHint'
+
+    post:
+      tags: [Keys]
+      summary: Store key hint
+      description: Stores hint only; actual key in browser localStorage
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                  enum: [openai, gemini]
+                keyHint:
+                  type: string
+                  minLength: 4
+                  maxLength: 4
+              required: [provider, keyHint]
+      responses:
+        '201':
+          description: Key hint stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LLMKeyHint'
+
+  /keys/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    delete:
+      tags: [Keys]
+      summary: Remove key hint
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Removed
+
+  # ============ ADMIN ============
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: List users
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by email
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminUser'
+                  total:
+                    type: integer
+        '403':
+          description: Not admin
+
+  /admin/users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Admin]
+      summary: Get user detail
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: User detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserDetail'
+        '403':
+          description: Not admin
+
+  /admin/users/{id}/role:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    put:
+      tags: [Admin]
+      summary: Update user role
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [super_admin, friend, public]
+              required: [role]
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '403':
+          description: Not admin
+
+  /admin/system:
+    get:
+      tags: [Admin]
+      summary: Get system config
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: System configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemConfig'
+        '403':
+          description: Not admin
+
+    put:
+      tags: [Admin]
+      summary: Update system config
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemConfigInput'
+      responses:
+        '200':
+          description: Updated config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemConfig'
+        '403':
+          description: Not admin
+
+  /admin/usage:
+    get:
+      tags: [Admin]
+      summary: Get usage stats
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+      responses:
+        '200':
+          description: Usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageStats'
+        '403':
+          description: Not admin
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
+
+  schemas:
+    # ---- Common ----
+    Role:
+      type: string
+      enum: [super_admin, friend, public]
+
+    WorkFormat:
+      type: string
+      enum: [remote, hybrid, onsite]
+
+    LLMProvider:
+      type: string
+      enum: [openai, gemini]
+
+    PlatformProvider:
+      type: string
+      enum: [openai, gemini_flash]
+
+    # ---- Auth ----
+    AuthMeResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserPublic'
+        profile:
+          $ref: '#/components/schemas/Profile'
+          nullable: true
+
+    UserPublic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/Role'
+        createdAt:
+          type: string
+          format: date-time
+
+    # ---- Profile ----
+    LanguageEntry:
+      type: object
+      properties:
+        language:
+          type: string
+        level:
+          type: string
+      required: [language, level]
+
+    PhoneEntry:
+      type: object
+      properties:
+        number:
+          type: string
+        label:
+          type: string
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        country:
+          type: string
+          minLength: 2
+          maxLength: 2
+        searchRegion:
+          type: string
+        workFormat:
+          $ref: '#/components/schemas/WorkFormat'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguageEntry'
+        phones:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhoneEntry'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProfileInput:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        country:
+          type: string
+          minLength: 2
+          maxLength: 2
+        searchRegion:
+          type: string
+        workFormat:
+          $ref: '#/components/schemas/WorkFormat'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguageEntry'
+        phones:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhoneEntry'
+      required: [firstName, lastName, email, country, searchRegion, workFormat, languages]
+
+    # ---- Resume ----
+    PersonalInfo:
+      type: object
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        location:
+          type: string
+        linkedin:
+          type: string
+          format: uri
+        website:
+          type: string
+          format: uri
+      required: [fullName, email]
+
+    ExperienceEntry:
+      type: object
+      properties:
+        company:
+          type: string
+        position:
+          type: string
+        startDate:
+          type: string
+          pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+        endDate:
+          type: string
+          pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+          nullable: true
+        description:
+          type: string
+        projects:
+          type: array
+          items:
+            type: string
+        links:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              link:
+                type: string
+                format: uri
+      required: [company, position, startDate, description]
+
+    EducationEntry:
+      type: object
+      properties:
+        institution:
+          type: string
+        degree:
+          type: string
+        field:
+          type: string
+        startDate:
+          type: string
+          pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+        endDate:
+          type: string
+          pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+      required: [institution, degree, startDate]
+
+    ResumeContent:
+      type: object
+      properties:
+        personalInfo:
+          $ref: '#/components/schemas/PersonalInfo'
+        summary:
+          type: string
+        experience:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperienceEntry'
+        education:
+          type: array
+          items:
+            $ref: '#/components/schemas/EducationEntry'
+        skills:
+          type: array
+          items:
+            type: string
+        certifications:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              issuer:
+                type: string
+              date:
+                type: string
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguageEntry'
+      required: [personalInfo, experience, education, skills]
+
+    Resume:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          $ref: '#/components/schemas/ResumeContent'
+        sourceFileName:
+          type: string
+        sourceFileType:
+          type: string
+          enum: [docx, pdf]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ResumeSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        sourceFileName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # ---- Vacancy ----
+    Vacancy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        company:
+          type: string
+        jobPosition:
+          type: string
+          nullable: true
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    VacancySummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        company:
+          type: string
+        jobPosition:
+          type: string
+          nullable: true
+        displayTitle:
+          type: string
+        hasGeneration:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    VacancyDetail:
+      type: object
+      properties:
+        vacancy:
+          $ref: '#/components/schemas/Vacancy'
+        latestGeneration:
+          $ref: '#/components/schemas/Generation'
+          nullable: true
+        daysUntilExpiration:
+          type: integer
+          nullable: true
+
+    VacancyInput:
+      type: object
+      properties:
+        company:
+          type: string
+        jobPosition:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+        notes:
+          type: string
+      required: [company, description]
+
+    # ---- Generation ----
+    Generation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vacancyId:
+          type: string
+          format: uuid
+        resumeId:
+          type: string
+          format: uuid
+        content:
+          $ref: '#/components/schemas/ResumeContent'
+        matchScoreBefore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        matchScoreAfter:
+          type: integer
+          minimum: 0
+          maximum: 100
+        generatedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    GenerationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        matchScoreBefore:
+          type: integer
+        matchScoreAfter:
+          type: integer
+        generatedAt:
+          type: string
+          format: date-time
+
+    # ---- Keys ----
+    LLMKeyHint:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        provider:
+          $ref: '#/components/schemas/LLMProvider'
+        keyHint:
+          type: string
+          minLength: 4
+          maxLength: 4
+        createdAt:
+          type: string
+          format: date-time
+
+    # ---- Admin ----
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/Role'
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminUserDetail:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/AdminUser'
+        profile:
+          $ref: '#/components/schemas/Profile'
+          nullable: true
+        stats:
+          type: object
+          properties:
+            resumeCount:
+              type: integer
+            vacancyCount:
+              type: integer
+            generationCount:
+              type: integer
+            todayUsage:
+              type: object
+              properties:
+                parse:
+                  type: integer
+                generate:
+                  type: integer
+                export:
+                  type: integer
+
+    SystemConfig:
+      type: object
+      properties:
+        platformLlmEnabled:
+          type: boolean
+        byokEnabled:
+          type: boolean
+        platformProvider:
+          $ref: '#/components/schemas/PlatformProvider'
+        globalBudgetCap:
+          type: number
+        globalBudgetUsed:
+          type: number
+
+    SystemConfigInput:
+      type: object
+      properties:
+        platformLlmEnabled:
+          type: boolean
+        byokEnabled:
+          type: boolean
+        platformProvider:
+          $ref: '#/components/schemas/PlatformProvider'
+        globalBudgetCap:
+          type: number
+
+    UsageStats:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: [day, week, month]
+        totalOperations:
+          type: integer
+        byOperation:
+          type: object
+          properties:
+            parse:
+              type: integer
+            generate:
+              type: integer
+            export:
+              type: integer
+        byProvider:
+          type: object
+          properties:
+            platform:
+              type: integer
+            byok:
+              type: integer
+        totalCost:
+          type: number
+        uniqueUsers:
+          type: integer
