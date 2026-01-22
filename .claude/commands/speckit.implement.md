@@ -12,6 +12,12 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
+0. **Repo conventions (must follow)**:
+   - Read `.claude/skills/project-conventions/SKILL.md` and relevant `docs/*`.
+   - Nuxt v4 + NuxtUI v4 only; i18n from day 1; VueUse-first.
+   - ATS/Human pages must remain SSR-friendly and use server-side islands rendering.
+   - Strict schemas belong in `@int/schema` (Zod + inferred types). Runtime validation belongs in services, not endpoints.
+
 1. Run `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
 2. **Check checklists status** (if FEATURE_DIR/checklists/ exists):
@@ -36,10 +42,10 @@ You **MUST** consider the user input before proceeding (if not empty).
 
    - **If any checklist is incomplete**:
      - Display the table with incomplete item counts
-     - **STOP** and ask: "Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)"
-     - Wait for user response before continuing
-     - If user says "no" or "wait" or "stop", halt execution
-     - If user says "yes" or "proceed" or "continue", proceed to step 3
+     - If user input contains `--force`: proceed anyway (with a warning)
+     - Otherwise **STOP** and ask: "Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)"
+       - If user says "no"/"wait"/"stop": halt execution
+       - If user says "yes"/"proceed"/"continue": proceed to step 3
 
    - **If all checklists are complete**:
      - Display the table showing all checklists passed

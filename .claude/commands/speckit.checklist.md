@@ -2,6 +2,15 @@
 description: Generate a custom checklist for the current feature based on user requirements.
 ---
 
+## Repo conventions (apply to checklists)
+
+When generating checklists, keep them aligned with:
+- `.claude/skills/project-conventions/SKILL.md`
+- `docs/architecture/*`, `docs/api/*`, `docs/codestyle/*`
+- Nuxt v4 + NuxtUI v4; VueUse-first; i18n from day 1
+- ATS/Human pages: SSR-friendly + server-side islands
+- Layer naming: include repo path `packages/nuxt-layer-*/` and package name `@int/*`
+
 ## Checklist Purpose: "Unit Tests for English"
 
 **CRITICAL CONCEPT**: Checklists are **UNIT TESTS FOR REQUIREMENTS WRITING** - they validate the quality, clarity, and completeness of requirements in a given domain.

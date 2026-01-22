@@ -10,6 +10,16 @@ $ARGUMENTS
 
 You **MUST** consider the user input before proceeding (if not empty).
 
+## Repo conventions (source of truth)
+
+Use these as constraints while analyzing consistency:
+- `.claude/skills/project-conventions/SKILL.md`
+- `docs/architecture/*`, `docs/api/*`, `docs/codestyle/*`
+- Nuxt v4 + NuxtUI v4, i18n from day 1, VueUse-first
+- ATS/Human pages must remain SSR-friendly and use server-side islands rendering
+- Layer naming: repo path `packages/nuxt-layer-*/` vs package name `@int/*`
+
+
 ## Goal
 
 Identify inconsistencies, duplications, ambiguities, and underspecified items across the three core artifacts (`spec.md`, `plan.md`, `tasks.md`) before implementation. This command MUST run only after `/speckit.tasks` has successfully produced a complete `tasks.md`.

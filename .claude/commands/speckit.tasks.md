@@ -21,6 +21,14 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
+0. **Repo conventions (must follow)**:
+   - Read `.claude/skills/project-conventions/SKILL.md` and relevant `docs/*`.
+   - Nuxt v4 + NuxtUI v4 only; i18n from day 1; VueUse-first.
+   - ATS/Human pages must remain SSR-friendly and use server-side islands rendering.
+   - When tasks reference layers, include both:
+     - repo path: `packages/nuxt-layer-*/`
+     - package name: `@int/*`
+
 1. **Setup**: Run `.specify/scripts/bash/check-prerequisites.sh --json` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
 2. **Load design documents**: Read from FEATURE_DIR:

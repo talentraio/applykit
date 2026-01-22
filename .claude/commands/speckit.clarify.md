@@ -14,6 +14,16 @@ $ARGUMENTS
 
 You **MUST** consider the user input before proceeding (if not empty).
 
+## ApplyKit guardrails (prioritize these in questions)
+
+When choosing what to clarify first, prioritize unresolved decisions that affect:
+- Nuxt v4 / NuxtUI v4 specifics that require MCP docs
+- i18n keys and routing/page structure
+- SSR + server-side islands constraints (ATS/Human)
+- Rate limits / global budget cap / kill switch behavior
+- BYOK key storage policy (encrypt at rest, never log, UI hint only)
+- Layer boundaries: `packages/nuxt-layer-*/` (repo) vs `@int/*` (package)
+
 ## Outline
 
 Goal: Detect and reduce ambiguity or missing decision points in the active feature specification and record the clarifications directly in the spec file.
