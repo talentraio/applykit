@@ -11,7 +11,7 @@
   "dependencies": {
     "@int/schema": "workspace:*",
     "nuxt": "^4.0.9",
-    "nuxt-auth-utils": "^0.6.7",
+    "nuxt-auth-utils": "^0.5.27",
     "drizzle-orm": "^0.38.3",
     "postgres": "^3.4.5"
   },

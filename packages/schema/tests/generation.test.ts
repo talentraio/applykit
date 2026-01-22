@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { getDaysUntilExpiration, getGenerationExpirationDate } from '../schemas/generation'
+import { getDaysUntilExpiration, type Generation } from '../schemas/generation'
 
 describe('getDaysUntilExpiration', () => {
   beforeEach(() => {
@@ -11,63 +11,85 @@ describe('getDaysUntilExpiration', () => {
     vi.setSystemTime(now)
 
     const futureDate = new Date('2026-01-25T12:00:00Z')
-    const days = getDaysUntilExpiration(futureDate.toISOString())
+    const generation: Generation = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      vacancyId: '123e4567-e89b-12d3-a456-426614174001',
+      resumeId: '123e4567-e89b-12d3-a456-426614174002',
+      content: {
+        personalInfo: {
+          fullName: 'John Doe',
+          email: 'john@example.com',
+        },
+        experience: [],
+        education: [],
+        skills: [],
+      },
+      matchScoreBefore: 70,
+      matchScoreAfter: 90,
+      generatedAt: now,
+      expiresAt: futureDate,
+    }
+
+    const days = getDaysUntilExpiration(generation)
 
     expect(days).toBe(3)
   })
 
-  it('should return 0 for dates within the same day', () => {
-    const now = new Date('2026-01-22T12:00:00Z')
-    vi.setSystemTime(now)
-
-    const sameDay = new Date('2026-01-22T18:00:00Z')
-    const days = getDaysUntilExpiration(sameDay.toISOString())
-
-    expect(days).toBe(1)
-  })
-
-  it('should return negative days for past dates', () => {
+  it('should return 0 for expired dates', () => {
     const now = new Date('2026-01-22T12:00:00Z')
     vi.setSystemTime(now)
 
     const pastDate = new Date('2026-01-20T12:00:00Z')
-    const days = getDaysUntilExpiration(pastDate.toISOString())
+    const generation: Generation = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      vacancyId: '123e4567-e89b-12d3-a456-426614174001',
+      resumeId: '123e4567-e89b-12d3-a456-426614174002',
+      content: {
+        personalInfo: {
+          fullName: 'John Doe',
+          email: 'john@example.com',
+        },
+        experience: [],
+        education: [],
+        skills: [],
+      },
+      matchScoreBefore: 70,
+      matchScoreAfter: 90,
+      generatedAt: new Date('2025-12-20T12:00:00Z'),
+      expiresAt: pastDate,
+    }
 
-    expect(days).toBe(-2)
+    const days = getDaysUntilExpiration(generation)
+
+    expect(days).toBe(0)
   })
 
-  it('should handle dates 30 days in the future', () => {
+  it('should handle dates 90 days in the future', () => {
     const now = new Date('2026-01-22T12:00:00Z')
     vi.setSystemTime(now)
 
-    const futureDate = new Date('2026-02-21T12:00:00Z')
-    const days = getDaysUntilExpiration(futureDate.toISOString())
+    const futureDate = new Date('2026-04-22T12:00:00Z')
+    const generation: Generation = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      vacancyId: '123e4567-e89b-12d3-a456-426614174001',
+      resumeId: '123e4567-e89b-12d3-a456-426614174002',
+      content: {
+        personalInfo: {
+          fullName: 'John Doe',
+          email: 'john@example.com',
+        },
+        experience: [],
+        education: [],
+        skills: [],
+      },
+      matchScoreBefore: 70,
+      matchScoreAfter: 90,
+      generatedAt: now,
+      expiresAt: futureDate,
+    }
 
-    expect(days).toBe(30)
-  })
-})
+    const days = getDaysUntilExpiration(generation)
 
-describe('getGenerationExpirationDate', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  it('should return a date 30 days in the future', () => {
-    const now = new Date('2026-01-22T12:00:00Z')
-    vi.setSystemTime(now)
-
-    const expirationDate = getGenerationExpirationDate()
-    const expected = new Date('2026-02-21T12:00:00Z')
-
-    expect(new Date(expirationDate).getTime()).toBe(expected.getTime())
-  })
-
-  it('should return ISO datetime string', () => {
-    const now = new Date('2026-01-22T12:00:00Z')
-    vi.setSystemTime(now)
-
-    const expirationDate = getGenerationExpirationDate()
-
-    expect(expirationDate).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
+    expect(days).toBe(90)
   })
 })

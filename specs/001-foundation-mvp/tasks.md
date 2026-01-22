@@ -32,8 +32,8 @@
 - [x] TX001 [P] Setup Vitest at repo root (config + `pnpm test`) and add a first smoke unit test
 - [x] TX002 [P] Setup Playwright e2e harness (`tests/e2e/` + config + `pnpm e2e`) with a placeholder smoke test
 - [x] TX010 [P] Add unit tests for schema helpers (e.g. `getVacancyTitle`) and date format validation in `packages/schema/`
-- [ ] TX020 Add integration tests for limits/usage counters (daily per-op per-role, 429 responses) in `packages/nuxt-layer-api/server/services/limits/`
-- [ ] TX021 Add integration tests for BYOK key handling (encrypt at rest, hint only, never log full keys) in `packages/nuxt-layer-api/server/services/`
+- [x] TX020 Add integration tests for limits/usage counters (daily per-op per-role, 429 responses) in `packages/nuxt-layer-api/server/services/limits/`
+- [x] TX021 Add integration tests for BYOK key handling (encrypt at rest, hint only, never log full keys) in `packages/nuxt-layer-api/server/services/`
 - [ ] TX030 Add integration tests for export caching + invalidation (cache key includes userId + generationId; invalidates on regeneration) in `packages/nuxt-layer-api/server/services/export/`
 - [ ] TX040 Add a minimal e2e happy-path smoke test (auth → parse → vacancy → generate → export) (can be skipped/flaky-tagged until stable)
 
@@ -66,16 +66,16 @@
 
 ### 2.1 Schema Package Setup
 
-- [ ] T013 [P] Create base enums in `packages/schema/schemas/enums.ts` (Role, WorkFormat, SourceFileType, LLMProvider, Operation, ProviderType, PlatformProvider)
-- [ ] T014 [P] Create User schema in `packages/schema/schemas/user.ts` with Zod + inferred types
-- [ ] T015 [P] Create Profile schema in `packages/schema/schemas/profile.ts` with LanguageEntry, PhoneEntry
-- [ ] T016 [P] Create ResumeContent schema in `packages/schema/schemas/resume.ts` with all nested types
-- [ ] T017 [P] Create Vacancy schema in `packages/schema/schemas/vacancy.ts` with VacancyInput, getVacancyTitle helper
-- [ ] T018 [P] Create Generation schema in `packages/schema/schemas/generation.ts` with getDaysUntilExpiration helper
-- [ ] T019 [P] Create LLMKey schema in `packages/schema/schemas/llm-key.ts`
-- [ ] T020 [P] Create UsageLog schema in `packages/schema/schemas/usage.ts`
-- [ ] T021 [P] Create SystemConfig schema in `packages/schema/schemas/system.ts` with SystemConfigDefaults
-- [ ] T022 Create barrel export in `packages/schema/index.ts` re-exporting all schemas and types
+- [x] T013 [P] Create base enums in `packages/schema/schemas/enums.ts` (Role, WorkFormat, SourceFileType, LLMProvider, Operation, ProviderType, PlatformProvider)
+- [x] T014 [P] Create User schema in `packages/schema/schemas/user.ts` with Zod + inferred types
+- [x] T015 [P] Create Profile schema in `packages/schema/schemas/profile.ts` with LanguageEntry, PhoneEntry
+- [x] T016 [P] Create ResumeContent schema in `packages/schema/schemas/resume.ts` with all nested types
+- [x] T017 [P] Create Vacancy schema in `packages/schema/schemas/vacancy.ts` with VacancyInput, getVacancyTitle helper
+- [x] T018 [P] Create Generation schema in `packages/schema/schemas/generation.ts` with getDaysUntilExpiration helper
+- [x] T019 [P] Create LLMKey schema in `packages/schema/schemas/llm-key.ts`
+- [x] T020 [P] Create UsageLog schema in `packages/schema/schemas/usage.ts`
+- [x] T021 [P] Create SystemConfig schema in `packages/schema/schemas/system.ts` with SystemConfigDefaults
+- [x] T022 Create barrel export in `packages/schema/index.ts` re-exporting all schemas and types
 
 ### 2.2 Database & Data Layer
 

@@ -14,7 +14,7 @@ export function isValidYYYYMM(date: string): boolean {
     return false
   }
 
-  const [year, month] = date.split('-').map(Number)
+  const [year] = date.split('-').map(Number)
 
   // Check year is reasonable (1900-2100)
   if (year < 1900 || year > 2100) {

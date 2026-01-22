@@ -1,38 +1,58 @@
 import { describe, it, expect } from 'vitest'
-import { getVacancyTitle } from '../schemas/vacancy'
+import { getVacancyTitle, type Vacancy } from '../schemas/vacancy'
 
 describe('getVacancyTitle', () => {
   it('should return "Company (Position)" when jobPosition is provided', () => {
-    const vacancy = {
+    const vacancy: Vacancy = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      userId: '123e4567-e89b-12d3-a456-426614174001',
       company: 'Acme Corp',
-      jobPosition: 'Senior Developer'
+      jobPosition: 'Senior Developer',
+      description: 'Job description',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
 
     expect(getVacancyTitle(vacancy)).toBe('Acme Corp (Senior Developer)')
   })
 
   it('should return just "Company" when jobPosition is not provided', () => {
-    const vacancy = {
+    const vacancy: Vacancy = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      userId: '123e4567-e89b-12d3-a456-426614174001',
       company: 'Acme Corp',
-      jobPosition: undefined
+      jobPosition: undefined,
+      description: 'Job description',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
 
     expect(getVacancyTitle(vacancy)).toBe('Acme Corp')
   })
 
-  it('should return just "Company" when jobPosition is empty string', () => {
-    const vacancy = {
+  it('should return just "Company" when jobPosition is null', () => {
+    const vacancy: Vacancy = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      userId: '123e4567-e89b-12d3-a456-426614174001',
       company: 'Acme Corp',
-      jobPosition: ''
+      jobPosition: null,
+      description: 'Job description',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
 
     expect(getVacancyTitle(vacancy)).toBe('Acme Corp')
   })
 
   it('should handle company names with special characters', () => {
-    const vacancy = {
+    const vacancy: Vacancy = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      userId: '123e4567-e89b-12d3-a456-426614174001',
       company: 'Smith & Co.',
-      jobPosition: 'UI/UX Designer'
+      jobPosition: 'UI/UX Designer',
+      description: 'Job description',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
 
     expect(getVacancyTitle(vacancy)).toBe('Smith & Co. (UI/UX Designer)')
