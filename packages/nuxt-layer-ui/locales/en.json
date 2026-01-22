@@ -1,0 +1,29 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "loading": "Loading...",
+    "submit": "Submit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "yes": "Yes",
+    "no": "No",
+    "error": {
+      "generic": "An error occurred. Please try again.",
+      "network": "Network error. Please check your connection.",
+      "notFound": "Resource not found.",
+      "unauthorized": "You are not authorized to perform this action.",
+      "forbidden": "Access forbidden.",
+      "validation": "Please check your input and try again."
+    }
+  }
+}

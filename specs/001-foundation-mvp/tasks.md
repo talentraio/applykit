@@ -29,9 +29,9 @@
 
 ### Test tooling & critical coverage
 
-- [ ] TX001 [P] Setup Vitest at repo root (config + `pnpm test`) and add a first smoke unit test
-- [ ] TX002 [P] Setup Playwright e2e harness (`tests/e2e/` + config + `pnpm e2e`) with a placeholder smoke test
-- [ ] TX010 [P] Add unit tests for schema helpers (e.g. `getVacancyTitle`) and date format validation in `packages/schema/`
+- [x] TX001 [P] Setup Vitest at repo root (config + `pnpm test`) and add a first smoke unit test
+- [x] TX002 [P] Setup Playwright e2e harness (`tests/e2e/` + config + `pnpm e2e`) with a placeholder smoke test
+- [x] TX010 [P] Add unit tests for schema helpers (e.g. `getVacancyTitle`) and date format validation in `packages/schema/`
 - [ ] TX020 Add integration tests for limits/usage counters (daily per-op per-role, 429 responses) in `packages/nuxt-layer-api/server/services/limits/`
 - [ ] TX021 Add integration tests for BYOK key handling (encrypt at rest, hint only, never log full keys) in `packages/nuxt-layer-api/server/services/`
 - [ ] TX030 Add integration tests for export caching + invalidation (cache key includes userId + generationId; invalidates on regeneration) in `packages/nuxt-layer-api/server/services/export/`
@@ -43,18 +43,18 @@
 
 **Purpose**: Project initialization, monorepo structure, and tooling
 
-- [ ] T001 Initialize pnpm workspace with `pnpm-workspace.yaml` at repo root
-- [ ] T002 [P] Create `packages/schema/package.json` with name `@int/schema` and TypeScript config
-- [ ] T003 [P] Create `packages/nuxt-layer-api/package.json` with name `@int/api` and `"main": "./nuxt.config.ts"`
-- [ ] T004 [P] Create `packages/nuxt-layer-ui/package.json` with name `@int/ui` and `"main": "./nuxt.config.ts"`
-- [ ] T005 [P] Create `apps/site/package.json` and initial `nuxt.config.ts` extending `@int/ui`, `@int/api`
-- [ ] T006 [P] Create `apps/admin/package.json` and initial `nuxt.config.ts` extending `@int/ui`, `@int/api`
-- [ ] T007 Configure ESLint, Prettier, and TypeScript across all packages in root config files
-- [ ] T008 [P] Create `packages/nuxt-layer-api/.playground/nuxt.config.ts` for isolated API layer testing
-- [ ] T009 [P] Create `packages/nuxt-layer-ui/.playground/nuxt.config.ts` for isolated UI layer testing
-- [ ] T010 Setup i18n configuration in `packages/nuxt-layer-ui/nuxt.config.ts` with @nuxtjs/i18n
-- [ ] T011 [P] Create base locale file `packages/nuxt-layer-ui/locales/en.json` with common keys
-- [ ] T012 Configure NuxtUI v4 in `packages/nuxt-layer-ui/nuxt.config.ts`
+- [x] T001 Initialize pnpm workspace with `pnpm-workspace.yaml` at repo root
+- [x] T002 [P] Create `packages/schema/package.json` with name `@int/schema` and TypeScript config
+- [x] T003 [P] Create `packages/nuxt-layer-api/package.json` with name `@int/api` and `"main": "./nuxt.config.ts"`
+- [x] T004 [P] Create `packages/nuxt-layer-ui/package.json` with name `@int/ui` and `"main": "./nuxt.config.ts"`
+- [x] T005 [P] Create `apps/site/package.json` and initial `nuxt.config.ts` extending `@int/ui`, `@int/api`
+- [x] T006 [P] Create `apps/admin/package.json` and initial `nuxt.config.ts` extending `@int/ui`, `@int/api`
+- [x] T007 Configure ESLint, Prettier, and TypeScript across all packages in root config files
+- [x] T008 [P] Create `packages/nuxt-layer-api/.playground/nuxt.config.ts` for isolated API layer testing
+- [x] T009 [P] Create `packages/nuxt-layer-ui/.playground/nuxt.config.ts` for isolated UI layer testing
+- [x] T010 Setup i18n configuration in `packages/nuxt-layer-ui/nuxt.config.ts` with @nuxtjs/i18n
+- [x] T011 [P] Create base locale file `packages/nuxt-layer-ui/locales/en.json` with common keys
+- [x] T012 Configure NuxtUI v4 in `packages/nuxt-layer-ui/nuxt.config.ts`
 
 ---
 
