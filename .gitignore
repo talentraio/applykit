@@ -69,9 +69,9 @@ Thumbs.db
 # =========================
 # Optional: local-only tooling folders
 # =========================
-.codex/
-.claude/
-.cursor/
+.codex/**/*.local.*
+.claude/**/*.local.*
+.cursor/**/*.local.*
 
 # =========================
 # Optional: local playground outputs (Nuxt layer .playground)
