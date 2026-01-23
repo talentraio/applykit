@@ -5,16 +5,18 @@ disable-model-invocation: true
 ---
 
 Before coding:
+
 - Load .claude/skills/project-conventions/SKILL.md (source of truth).
 - Read relevant docs in docs/architecture, docs/api, docs/codestyle.
 - Confirm which app/layer you are editing AND its repo path:
-    - apps/site
-    - apps/admin
-    - packages/nuxt-layer-api/ (package: @int/api)
-    - packages/nuxt-layer-ui/ (package: @int/ui)
-    - packages/nuxt-layer-schema/ (package: @int/schema)
+  - apps/site
+  - apps/admin
+  - packages/nuxt-layer-api/ (package: @int/api)
+  - packages/nuxt-layer-ui/ (package: @int/ui)
+  - packages/nuxt-layer-schema/ (package: @int/schema)
 
 When coding:
+
 - Nuxt v4 + NuxtUI v4 only. Use Nuxt/NuxtUI MCP docs for exact APIs.
   If MCP is required but not working: stop and ask the user (do not guess).
 - Check VueUse first; prefer existing composables over custom ones.

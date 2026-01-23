@@ -12,6 +12,7 @@ This directory contains global server middleware for authentication and authoriz
 ## Execution Order
 
 Nuxt server middleware runs in alphabetical order:
+
 1. `admin.ts` (checks admin routes)
 2. `auth.ts` (checks API routes)
 
@@ -44,12 +45,12 @@ const publicRoutes = [
   '/api/auth/google',
   '/api/auth/google/callback',
   '/api/health',
-  '/api/your-new-public-route', // Add here
+  '/api/your-new-public-route' // Add here
 ]
 
 const publicPatterns = [
   /^\/api\/auth\//,
-  /^\/api\/public\//, // Or add pattern here
+  /^\/api\/public\// // Or add pattern here
 ]
 ```
 
@@ -59,14 +60,14 @@ After auth middleware runs, you can access the user from `event.context`:
 
 ```typescript
 // server/api/profile.get.ts
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   // User is guaranteed to exist (auth middleware already checked)
   const user = event.context.user
 
   return {
     id: user.id,
     email: user.email,
-    role: user.role,
+    role: user.role
   }
 })
 ```
@@ -77,7 +78,7 @@ If you need to manually check authentication in a public route:
 
 ```typescript
 // server/api/optional-auth.get.ts
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   // Optional: get session without throwing error
   const session = await getUserSession(event)
 
@@ -103,7 +104,7 @@ Admin middleware automatically runs after auth middleware:
 
 ```typescript
 // server/api/admin/users.get.ts
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   // User is guaranteed to be super_admin (admin middleware checked)
   const user = event.context.user
   const isAdmin = event.context.isAdmin // true
@@ -116,6 +117,7 @@ export default defineEventHandler(async (event) => {
 ### Error Responses
 
 Admin middleware returns:
+
 - **401 Unauthorized**: If user is not authenticated
 - **403 Forbidden**: If user is authenticated but not super_admin
 
@@ -131,7 +133,7 @@ Sessions are managed by `nuxt-auth-utils` with encrypted cookies.
 ### Session Data Structure
 
 ```typescript
-interface UserSession {
+type UserSession = {
   user: {
     id: string
     email: string
@@ -159,9 +161,9 @@ await setUserSession(event, {
     id: user.id,
     email: user.email,
     role: user.role,
-    googleId: user.googleId,
+    googleId: user.googleId
   },
-  loggedInAt: new Date(),
+  loggedInAt: new Date()
 })
 
 // Clear session (logout)
@@ -219,12 +221,12 @@ Cookie size limit is ~4KB. For larger data:
 // ❌ Don't store large data in session
 await setUserSession(event, {
   user: { id: '123', email: 'user@example.com' },
-  resume: hugeResumeObject, // Too large!
+  resume: hugeResumeObject // Too large!
 })
 
 // ✅ Store only ID, fetch from DB when needed
 await setUserSession(event, {
-  user: { id: '123', email: 'user@example.com' },
+  user: { id: '123', email: 'user@example.com' }
 })
 
 // Later, in route handler:
@@ -244,9 +246,9 @@ vi.mock('#imports', () => ({
     user: {
       id: 'test-user-id',
       email: 'test@example.com',
-      role: 'public',
-    },
-  }),
+      role: 'public'
+    }
+  })
 }))
 ```
 
@@ -258,7 +260,7 @@ describe('Protected API Route', () => {
     vi.mocked(getUserSession).mockResolvedValue({})
 
     const response = await $fetch('/api/protected', {
-      ignoreResponseError: true,
+      ignoreResponseError: true
     })
 
     expect(response.statusCode).toBe(401)
@@ -266,7 +268,7 @@ describe('Protected API Route', () => {
 
   it('should return data for authenticated user', async () => {
     vi.mocked(getUserSession).mockResolvedValue({
-      user: { id: '123', email: 'user@example.com', role: 'public' },
+      user: { id: '123', email: 'user@example.com', role: 'public' }
     })
 
     const response = await $fetch('/api/protected')

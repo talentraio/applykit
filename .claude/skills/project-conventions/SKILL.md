@@ -4,12 +4,14 @@ description: Repo conventions for ApplyKit-style monorepo (Nuxt layers + strict 
 ---
 
 Use these docs as the source of truth:
-- docs/architecture/*
-- docs/api/*
-- docs/codestyle/*
+
+- docs/architecture/\*
+- docs/api/\*
+- docs/codestyle/\*
 
 Always follow:
-- Monorepo structure (pnpm workspaces; Nuxt layers as @int/* packages)
+
+- Monorepo structure (pnpm workspaces; Nuxt layers as @int/\* packages)
 - Strict schemas in @int/schema (Zod + inferred types)
 - Store/actions pattern for API calls
 - Server-side islands rendering for ATS/Human pages
@@ -19,4 +21,3 @@ Always follow:
   If MCP is required but not working: stop and ask the user (do not guess).
 - Use MCP context7 for other documentation.
 - Check VueUse first; prefer existing composables over custom ones.
-

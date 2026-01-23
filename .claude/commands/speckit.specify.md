@@ -20,6 +20,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 Create or update the feature specification file (`spec.md`) that downstream workflows (`/speckit.clarify`, `/speckit.plan`, `/speckit.tasks`) can build upon.
 
 This spec MUST align with:
+
 - `.claude/skills/project-conventions/SKILL.md`
 - `docs/architecture/*`
 - `docs/api/*`
@@ -31,8 +32,8 @@ This spec MUST align with:
    - `FEATURE_SPEC`
    - `SPECS_DIR`
    - `BRANCH`
-   All paths must be absolute.
-   For single quotes in args like "I'm Groot", use escape syntax: e.g. ` 'I'\''m Groot' ` (or double-quote if possible: `"I'm Groot"`).
+     All paths must be absolute.
+     For single quotes in args like "I'm Groot", use escape syntax: e.g. `'I'\''m Groot'` (or double-quote if possible: `"I'm Groot"`).
 
 2. **Load context**:
    - Read `.claude/skills/project-conventions/SKILL.md`
@@ -64,7 +65,7 @@ This spec MUST align with:
      - When referencing a layer, ALWAYS include both:
        - repo path: `packages/nuxt-layer-*/`
        - package name: `@int/*`
-       Example: `packages/nuxt-layer-api/ (package: @int/api)`
+         Example: `packages/nuxt-layer-api/ (package: @int/api)`
    - **Acceptance criteria**
    - **Edge cases**
    - **Testing plan**

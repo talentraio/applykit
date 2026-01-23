@@ -9,7 +9,7 @@
 
 import type { UserPublic } from '@int/schema'
 
-export interface CurrentUserComposable {
+export type CurrentUserComposable = {
   /**
    * The current authenticated user, or null if not logged in
    */
@@ -54,6 +54,6 @@ export function useCurrentUser(): CurrentUserComposable {
     user,
     isLoggedIn: loggedIn,
     refresh,
-    logout,
+    logout
   }
 }

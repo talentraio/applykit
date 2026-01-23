@@ -1,10 +1,9 @@
-import { readFiles } from 'h3-formidable'
 import { readFile } from 'node:fs/promises'
-import { z } from 'zod'
 import { SourceFileTypeSchema } from '@int/schema'
+import { readFiles } from 'h3-formidable'
 import { resumeRepository } from '../../data/repositories'
-import { parseDocument } from '../../services/parser'
 import { parseResumeWithLLM } from '../../services/llm/parse'
+import { parseDocument } from '../../services/parser'
 import { checkRateLimit } from '../../utils/rate-limiter'
 import { logUsage } from '../../utils/usage'
 
@@ -26,7 +25,7 @@ import { logUsage } from '../../utils/usage'
  *
  * Related: T074 (US2)
  */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event)
   const userId = session.user.id
@@ -36,7 +35,7 @@ export default defineEventHandler(async (event) => {
 
   // Parse multipart form data
   const { files } = await readFiles(event, {
-    includeFields: true,
+    includeFields: true
   })
 
   // Validate file upload
@@ -44,7 +43,7 @@ export default defineEventHandler(async (event) => {
   if (!fileArray || fileArray.length === 0) {
     throw createError({
       statusCode: 400,
-      message: 'No file uploaded',
+      message: 'No file uploaded'
     })
   }
 
@@ -54,14 +53,12 @@ export default defineEventHandler(async (event) => {
   let fileType: 'docx' | 'pdf'
   if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
     fileType = 'docx'
-  }
-  else if (file.mimetype === 'application/pdf') {
+  } else if (file.mimetype === 'application/pdf') {
     fileType = 'pdf'
-  }
-  else {
+  } else {
     throw createError({
       statusCode: 400,
-      message: `Unsupported file type: ${file.mimetype}. Only DOCX and PDF are supported.`,
+      message: `Unsupported file type: ${file.mimetype}. Only DOCX and PDF are supported.`
     })
   }
 
@@ -70,7 +67,7 @@ export default defineEventHandler(async (event) => {
   if (!fileTypeValidation.success) {
     throw createError({
       statusCode: 400,
-      message: 'Invalid file type',
+      message: 'Invalid file type'
     })
   }
 
@@ -86,7 +83,7 @@ export default defineEventHandler(async (event) => {
 
     // Parse with LLM
     const llmResult = await parseResumeWithLLM(parseResult.text, {
-      userApiKey: userApiKey || undefined,
+      userApiKey: userApiKey || undefined
     })
 
     // Determine title (use provided or default to filename without extension)
@@ -98,7 +95,7 @@ export default defineEventHandler(async (event) => {
       title,
       content: llmResult.content,
       sourceFileName: file.originalFilename || 'unknown',
-      sourceFileType: fileType,
+      sourceFileType: fileType
     })
 
     // Log usage
@@ -114,24 +111,23 @@ export default defineEventHandler(async (event) => {
         fileType,
         wordCount: parseResult.metadata?.wordCount,
         pageCount: parseResult.metadata?.pageCount,
-        attemptsUsed: llmResult.attemptsUsed,
-      },
+        attemptsUsed: llmResult.attemptsUsed
+      }
     })
 
     return resume
-  }
-  catch (error) {
+  } catch (error) {
     // Handle parsing errors
     if (error instanceof Error) {
       throw createError({
         statusCode: 422,
-        message: `Failed to parse resume: ${error.message}`,
+        message: `Failed to parse resume: ${error.message}`
       })
     }
 
     throw createError({
       statusCode: 500,
-      message: 'Failed to parse resume',
+      message: 'Failed to parse resume'
     })
   }
 })

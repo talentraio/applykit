@@ -1,9 +1,8 @@
+import type { PlatformProvider, SystemConfigKey } from '@int/schema'
+import { SystemConfigDefaults, SystemConfigValues } from '@int/schema'
 import { eq } from 'drizzle-orm'
 import { db } from '../db'
 import { systemConfigs } from '../schema'
-import type { SystemConfig } from '../schema'
-import type { SystemConfigKey, PlatformProvider } from '@int/schema'
-import { SystemConfigDefaults, SystemConfigValues } from '@int/schema'
 
 /**
  * System Config Repository
@@ -32,7 +31,9 @@ export const systemConfigRepository = {
   /**
    * Get boolean config value
    */
-  async getBoolean(key: Extract<SystemConfigKey, 'platform_llm_enabled' | 'byok_enabled'>): Promise<boolean> {
+  async getBoolean(
+    key: Extract<SystemConfigKey, 'platform_llm_enabled' | 'byok_enabled'>
+  ): Promise<boolean> {
     const value = await this.get(key)
     return Boolean(value)
   },
@@ -40,7 +41,9 @@ export const systemConfigRepository = {
   /**
    * Get number config value
    */
-  async getNumber(key: Extract<SystemConfigKey, 'global_budget_cap' | 'global_budget_used'>): Promise<number> {
+  async getNumber(
+    key: Extract<SystemConfigKey, 'global_budget_cap' | 'global_budget_used'>
+  ): Promise<number> {
     const value = await this.get(key)
     return Number(value)
   },
@@ -71,22 +74,28 @@ export const systemConfigRepository = {
         target: systemConfigs.key,
         set: {
           value: jsonValue,
-          updatedAt: new Date(),
-        },
+          updatedAt: new Date()
+        }
       })
   },
 
   /**
    * Set boolean config value
    */
-  async setBoolean(key: Extract<SystemConfigKey, 'platform_llm_enabled' | 'byok_enabled'>, value: boolean): Promise<void> {
+  async setBoolean(
+    key: Extract<SystemConfigKey, 'platform_llm_enabled' | 'byok_enabled'>,
+    value: boolean
+  ): Promise<void> {
     await this.set(key, value)
   },
 
   /**
    * Set number config value
    */
-  async setNumber(key: Extract<SystemConfigKey, 'global_budget_cap' | 'global_budget_used'>, value: number): Promise<void> {
+  async setNumber(
+    key: Extract<SystemConfigKey, 'global_budget_cap' | 'global_budget_used'>,
+    value: number
+  ): Promise<void> {
     await this.set(key, value)
   },
 
@@ -106,7 +115,7 @@ export const systemConfigRepository = {
 
     const config: Record<string, unknown> = { ...SystemConfigDefaults }
 
-    results.forEach((row) => {
+    results.forEach(row => {
       const value = typeof row.value === 'string' ? JSON.parse(row.value) : row.value
       config[row.key] = value
     })
@@ -164,5 +173,5 @@ export const systemConfigRepository = {
    */
   async isBYOKEnabled(): Promise<boolean> {
     return await this.getBoolean('byok_enabled')
-  },
+  }
 }

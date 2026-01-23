@@ -1,8 +1,8 @@
-import { eq, desc, and } from 'drizzle-orm'
+import type { ResumeContent, SourceFileType } from '@int/schema'
+import type { Resume } from '../schema'
+import { and, desc, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { resumes } from '../schema'
-import type { Resume, NewResume } from '../schema'
-import type { ResumeContent, SourceFileType } from '@int/schema'
 
 /**
  * Resume Repository
@@ -54,13 +54,16 @@ export const resumeRepository = {
     sourceFileName: string
     sourceFileType: SourceFileType
   }): Promise<Resume> {
-    const result = await db.insert(resumes).values({
-      userId: data.userId,
-      title: data.title,
-      content: data.content,
-      sourceFileName: data.sourceFileName,
-      sourceFileType: data.sourceFileType,
-    }).returning()
+    const result = await db
+      .insert(resumes)
+      .values({
+        userId: data.userId,
+        title: data.title,
+        content: data.content,
+        sourceFileName: data.sourceFileName,
+        sourceFileType: data.sourceFileType
+      })
+      .returning()
     return result[0]
   },
 
@@ -73,7 +76,7 @@ export const resumeRepository = {
       .update(resumes)
       .set({
         content,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(and(eq(resumes.id, id), eq(resumes.userId, userId)))
       .returning()
@@ -88,7 +91,7 @@ export const resumeRepository = {
       .update(resumes)
       .set({
         title,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(and(eq(resumes.id, id), eq(resumes.userId, userId)))
       .returning()
@@ -125,5 +128,5 @@ export const resumeRepository = {
       .orderBy(desc(resumes.createdAt))
       .limit(1)
     return result[0] ?? null
-  },
+  }
 }

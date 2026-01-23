@@ -18,15 +18,17 @@ apps/site/layers/
 Defined in `apps/site/nuxt.config.ts`:
 
 ```typescript
-extends: [
-  '@int/ui',        // UI components layer (external package)
-  '@int/api',       // API layer (external package)
-  './layers/_base', // 1. Base layer (shared utilities)
-  './layers/auth',  // 2. Auth layer (login, logout)
-  './layers/user',  // 3. User layer (profile, settings)
-  './layers/landing', // 4. Landing layer (homepage)
-  './layers/vacancy', // 5. Vacancy layer (job management)
-]
+export default defineNuxtConfig({
+  extends: [
+    '@int/ui', // UI components layer (external package)
+    '@int/api', // API layer (external package)
+    './layers/_base', // 1. Base layer (shared utilities)
+    './layers/auth', // 2. Auth layer (login, logout)
+    './layers/user', // 3. User layer (profile, settings)
+    './layers/landing', // 4. Landing layer (homepage)
+    './layers/vacancy' // 5. Vacancy layer (job management)
+  ]
+})
 ```
 
 **Important**: `_base` must be first in the internal layers list to ensure shared components/composables/stores are available to all other layers.
@@ -40,6 +42,7 @@ extends: [
 Shared foundation for all site layers.
 
 **Structure**:
+
 ```
 _base/
 ├── nuxt.config.ts
@@ -52,6 +55,7 @@ _base/
 ```
 
 **Purpose**:
+
 - Shared components used across multiple layers
 - Common composables (e.g., `useCurrentUser`, `useToast`)
 - Shared Pinia stores (e.g., `useAuthStore`)
@@ -59,10 +63,11 @@ _base/
 - Global middleware
 
 **Usage**:
+
 ```typescript
+import MySharedComponent from '@site/base/components/MySharedComponent.vue'
 // Import from base layer
 import { useToast } from '@site/base/composables/useToast'
-import MySharedComponent from '@site/base/components/MySharedComponent.vue'
 ```
 
 ### `auth` Layer
@@ -72,6 +77,7 @@ import MySharedComponent from '@site/base/components/MySharedComponent.vue'
 Authentication and session management.
 
 **Responsibilities**:
+
 - Login/logout pages
 - OAuth callback routes
 - Auth middleware
@@ -79,11 +85,13 @@ Authentication and session management.
 - Protected route guards
 
 **Key Files (to be created)**:
+
 - `app/pages/login.vue` - Login page
 - `app/layouts/auth.vue` - Auth layout
 - `app/middleware/auth.global.ts` - Auth guard middleware
 
 **Usage**:
+
 ```typescript
 // Import from auth layer
 import { useAuthStore } from '@site/auth/stores/useAuthStore'
@@ -96,6 +104,7 @@ import { useAuthStore } from '@site/auth/stores/useAuthStore'
 User profile and settings management.
 
 **Responsibilities**:
+
 - User profile pages
 - Settings pages
 - Profile editing
@@ -103,11 +112,13 @@ User profile and settings management.
 - Usage dashboard
 
 **Key Files (to be created)**:
+
 - `app/pages/profile.vue` - Profile page
 - `app/pages/settings.vue` - Settings page
 - `app/pages/dashboard.vue` - User dashboard
 
 **Usage**:
+
 ```typescript
 // Import from user layer
 import { useProfileStore } from '@site/user/stores/useProfileStore'
@@ -120,17 +131,20 @@ import { useProfileStore } from '@site/user/stores/useProfileStore'
 Homepage and marketing pages.
 
 **Responsibilities**:
+
 - Homepage/landing page
 - Marketing content
 - Public pages
 - Call-to-action sections
 
 **Key Files (to be created)**:
+
 - `app/pages/index.vue` - Homepage
 - `app/components/Hero.vue` - Hero section
 - `app/components/Features.vue` - Features section
 
 **Usage**:
+
 ```typescript
 // Import from landing layer
 import HeroSection from '@site/landing/components/Hero.vue'
@@ -143,6 +157,7 @@ import HeroSection from '@site/landing/components/Hero.vue'
 Job vacancy management and resume generation.
 
 **Responsibilities**:
+
 - Vacancy list page
 - Vacancy detail page
 - Vacancy creation/editing
@@ -150,12 +165,14 @@ Job vacancy management and resume generation.
 - Export functionality
 
 **Key Files (to be created)**:
+
 - `app/pages/vacancies/index.vue` - Vacancy list
 - `app/pages/vacancies/[id].vue` - Vacancy detail
 - `app/pages/vacancies/new.vue` - Create vacancy
 - `app/components/VacancyCard.vue` - Vacancy card component
 
 **Usage**:
+
 ```typescript
 // Import from vacancy layer
 import { useVacancyStore } from '@site/vacancy/stores/useVacancyStore'
@@ -167,15 +184,14 @@ import { useVacancyStore } from '@site/vacancy/stores/useVacancyStore'
 
 Components, composables, and utilities in each layer are automatically imported:
 
-```typescript
-// NO NEED for explicit imports:
-// ✅ Auto-imported from any layer
+```vue
 <template>
-  <MyComponent />  <!-- From any layer's app/components/ -->
+  <MyComponent />
+  <!-- From any layer's app/components/ -->
 </template>
 
 <script setup lang="ts">
-const user = useCurrentUser()  // From any layer's app/composables/
+const user = useCurrentUser() // From any layer's app/composables/
 const { formatDate } = useUtils() // From any layer's app/utils/
 </script>
 ```
@@ -185,19 +201,21 @@ const { formatDate } = useUtils() // From any layer's app/utils/
 Use layer aliases for explicit imports when needed:
 
 ```typescript
+import MyComponent from '@site/auth/components/LoginForm.vue'
 // Explicit import using alias
 import { MyType } from '@site/base/types'
-import MyComponent from '@site/auth/components/LoginForm.vue'
 ```
 
 ### Layer Isolation
 
 Each layer is isolated and can:
+
 - Have its own `pages/`, `layouts/`, `components/`, `composables/`, etc.
 - Override or extend functionality from earlier layers
 - Use components/composables from earlier layers (via auto-import or alias)
 
 **Layer merging order**:
+
 1. External packages (`@int/ui`, `@int/api`)
 2. `_base` layer (shared foundation)
 3. Feature layers (auth, user, landing, vacancy)
@@ -235,7 +253,7 @@ Creates route: `/vacancies`
 
 ```typescript
 // apps/site/layers/vacancy/types/index.ts
-export interface VacancyFormData {
+export type VacancyFormData = {
   company: string
   position: string
   description: string
@@ -243,6 +261,7 @@ export interface VacancyFormData {
 ```
 
 Import explicitly:
+
 ```typescript
 import type { VacancyFormData } from '@site/vacancy/types'
 ```
@@ -260,6 +279,7 @@ import type { VacancyFormData } from '@site/vacancy/types'
 ### 2. Avoid Circular Dependencies
 
 Layers should not depend on layers loaded after them:
+
 - ✅ `vacancy` can use `_base`
 - ✅ `vacancy` can use `auth`
 - ❌ `auth` should not use `vacancy`
@@ -292,12 +312,12 @@ export const useVacancyStore = defineStore('vacancy', () => {
 
 Use TypeScript and leverage auto-imports:
 
-```typescript
+```vue
 <script setup lang="ts">
 import type { User } from '@int/schema'
 
 const user = useCurrentUser() // Auto-imported composable
-const toast = useToast()       // Auto-imported composable
+const toast = useToast() // Auto-imported composable
 </script>
 ```
 
@@ -316,6 +336,7 @@ _base/
 ```
 
 Run tests:
+
 ```bash
 pnpm test apps/site/layers/_base
 pnpm test apps/site/layers/vacancy

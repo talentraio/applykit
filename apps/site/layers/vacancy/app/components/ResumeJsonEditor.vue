@@ -1,3 +1,79 @@
+<template>
+  <div class="space-y-4">
+    <!-- Toolbar -->
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <UBadge v-if="hasUnsavedChanges" color="amber" variant="soft">
+          {{ $t('resume.editor.unsavedChanges') }}
+        </UBadge>
+        <UBadge v-if="saveSuccess" color="green" variant="soft">
+          {{ $t('resume.editor.saved') }}
+        </UBadge>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <UButton
+          color="neutral"
+          variant="soft"
+          icon="i-lucide-align-left"
+          :disabled="!isValid || readonly"
+          @click="formatJson"
+        >
+          Format
+        </UButton>
+        <UButton
+          color="primary"
+          icon="i-lucide-save"
+          :disabled="!hasUnsavedChanges || !isValid || readonly"
+          :loading="loading"
+          @click="handleSave"
+        >
+          {{ loading ? $t('resume.editor.saving') : $t('resume.editor.save') }}
+        </UButton>
+      </div>
+    </div>
+
+    <!-- JSON Editor -->
+    <div class="relative">
+      <UTextarea
+        v-model="jsonText"
+        :rows="20"
+        :readonly="readonly"
+        class="font-mono text-sm"
+        :placeholder="$t('resume.editor.title')"
+        @input="handleChange"
+      />
+    </div>
+
+    <!-- Validation Error -->
+    <UAlert
+      v-if="validationError"
+      color="red"
+      variant="soft"
+      icon="i-lucide-alert-circle"
+      :title="$t('resume.editor.invalidJson')"
+      :description="validationError"
+    />
+
+    <!-- Sections Info -->
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div
+        v-for="section in [
+          { key: 'personalInfo', icon: 'i-lucide-user' },
+          { key: 'experience', icon: 'i-lucide-briefcase' },
+          { key: 'education', icon: 'i-lucide-graduation-cap' },
+          { key: 'skills', icon: 'i-lucide-code' }
+        ]"
+        :key="section.key"
+        class="flex items-center gap-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800"
+      >
+        <UIcon :name="section.icon" class="h-5 w-5 text-muted" />
+        <span class="text-sm font-medium">{{ $t(`resume.editor.${section.key}`) }}</span>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 /**
  * Resume JSON Editor Component
@@ -68,8 +144,7 @@ const parseJson = (): ResumeContent | null => {
     }
 
     return result.data
-  }
-  catch (err) {
+  } catch (err) {
     validationError.value = err instanceof Error ? err.message : t('resume.editor.invalidJson')
     return null
   }
@@ -105,8 +180,7 @@ const handleSave = async () => {
     setTimeout(() => {
       saveSuccess.value = false
     }, 3000)
-  }
-  catch (err) {
+  } catch (err) {
     const error = err instanceof Error ? err : new Error(t('resume.error.updateFailed'))
     validationError.value = error.message
     emit('error', error)
@@ -131,93 +205,8 @@ const isValid = computed(() => {
   try {
     const parsed = JSON.parse(jsonText.value)
     return ResumeContentSchema.safeParse(parsed).success
-  }
-  catch {
+  } catch {
     return false
   }
 })
 </script>
-
-<template>
-  <div class="space-y-4">
-    <!-- Toolbar -->
-    <div class="flex items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <UBadge
-          v-if="hasUnsavedChanges"
-          color="amber"
-          variant="soft"
-        >
-          {{ $t('resume.editor.unsavedChanges') }}
-        </UBadge>
-        <UBadge
-          v-if="saveSuccess"
-          color="green"
-          variant="soft"
-        >
-          {{ $t('resume.editor.saved') }}
-        </UBadge>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <UButton
-          color="neutral"
-          variant="soft"
-          icon="i-lucide-align-left"
-          :disabled="!isValid || readonly"
-          @click="formatJson"
-        >
-          Format
-        </UButton>
-        <UButton
-          color="primary"
-          icon="i-lucide-save"
-          :disabled="!hasUnsavedChanges || !isValid || readonly"
-          :loading="loading"
-          @click="handleSave"
-        >
-          {{ loading ? $t('resume.editor.saving') : $t('resume.editor.save') }}
-        </UButton>
-      </div>
-    </div>
-
-    <!-- JSON Editor -->
-    <div class="relative">
-      <UTextarea
-        v-model="jsonText"
-        :rows="20"
-        :readonly="readonly"
-        class="font-mono text-sm"
-        :placeholder="$t('resume.editor.title')"
-        @input="handleChange"
-      />
-    </div>
-
-    <!-- Validation Error -->
-    <UAlert
-      v-if="validationError"
-      color="red"
-      variant="soft"
-      icon="i-lucide-alert-circle"
-      :title="$t('resume.editor.invalidJson')"
-      :description="validationError"
-    />
-
-    <!-- Sections Info -->
-    <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-      <div
-        v-for="section in [
-          { key: 'personalInfo', icon: 'i-lucide-user' },
-          { key: 'experience', icon: 'i-lucide-briefcase' },
-          { key: 'education', icon: 'i-lucide-graduation-cap' },
-          { key: 'skills', icon: 'i-lucide-code' },
-        ]"
-        :key="section.key"
-        class="flex items-center gap-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800"
-      >
-        <UIcon :name="section.icon" class="h-5 w-5 text-muted" />
-        <span class="text-sm font-medium">{{ $t(`resume.editor.${section.key}`) }}</span>
-      </div>
-    </div>
-  </div>
-</template>

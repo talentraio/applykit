@@ -280,22 +280,27 @@ pnpm test:e2e -- --grep "happy path"
 ### Common Issues
 
 **"Module not found: @int/schema"**
+
 - Run `pnpm install` from root
 - Check `pnpm-workspace.yaml` includes packages
 
 **OAuth callback error**
+
 - Verify redirect URI in Google Console matches exactly
 - Check `NUXT_PUBLIC_BASE_URL` is correct
 
 **Database connection failed**
+
 - For SQLite: ensure `dev.db` directory is writable
 - For PostgreSQL: check `DATABASE_URL` format and credentials
 
 **LLM parsing fails**
+
 - Verify `OPENAI_API_KEY` is set and valid
 - Check rate limits on OpenAI dashboard
 
 **PDF export timeout**
+
 - Playwright needs Chromium; run `npx playwright install chromium`
 - Check serverless function timeout (increase if needed)
 
@@ -327,6 +332,7 @@ vercel
 ### Environment Variables on Vercel
 
 Set these in Vercel project settings:
+
 - `DATABASE_URL` (PostgreSQL connection string)
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`

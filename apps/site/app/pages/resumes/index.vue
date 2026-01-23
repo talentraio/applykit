@@ -1,91 +1,3 @@
-<script setup lang="ts">
-/**
- * Resumes List Page
- *
- * Display all resumes for the current user
- * Allows navigation to detail/edit and upload new resumes
- *
- * T082 [US2] Resumes list page
- */
-
-import type { Resume } from '@int/schema'
-
-definePageMeta({
-  middleware: 'auth',
-})
-
-const { t } = useI18n()
-const router = useRouter()
-const { resumes, loading, error, fetchResumes, deleteResume } = useResumes({ immediate: true })
-
-const deleteConfirmId = ref<string | null>(null)
-const isDeleting = ref(false)
-
-/**
- * Navigate to resume detail
- */
-const viewResume = (id: string) => {
-  router.push(`/resumes/${id}`)
-}
-
-/**
- * Navigate to upload page
- */
-const goToUpload = () => {
-  router.push('/resumes/new')
-}
-
-/**
- * Show delete confirmation
- */
-const confirmDelete = (id: string) => {
-  deleteConfirmId.value = id
-}
-
-/**
- * Cancel delete
- */
-const cancelDelete = () => {
-  deleteConfirmId.value = null
-}
-
-/**
- * Delete resume
- */
-const handleDelete = async (id: string) => {
-  isDeleting.value = true
-  try {
-    await deleteResume(id)
-    deleteConfirmId.value = null
-  }
-  catch (err) {
-    console.error('Failed to delete resume:', err)
-  }
-  finally {
-    isDeleting.value = false
-  }
-}
-
-/**
- * Format date
- */
-const formatDate = (date: Date | string) => {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(d)
-}
-
-/**
- * Get file type badge color
- */
-const getFileTypeBadge = (type: string) => {
-  return type === 'pdf' ? 'red' : 'blue'
-}
-</script>
-
 <template>
   <div class="container mx-auto max-w-6xl p-4 py-8">
     <!-- Header -->
@@ -98,12 +10,7 @@ const getFileTypeBadge = (type: string) => {
           {{ $t('resume.list.count', { count: resumes.length }) }}
         </p>
       </div>
-      <UButton
-        color="primary"
-        icon="i-lucide-upload"
-        size="lg"
-        @click="goToUpload"
-      >
+      <UButton color="primary" icon="i-lucide-upload" size="lg" @click="goToUpload">
         {{ $t('resume.list.uploadButton') }}
       </UButton>
     </div>
@@ -127,7 +34,9 @@ const getFileTypeBadge = (type: string) => {
     <UPageCard v-else-if="resumes.length === 0" class="text-center">
       <div class="py-12">
         <div class="flex justify-center">
-          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+          <div
+            class="flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800"
+          >
             <UIcon name="i-lucide-file-text" class="h-10 w-10 text-muted" />
           </div>
         </div>
@@ -138,12 +47,7 @@ const getFileTypeBadge = (type: string) => {
           {{ $t('resume.list.emptyDescription') }}
         </p>
         <div class="mt-6">
-          <UButton
-            color="primary"
-            icon="i-lucide-upload"
-            size="lg"
-            @click="goToUpload"
-          >
+          <UButton color="primary" icon="i-lucide-upload" size="lg" @click="goToUpload">
             {{ $t('resume.list.uploadButton') }}
           </UButton>
         </div>
@@ -168,10 +72,7 @@ const getFileTypeBadge = (type: string) => {
                 {{ resume.content.personalInfo.fullName }}
               </p>
             </div>
-            <UBadge
-              :color="getFileTypeBadge(resume.sourceFileType)"
-              variant="soft"
-            >
+            <UBadge :color="getFileTypeBadge(resume.sourceFileType)" variant="soft">
               {{ resume.sourceFileType.toUpperCase() }}
             </UBadge>
           </div>
@@ -237,8 +138,13 @@ const getFileTypeBadge = (type: string) => {
       <UCard>
         <template #header>
           <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-              <UIcon name="i-lucide-alert-triangle" class="h-5 w-5 text-red-600 dark:text-red-400" />
+            <div
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20"
+            >
+              <UIcon
+                name="i-lucide-alert-triangle"
+                class="h-5 w-5 text-red-600 dark:text-red-400"
+              />
             </div>
             <h3 class="text-lg font-semibold">
               {{ $t('resume.delete.confirm') }}
@@ -252,18 +158,10 @@ const getFileTypeBadge = (type: string) => {
 
         <template #footer>
           <div class="flex items-center justify-end gap-2">
-            <UButton
-              color="neutral"
-              variant="soft"
-              @click="cancelDelete"
-            >
+            <UButton color="neutral" variant="soft" @click="cancelDelete">
               {{ $t('common.cancel') }}
             </UButton>
-            <UButton
-              color="red"
-              :loading="isDeleting"
-              @click="handleDelete(deleteConfirmId!)"
-            >
+            <UButton color="red" :loading="isDeleting" @click="handleDelete(deleteConfirmId!)">
               {{ isDeleting ? $t('resume.delete.deleting') : $t('resume.delete.button') }}
             </UButton>
           </div>
@@ -272,3 +170,86 @@ const getFileTypeBadge = (type: string) => {
     </UModal>
   </div>
 </template>
+
+<script setup lang="ts">
+/**
+ * Resumes List Page
+ *
+ * Display all resumes for the current user
+ * Allows navigation to detail/edit and upload new resumes
+ *
+ * T082 [US2] Resumes list page
+ */
+
+definePageMeta({
+  middleware: 'auth'
+})
+
+const router = useRouter()
+const { resumes, loading, error, deleteResume } = useResumes({ immediate: true })
+
+const deleteConfirmId = ref<string | null>(null)
+const isDeleting = ref(false)
+
+/**
+ * Navigate to resume detail
+ */
+const viewResume = (id: string) => {
+  router.push(`/resumes/${id}`)
+}
+
+/**
+ * Navigate to upload page
+ */
+const goToUpload = () => {
+  router.push('/resumes/new')
+}
+
+/**
+ * Show delete confirmation
+ */
+const confirmDelete = (id: string) => {
+  deleteConfirmId.value = id
+}
+
+/**
+ * Cancel delete
+ */
+const cancelDelete = () => {
+  deleteConfirmId.value = null
+}
+
+/**
+ * Delete resume
+ */
+const handleDelete = async (id: string) => {
+  isDeleting.value = true
+  try {
+    await deleteResume(id)
+    deleteConfirmId.value = null
+  } catch (err) {
+    console.error('Failed to delete resume:', err)
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+/**
+ * Format date
+ */
+const formatDate = (date: Date | string) => {
+  const d = typeof date === 'string' ? new Date(date) : date
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(d)
+}
+
+/**
+ * Get file type badge color
+ */
+const getFileTypeBadge = (type: string) => {
+  return type === 'pdf' ? 'red' : 'blue'
+}
+</script>

@@ -31,14 +31,14 @@ server/
 // server/api/parse.post.ts
 import { requireLimit } from '~/server/services/limits'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const user = event.context.user
 
   // Automatically throws 429 if limit exceeded
   await requireLimit(user.id, 'parse', user.role)
 
   // Proceed with operation
-  const result = await parseResume(...)
+  const result = await parseResume({})
 
   // Log usage after successful operation
   await logUsage(user.id, 'parse', 'platform', tokensUsed, cost)
@@ -90,7 +90,7 @@ console.log(summary)
 ### Logging Operations
 
 ```typescript
-import { logUsage, logParse, logGenerate, logExport } from '~/server/utils/usage'
+import { logExport, logGenerate, logParse, logUsage } from '~/server/utils/usage'
 
 // Generic logging
 await logUsage(userId, 'parse', 'platform', 1500, 0.003)
@@ -104,7 +104,7 @@ await logExport(userId, 'platform') // No tokens/cost required
 ### Querying Usage
 
 ```typescript
-import { getDailyUsageCount, getDailyTokensUsed, getDailyCost } from '~/server/utils/usage'
+import { getDailyCost, getDailyTokensUsed, getDailyUsageCount } from '~/server/utils/usage'
 
 // Get operation count
 const parseCount = await getDailyUsageCount(userId, 'parse')
@@ -123,7 +123,7 @@ In addition to daily limits, you can apply per-second/minute rate limits:
 ```typescript
 import { checkRateLimit, RateLimitPresets } from '~/server/utils/rate-limiter'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const userId = event.context.user.id
 
   // Apply rate limit: 10 requests per minute
@@ -143,11 +143,11 @@ export default defineEventHandler(async (event) => {
 ### Rate Limit Presets
 
 ```typescript
-RateLimitPresets.veryStrict  // 1 req/sec
-RateLimitPresets.strict      // 10 req/min
-RateLimitPresets.moderate    // 60 req/min
-RateLimitPresets.lenient     // 100 req/min
-RateLimitPresets.hourly      // 1000 req/hour
+RateLimitPresets.veryStrict // 1 req/sec
+RateLimitPresets.strict // 10 req/min
+RateLimitPresets.moderate // 60 req/min
+RateLimitPresets.lenient // 100 req/min
+RateLimitPresets.hourly // 1000 req/hour
 ```
 
 ### Custom Rate Limits
@@ -155,7 +155,7 @@ RateLimitPresets.hourly      // 1000 req/hour
 ```typescript
 checkRateLimit(userId, 'expensive-operation', {
   maxRequests: 5,
-  windowSeconds: 300, // 5 minutes
+  windowSeconds: 300 // 5 minutes
 })
 ```
 
@@ -168,18 +168,18 @@ const DAILY_LIMITS: Record<Role, Record<Operation, number>> = {
   public: {
     parse: 3,
     generate: 2,
-    export: 5,
+    export: 5
   },
   friend: {
     parse: 10,
     generate: 8,
-    export: 20,
+    export: 20
   },
   super_admin: {
     parse: Infinity,
     generate: Infinity,
-    export: Infinity,
-  },
+    export: Infinity
+  }
 }
 ```
 
@@ -209,6 +209,7 @@ When daily limit is exceeded:
 Daily limits reset at **midnight UTC** (00:00:00 UTC).
 
 Example:
+
 - User reaches limit at 23:30 UTC on Jan 23
 - Limits reset at 00:00:00 UTC on Jan 24
 - User can perform operations again
@@ -219,14 +220,14 @@ Example:
 
 ```typescript
 // server/api/resumes/parse.post.ts
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const user = event.context.user
 
   // Check limit first
   await requireLimit(user.id, 'parse', user.role)
 
   // Perform parsing
-  const result = await parseResume(...)
+  const result = await parseResume({})
 
   // Log usage after success
   await logParse(user.id, 'platform', result.tokensUsed, result.cost)
@@ -239,14 +240,14 @@ export default defineEventHandler(async (event) => {
 
 ```typescript
 // server/api/vacancies/[id]/generate.post.ts
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const user = event.context.user
 
   // Check limit
   await requireLimit(user.id, 'generate', user.role)
 
   // Perform generation
-  const generation = await generateResume(...)
+  const generation = await generateResume({})
 
   // Log usage
   await logGenerate(user.id, 'platform', generation.tokensUsed, generation.cost)
@@ -259,14 +260,14 @@ export default defineEventHandler(async (event) => {
 
 ```typescript
 // server/api/vacancies/[id]/export.post.ts
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const user = event.context.user
 
   // Check limit
   await requireLimit(user.id, 'export', user.role)
 
   // Perform export (usually no LLM tokens)
-  const pdfUrl = await exportToPDF(...)
+  const pdfUrl = await exportToPDF({})
 
   // Log usage (no tokens/cost for PDF generation)
   await logExport(user.id, 'platform')
@@ -281,7 +282,7 @@ export default defineEventHandler(async (event) => {
 
 ```typescript
 // server/api/me/usage.get.ts
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const user = event.context.user
 
   const summary = await getUsageSummary(user.id, user.role)
@@ -291,6 +292,7 @@ export default defineEventHandler(async (event) => {
 ```
 
 Client can display:
+
 - Progress bars showing usage (e.g., "2/3 parses used")
 - Warning when approaching limit
 - Reset time countdown
@@ -301,7 +303,7 @@ Client can display:
 
 ```typescript
 // server/api/admin/usage/stats.get.ts
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   // Admin only (middleware checks)
 
   const stats = await usageLogRepository.getSystemStats()
@@ -309,7 +311,7 @@ export default defineEventHandler(async (event) => {
   return {
     totalOperations: stats.count,
     totalTokens: stats.tokens,
-    totalCost: stats.cost,
+    totalCost: stats.cost
     // ... more stats
   }
 })
@@ -336,8 +338,9 @@ describe('Limits', () => {
   it('should block when limit exceeded', async () => {
     vi.mocked(getDailyUsageCount).mockResolvedValue(3) // At limit
 
-    await expect(requireLimit(userId, 'parse', 'public'))
-      .rejects.toThrow('Daily parse limit exceeded')
+    await expect(requireLimit(userId, 'parse', 'public')).rejects.toThrow(
+      'Daily parse limit exceeded'
+    )
   })
 
   it('should allow super_admin unlimited', async () => {
@@ -370,11 +373,11 @@ This is indexed: `idx_usage_logs_user_operation_date`
 For high-traffic scenarios, consider caching daily counts:
 
 ```typescript
-const cache = new Map<string, { count: number, expiresAt: number }>()
+const cache = new Map<string, { count: number; expiresAt: number }>()
 
 export async function getDailyUsageCountCached(
   userId: string,
-  operation: Operation,
+  operation: Operation
 ): Promise<number> {
   const key = `${userId}:${operation}`
   const cached = cache.get(key)
@@ -387,7 +390,7 @@ export async function getDailyUsageCountCached(
 
   cache.set(key, {
     count,
-    expiresAt: Date.now() + 60000, // Cache for 1 minute
+    expiresAt: Date.now() + 60000 // Cache for 1 minute
   })
 
   return count
@@ -397,6 +400,7 @@ export async function getDailyUsageCountCached(
 ## Future Enhancements
 
 Potential improvements:
+
 - **Redis-based rate limiting** for multi-instance deployments
 - **Usage quotas** (monthly limits in addition to daily)
 - **Burst allowance** (allow brief spikes above limit)

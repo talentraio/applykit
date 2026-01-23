@@ -1,6 +1,6 @@
-import OpenAI from 'openai'
 import type { ILLMProvider, LLMRequest, LLMResponse } from '../types'
-import { LLMError, LLMAuthError, LLMRateLimitError, LLMQuotaError, sanitizeApiKey } from '../types'
+import OpenAI from 'openai'
+import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '../types'
 
 /**
  * OpenAI Provider
@@ -23,7 +23,7 @@ const PRICING: Record<string, { input: number; output: number }> = {
   'gpt-4o': { input: 5.0, output: 15.0 },
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
   'gpt-4-turbo': { input: 10.0, output: 30.0 },
-  'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
+  'gpt-3.5-turbo': { input: 0.5, output: 1.5 }
 }
 
 /**
@@ -49,12 +49,11 @@ export class OpenAIProvider implements ILLMProvider {
       await client.chat.completions.create({
         model: DEFAULT_MODEL,
         messages: [{ role: 'user', content: 'test' }],
-        max_tokens: 1,
+        max_tokens: 1
       })
 
       return true
-    }
-    catch (error) {
+    } catch (error) {
       if (error instanceof OpenAI.AuthenticationError) {
         return false
       }
@@ -71,7 +70,7 @@ export class OpenAIProvider implements ILLMProvider {
   async call(
     request: LLMRequest,
     apiKey: string,
-    providerType: 'platform' | 'byok',
+    providerType: 'platform' | 'byok'
   ): Promise<LLMResponse> {
     const client = new OpenAI({ apiKey })
     const model = request.model || DEFAULT_MODEL
@@ -83,10 +82,10 @@ export class OpenAIProvider implements ILLMProvider {
           ...(request.systemMessage
             ? [{ role: 'system' as const, content: request.systemMessage }]
             : []),
-          { role: 'user', content: request.prompt },
+          { role: 'user', content: request.prompt }
         ],
         temperature: request.temperature ?? 0.7,
-        max_tokens: request.maxTokens,
+        max_tokens: request.maxTokens
       })
 
       const content = completion.choices[0]?.message?.content || ''
@@ -99,32 +98,20 @@ export class OpenAIProvider implements ILLMProvider {
         cost,
         model,
         provider: 'openai',
-        providerType,
+        providerType
       }
-    }
-    catch (error) {
+    } catch (error) {
       // Handle specific OpenAI errors
       if (error instanceof OpenAI.AuthenticationError) {
         throw new LLMAuthError('openai')
-      }
-      else if (error instanceof OpenAI.RateLimitError) {
+      } else if (error instanceof OpenAI.RateLimitError) {
         throw new LLMRateLimitError('openai')
-      }
-      else if (error instanceof OpenAI.PermissionDeniedError) {
+      } else if (error instanceof OpenAI.PermissionDeniedError) {
         throw new LLMQuotaError('openai')
-      }
-      else if (error instanceof OpenAI.APIError) {
-        throw new LLMError(
-          `OpenAI API error: ${error.message}`,
-          'openai',
-          error.code || undefined,
-        )
-      }
-      else {
-        throw new LLMError(
-          error instanceof Error ? error.message : 'Unknown error',
-          'openai',
-        )
+      } else if (error instanceof OpenAI.APIError) {
+        throw new LLMError(`OpenAI API error: ${error.message}`, 'openai', error.code || undefined)
+      } else {
+        throw new LLMError(error instanceof Error ? error.message : 'Unknown error', 'openai')
       }
     }
   }

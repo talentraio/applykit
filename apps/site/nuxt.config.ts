@@ -7,7 +7,7 @@ export default defineNuxtConfig({
     './layers/auth',
     './layers/user',
     './layers/landing',
-    './layers/vacancy',
+    './layers/vacancy'
   ],
 
   compatibilityDate: '2024-04-03',
@@ -19,5 +19,5 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     typeCheck: true
-  },
+  }
 })

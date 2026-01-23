@@ -4,14 +4,15 @@ description: Review current changes for style, architecture fit, and correctness
 disable-model-invocation: true
 ---
 
-Review checklist (source of truth: .claude/skills/project-conventions/SKILL.md + docs/*):
+Review checklist (source of truth: .claude/skills/project-conventions/SKILL.md + docs/\*):
+
 - Matches docs/architecture decisions
 - Nuxt v4 + NuxtUI v4 only (no accidental v3 patterns)
 - VueUse-first: no custom composable when VueUse has an equivalent
-- Layer packages: if touching packages/nuxt-layer-*/ ensure:
-    - package.json has "main": "./nuxt.config.ts"
-    - correct extends wiring in apps or other layers
-    - repo path is referenced correctly (packages/...) vs package name (@int/...)
+- Layer packages: if touching packages/nuxt-layer-\*/ ensure:
+  - package.json has "main": "./nuxt.config.ts"
+  - correct extends wiring in apps or other layers
+  - repo path is referenced correctly (packages/...) vs package name (@int/...)
 - Schemas: strict typing via @int/schema (Zod + inferred types)
 - API typings inferred correctly (no client generics)
 - Stores return values from actions

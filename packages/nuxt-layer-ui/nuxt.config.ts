@@ -1,10 +1,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
 
-  modules: [
-    '@nuxt/ui',
-    '@nuxtjs/i18n'
-  ],
+  modules: ['@nuxt/ui', '@nuxtjs/i18n'],
 
   // NuxtUI v4 configuration
   ui: {
@@ -30,5 +27,5 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     typeCheck: true
-  },
+  }
 })

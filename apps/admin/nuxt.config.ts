@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     './layers/_base',
     './layers/auth',
     './layers/users',
-    './layers/system',
+    './layers/system'
   ],
 
   compatibilityDate: '2024-04-03',
@@ -18,5 +18,5 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     typeCheck: true
-  },
+  }
 })

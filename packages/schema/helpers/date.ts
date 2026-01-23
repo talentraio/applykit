@@ -2,7 +2,7 @@
  * Date format validation and parsing helpers
  */
 
-const YYYY_MM_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/
+const YYYY_MM_REGEX = /^\d{4}-(?:0[1-9]|1[0-2])$/
 
 /**
  * Validate YYYY-MM date format

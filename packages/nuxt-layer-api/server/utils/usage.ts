@@ -1,5 +1,5 @@
-import { usageLogRepository } from '../data/repositories'
 import type { Operation, ProviderType } from '@int/schema'
+import { usageLogRepository } from '../data/repositories'
 
 /**
  * Usage Tracking Utility
@@ -24,14 +24,14 @@ export async function logUsage(
   operation: Operation,
   providerType: ProviderType,
   tokensUsed?: number,
-  cost?: number,
+  cost?: number
 ): Promise<void> {
   await usageLogRepository.create({
     userId,
     operation,
     providerType,
     tokensUsed: tokensUsed ?? null,
-    cost: cost?.toString() ?? null,
+    cost: cost?.toString() ?? null
   })
 }
 
@@ -42,10 +42,7 @@ export async function logUsage(
  * @param operation - Operation type
  * @returns Number of operations today
  */
-export async function getDailyUsageCount(
-  userId: string,
-  operation: Operation,
-): Promise<number> {
+export async function getDailyUsageCount(userId: string, operation: Operation): Promise<number> {
   return await usageLogRepository.getDailyCount(userId, operation)
 }
 
@@ -80,8 +77,8 @@ export async function getDailyCost(userId: string): Promise<number> {
 export async function getUsageHistory(
   userId: string,
   startDate: Date,
-  endDate: Date,
-) {
+  endDate: Date
+): ReturnType<typeof usageLogRepository.findByUserAndDateRange> {
   return await usageLogRepository.findByUserAndDateRange(userId, startDate, endDate)
 }
 
@@ -92,7 +89,7 @@ export async function logParse(
   userId: string,
   providerType: ProviderType,
   tokensUsed?: number,
-  cost?: number,
+  cost?: number
 ): Promise<void> {
   await logUsage(userId, 'parse', providerType, tokensUsed, cost)
 }
@@ -104,7 +101,7 @@ export async function logGenerate(
   userId: string,
   providerType: ProviderType,
   tokensUsed?: number,
-  cost?: number,
+  cost?: number
 ): Promise<void> {
   await logUsage(userId, 'generate', providerType, tokensUsed, cost)
 }
@@ -116,7 +113,7 @@ export async function logExport(
   userId: string,
   providerType: ProviderType,
   tokensUsed?: number,
-  cost?: number,
+  cost?: number
 ): Promise<void> {
   await logUsage(userId, 'export', providerType, tokensUsed, cost)
 }

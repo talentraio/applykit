@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { RoleSchema } from './enums'
 
-export { RoleSchema, type Role } from './enums'
+export { type Role, RoleSchema } from './enums'
 
 export const UserSchema = z.object({
   id: z.string().uuid(),
@@ -9,7 +9,7 @@ export const UserSchema = z.object({
   googleId: z.string(),
   role: RoleSchema,
   createdAt: z.date(),
-  updatedAt: z.date(),
+  updatedAt: z.date()
 })
 
 export type User = z.infer<typeof UserSchema>

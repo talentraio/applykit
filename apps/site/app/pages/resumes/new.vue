@@ -1,3 +1,58 @@
+<template>
+  <div class="container mx-auto max-w-4xl p-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="mb-4">
+        <UButton color="neutral" variant="ghost" icon="i-lucide-arrow-left" @click="goBack">
+          {{ $t('common.back') }}
+        </UButton>
+      </div>
+      <h1 class="text-3xl font-bold">
+        {{ $t('resume.upload.title') }}
+      </h1>
+      <p class="mt-2 text-muted">
+        {{ $t('resume.upload.formats') }}
+      </p>
+    </div>
+
+    <!-- Upload Card -->
+    <UPageCard>
+      <ResumeUploader
+        :loading="isUploading"
+        @upload="handleUpload"
+        @success="handleSuccess"
+        @error="handleError"
+      />
+
+      <!-- Additional Info -->
+      <template #footer>
+        <div class="space-y-3 text-sm text-muted">
+          <div class="flex items-start gap-2">
+            <UIcon name="i-lucide-info" class="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <p>
+              Your resume will be parsed automatically using AI. You can review and edit the parsed
+              data after upload.
+            </p>
+          </div>
+          <div class="flex items-start gap-2">
+            <UIcon name="i-lucide-shield-check" class="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <p>Your data is secure and private. We use encryption to protect your information.</p>
+          </div>
+        </div>
+      </template>
+    </UPageCard>
+
+    <!-- Rate Limit Info -->
+    <UAlert color="blue" variant="soft" icon="i-lucide-zap" class="mt-6">
+      <template #title> Parse Limits </template>
+      <template #description>
+        Free users can parse up to 3 resumes per day. Premium users get higher limits or can use
+        their own API keys.
+      </template>
+    </UAlert>
+  </div>
+</template>
+
 <script setup lang="ts">
 /**
  * Resume Upload Page
@@ -11,10 +66,9 @@
 import type { Resume } from '@int/schema'
 
 definePageMeta({
-  middleware: 'auth',
+  middleware: 'auth'
 })
 
-const { t } = useI18n()
 const router = useRouter()
 
 const uploadError = ref<Error | null>(null)
@@ -23,7 +77,7 @@ const isUploading = ref(false)
 /**
  * Handle upload start
  */
-const handleUpload = (file: File) => {
+const handleUpload = (_file: File) => {
   isUploading.value = true
   uploadError.value = null
 }
@@ -52,70 +106,3 @@ const goBack = () => {
   router.push('/resumes')
 }
 </script>
-
-<template>
-  <div class="container mx-auto max-w-4xl p-4 py-8">
-    <!-- Header -->
-    <div class="mb-8">
-      <div class="mb-4">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          icon="i-lucide-arrow-left"
-          @click="goBack"
-        >
-          {{ $t('common.back') }}
-        </UButton>
-      </div>
-      <h1 class="text-3xl font-bold">
-        {{ $t('resume.upload.title') }}
-      </h1>
-      <p class="mt-2 text-muted">
-        {{ $t('resume.upload.formats') }}
-      </p>
-    </div>
-
-    <!-- Upload Card -->
-    <UPageCard>
-      <ResumeUploader
-        :loading="isUploading"
-        @upload="handleUpload"
-        @success="handleSuccess"
-        @error="handleError"
-      />
-
-      <!-- Additional Info -->
-      <template #footer>
-        <div class="space-y-3 text-sm text-muted">
-          <div class="flex items-start gap-2">
-            <UIcon name="i-lucide-info" class="mt-0.5 h-4 w-4 flex-shrink-0" />
-            <p>
-              Your resume will be parsed automatically using AI. You can review and edit the parsed data after upload.
-            </p>
-          </div>
-          <div class="flex items-start gap-2">
-            <UIcon name="i-lucide-shield-check" class="mt-0.5 h-4 w-4 flex-shrink-0" />
-            <p>
-              Your data is secure and private. We use encryption to protect your information.
-            </p>
-          </div>
-        </div>
-      </template>
-    </UPageCard>
-
-    <!-- Rate Limit Info -->
-    <UAlert
-      color="blue"
-      variant="soft"
-      icon="i-lucide-zap"
-      class="mt-6"
-    >
-      <template #title>
-        Parse Limits
-      </template>
-      <template #description>
-        Free users can parse up to 3 resumes per day. Premium users get higher limits or can use their own API keys.
-      </template>
-    </UAlert>
-  </div>
-</template>

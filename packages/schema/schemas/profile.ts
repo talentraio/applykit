@@ -1,17 +1,17 @@
 import { z } from 'zod'
 import { WorkFormatSchema } from './enums'
 
-export { WorkFormatSchema, type WorkFormat } from './enums'
+export { type WorkFormat, WorkFormatSchema } from './enums'
 
 export const LanguageEntrySchema = z.object({
   language: z.string().min(1),
-  level: z.string().min(1), // e.g., "Native", "Fluent", "Intermediate", "Basic"
+  level: z.string().min(1) // e.g., "Native", "Fluent", "Intermediate", "Basic"
 })
 export type LanguageEntry = z.infer<typeof LanguageEntrySchema>
 
 export const PhoneEntrySchema = z.object({
   number: z.string().min(1),
-  label: z.string().optional(), // e.g., "Mobile", "Work"
+  label: z.string().optional() // e.g., "Mobile", "Work"
 })
 export type PhoneEntry = z.infer<typeof PhoneEntrySchema>
 
@@ -27,7 +27,7 @@ export const ProfileSchema = z.object({
   languages: z.array(LanguageEntrySchema).min(1),
   phones: z.array(PhoneEntrySchema).optional(),
   createdAt: z.date(),
-  updatedAt: z.date(),
+  updatedAt: z.date()
 })
 
 export type Profile = z.infer<typeof ProfileSchema>
@@ -37,12 +37,12 @@ export const ProfileInputSchema = ProfileSchema.omit({
   id: true,
   userId: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 })
 export type ProfileInput = z.infer<typeof ProfileInputSchema>
 
 // Profile completeness check
-export const isProfileComplete = (profile: Profile | null): boolean => {
+export function isProfileComplete(profile: Profile | null): boolean {
   if (!profile) return false
   return (
     profile.firstName.length > 0 &&

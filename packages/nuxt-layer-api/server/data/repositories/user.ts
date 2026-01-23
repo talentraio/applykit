@@ -1,8 +1,8 @@
+import type { Role } from '@int/schema'
+import type { NewUser, User } from '../schema'
 import { eq } from 'drizzle-orm'
 import { db } from '../db'
 import { users } from '../schema'
-import type { User, NewUser } from '../schema'
-import type { Role } from '@int/schema'
 
 /**
  * User Repository
@@ -42,11 +42,14 @@ export const userRepository = {
    * Called during first-time Google OAuth login
    */
   async create(data: Pick<NewUser, 'email' | 'googleId'> & { role?: Role }): Promise<User> {
-    const result = await db.insert(users).values({
-      email: data.email,
-      googleId: data.googleId,
-      role: data.role ?? 'public',
-    }).returning()
+    const result = await db
+      .insert(users)
+      .values({
+        email: data.email,
+        googleId: data.googleId,
+        role: data.role ?? 'public'
+      })
+      .returning()
     return result[0]
   },
 
@@ -67,17 +70,18 @@ export const userRepository = {
    * Update user's last login timestamp
    */
   async updateLastLogin(id: string): Promise<void> {
-    await db
-      .update(users)
-      .set({ updatedAt: new Date() })
-      .where(eq(users.id, id))
+    await db.update(users).set({ updatedAt: new Date() }).where(eq(users.id, id))
   },
 
   /**
    * Check if user exists by email
    */
   async existsByEmail(email: string): Promise<boolean> {
-    const result = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1)
+    const result = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1)
     return result.length > 0
   },
 
@@ -87,5 +91,5 @@ export const userRepository = {
    */
   async findByRole(role: Role): Promise<User[]> {
     return await db.select().from(users).where(eq(users.role, role))
-  },
+  }
 }

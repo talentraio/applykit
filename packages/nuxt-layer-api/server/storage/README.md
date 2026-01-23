@@ -5,6 +5,7 @@ Abstract storage layer for file operations with pluggable backends.
 ## Overview
 
 The storage adapter provides a unified interface for file storage operations across different backends:
+
 - **Production**: Vercel Blob Storage
 - **Development**: Local filesystem
 
@@ -30,7 +31,7 @@ const storage = getStorage()
 // Upload a file
 const url = await storage.put('exports/user-123/resume.pdf', pdfBuffer, {
   contentType: 'application/pdf',
-  cacheControl: 'public, max-age=31536000',
+  cacheControl: 'public, max-age=31536000'
 })
 
 // Get a file
@@ -67,13 +68,13 @@ import { createStorage } from '~/server/storage'
 // Force Vercel Blob
 const storage = createStorage({
   type: 'vercel-blob',
-  options: { token: 'your-token' },
+  options: { token: 'your-token' }
 })
 
 // Force local with custom directory
 const storage = createStorage({
   type: 'local',
-  options: { baseDir: '/custom/path' },
+  options: { baseDir: '/custom/path' }
 })
 ```
 
@@ -90,6 +91,7 @@ const storage = createStorage({
   - Built-in caching
 
 **Configuration**:
+
 ```bash
 # Auto-detected on Vercel
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
@@ -105,6 +107,7 @@ BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
   - Filesystem-backed
 
 **Configuration**:
+
 ```bash
 # Optional: Custom base directory
 STORAGE_BASE_DIR=/custom/path
@@ -116,30 +119,32 @@ STORAGE_BASE_URL=http://localhost:3000/files
 ## Storage Adapter Interface
 
 ```typescript
-interface StorageAdapter {
+import type { Buffer } from 'node:buffer'
+
+type StorageAdapter = {
   // Upload a file
-  put(path: string, data: Buffer | Blob, options?: PutOptions): Promise<string>
+  put: (path: string, data: Buffer | Blob, options?: PutOptions) => Promise<string>
 
   // Retrieve a file
-  get(path: string): Promise<Buffer | null>
+  get: (path: string) => Promise<Buffer | null>
 
   // Delete a file
-  delete(path: string): Promise<boolean>
+  delete: (path: string) => Promise<boolean>
 
   // Get public URL
-  getUrl(path: string): Promise<string>
+  getUrl: (path: string) => Promise<string>
 
   // List files by prefix
-  list(prefix: string): Promise<string[]>
+  list: (prefix: string) => Promise<string[]>
 
   // Delete files by prefix
-  deleteByPrefix(prefix: string): Promise<number>
+  deleteByPrefix: (prefix: string) => Promise<number>
 }
 
-interface PutOptions {
-  contentType?: string      // MIME type (e.g., 'application/pdf')
-  cacheControl?: string     // Cache header (e.g., 'public, max-age=31536000')
-  metadata?: Record<string, string>  // Custom metadata
+type PutOptions = {
+  contentType?: string // MIME type (e.g., 'application/pdf')
+  cacheControl?: string // Cache header (e.g., 'public, max-age=31536000')
+  metadata?: Record<string, string> // Custom metadata
 }
 ```
 
@@ -149,15 +154,15 @@ Use consistent path patterns for organization:
 
 ```typescript
 // Exports (PDF files)
-exports/{userId}/{generationId}-{version}.pdf
+// exports/{userId}/{generationId}-{version}.pdf
 // Example: exports/user-123/gen-456-ats.pdf
-
+//
 // Source files (uploaded resumes)
-sources/{userId}/{resumeId}.{ext}
+// sources/{userId}/{resumeId}.{ext}
 // Example: sources/user-123/resume-789.docx
-
+//
 // Temporary files
-temp/{sessionId}/{filename}
+// temp/{sessionId}/{filename}
 // Example: temp/session-abc/upload.pdf
 ```
 
@@ -200,7 +205,7 @@ export async function exportToPDF(generationId: string, version: 'ats' | 'human'
   const path = `exports/${generation.userId}/${generationId}-${version}.pdf`
   const url = await storage.put(path, pdfBuffer, {
     contentType: 'application/pdf',
-    cacheControl: 'public, max-age=2592000', // 30 days
+    cacheControl: 'public, max-age=2592000' // 30 days
   })
 
   return { url, cached: false }
@@ -226,6 +231,7 @@ export async function invalidateExports(userId: string, generationId: string) {
 For unit tests, you can mock the storage adapter:
 
 ```typescript
+import { Buffer } from 'node:buffer'
 import { vi } from 'vitest'
 
 const mockStorage = {
@@ -234,7 +240,7 @@ const mockStorage = {
   delete: vi.fn().mockResolvedValue(true),
   getUrl: vi.fn().mockResolvedValue('https://example.com/file.pdf'),
   list: vi.fn().mockResolvedValue([]),
-  deleteByPrefix: vi.fn().mockResolvedValue(0),
+  deleteByPrefix: vi.fn().mockResolvedValue(0)
 }
 ```
 
@@ -245,7 +251,7 @@ import { createStorage } from '~/server/storage'
 
 const storage = createStorage({
   type: 'local',
-  options: { baseDir: '/tmp/test-storage' },
+  options: { baseDir: '/tmp/test-storage' }
 })
 ```
 
@@ -268,12 +274,14 @@ const storage = createStorage({
 ## Future Enhancements
 
 Potential backend additions:
+
 - AWS S3
 - Google Cloud Storage
 - Azure Blob Storage
 - Cloudflare R2
 
 To add a new backend:
+
 1. Implement `StorageAdapter` interface
 2. Add factory case in `createStorageFromConfig()`
 3. Update environment detection logic

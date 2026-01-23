@@ -1,6 +1,7 @@
+import type { SourceFileType } from '@int/schema'
+import type { Buffer } from 'node:buffer'
 import mammoth from 'mammoth'
 import pdfParse from 'pdf-parse'
-import type { SourceFileType } from '@int/schema'
 
 /**
  * Document Parser Service
@@ -26,7 +27,7 @@ export class ParseError extends Error {
       | 'EMPTY_FILE'
       | 'CORRUPTED_FILE'
       | 'TOO_LARGE'
-      | 'PARSE_FAILED',
+      | 'PARSE_FAILED'
   ) {
     super(message)
     this.name = 'ParseError'
@@ -36,7 +37,7 @@ export class ParseError extends Error {
 /**
  * Parse result
  */
-export interface ParseResult {
+export type ParseResult = {
   text: string
   metadata?: {
     pageCount?: number
@@ -68,11 +69,10 @@ async function parseDocx(buffer: Buffer): Promise<ParseResult> {
     return {
       text: result.value,
       metadata: {
-        wordCount,
-      },
+        wordCount
+      }
     }
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof ParseError) {
       throw error
     }
@@ -80,7 +80,7 @@ async function parseDocx(buffer: Buffer): Promise<ParseResult> {
     throw new ParseError(
       `Failed to parse DOCX: ${error instanceof Error ? error.message : 'Unknown error'}`,
       'docx',
-      'PARSE_FAILED',
+      'PARSE_FAILED'
     )
   }
 }
@@ -105,11 +105,10 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
       text: data.text,
       metadata: {
         pageCount: data.numpages,
-        wordCount,
-      },
+        wordCount
+      }
     }
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof ParseError) {
       throw error
     }
@@ -117,7 +116,7 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
     throw new ParseError(
       `Failed to parse PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
       'pdf',
-      'PARSE_FAILED',
+      'PARSE_FAILED'
     )
   }
 }
@@ -132,14 +131,14 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
  */
 export async function parseDocument(
   buffer: Buffer,
-  fileType: SourceFileType,
+  fileType: SourceFileType
 ): Promise<ParseResult> {
   // Validate file size
   if (buffer.length > MAX_FILE_SIZE) {
     throw new ParseError(
       `File size exceeds maximum allowed size (${MAX_FILE_SIZE / 1024 / 1024}MB)`,
       fileType,
-      'TOO_LARGE',
+      'TOO_LARGE'
     )
   }
 
@@ -157,11 +156,7 @@ export async function parseDocument(
       return await parsePdf(buffer)
 
     default:
-      throw new ParseError(
-        `Unsupported file type: ${fileType}`,
-        fileType,
-        'UNSUPPORTED_FORMAT',
-      )
+      throw new ParseError(`Unsupported file type: ${fileType}`, fileType, 'UNSUPPORTED_FORMAT')
   }
 }
 
@@ -173,16 +168,13 @@ export async function parseDocument(
  * @returns true if valid
  * @throws ParseError if invalid
  */
-export function validateFile(
-  buffer: Buffer,
-  fileType: SourceFileType,
-): boolean {
+export function validateFile(buffer: Buffer, fileType: SourceFileType): boolean {
   // Check size
   if (buffer.length > MAX_FILE_SIZE) {
     throw new ParseError(
       `File size exceeds maximum allowed size (${MAX_FILE_SIZE / 1024 / 1024}MB)`,
       fileType,
-      'TOO_LARGE',
+      'TOO_LARGE'
     )
   }
 
@@ -193,11 +185,7 @@ export function validateFile(
 
   // Check supported format
   if (fileType !== 'docx' && fileType !== 'pdf') {
-    throw new ParseError(
-      `Unsupported file type: ${fileType}`,
-      fileType,
-      'UNSUPPORTED_FORMAT',
-    )
+    throw new ParseError(`Unsupported file type: ${fileType}`, fileType, 'UNSUPPORTED_FORMAT')
   }
 
   return true

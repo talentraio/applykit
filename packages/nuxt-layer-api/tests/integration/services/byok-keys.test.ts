@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import type { LLMProvider } from '@int/schema'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * Integration tests for BYOK (Bring Your Own Key) handling
@@ -18,16 +18,25 @@ import type { LLMProvider } from '@int/schema'
  */
 
 // Mock types - will be replaced with actual imports when services are implemented
-interface LLMKeyService {
-  storeKeyMetadata(userId: string, provider: LLMProvider, keyHint: string): Promise<string>
-  getKeyMetadata(userId: string, provider: LLMProvider): Promise<{ id: string; keyHint: string } | null>
-  deleteKeyMetadata(userId: string, keyId: string): Promise<void>
-  listUserKeys(userId: string): Promise<Array<{ id: string; provider: LLMProvider; keyHint: string }>>
+type LLMKeyService = {
+  storeKeyMetadata: (userId: string, provider: LLMProvider, keyHint: string) => Promise<string>
+  getKeyMetadata: (
+    userId: string,
+    provider: LLMProvider
+  ) => Promise<{ id: string; keyHint: string } | null>
+  deleteKeyMetadata: (userId: string, keyId: string) => Promise<void>
+  listUserKeys: (
+    userId: string
+  ) => Promise<Array<{ id: string; provider: LLMProvider; keyHint: string }>>
 }
 
-interface LLMService {
-  validateKey(provider: LLMProvider, apiKey: string): Promise<boolean>
-  callLLM(provider: LLMProvider, apiKey: string, prompt: string): Promise<{ result: string; tokensUsed: number }>
+type LLMService = {
+  validateKey: (provider: LLMProvider, apiKey: string) => Promise<boolean>
+  callLLM: (
+    provider: LLMProvider,
+    apiKey: string,
+    prompt: string
+  ) => Promise<{ result: string; tokensUsed: number }>
 }
 
 // Mock logger to verify no keys are logged
@@ -35,10 +44,10 @@ const mockLogger = {
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
-  debug: vi.fn(),
+  debug: vi.fn()
 }
 
-describe.skip('BYOK Key Handling Integration Tests', () => {
+describe.skip('bYOK Key Handling Integration Tests', () => {
   let keyService: LLMKeyService
   let llmService: LLMService
 
@@ -56,10 +65,10 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
       ...mockLogger.info.mock.calls,
       ...mockLogger.warn.mock.calls,
       ...mockLogger.error.mock.calls,
-      ...mockLogger.debug.mock.calls,
+      ...mockLogger.debug.mock.calls
     ]
 
-    allLogCalls.forEach((call) => {
+    allLogCalls.forEach(call => {
       const logMessage = JSON.stringify(call)
       // Check for patterns that look like API keys
       expect(logMessage).not.toMatch(/sk-[a-zA-Z0-9]{20,}/) // OpenAI key pattern
@@ -67,11 +76,11 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
     })
   })
 
-  describe('Key metadata storage (hint only)', () => {
+  describe('key metadata storage (hint only)', () => {
     it('should store only the last 4 characters as hint', async () => {
       const userId = 'test-user-1'
       const provider: LLMProvider = 'openai'
-      const fullKey = 'sk-proj-1234567890abcdefghijklmnopqrstuvwxyz'
+      const _fullKey = 'sk-proj-1234567890abcdefghijklmnopqrstuvwxyz'
       const expectedHint = 'wxyz' // last 4 chars
 
       const keyId = await keyService.storeKeyMetadata(userId, provider, expectedHint)
@@ -80,7 +89,7 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
       const metadata = await keyService.getKeyMetadata(userId, provider)
       expect(metadata).toMatchObject({
         id: keyId,
-        keyHint: expectedHint,
+        keyHint: expectedHint
       })
 
       // Verify full key is NOT stored
@@ -121,7 +130,7 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
     })
   })
 
-  describe('Key deletion', () => {
+  describe('key deletion', () => {
     it('should delete key metadata', async () => {
       const userId = 'test-user-delete'
       const provider: LLMProvider = 'openai'
@@ -140,15 +149,16 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
       const keyId = await keyService.storeKeyMetadata(user1, 'openai', 'test')
 
       // User 2 trying to delete user 1's key should fail
-      await expect(keyService.deleteKeyMetadata(user2, keyId))
-        .rejects.toThrow(/not found|unauthorized/i)
+      await expect(keyService.deleteKeyMetadata(user2, keyId)).rejects.toThrow(
+        /not found|unauthorized/i
+      )
     })
   })
 
-  describe('Key encryption at rest', () => {
+  describe('key encryption at rest', () => {
     it('should never store unencrypted keys in database', async () => {
       const userId = 'test-user-encrypt'
-      const fullKey = 'sk-proj-very-secret-key-1234567890'
+      const _fullKey = 'sk-proj-very-secret-key-1234567890'
       const hint = '7890'
 
       await keyService.storeKeyMetadata(userId, 'openai', hint)
@@ -175,7 +185,7 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
     })
   })
 
-  describe('Key validation', () => {
+  describe('key validation', () => {
     it('should validate OpenAI keys without logging them', async () => {
       const validKey = 'sk-proj-test-key-1234567890'
 
@@ -184,9 +194,7 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
 
       // Should validate without logging the key
       expect(isValid).toBeDefined()
-      expect(mockLogger.info).not.toHaveBeenCalledWith(
-        expect.stringContaining(validKey)
-      )
+      expect(mockLogger.info).not.toHaveBeenCalledWith(expect.stringContaining(validKey))
     })
 
     it('should validate Gemini keys without logging them', async () => {
@@ -195,26 +203,23 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
       const isValid = await llmService.validateKey('gemini', validKey)
 
       expect(isValid).toBeDefined()
-      expect(mockLogger.info).not.toHaveBeenCalledWith(
-        expect.stringContaining(validKey)
-      )
+      expect(mockLogger.info).not.toHaveBeenCalledWith(expect.stringContaining(validKey))
     })
 
     it('should handle validation errors without exposing keys', async () => {
       const invalidKey = 'invalid-key'
 
-      await expect(llmService.validateKey('openai', invalidKey))
-        .rejects.toThrow()
+      await expect(llmService.validateKey('openai', invalidKey)).rejects.toThrow()
 
       // Error messages should NOT contain the key
       const errorCalls = mockLogger.error.mock.calls
-      errorCalls.forEach((call) => {
+      errorCalls.forEach(call => {
         expect(call.toString()).not.toContain(invalidKey)
       })
     })
   })
 
-  describe('Key usage in LLM calls', () => {
+  describe('key usage in LLM calls', () => {
     it('should use BYOK key for API calls without logging', async () => {
       const userKey = 'sk-proj-user-key-1234567890'
       const prompt = 'Test prompt'
@@ -225,11 +230,8 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
       expect(result).toHaveProperty('tokensUsed')
 
       // Verify key was not logged
-      const allLogs = [
-        ...mockLogger.info.mock.calls,
-        ...mockLogger.debug.mock.calls,
-      ]
-      allLogs.forEach((call) => {
+      const allLogs = [...mockLogger.info.mock.calls, ...mockLogger.debug.mock.calls]
+      allLogs.forEach(call => {
         expect(JSON.stringify(call)).not.toContain(userKey)
       })
     })
@@ -243,7 +245,7 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
     })
   })
 
-  describe('Security edge cases', () => {
+  describe('security edge cases', () => {
     it('should sanitize keys from error messages', async () => {
       const sensitiveKey = 'sk-proj-secret-key-1234567890'
 
@@ -252,9 +254,7 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
         throw new Error(`Failed to authenticate with key: ${sensitiveKey}`)
       } catch (error) {
         // Error handler should sanitize
-        const sanitized = error instanceof Error
-          ? error.message.replace(/sk-[a-zA-Z0-9-_]+/, 'sk-***')
-          : ''
+        const sanitized = error instanceof Error ? error.message.replace(/sk-[\w-]+/, 'sk-***') : ''
 
         expect(sanitized).not.toContain(sensitiveKey)
         expect(sanitized).toContain('sk-***')
@@ -301,7 +301,7 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
     })
   })
 
-  describe('Client-side storage (browser localStorage)', () => {
+  describe('client-side storage (browser localStorage)', () => {
     it('should document that keys are stored in browser only', () => {
       // This is a documentation test
       // Keys should be stored in browser localStorage and sent with each request
@@ -322,7 +322,7 @@ describe.skip('BYOK Key Handling Integration Tests', () => {
     })
   })
 
-  describe('HTTPS enforcement', () => {
+  describe('hTTPS enforcement', () => {
     it('should only accept keys over HTTPS in production', () => {
       // TODO: When API routes are implemented, verify:
       // if (process.env.NODE_ENV === 'production' && !request.secure) {

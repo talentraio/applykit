@@ -1,8 +1,8 @@
-import { eq, desc, and, lt } from 'drizzle-orm'
+import type { ResumeContent } from '@int/schema'
+import type { Generation } from '../schema'
+import { desc, eq, lt } from 'drizzle-orm'
 import { db } from '../db'
 import { generations } from '../schema'
-import type { Generation, NewGeneration } from '../schema'
-import type { ResumeContent } from '@int/schema'
 
 /**
  * Generation Repository
@@ -66,14 +66,17 @@ export const generationRepository = {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 90) // 90 days lifetime
 
-    const result = await db.insert(generations).values({
-      vacancyId: data.vacancyId,
-      resumeId: data.resumeId,
-      content: data.content,
-      matchScoreBefore: data.matchScoreBefore,
-      matchScoreAfter: data.matchScoreAfter,
-      expiresAt,
-    }).returning()
+    const result = await db
+      .insert(generations)
+      .values({
+        vacancyId: data.vacancyId,
+        resumeId: data.resumeId,
+        content: data.content,
+        matchScoreBefore: data.matchScoreBefore,
+        matchScoreAfter: data.matchScoreAfter,
+        expiresAt
+      })
+      .returning()
     return result[0]
   },
 
@@ -104,10 +107,7 @@ export const generationRepository = {
    */
   async findExpired(): Promise<Generation[]> {
     const now = new Date()
-    return await db
-      .select()
-      .from(generations)
-      .where(lt(generations.expiresAt, now))
+    return await db.select().from(generations).where(lt(generations.expiresAt, now))
   },
 
   /**
@@ -143,5 +143,5 @@ export const generationRepository = {
 
     const now = new Date()
     return generation.expiresAt > now
-  },
+  }
 }

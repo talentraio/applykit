@@ -1,6 +1,6 @@
-import { GoogleGenAI } from '@google/genai'
 import type { ILLMProvider, LLMRequest, LLMResponse } from '../types'
-import { LLMError, LLMAuthError, LLMRateLimitError, LLMQuotaError, sanitizeApiKey } from '../types'
+import { GoogleGenAI } from '@google/genai'
+import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '../types'
 
 /**
  * Gemini Provider
@@ -22,7 +22,7 @@ import { LLMError, LLMAuthError, LLMRateLimitError, LLMQuotaError, sanitizeApiKe
 const PRICING: Record<string, { input: number; output: number }> = {
   'gemini-2.0-flash': { input: 0.1, output: 0.4 },
   'gemini-1.5-flash': { input: 0.075, output: 0.3 },
-  'gemini-1.5-pro': { input: 1.25, output: 5.0 },
+  'gemini-1.5-pro': { input: 1.25, output: 5.0 }
 }
 
 /**
@@ -47,12 +47,11 @@ export class GeminiProvider implements ILLMProvider {
       // Make minimal API call to verify key
       await ai.models.generateContent({
         model: DEFAULT_MODEL,
-        contents: 'test',
+        contents: 'test'
       })
 
       return true
-    }
-    catch (error: any) {
+    } catch (error: any) {
       // Check for authentication errors
       if (error?.status === 401 || error?.status === 403) {
         return false
@@ -69,7 +68,7 @@ export class GeminiProvider implements ILLMProvider {
   async call(
     request: LLMRequest,
     apiKey: string,
-    providerType: 'platform' | 'byok',
+    providerType: 'platform' | 'byok'
   ): Promise<LLMResponse> {
     const ai = new GoogleGenAI({ apiKey })
     const model = request.model || DEFAULT_MODEL
@@ -86,8 +85,8 @@ export class GeminiProvider implements ILLMProvider {
         contents,
         generationConfig: {
           temperature: request.temperature ?? 0.7,
-          maxOutputTokens: request.maxTokens,
-        },
+          maxOutputTokens: request.maxTokens
+        }
       })
 
       const content = response.text || ''
@@ -103,29 +102,21 @@ export class GeminiProvider implements ILLMProvider {
         cost,
         model,
         provider: 'gemini',
-        providerType,
+        providerType
       }
-    }
-    catch (error: any) {
+    } catch (error: any) {
       // Handle specific Gemini errors based on status code
       const status = error?.status
       const message = error?.message || 'Unknown error'
 
       if (status === 401 || status === 403) {
         throw new LLMAuthError('gemini')
-      }
-      else if (status === 429) {
+      } else if (status === 429) {
         throw new LLMRateLimitError('gemini')
-      }
-      else if (status === 400 && message.includes('quota')) {
+      } else if (status === 400 && message.includes('quota')) {
         throw new LLMQuotaError('gemini')
-      }
-      else {
-        throw new LLMError(
-          `Gemini API error: ${message}`,
-          'gemini',
-          status?.toString(),
-        )
+      } else {
+        throw new LLMError(`Gemini API error: ${message}`, 'gemini', status?.toString())
       }
     }
   }

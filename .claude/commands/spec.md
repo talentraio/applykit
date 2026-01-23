@@ -7,15 +7,17 @@ disable-model-invocation: true
 You are working in this repo.
 
 Source of truth:
+
 - .claude/skills/project-conventions/SKILL.md
-- docs/architecture/*
-- docs/api/*
-- docs/codestyle/*
+- docs/architecture/\*
+- docs/api/\*
+- docs/codestyle/\*
 
 Task:
 Produce a spec-kit compatible spec (Markdown) for: $ARGUMENTS
 
 Hard constraints (must be reflected in the spec):
+
 - Nuxt v4 + NuxtUI v4
 - i18n from day 1 (all new UI copy must be keys)
 - Check VueUse first; prefer existing composables
@@ -26,12 +28,14 @@ Hard constraints (must be reflected in the spec):
 - ATS/Human pages use server-side islands rendering
 
 Monorepo convention (must be explicit in "Implementation notes / Repo touchpoints"):
-- Layer packages live under: packages/nuxt-layer-*/ (repo path)
-- They are referenced by package name: @int/* (package.json)
+
+- Layer packages live under: packages/nuxt-layer-\*/ (repo path)
+- They are referenced by package name: @int/\* (package.json)
 - Always include both forms when referencing a layer, e.g.
   "packages/nuxt-layer-api/ (package: @int/api)"
 
 Spec must include:
+
 - Problem + goals
 - Non-goals
 - User flows

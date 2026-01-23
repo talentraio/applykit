@@ -9,9 +9,9 @@ This folder documents product + system architecture decisions for ApplyKit.
 - **Nuxt v4** + **NuxtUI v4**
 - Monorepo: **pnpm workspaces** (no Turborepo/Nx for MVP)
 - Shared pieces are split into internal workspace packages as **Nuxt layers**
-    - **Path convention:** `packages/nuxt-layer-*/`
-    - **Package name convention:** `@int/*`
-    - Example: `packages/nuxt-layer-api/` → `@int/api`
+  - **Path convention:** `packages/nuxt-layer-*/`
+  - **Package name convention:** `@int/*`
+  - Example: `packages/nuxt-layer-api/` → `@int/api`
 - Layers may include `.playground/` when it helps validate behavior in isolation
 - i18n is integrated from the start (to avoid painful refactors later)
 

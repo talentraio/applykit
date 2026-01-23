@@ -12,7 +12,7 @@ import type { LLMProvider } from '@int/schema'
 /**
  * LLM request configuration
  */
-export interface LLMRequest {
+export type LLMRequest = {
   /**
    * The prompt/messages to send to the LLM
    */
@@ -43,7 +43,7 @@ export interface LLMRequest {
 /**
  * LLM response
  */
-export interface LLMResponse {
+export type LLMResponse = {
   /**
    * Generated content
    */
@@ -80,7 +80,7 @@ export interface LLMResponse {
  *
  * All LLM providers must implement this interface
  */
-export interface ILLMProvider {
+export type ILLMProvider = {
   /**
    * Provider name (openai, gemini)
    */
@@ -93,7 +93,7 @@ export interface ILLMProvider {
    * @param apiKey - API key to validate
    * @returns true if valid, false otherwise
    */
-  validateKey(apiKey: string): Promise<boolean>
+  validateKey: (apiKey: string) => Promise<boolean>
 
   /**
    * Call the LLM with a request
@@ -103,16 +103,16 @@ export interface ILLMProvider {
    * @param providerType - Whether using platform or BYOK
    * @returns LLM response with content and usage
    */
-  call(
+  call: (
     request: LLMRequest,
     apiKey: string,
-    providerType: 'platform' | 'byok',
-  ): Promise<LLMResponse>
+    providerType: 'platform' | 'byok'
+  ) => Promise<LLMResponse>
 
   /**
    * Get default model for this provider
    */
-  getDefaultModel(): string
+  getDefaultModel: () => string
 
   /**
    * Calculate estimated cost for a request
@@ -121,13 +121,13 @@ export interface ILLMProvider {
    * @param model - Model used
    * @returns Cost in USD
    */
-  calculateCost(tokensUsed: number, model: string): number
+  calculateCost: (tokensUsed: number, model: string) => number
 }
 
 /**
  * LLM Service Configuration
  */
-export interface LLMServiceConfig {
+export type LLMServiceConfig = {
   /**
    * Preferred provider (openai or gemini)
    */
@@ -165,7 +165,7 @@ export class LLMError extends Error {
   constructor(
     message: string,
     public provider: LLMProvider,
-    public code?: string,
+    public code?: string
   ) {
     super(message)
     this.name = 'LLMError'

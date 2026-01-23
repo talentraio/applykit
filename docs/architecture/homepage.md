@@ -3,6 +3,7 @@
 ## Goal
 
 Make the landing page feel “alive” and trustworthy, while clearly explaining:
+
 - why ATS resumes look ugly (and why that’s OK),
 - how ApplyKit helps generate both ATS-friendly and human-friendly PDFs,
 - that the product is simple: upload → adapt per vacancy → export.
@@ -17,6 +18,7 @@ Use NuxtUI v4 building blocks + Tailwind. Keep markup simple and easy to iterate
 ### 1) Hero (top section)
 
 **Content:**
+
 - Headline: `Tailor your resume to every vacancy — fast.`
 - Subheadline: `Upload a DOCX or PDF, review the structured result, generate ATS + human-friendly versions, and export clean PDFs.`
 - Primary CTA: `Continue with Google`
@@ -24,9 +26,10 @@ Use NuxtUI v4 building blocks + Tailwind. Keep markup simple and easy to iterate
 - Small disclaimer line (tiny text): `Free tier available. Bring your own API key if you want higher limits.`
 
 **UI:**
+
 - Left: text + CTAs
 - Right: a simple illustrative block (no real screenshot needed yet):
-    - a “split preview” card: ATS (left) / Human (right) with dummy lines
+  - a “split preview” card: ATS (left) / Human (right) with dummy lines
 
 ### 2) “How it works” (Steps)
 
@@ -44,16 +47,18 @@ Each card: title + 1–2 lines max.
 Two-column section:
 
 **Left column: “ATS Resume”**
+
 - Bullet points:
-    - Optimized for parsers (simple structure)
-    - No fancy layout, minimal styling
-    - Best for mass applications
+  - Optimized for parsers (simple structure)
+  - No fancy layout, minimal styling
+  - Best for mass applications
 
 **Right column: “Human Resume”**
+
 - Bullet points:
-    - Clean A4 layout, readable typography
-    - Optional photo + visual hierarchy
-    - Best when recruiter asks for a “nice PDF”
+  - Clean A4 layout, readable typography
+  - Optional photo + visual hierarchy
+  - Best when recruiter asks for a “nice PDF”
 
 Add a short neutral sentence under both:
 `ApplyKit keeps the content consistent between both versions — only the presentation changes.`
@@ -64,6 +69,7 @@ Grid of 4–6 “metric” cards. These are STATIC initially (marketing placehol
 but must map to real future data.
 
 Suggested tiles:
+
 - `Vacancies tracked` → placeholder: `12`
 - `Resumes generated` → placeholder: `48`
 - `Avg. match score` → placeholder: `72%`
@@ -78,17 +84,18 @@ Note: later these will be backed by stored metrics from generation runs.
 Keep answers short.
 
 - **Is it safe to paste my API key?**
-    - `You can use the free tier, or bring your own key. Keys are treated as sensitive. Prefer temporary keys.`
+  - `You can use the free tier, or bring your own key. Keys are treated as sensitive. Prefer temporary keys.`
 - **Why does my ATS resume look plain?**
-    - `That’s intentional: ATS parsers prefer predictable structure.`
+  - `That’s intentional: ATS parsers prefer predictable structure.`
 - **Can I edit the result?**
-    - `Yes — MVP uses a JSON editor. A friendly UI editor comes later.`
+  - `Yes — MVP uses a JSON editor. A friendly UI editor comes later.`
 - **DOCX or PDF?**
-    - `DOCX is preferred, but PDF parsing is supported too.`
+  - `DOCX is preferred, but PDF parsing is supported too.`
 
 ### 6) Footer
 
 Minimal:
+
 - `Privacy`
 - `Terms`
 - `Contact`

@@ -1,12 +1,12 @@
-model: 'gpt-5.2'
-approval_policy: 'on-request'
-sandbox_mode: 'workspace-write'
-model_reasoning_effort: 'high'
+model: gpt-5.2
+approval_policy: on-request
+sandbox_mode: workspace-write
+model_reasoning_effort: high
 
 shell_environment_policy:
   include_only:
-    - 'PATH'
-    - 'HOME'
+    - PATH
+    - HOME
 
 features:
   parallel: true

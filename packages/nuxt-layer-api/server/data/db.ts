@@ -1,7 +1,8 @@
-import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
-import { drizzle as drizzleSQLite } from 'drizzle-orm/better-sqlite3'
-import postgres from 'postgres'
+import process from 'node:process'
 import Database from 'better-sqlite3'
+import { drizzle as drizzleSQLite } from 'drizzle-orm/better-sqlite3'
+import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 import * as schema from './schema'
 
 /**
@@ -19,18 +20,21 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 const databaseUrl = process.env.DATABASE_URL
 
 // Type-safe database instance
-type DB = ReturnType<typeof drizzlePostgres<typeof schema>> | ReturnType<typeof drizzleSQLite<typeof schema>>
+type DB =
+  | ReturnType<typeof drizzlePostgres<typeof schema>>
+  | ReturnType<typeof drizzleSQLite<typeof schema>>
 
-let db: DB
+const db: DB = (() => {
+  if (isDevelopment && !databaseUrl) {
+    // SQLite for local development
+    const sqlite = new Database('.data/local.db')
+    sqlite.pragma('journal_mode = WAL') // Better concurrency
+    const instance = drizzleSQLite(sqlite, { schema })
 
-if (isDevelopment && !databaseUrl) {
-  // SQLite for local development
-  const sqlite = new Database('.data/local.db')
-  sqlite.pragma('journal_mode = WAL') // Better concurrency
-  db = drizzleSQLite(sqlite, { schema })
+    console.warn('🗄️  Database: SQLite (local development)')
+    return instance
+  }
 
-  console.log('🗄️  Database: SQLite (local development)')
-} else {
   // PostgreSQL for production
   if (!databaseUrl) {
     throw new Error('DATABASE_URL environment variable is required for production')
@@ -39,13 +43,14 @@ if (isDevelopment && !databaseUrl) {
   const client = postgres(databaseUrl, {
     max: 10, // Connection pool size
     idle_timeout: 20,
-    connect_timeout: 10,
+    connect_timeout: 10
   })
 
-  db = drizzlePostgres(client, { schema })
+  const instance = drizzlePostgres(client, { schema })
 
-  console.log('🗄️  Database: PostgreSQL (production)')
-}
+  console.warn('🗄️  Database: PostgreSQL (production)')
+  return instance
+})()
 
 export { db }
 export type { DB }

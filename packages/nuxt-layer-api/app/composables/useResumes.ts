@@ -9,14 +9,14 @@
 
 import type { Resume, ResumeContent } from '@int/schema'
 
-export interface UseResumesOptions {
+export type UseResumesOptions = {
   /**
    * Auto-fetch resumes on mount
    */
   immediate?: boolean
 }
 
-export interface UseResumesReturn {
+export type UseResumesReturn = {
   /**
    * List of resumes
    */
@@ -55,7 +55,7 @@ export interface UseResumesReturn {
   /**
    * Update resume content or title
    */
-  updateResume: (id: string, data: { content?: ResumeContent, title?: string }) => Promise<Resume>
+  updateResume: (id: string, data: { content?: ResumeContent; title?: string }) => Promise<Resume>
 
   /**
    * Delete a resume
@@ -79,19 +79,17 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
   /**
    * Fetch all resumes for current user
    */
-  const fetchResumes = async () => {
+  const fetchResumes = async (): Promise<void> => {
     loading.value = true
     error.value = null
 
     try {
       const data = await $fetch<Resume[]>('/api/resumes')
       resumes.value = data
-    }
-    catch (err) {
+    } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to fetch resumes')
       throw error.value
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -107,13 +105,11 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
       const resume = await $fetch<Resume>(`/api/resumes/${id}`)
       current.value = resume
       return resume
-    }
-    catch (err) {
+    } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to fetch resume')
       current.value = null
       return null
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -134,7 +130,7 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
 
       const resume = await $fetch<Resume>('/api/resumes', {
         method: 'POST',
-        body: formData,
+        body: formData
       })
 
       // Add to list
@@ -142,12 +138,10 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
       current.value = resume
 
       return resume
-    }
-    catch (err) {
+    } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to upload resume')
       throw error.value
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -157,7 +151,7 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
    */
   const updateResume = async (
     id: string,
-    data: { content?: ResumeContent, title?: string },
+    data: { content?: ResumeContent; title?: string }
   ): Promise<Resume> => {
     loading.value = true
     error.value = null
@@ -165,7 +159,7 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
     try {
       const resume = await $fetch<Resume>(`/api/resumes/${id}`, {
         method: 'PUT',
-        body: data,
+        body: data
       })
 
       // Update in list
@@ -180,12 +174,10 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
       }
 
       return resume
-    }
-    catch (err) {
+    } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to update resume')
       throw error.value
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -199,7 +191,7 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
 
     try {
       await $fetch(`/api/resumes/${id}`, {
-        method: 'DELETE',
+        method: 'DELETE'
       })
 
       // Remove from list
@@ -209,12 +201,10 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
       if (current.value?.id === id) {
         current.value = null
       }
-    }
-    catch (err) {
+    } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to delete resume')
       throw error.value
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -222,7 +212,7 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
   /**
    * Refresh the current resume
    */
-  const refresh = async () => {
+  const refresh = async (): Promise<void> => {
     if (current.value) {
       await fetchResume(current.value.id)
     }
@@ -245,6 +235,6 @@ export function useResumes(options: UseResumesOptions = {}): UseResumesReturn {
     uploadResume,
     updateResume,
     deleteResume,
-    refresh,
+    refresh
   }
 }

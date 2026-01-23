@@ -1,5 +1,5 @@
-import { z } from 'zod'
 import { ResumeContentSchema } from '@int/schema'
+import { z } from 'zod'
 import { resumeRepository } from '../../data/repositories'
 
 /**
@@ -17,15 +17,16 @@ import { resumeRepository } from '../../data/repositories'
  * Related: T076 (US2)
  */
 
-const UpdateResumeSchema = z.object({
-  content: ResumeContentSchema.optional(),
-  title: z.string().min(1).max(255).optional(),
-}).refine(
-  data => data.content !== undefined || data.title !== undefined,
-  { message: 'At least one of content or title must be provided' },
-)
+const UpdateResumeSchema = z
+  .object({
+    content: ResumeContentSchema.optional(),
+    title: z.string().min(1).max(255).optional()
+  })
+  .refine(data => data.content !== undefined || data.title !== undefined, {
+    message: 'At least one of content or title must be provided'
+  })
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event)
 
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       statusCode: 400,
-      message: 'Resume ID is required',
+      message: 'Resume ID is required'
     })
   }
 
@@ -46,7 +47,7 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 400,
       message: 'Invalid request body',
-      data: validation.error.errors,
+      data: validation.error.errors
     })
   }
 
@@ -57,7 +58,7 @@ export default defineEventHandler(async (event) => {
   if (!existingResume) {
     throw createError({
       statusCode: 404,
-      message: 'Resume not found',
+      message: 'Resume not found'
     })
   }
 

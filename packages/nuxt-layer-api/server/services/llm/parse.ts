@@ -1,7 +1,7 @@
-import { ResumeContentSchema, type ResumeContent } from '@int/schema'
-import type { LLMProvider } from '@int/schema'
+import type { LLMProvider, ResumeContent } from '@int/schema'
+import { ResumeContentSchema } from '@int/schema'
 import { callLLM, LLMError } from './index'
-import { PARSE_SYSTEM_PROMPT, createParseUserPrompt } from './prompts/parse'
+import { createParseUserPrompt, PARSE_SYSTEM_PROMPT } from './prompts/parse'
 
 /**
  * LLM Parse Service
@@ -15,7 +15,7 @@ import { PARSE_SYSTEM_PROMPT, createParseUserPrompt } from './prompts/parse'
 /**
  * Parse options
  */
-export interface ParseOptions {
+export type ParseOptions = {
   /**
    * User-provided API key (BYOK)
    */
@@ -40,7 +40,7 @@ export interface ParseOptions {
 /**
  * Parse result
  */
-export interface ParseLLMResult {
+export type ParseLLMResult = {
   content: ResumeContent
   cost: number
   tokensUsed: number
@@ -59,7 +59,7 @@ export class ParseLLMError extends Error {
       | 'MAX_RETRIES_EXCEEDED'
       | 'LLM_ERROR'
       | 'INVALID_JSON',
-    public readonly details?: unknown,
+    public readonly details?: unknown
   ) {
     super(message)
     this.name = 'ParseLLMError'
@@ -100,14 +100,9 @@ function extractJSON(text: string): string {
  */
 export async function parseResumeWithLLM(
   text: string,
-  options: ParseOptions = {},
+  options: ParseOptions = {}
 ): Promise<ParseLLMResult> {
-  const {
-    userApiKey,
-    provider,
-    maxRetries = 2,
-    temperature = 0.1,
-  } = options
+  const { userApiKey, provider, maxRetries = 2, temperature = 0.1 } = options
 
   let attempts = 0
   let totalCost = 0
@@ -124,15 +119,15 @@ export async function parseResumeWithLLM(
         {
           messages: [
             { role: 'system', content: PARSE_SYSTEM_PROMPT },
-            { role: 'user', content: createParseUserPrompt(text) },
+            { role: 'user', content: createParseUserPrompt(text) }
           ],
           temperature,
-          maxTokens: 4000,
+          maxTokens: 4000
         },
         {
           userApiKey,
-          provider,
-        },
+          provider
+        }
       )
 
       actualProvider = response.provider
@@ -146,12 +141,11 @@ export async function parseResumeWithLLM(
       let parsedJSON: unknown
       try {
         parsedJSON = JSON.parse(jsonString)
-      }
-      catch (jsonError) {
+      } catch (jsonError) {
         throw new ParseLLMError(
           `Failed to parse JSON: ${jsonError instanceof Error ? jsonError.message : 'Unknown error'}`,
           'INVALID_JSON',
-          { response: response.content },
+          { response: response.content }
         )
       }
 
@@ -165,7 +159,7 @@ export async function parseResumeWithLLM(
           cost: totalCost,
           tokensUsed: totalTokens,
           provider: actualProvider,
-          attemptsUsed: attempts,
+          attemptsUsed: attempts
         }
       }
 
@@ -173,12 +167,12 @@ export async function parseResumeWithLLM(
       lastError = new ParseLLMError(
         `Validation failed: ${JSON.stringify(validationResult.error.errors)}`,
         'VALIDATION_FAILED',
-        validationResult.error.errors,
+        validationResult.error.errors
       )
 
       console.warn(
         `Parse validation failed (attempt ${attempts}/${maxRetries}):`,
-        validationResult.error.errors,
+        validationResult.error.errors
       )
 
       // If this is the last attempt, throw error
@@ -188,23 +182,16 @@ export async function parseResumeWithLLM(
 
       // Otherwise, retry with more specific instructions
       // (Could enhance this to include validation errors in the prompt)
-    }
-    catch (error) {
+    } catch (error) {
       if (error instanceof ParseLLMError) {
         lastError = error
-      }
-      else if (error instanceof LLMError) {
-        throw new ParseLLMError(
-          `LLM error: ${error.message}`,
-          'LLM_ERROR',
-          error,
-        )
-      }
-      else {
+      } else if (error instanceof LLMError) {
+        throw new ParseLLMError(`LLM error: ${error.message}`, 'LLM_ERROR', error)
+      } else {
         lastError = new ParseLLMError(
           `Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`,
           'LLM_ERROR',
-          error,
+          error
         )
       }
 
@@ -213,10 +200,7 @@ export async function parseResumeWithLLM(
         throw lastError
       }
 
-      console.warn(
-        `Parse attempt ${attempts}/${maxRetries} failed:`,
-        lastError.message,
-      )
+      console.warn(`Parse attempt ${attempts}/${maxRetries} failed:`, lastError.message)
     }
   }
 
@@ -224,6 +208,6 @@ export async function parseResumeWithLLM(
   throw new ParseLLMError(
     `Failed to parse resume after ${attempts} attempts: ${lastError?.message || 'Unknown error'}`,
     'MAX_RETRIES_EXCEEDED',
-    lastError,
+    lastError
   )
 }

@@ -5,6 +5,7 @@ This directory contains integration tests for critical server-side services in t
 ## Overview
 
 These tests are written following **Test-Driven Development (TDD)** principles and serve as:
+
 1. **Specifications** for service behavior
 2. **Documentation** of requirements and edge cases
 3. **Security contracts** for critical features
@@ -13,9 +14,11 @@ These tests are written following **Test-Driven Development (TDD)** principles a
 ## Test Files
 
 ### `services/limits.test.ts` (TX020)
+
 **Status**: ⏸️ Skipped (awaiting service implementation T043-T045)
 
 Tests for the limits and rate limiting service:
+
 - ✅ Role-based daily limits (public: 3 parse, 2 generate, 5 export)
 - ✅ Friend tier limits (10 parse, 8 generate, 20 export)
 - ✅ Super admin unlimited access
@@ -28,23 +31,29 @@ Tests for the limits and rate limiting service:
 - ✅ Usage tracking integration
 
 **Required Services**:
+
 - `packages/nuxt-layer-api/server/services/limits/index.ts`
 - `packages/nuxt-layer-api/server/utils/rate-limiter.ts`
 - `packages/nuxt-layer-api/server/utils/usage.ts`
 
 **Expected Limits**:
+
 ```typescript
-public: { parse: 3/day, generate: 2/day, export: 5/day }
-friend: { parse: 10/day, generate: 8/day, export: 20/day }
-super_admin: unlimited
+export const expectedLimits = {
+  public: { parse: 3, generate: 2, export: 5 }, // per day
+  friend: { parse: 10, generate: 8, export: 20 }, // per day
+  super_admin: 'unlimited'
+}
 ```
 
 ---
 
 ### `services/byok-keys.test.ts` (TX021)
+
 **Status**: ⏸️ Skipped (awaiting service implementation T046-T049, T125-T127)
 
 Tests for BYOK (Bring Your Own Key) security:
+
 - 🔒 **CRITICAL**: Keys encrypted at rest
 - 🔒 **CRITICAL**: Only last 4 chars stored as hint
 - 🔒 **CRITICAL**: Full keys NEVER logged
@@ -58,6 +67,7 @@ Tests for BYOK (Bring Your Own Key) security:
 - ✅ BYOK vs platform usage tracking
 
 **Required Services**:
+
 - `packages/nuxt-layer-api/server/services/llm/types.ts`
 - `packages/nuxt-layer-api/server/services/llm/providers/openai.ts`
 - `packages/nuxt-layer-api/server/services/llm/providers/gemini.ts`
@@ -65,13 +75,14 @@ Tests for BYOK (Bring Your Own Key) security:
 - `packages/nuxt-layer-api/server/api/keys/[id].delete.ts`
 
 **Security Requirements**:
+
 ```typescript
 // Database stores ONLY hint
-interface LLMKey {
+type LLMKey = {
   id: string
   userId: string
   provider: 'openai' | 'gemini'
-  keyHint: string  // Last 4 chars ONLY
+  keyHint: string // Last 4 chars ONLY
   createdAt: Date
 }
 
@@ -82,9 +93,11 @@ interface LLMKey {
 ---
 
 ### `services/export-cache.test.ts` (TX030)
+
 **Status**: ⏸️ Skipped (awaiting service implementation T115-T124)
 
 Tests for export PDF caching and invalidation:
+
 - ✅ Cache key includes userId + generationId + version
 - ✅ Separate caches for ATS vs Human versions
 - ✅ Cache hit/miss behavior
@@ -97,20 +110,22 @@ Tests for export PDF caching and invalidation:
 - ✅ Graceful degradation on cache corruption
 
 **Required Services**:
+
 - `packages/nuxt-layer-api/server/services/export/index.ts`
 - `packages/nuxt-layer-api/server/services/cache/index.ts`
 
 **Expected Cache Key Format**:
+
 ```typescript
 // Pattern: export:{userId}:{generationId}:{version}
 // Example ATS: export:user-123:gen-456:ats
 // Example Human: export:user-123:gen-456:human
 
-interface CacheService {
-  get(key: string): Promise<string | null>
-  set(key: string, value: string, ttl?: number): Promise<void>
-  delete(key: string): Promise<void>
-  deleteByPattern(pattern: string): Promise<number>
+type CacheService = {
+  get: (key: string) => Promise<string | null>
+  set: (key: string, value: string, ttl?: number) => Promise<void>
+  delete: (key: string) => Promise<void>
+  deleteByPattern: (pattern: string) => Promise<number>
 }
 
 // Cache value: PDF URL from Vercel Blob storage
@@ -118,6 +133,7 @@ interface CacheService {
 ```
 
 **Invalidation Strategy**:
+
 - On regeneration: delete pattern `export:{userId}:{generationId}:*`
 - On generation deletion: same pattern
 - On user deletion: delete pattern `export:{userId}:*`
@@ -127,14 +143,17 @@ interface CacheService {
 ## Running Tests
 
 ### Run all integration tests (currently skipped):
+
 ```bash
 pnpm test packages/nuxt-layer-api/tests
 ```
 
 ### Enable tests when services are ready:
+
 Remove `.skip` from `describe.skip()` in each test file.
 
 ### Run specific test suite:
+
 ```bash
 pnpm test packages/nuxt-layer-api/tests/integration/services/limits.test.ts
 pnpm test packages/nuxt-layer-api/tests/integration/services/byok-keys.test.ts
@@ -143,11 +162,11 @@ pnpm test packages/nuxt-layer-api/tests/integration/services/export-cache.test.t
 
 ## Test Status
 
-| Test Suite | Status | Depends On Tasks | Lines | Coverage |
-|------------|--------|------------------|-------|----------|
-| limits.test.ts | ⏸️ Skipped | T043-T045 | 17 tests | 0% (pending) |
-| byok-keys.test.ts | ⏸️ Skipped | T046-T049, T125-T127 | 18 tests | 0% (pending) |
-| export-cache.test.ts | ⏸️ Skipped | T115-T124 | 50+ tests | 0% (pending) |
+| Test Suite           | Status     | Depends On Tasks     | Lines     | Coverage     |
+| -------------------- | ---------- | -------------------- | --------- | ------------ |
+| limits.test.ts       | ⏸️ Skipped | T043-T045            | 17 tests  | 0% (pending) |
+| byok-keys.test.ts    | ⏸️ Skipped | T046-T049, T125-T127 | 18 tests  | 0% (pending) |
+| export-cache.test.ts | ⏸️ Skipped | T115-T124            | 50+ tests | 0% (pending) |
 
 **Total**: 85+ integration tests ready for implementation
 
@@ -165,6 +184,7 @@ When implementing the services (Phase 2.5-2.6):
 ## Security Notes
 
 ### BYOK Key Handling (CRITICAL)
+
 The `byok-keys.test.ts` suite includes security-critical tests:
 
 - ❌ **NEVER** store full keys in database
@@ -175,6 +195,7 @@ The `byok-keys.test.ts` suite includes security-critical tests:
 - ✅ **ALWAYS** clear keys from memory after use
 
 ### Limits/Rate Limiting
+
 The `limits.test.ts` suite ensures:
 
 - Fair usage enforcement
@@ -205,6 +226,7 @@ The `limits.test.ts` suite ensures:
 ---
 
 **Related Documentation**:
+
 - `/specs/001-foundation-mvp/tasks.md` - Full task list
 - `/specs/001-foundation-mvp/data-model.md` - Database schema
 - `/packages/schema/` - Zod schemas and types

@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { getDaysUntilExpiration, type Generation } from '../schemas/generation'
+import type { Generation } from '../schemas/generation'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getDaysUntilExpiration } from '../schemas/generation'
 
 describe('getDaysUntilExpiration', () => {
   beforeEach(() => {
@@ -18,16 +19,16 @@ describe('getDaysUntilExpiration', () => {
       content: {
         personalInfo: {
           fullName: 'John Doe',
-          email: 'john@example.com',
+          email: 'john@example.com'
         },
         experience: [],
         education: [],
-        skills: [],
+        skills: []
       },
       matchScoreBefore: 70,
       matchScoreAfter: 90,
       generatedAt: now,
-      expiresAt: futureDate,
+      expiresAt: futureDate
     }
 
     const days = getDaysUntilExpiration(generation)
@@ -47,16 +48,16 @@ describe('getDaysUntilExpiration', () => {
       content: {
         personalInfo: {
           fullName: 'John Doe',
-          email: 'john@example.com',
+          email: 'john@example.com'
         },
         experience: [],
         education: [],
-        skills: [],
+        skills: []
       },
       matchScoreBefore: 70,
       matchScoreAfter: 90,
       generatedAt: new Date('2025-12-20T12:00:00Z'),
-      expiresAt: pastDate,
+      expiresAt: pastDate
     }
 
     const days = getDaysUntilExpiration(generation)
@@ -76,16 +77,16 @@ describe('getDaysUntilExpiration', () => {
       content: {
         personalInfo: {
           fullName: 'John Doe',
-          email: 'john@example.com',
+          email: 'john@example.com'
         },
         experience: [],
         education: [],
-        skills: [],
+        skills: []
       },
       matchScoreBefore: 70,
       matchScoreAfter: 90,
       generatedAt: now,
-      expiresAt: futureDate,
+      expiresAt: futureDate
     }
 
     const days = getDaysUntilExpiration(generation)

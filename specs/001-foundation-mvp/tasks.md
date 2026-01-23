@@ -24,7 +24,7 @@
 
 ## Design
 
-For any UI work, follow docs/design/mvp.md (Nuxt UI Pro SaaS for apps/site, Dashboard for apps/admin, primary=violet, neutral=slate, system color-mode with dark fallback). 
+For any UI work, follow docs/design/mvp.md (Nuxt UI Pro SaaS for apps/site, Dashboard for apps/admin, primary=violet, neutral=slate, system color-mode with dark fallback).
 No custom patterns outside Nuxt UI Pro.
 
 ## Testing policy (MVP)
@@ -142,7 +142,6 @@ No custom patterns outside Nuxt UI Pro.
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
-
 ---
 
 ## Phase 3: User Story 1 - Authentication (Priority: P1) MVP
@@ -158,7 +157,7 @@ No custom patterns outside Nuxt UI Pro.
 - [x] T061 [US1] Create POST `/api/auth/logout` endpoint in `packages/nuxt-layer-api/server/api/auth/logout.post.ts`
 - [x] T062 [US1] Create GET `/api/auth/me` endpoint in `packages/nuxt-layer-api/server/api/auth/me.get.ts`
 - [x] T063 [US1] Create useAuth composable in `packages/nuxt-layer-api/app/composables/useAuth.ts`
-- [x] T064 [US1] Add auth i18n keys to `packages/nuxt-layer-ui/locales/en.json` (auth.login.google, auth.logout, auth.error.*)
+- [x] T064 [US1] Add auth i18n keys to `packages/nuxt-layer-ui/locales/en.json` (auth.login.google, auth.logout, auth.error.\*)
 - [x] T065 [US1] Create login page in `apps/site/layers/auth/app/pages/login.vue` with Google sign-in button
 - [x] T066 [US1] Create auth layout in `apps/site/layers/auth/app/layouts/auth.vue`
 - [x] T067 [US1] Create auth guard middleware in `apps/site/layers/auth/app/middleware/auth.global.ts`
@@ -186,7 +185,7 @@ No custom patterns outside Nuxt UI Pro.
 - [x] T076 [US2] Create PUT `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].put.ts`
 - [x] T077 [US2] Create DELETE `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].delete.ts`
 - [x] T078 [US2] Create useResumes composable in `packages/nuxt-layer-api/app/composables/useResumes.ts`
-- [x] T079 [US2] Add resume i18n keys to `packages/nuxt-layer-ui/locales/en.json` (resume.list.*, resume.upload.*, resume.editor.*, resume.error.*)
+- [x] T079 [US2] Add resume i18n keys to `packages/nuxt-layer-ui/locales/en.json` (resume.list._, resume.upload._, resume.editor._, resume.error._)
 - [x] T080 [US2] Create ResumeUploader component in `apps/site/layers/vacancy/app/components/ResumeUploader.vue` with dropzone
 - [x] T081 [US2] Create ResumeJsonEditor component in `apps/site/layers/vacancy/app/components/ResumeJsonEditor.vue`
 - [x] T082 [US2] Create resumes list page in `apps/site/app/pages/resumes/index.vue`
@@ -209,7 +208,7 @@ No custom patterns outside Nuxt UI Pro.
 - [ ] T086 [US3] Create PUT `/api/profile` endpoint in `packages/nuxt-layer-api/server/api/profile/index.put.ts`
 - [ ] T087 [US3] Create GET `/api/profile/complete` endpoint in `packages/nuxt-layer-api/server/api/profile/complete.get.ts`
 - [ ] T088 [US3] Create useProfile composable in `packages/nuxt-layer-api/app/composables/useProfile.ts`
-- [ ] T089 [US3] Add profile i18n keys to `packages/nuxt-layer-ui/locales/en.json` (profile.title, profile.form.*, profile.error.*)
+- [ ] T089 [US3] Add profile i18n keys to `packages/nuxt-layer-ui/locales/en.json` (profile.title, profile.form._, profile.error._)
 - [ ] T090 [US3] Create ProfileForm component in `apps/site/layers/user/app/components/ProfileForm.vue` with all required fields
 - [ ] T091 [US3] Create profile page in `apps/site/app/pages/profile.vue`
 
@@ -231,7 +230,7 @@ No custom patterns outside Nuxt UI Pro.
 - [ ] T095 [US4] Create PUT `/api/vacancies/[id]` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id].put.ts`
 - [ ] T096 [US4] Create DELETE `/api/vacancies/[id]` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id].delete.ts`
 - [ ] T097 [US4] Create useVacancies composable in `packages/nuxt-layer-api/app/composables/useVacancies.ts`
-- [ ] T098 [US4] Add vacancy i18n keys to `packages/nuxt-layer-ui/locales/en.json` (vacancy.list.*, vacancy.form.*, vacancy.detail.*)
+- [ ] T098 [US4] Add vacancy i18n keys to `packages/nuxt-layer-ui/locales/en.json` (vacancy.list._, vacancy.form._, vacancy.detail.\*)
 - [ ] T099 [US4] Create VacancyForm component in `apps/site/layers/vacancy/app/components/VacancyForm.vue`
 - [ ] T100 [US4] Create VacancyCard component in `apps/site/layers/vacancy/app/components/VacancyCard.vue` with "Company (Position)" format
 - [ ] T101 [US4] Create vacancies list page in `apps/site/app/pages/vacancies/index.vue`
@@ -256,7 +255,7 @@ No custom patterns outside Nuxt UI Pro.
 - [ ] T107 [US5] Create GET `/api/vacancies/[id]/generations` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/generations/index.get.ts`
 - [ ] T108 [US5] Create GET `/api/vacancies/[id]/generations/latest` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/generations/latest.get.ts`
 - [ ] T109 [US5] Create useGenerations composable in `packages/nuxt-layer-api/app/composables/useGenerations.ts`
-- [ ] T110 [US5] Add generation i18n keys to `packages/nuxt-layer-ui/locales/en.json` (generation.button, generation.inProgress, generation.matchScore.*, generation.lifetime.*, generation.error.*)
+- [ ] T110 [US5] Add generation i18n keys to `packages/nuxt-layer-ui/locales/en.json` (generation.button, generation.inProgress, generation.matchScore._, generation.lifetime._, generation.error.\*)
 - [ ] T111 [US5] Create GenerateButton component in `apps/site/layers/vacancy/app/components/GenerateButton.vue` with loading state
 - [ ] T112 [US5] Create MatchScoreDisplay component in `apps/site/layers/vacancy/app/components/MatchScoreDisplay.vue` (before/after)
 - [ ] T113 [US5] Create LifetimeIndicator component in `apps/site/layers/vacancy/app/components/LifetimeIndicator.vue` (days until expiration)
@@ -277,7 +276,7 @@ No custom patterns outside Nuxt UI Pro.
 - [ ] T115 [US6] Create PDF export service in `packages/nuxt-layer-api/server/services/export/pdf.ts` using Playwright
 - [ ] T116 [US6] Create POST `/api/vacancies/[id]/export` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/export.post.ts`
 - [ ] T117 [US6] Create useExport composable in `packages/nuxt-layer-api/app/composables/useExport.ts`
-- [ ] T118 [US6] Add export i18n keys to `packages/nuxt-layer-ui/locales/en.json` (export.button.ats, export.button.human, export.inProgress, export.success, export.error.*)
+- [ ] T118 [US6] Add export i18n keys to `packages/nuxt-layer-ui/locales/en.json` (export.button.ats, export.button.human, export.inProgress, export.success, export.error.\*)
 - [ ] T119 [US6] Create ResumeAtsView component in `apps/site/layers/vacancy/app/components/ResumeAtsView.vue` (SSR island)
 - [ ] T120 [US6] Create ResumeHumanView component in `apps/site/layers/vacancy/app/components/ResumeHumanView.vue` (SSR island)
 - [ ] T121 [US6] Create ATS view page in `apps/site/app/pages/vacancies/[id]/ats.vue` with server component
@@ -301,7 +300,7 @@ No custom patterns outside Nuxt UI Pro.
 - [ ] T126 [US7] Create POST `/api/keys` endpoint in `packages/nuxt-layer-api/server/api/keys/index.post.ts`
 - [ ] T127 [US7] Create DELETE `/api/keys/[id]` endpoint in `packages/nuxt-layer-api/server/api/keys/[id].delete.ts`
 - [ ] T128 [US7] Create useKeys composable in `packages/nuxt-layer-api/app/composables/useKeys.ts`
-- [ ] T129 [US7] Add settings i18n keys to `packages/nuxt-layer-ui/locales/en.json` (settings.title, settings.keys.*)
+- [ ] T129 [US7] Add settings i18n keys to `packages/nuxt-layer-ui/locales/en.json` (settings.title, settings.keys.\*)
 - [ ] T130 [US7] Create KeyManager component in `apps/site/layers/user/app/components/KeyManager.vue` with localStorage integration
 - [ ] T131 [US7] Create settings page in `apps/site/app/pages/settings.vue` with key management
 
@@ -387,17 +386,17 @@ Phase 12 (Polish)
 
 ### User Story Dependencies
 
-| Story | Priority | Depends On | Can Start After |
-|-------|----------|------------|-----------------|
-| US1 (Auth) | P1 | Foundational | Phase 2 complete |
-| US2 (Resume) | P1 | US1 (auth required) | T069 complete |
-| US3 (Profile) | P1 | US1 (auth required) | T069 complete |
-| US4 (Vacancy) | P1 | US1 (auth required) | T069 complete |
-| US5 (Generation) | P1 | US2, US3, US4 | T084, T091, T103 complete |
-| US6 (Export) | P1 | US5 (needs generation) | T114 complete |
-| US7 (BYOK) | P2 | US1 (auth required) | T069 complete |
-| US8 (Admin Users) | P2 | Foundational | Phase 2 complete |
-| US9 (Admin System) | P2 | US8 (admin auth) | T140 complete |
+| Story              | Priority | Depends On             | Can Start After           |
+| ------------------ | -------- | ---------------------- | ------------------------- |
+| US1 (Auth)         | P1       | Foundational           | Phase 2 complete          |
+| US2 (Resume)       | P1       | US1 (auth required)    | T069 complete             |
+| US3 (Profile)      | P1       | US1 (auth required)    | T069 complete             |
+| US4 (Vacancy)      | P1       | US1 (auth required)    | T069 complete             |
+| US5 (Generation)   | P1       | US2, US3, US4          | T084, T091, T103 complete |
+| US6 (Export)       | P1       | US5 (needs generation) | T114 complete             |
+| US7 (BYOK)         | P2       | US1 (auth required)    | T069 complete             |
+| US8 (Admin Users)  | P2       | Foundational           | Phase 2 complete          |
+| US9 (Admin System) | P2       | US8 (admin auth)       | T140 complete             |
 
 ### Within Each User Story
 
@@ -409,6 +408,7 @@ Phase 12 (Polish)
 ### Parallel Opportunities
 
 **Phase 2 (Foundational)**:
+
 - All schema tasks (T013-T021) can run in parallel
 - All repository tasks (T028-T035) can run in parallel after T025
 - LLM providers (T047-T048) can run in parallel
@@ -416,6 +416,7 @@ Phase 12 (Polish)
 - Admin layers (T055-T057) can run in parallel
 
 **User Stories (after Phase 2)**:
+
 - US2, US3, US4, US7 can start in parallel (all depend only on US1)
 - US8 can start in parallel with US1-US7
 
@@ -455,12 +456,12 @@ Task: "Create SystemConfig schema in packages/schema/schemas/system.ts"
 
 ### Incremental Delivery
 
-| Increment | Stories | Value Delivered |
-|-----------|---------|-----------------|
-| MVP | US1-US6 | Full happy path: sign in → upload → vacancy → generate → export |
-| +BYOK | US7 | Users can use own API keys |
-| +Admin | US8-US9 | Admin can manage users and system |
-| +Polish | Phase 12 | Landing page, error handling, cleanup |
+| Increment | Stories  | Value Delivered                                                 |
+| --------- | -------- | --------------------------------------------------------------- |
+| MVP       | US1-US6  | Full happy path: sign in → upload → vacancy → generate → export |
+| +BYOK     | US7      | Users can use own API keys                                      |
+| +Admin    | US8-US9  | Admin can manage users and system                               |
+| +Polish   | Phase 12 | Landing page, error handling, cleanup                           |
 
 ### Critical Path
 

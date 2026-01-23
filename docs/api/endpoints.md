@@ -1,6 +1,7 @@
 # Endpoints (MVP)
 
 ## Resume
+
 - `POST /api/resume/parse`
   - body: multipart file (DOCX or PDF)
   - returns: `ResumeJson`
@@ -11,6 +12,7 @@
   - returns saved resume
 
 ## Vacancies
+
 - `POST /api/vacancies`
   - body: `{ company: string, jobPosition?: string, description: string, url?: string, notes?: string }`
   - returns: vacancy
@@ -26,11 +28,13 @@
   - returns latest version
 
 ## Export
+
 - `POST /api/vacancies/:id/export?type=ats|human`
   - returns: `{ url: string }` or streams a PDF
   - uses caching and invalidates cache on regeneration
 
 ## Admin (MVP)
+
 - `GET /api/admin/users`
 - `PUT /api/admin/users/:id/role`
 - `GET /api/admin/limits`

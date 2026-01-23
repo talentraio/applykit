@@ -2,7 +2,7 @@
 
 Last updated: 2026-01-22
 
-This document is the **single source of truth** for MVP UI decisions.  
+This document is the **single source of truth** for MVP UI decisions.
 Goal: ship fast with a **consistent, glossy B2C look** using **Nuxt UI Pro** templates and tokens.
 
 ---
@@ -13,6 +13,7 @@ Goal: ship fast with a **consistent, glossy B2C look** using **Nuxt UI Pro** tem
 - **apps/admin** follows **Nuxt UI Pro – Dashboard** template look & feel.
 
 Rules:
+
 - Do not invent new UI patterns if a Nuxt UI Pro pattern exists.
 - Reuse the templates’ layout rhythm: spacing, typography hierarchy, card styles, button styles.
 - Landing may use “glossy” effects; admin should remain clean and utilitarian.
@@ -22,10 +23,12 @@ Rules:
 ## 2) Theme & color mode
 
 ### Color mode
+
 - Prefer **system** color mode.
 - Fallback default is **dark** (if system preference is not available).
 
 ### Tokens (global)
+
 These tokens must be set in `packages/nuxt-layer-ui/app/app.config.ts` and used everywhere:
 
 - `ui.colors.primary = "violet"`
@@ -39,12 +42,14 @@ No ad-hoc hex colors in components unless explicitly justified.
 ## 3) Visual style goals (B2C glossy)
 
 ### Site (marketing + app pages under apps/site)
+
 - **High-contrast dark mode** by default; light mode should also look premium.
 - Big hero typography, generous spacing, large radius cards.
 - Subtle gradients/glow are allowed **only** on marketing surfaces (homepage sections, hero).
 - Primary CTA should be prominent and consistent across the site.
 
 ### Admin (apps/admin)
+
 - No glow/marketing gradients.
 - Use Dashboard template patterns: sidebar, page header, tables, filters, panels.
 
@@ -53,7 +58,9 @@ No ad-hoc hex colors in components unless explicitly justified.
 ## 4) Layout and structure rules
 
 ### Site landing (`apps/site/layers/landing`)
+
 Homepage should be composed of these sections (in this order):
+
 1. Hero (headline, subheadline, primary + secondary CTA, visual/mock area)
 2. Steps (3–5 steps explaining the flow)
 3. ATS vs Human explanation (clear comparison)
@@ -62,10 +69,12 @@ Homepage should be composed of these sections (in this order):
 6. Footer
 
 ### App shell (`apps/site/layers/*`)
+
 - Reuse the SaaS template navigation/app shell patterns.
 - Keep pages SSR-friendly and compatible with server-side islands rendering.
 
 ### Internal app layers
+
 - `apps/site/layers/*` and `apps/admin/layers/*` should not define competing themes.
 - All styling decisions (tokens/theme) must live in `@int/ui`.
 
@@ -101,6 +110,7 @@ Homepage should be composed of these sections (in this order):
 ## 8) Implementation notes for agents
 
 When implementing UI tasks, always:
+
 - Start from the relevant Nuxt UI Pro template pattern (SaaS or Dashboard).
 - Keep tokens consistent with Section 2.
 - If unsure about a Nuxt UI / Nuxt UI Pro API: verify using MCP docs (do not guess).
