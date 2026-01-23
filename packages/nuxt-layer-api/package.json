@@ -18,9 +18,12 @@
     "@vercel/blob": "^2.0.0",
     "better-sqlite3": "^12.6.2",
     "drizzle-orm": "^0.38.4",
+    "h3-formidable": "^1.0.0",
+    "mammoth": "^1.11.0",
     "nuxt": "^4.0.9",
     "nuxt-auth-utils": "^0.5.27",
     "openai": "^6.16.0",
+    "pdf-parse": "^2.4.5",
     "postgres": "^3.4.8"
   },
   "devDependencies": {

@@ -177,21 +177,21 @@ No custom patterns outside Nuxt UI Pro.
 
 ### Implementation for US2
 
-- [ ] T070 [US2] Create document parser service in `packages/nuxt-layer-api/server/services/parser/index.ts` (mammoth + pdf-parse)
-- [ ] T071 [US2] Create parse prompt in `packages/nuxt-layer-api/server/services/llm/prompts/parse.ts`
-- [ ] T072 [US2] Create LLM parse service in `packages/nuxt-layer-api/server/services/llm/parse.ts` with Zod validation + retry
-- [ ] T073 [US2] Create GET `/api/resumes` endpoint in `packages/nuxt-layer-api/server/api/resumes/index.get.ts`
-- [ ] T074 [US2] Create POST `/api/resumes` endpoint in `packages/nuxt-layer-api/server/api/resumes/index.post.ts` (multipart upload + parse)
-- [ ] T075 [US2] Create GET `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].get.ts`
-- [ ] T076 [US2] Create PUT `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].put.ts`
-- [ ] T077 [US2] Create DELETE `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].delete.ts`
-- [ ] T078 [US2] Create useResumes composable in `packages/nuxt-layer-api/app/composables/useResumes.ts`
-- [ ] T079 [US2] Add resume i18n keys to `packages/nuxt-layer-ui/locales/en.json` (resume.list.*, resume.upload.*, resume.editor.*, resume.error.*)
-- [ ] T080 [US2] Create ResumeUploader component in `apps/site/layers/vacancy/app/components/ResumeUploader.vue` with dropzone
-- [ ] T081 [US2] Create ResumeJsonEditor component in `apps/site/layers/vacancy/app/components/ResumeJsonEditor.vue`
-- [ ] T082 [US2] Create resumes list page in `apps/site/app/pages/resumes/index.vue`
-- [ ] T083 [US2] Create resume upload page in `apps/site/app/pages/resumes/new.vue`
-- [ ] T084 [US2] Create resume detail page in `apps/site/app/pages/resumes/[id].vue` with JSON editor
+- [x] T070 [US2] Create document parser service in `packages/nuxt-layer-api/server/services/parser/index.ts` (mammoth + pdf-parse)
+- [x] T071 [US2] Create parse prompt in `packages/nuxt-layer-api/server/services/llm/prompts/parse.ts`
+- [x] T072 [US2] Create LLM parse service in `packages/nuxt-layer-api/server/services/llm/parse.ts` with Zod validation + retry
+- [x] T073 [US2] Create GET `/api/resumes` endpoint in `packages/nuxt-layer-api/server/api/resumes/index.get.ts`
+- [x] T074 [US2] Create POST `/api/resumes` endpoint in `packages/nuxt-layer-api/server/api/resumes/index.post.ts` (multipart upload + parse)
+- [x] T075 [US2] Create GET `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].get.ts`
+- [x] T076 [US2] Create PUT `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].put.ts`
+- [x] T077 [US2] Create DELETE `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].delete.ts`
+- [x] T078 [US2] Create useResumes composable in `packages/nuxt-layer-api/app/composables/useResumes.ts`
+- [x] T079 [US2] Add resume i18n keys to `packages/nuxt-layer-ui/locales/en.json` (resume.list.*, resume.upload.*, resume.editor.*, resume.error.*)
+- [x] T080 [US2] Create ResumeUploader component in `apps/site/layers/vacancy/app/components/ResumeUploader.vue` with dropzone
+- [x] T081 [US2] Create ResumeJsonEditor component in `apps/site/layers/vacancy/app/components/ResumeJsonEditor.vue`
+- [x] T082 [US2] Create resumes list page in `apps/site/app/pages/resumes/index.vue`
+- [x] T083 [US2] Create resume upload page in `apps/site/app/pages/resumes/new.vue`
+- [x] T084 [US2] Create resume detail page in `apps/site/app/pages/resumes/[id].vue` with JSON editor
 
 **Checkpoint**: User can upload resume, see parsed JSON, edit and save
 
