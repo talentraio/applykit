@@ -101,9 +101,9 @@ No custom patterns outside Nuxt UI Pro.
 
 ### 2.3 Storage Adapter
 
-- [ ] T036 Create storage adapter interface in `packages/nuxt-layer-api/server/storage/types.ts` (put, get, delete, getUrl)
-- [ ] T037 Implement Vercel Blob adapter in `packages/nuxt-layer-api/server/storage/vercel-blob.ts`
-- [ ] T038 Create storage factory in `packages/nuxt-layer-api/server/storage/index.ts` with env-based selection
+- [x] T036 Create storage adapter interface in `packages/nuxt-layer-api/server/storage/types.ts` (put, get, delete, getUrl)
+- [x] T037 Implement Vercel Blob adapter in `packages/nuxt-layer-api/server/storage/vercel-blob.ts`
+- [x] T038 Create storage factory in `packages/nuxt-layer-api/server/storage/index.ts` with env-based selection
 
 ### 2.4 Auth Infrastructure
 
