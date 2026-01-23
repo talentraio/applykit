@@ -127,18 +127,18 @@ No custom patterns outside Nuxt UI Pro.
 
 ### 2.7 Site App Layers Structure
 
-- [ ] T050 [P] Create `apps/site/layers/_base/nuxt.config.ts` with alias `@site/base` + scaffold shared folders (`app/components`, `app/composables`, `app/stores`, `app/utils`, `app/middleware`)
-- [ ] T051 [P] Create `apps/site/layers/auth/nuxt.config.ts` with alias `@site/auth`
-- [ ] T052 [P] Create `apps/site/layers/user/nuxt.config.ts` with alias `@site/user`
-- [ ] T053 [P] Create `apps/site/layers/landing/nuxt.config.ts` with alias `@site/landing`
-- [ ] T054 Create `apps/site/layers/vacancy/nuxt.config.ts` with alias `@site/vacancy` + update `apps/site/nuxt.config.ts` to extend internal layers in order (`_base` first)
+- [x] T050 [P] Create `apps/site/layers/_base/nuxt.config.ts` with alias `@site/base` + scaffold shared folders (`app/components`, `app/composables`, `app/stores`, `app/utils`, `app/middleware`)
+- [x] T051 [P] Create `apps/site/layers/auth/nuxt.config.ts` with alias `@site/auth`
+- [x] T052 [P] Create `apps/site/layers/user/nuxt.config.ts` with alias `@site/user`
+- [x] T053 [P] Create `apps/site/layers/landing/nuxt.config.ts` with alias `@site/landing`
+- [x] T054 Create `apps/site/layers/vacancy/nuxt.config.ts` with alias `@site/vacancy` + update `apps/site/nuxt.config.ts` to extend internal layers in order (`_base` first)
 
 ### 2.8 Admin App Layers Structure
 
-- [ ] T055 [P] Create `apps/admin/layers/_base/nuxt.config.ts` with alias `@admin/base` + scaffold shared folders (`app/components`, `app/composables`, `app/stores`, `app/utils`, `app/middleware`)
-- [ ] T056 [P] Create `apps/admin/layers/auth/nuxt.config.ts` with alias `@admin/auth`
-- [ ] T057 [P] Create `apps/admin/layers/users/nuxt.config.ts` with alias `@admin/users`
-- [ ] T058 Create `apps/admin/layers/system/nuxt.config.ts` with alias `@admin/system` + update `apps/admin/nuxt.config.ts` to extend internal layers in order (`_base` first)
+- [x] T055 [P] Create `apps/admin/layers/_base/nuxt.config.ts` with alias `@admin/base` + scaffold shared folders (`app/components`, `app/composables`, `app/stores`, `app/utils`, `app/middleware`)
+- [x] T056 [P] Create `apps/admin/layers/auth/nuxt.config.ts` with alias `@admin/auth`
+- [x] T057 [P] Create `apps/admin/layers/users/nuxt.config.ts` with alias `@admin/users`
+- [x] T058 Create `apps/admin/layers/system/nuxt.config.ts` with alias `@admin/system` + update `apps/admin/nuxt.config.ts` to extend internal layers in order (`_base` first)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
