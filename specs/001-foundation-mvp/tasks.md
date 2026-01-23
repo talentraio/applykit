@@ -107,10 +107,10 @@ No custom patterns outside Nuxt UI Pro.
 
 ### 2.4 Auth Infrastructure
 
-- [ ] T039 Install nuxt-auth-utils in `packages/nuxt-layer-api/`
-- [ ] T040 Configure nuxt-auth-utils in `packages/nuxt-layer-api/nuxt.config.ts` with session secret
-- [ ] T041 Create auth middleware in `packages/nuxt-layer-api/server/middleware/auth.ts` for protected routes
-- [ ] T042 Create admin middleware in `packages/nuxt-layer-api/server/middleware/admin.ts` checking super_admin role
+- [x] T039 Install nuxt-auth-utils in `packages/nuxt-layer-api/`
+- [x] T040 Configure nuxt-auth-utils in `packages/nuxt-layer-api/nuxt.config.ts` with session secret
+- [x] T041 Create auth middleware in `packages/nuxt-layer-api/server/middleware/auth.ts` for protected routes
+- [x] T042 Create admin middleware in `packages/nuxt-layer-api/server/middleware/admin.ts` checking super_admin role
 
 ### 2.5 Rate Limiting & Limits Service
 
