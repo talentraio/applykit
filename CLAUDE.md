@@ -14,7 +14,8 @@ Key conventions:
 - Pinia stores own data flow; components call store actions
 - i18n from the start
 
-If unsure, open docs/\* and follow them.
+Before any code changes, always read `docs/codestyle/base.md` and follow it. Then read any
+other docs/\* relevant to the task.
 
 ## Tooling & docs policy
 

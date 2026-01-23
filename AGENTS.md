@@ -21,6 +21,8 @@
 
 ## Coding Style & Naming Conventions
 
+- Before any code changes, read `docs/codestyle/base.md` (always-on). Use other
+  docs/codestyle/\* as needed.
 - TypeScript + Vue SFCs; keep code typed end-to-end.
 - Formatting: 2-space indent, single quotes, no semicolons, 100-character print width.
 - Prefer workspace package names like `@int/schema`, `@int/api`, and `@int/ui`.
