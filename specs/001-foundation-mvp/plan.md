@@ -53,7 +53,7 @@ The constitution template is not yet customized for this project. Applying Apply
 | Principle | Status | Notes |
 |-----------|--------|-------|
 | Nuxt v4 + NuxtUI v4 only | PASS | Confirmed in stack |
-| Monorepo with @int/* packages and layers | PASS | @int/api and @int/ui are Nuxt layers; @int/schema is a shared package |
+| Monorepo with @int/* layers | PASS | Schema, API, UI layers defined |
 | Strict schemas in @int/schema | PASS | Zod + inferred types |
 | Store/actions pattern | PASS | Pinia stores planned |
 | SSR islands for ATS/Human | PASS | Specified in spec |
@@ -83,19 +83,28 @@ specs/001-foundation-mvp/
 ```text
 apps/
 ├── site/                          # User-facing Nuxt app
-│   ├── app/
-│   │   ├── components/            # Site-specific components
-│   │   ├── pages/                 # Route pages
-│   │   ├── layouts/               # App layouts
+│   ├── app/                       # Nuxt 4 app directory (keep thin: orchestration only)
+│   │   ├── app.vue
+│   │   ├── app.config.ts
+│   │   ├── layouts/
+│   │   ├── pages/                 # Route pages that mount feature modules
 │   │   └── plugins/               # App plugins (store-init)
 │   ├── layers/                    # App-internal Nuxt layers (feature slices)
+│   │   ├── _base/                 # @site/base     (shared app logic for other site layers)
+│   │   │   ├── app/
+│   │   │   │   ├── components/
+│   │   │   │   ├── composables/
+│   │   │   │   ├── stores/
+│   │   │   │   ├── utils/
+│   │   │   │   └── middleware/
+│   │   │   └── nuxt.config.ts     # defines unique alias for cross-layer imports
 │   │   ├── landing/               # @site/landing  (homepage, marketing sections)
 │   │   │   ├── app/
-│   │   │   └── nuxt.config.ts     # defines unique alias for cross-layer imports
+│   │   │   └── nuxt.config.ts
 │   │   ├── auth/                  # @site/auth     (login/register, auth UI)
 │   │   │   ├── app/
-│   │   │   └── nuxt.config.ts     # defines unique alias for cross-layer imports
-│   │   ├── user/                  # @site/user     (current user/profile state)
+│   │   │   └── nuxt.config.ts
+│   │   ├── user/                  # @site/user     (profile/settings feature UI)
 │   │   │   ├── app/
 │   │   │   └── nuxt.config.ts
 │   │   └── vacancy/               # @site/vacancy  (vacancy pages + business logic)
@@ -105,11 +114,21 @@ apps/
 │   └── nuxt.config.ts             # Extends @int/ui, @int/api + ./layers/*
 │
 └── admin/                         # Admin Nuxt app
-    ├── app/
-    │   ├── components/
+    ├── app/                       # Nuxt 4 app directory (keep thin: orchestration only)
+    │   ├── app.vue
+    │   ├── app.config.ts
+    │   ├── layouts/
     │   ├── pages/
-    │   └── layouts/
+    │   └── plugins/
     ├── layers/                    # App-internal Nuxt layers (feature slices)
+    │   ├── _base/                 # @admin/base    (shared app logic for other admin layers)
+    │   │   ├── app/
+    │   │   │   ├── components/
+    │   │   │   ├── composables/
+    │   │   │   ├── stores/
+    │   │   │   ├── utils/
+    │   │   │   └── middleware/
+    │   │   └── nuxt.config.ts
     │   ├── auth/                  # @admin/auth
     │   │   ├── app/
     │   │   └── nuxt.config.ts
@@ -138,63 +157,34 @@ packages/
 │   ├── package.json               # required
 │   ├── .playground/               # isolated debugging app
 │   ├── server/
-│   │   ├── api/                   # REST endpoints (thin handlers)
-│   │   │   ├── auth/
-│   │   │   ├── profile/
-│   │   │   ├── resumes/
-│   │   │   ├── vacancies/
-│   │   │   ├── keys/
-│   │   │   └── admin/
-│   │   ├── routes/                # Non-API routes (OAuth callbacks)
-│   │   ├── data/                  # Data-access layer (Drizzle)
-│   │   │   ├── db.ts              # Connection
-│   │   │   ├── schema.ts          # Drizzle schema
-│   │   │   └── repositories/
-│   │   ├── services/              # Business logic
-│   │   │   ├── llm/
-│   │   │   ├── export/
-│   │   │   └── limits/
-│   │   ├── storage/               # Storage adapter
-│   │   ├── tasks/                 # Background tasks
-│   │   ├── utils/                 # Shared utilities
-│   │   └── plugins/               # Server plugins
+│   │   ├── api/
+│   │   ├── routes/
+│   │   ├── data/
+│   │   ├── services/
+│   │   ├── storage/
+│   │   ├── tasks/
+│   │   ├── utils/
+│   │   └── plugins/
 │   ├── app/
-│   │   └── composables/           # Shared API composables
+│   │   └── composables/
 │   └── nuxt.config.ts
 │
 └── nuxt-layer-ui/                 # (package: @int/ui) Nuxt layer package
     ├── package.json               # required
     ├── .playground/               # isolated debugging app
     ├── app/
-    │   ├── components/            # Shared UI components
-    │   └── composables/           # UI composables
-    ├── assets/                    # Shared styles
-    └── nuxt.config.ts             # NuxtUI v4 config
+    │   ├── components/
+    │   └── composables/
+    ├── assets/
+    └── nuxt.config.ts
 
 tests/
-├── unit/                          # Unit tests (Vitest)
-├── integration/                   # Integration tests (Vitest)
-└── e2e/                           # E2E tests (Playwright)
+├── unit/
+├── integration/
+└── e2e/
 ```
 
-#### App-internal layers (apps/*/layers/*)
-
-We use app-internal Nuxt layers to slice each app by feature domain (Auth/User/Landing/Vacancy, etc.).
-
-Rules:
-- Each internal layer **must** have a unique alias defined in its `nuxt.config.ts` to enable safe cross-layer imports.
-  - Site aliases: `@site/auth`, `@site/user`, `@site/landing`, `@site/vacancy`
-  - Admin aliases: `@admin/auth`, `@admin/users`, `@admin/system`
-- Cross-layer imports must use aliases (no relative `../../..` imports).
-- Exact Nuxt config syntax for aliases and `extends` must be verified via Nuxt MCP docs at implementation time.
-
-**Workspace packages rule**:
-- Every entry under `packages/*` is a workspace package and **must** include a `package.json`.
-- Nuxt layer packages (`@int/api`, `@int/ui`) must set `"main": "./nuxt.config.ts"` and include a `.playground/` for isolated debugging.
-
-
-
-**Structure Decision**: Nuxt monorepo with pnpm workspaces. Two Nuxt layer packages (@int/api, @int/ui) plus a shared schema package (@int/schema) consumed by two apps (site, admin). Data-access isolated in `server/data/`, storage abstracted in `server/storage/`.
+**Structure Decision**: Nuxt monorepo with pnpm workspaces. Three layer packages (@int/schema, @int/api, @int/ui) consumed by two apps (site, admin). Data-access isolated in `server/data/`, storage abstracted in `server/storage/`.
 
 ## Complexity Tracking
 

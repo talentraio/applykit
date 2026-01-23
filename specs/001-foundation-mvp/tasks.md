@@ -20,6 +20,12 @@
 - **API layer**: `packages/nuxt-layer-api/` (package: `@int/api`)
 - **UI layer**: `packages/nuxt-layer-ui/` (package: `@int/ui`)
 - **App layers**: `apps/site/layers/*/`, `apps/admin/layers/*/`
+- **App shared layer**: `_base` is mandatory: `apps/site/layers/_base/`, `apps/admin/layers/_base/`
+
+## Design
+
+For any UI work, follow docs/design/mvp.md (Nuxt UI Pro SaaS for apps/site, Dashboard for apps/admin, primary=violet, neutral=slate, system color-mode with dark fallback). 
+No custom patterns outside Nuxt UI Pro.
 
 ## Testing policy (MVP)
 
@@ -121,20 +127,21 @@
 
 ### 2.7 Site App Layers Structure
 
-- [ ] T050 [P] Create `apps/site/layers/auth/nuxt.config.ts` with alias `@site/auth`
-- [ ] T051 [P] Create `apps/site/layers/user/nuxt.config.ts` with alias `@site/user`
-- [ ] T052 [P] Create `apps/site/layers/landing/nuxt.config.ts` with alias `@site/landing`
-- [ ] T053 [P] Create `apps/site/layers/vacancy/nuxt.config.ts` with alias `@site/vacancy`
-- [ ] T054 Update `apps/site/nuxt.config.ts` to extend all internal layers
+- [ ] T050 [P] Create `apps/site/layers/_base/nuxt.config.ts` with alias `@site/base` + scaffold shared folders (`app/components`, `app/composables`, `app/stores`, `app/utils`, `app/middleware`)
+- [ ] T051 [P] Create `apps/site/layers/auth/nuxt.config.ts` with alias `@site/auth`
+- [ ] T052 [P] Create `apps/site/layers/user/nuxt.config.ts` with alias `@site/user`
+- [ ] T053 [P] Create `apps/site/layers/landing/nuxt.config.ts` with alias `@site/landing`
+- [ ] T054 Create `apps/site/layers/vacancy/nuxt.config.ts` with alias `@site/vacancy` + update `apps/site/nuxt.config.ts` to extend internal layers in order (`_base` first)
 
 ### 2.8 Admin App Layers Structure
 
-- [ ] T055 [P] Create `apps/admin/layers/auth/nuxt.config.ts` with alias `@admin/auth`
-- [ ] T056 [P] Create `apps/admin/layers/users/nuxt.config.ts` with alias `@admin/users`
-- [ ] T057 [P] Create `apps/admin/layers/system/nuxt.config.ts` with alias `@admin/system`
-- [ ] T058 Update `apps/admin/nuxt.config.ts` to extend all internal layers
+- [ ] T055 [P] Create `apps/admin/layers/_base/nuxt.config.ts` with alias `@admin/base` + scaffold shared folders (`app/components`, `app/composables`, `app/stores`, `app/utils`, `app/middleware`)
+- [ ] T056 [P] Create `apps/admin/layers/auth/nuxt.config.ts` with alias `@admin/auth`
+- [ ] T057 [P] Create `apps/admin/layers/users/nuxt.config.ts` with alias `@admin/users`
+- [ ] T058 Create `apps/admin/layers/system/nuxt.config.ts` with alias `@admin/system` + update `apps/admin/nuxt.config.ts` to extend internal layers in order (`_base` first)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
+
 
 ---
 
@@ -155,7 +162,7 @@
 - [ ] T065 [US1] Create login page in `apps/site/layers/auth/app/pages/login.vue` with Google sign-in button
 - [ ] T066 [US1] Create auth layout in `apps/site/layers/auth/app/layouts/auth.vue`
 - [ ] T067 [US1] Create auth guard middleware in `apps/site/layers/auth/app/middleware/auth.global.ts`
-- [ ] T068 [US1] Create useCurrentUser composable in `apps/site/layers/user/app/composables/useCurrentUser.ts`
+- [ ] T068 [US1] Create useCurrentUser composable in `apps/site/layers/_base/app/composables/useCurrentUser.ts` (shared across site layers)
 - [ ] T069 [US1] Create dashboard page in `apps/site/app/pages/dashboard.vue` showing current user
 
 **Checkpoint**: User can sign in with Google, see dashboard, sign out
