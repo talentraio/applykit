@@ -6,6 +6,8 @@ description: 'Task list template for feature implementation'
 
 **Input**: Design documents from `/specs/[###-feature-name]/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
+**Documentation Gate**: Read and follow `docs/codestyle/base.md` before any code changes. Add
+any other required docs (docs/architecture/_, docs/api/_, docs/codestyle/\*).
 
 **Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
 

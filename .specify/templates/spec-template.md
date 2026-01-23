@@ -5,6 +5,11 @@
 **Status**: Draft
 **Input**: User description: "$ARGUMENTS"
 
+## Documentation Gate _(mandatory)_
+
+- Before any code changes, read and follow `docs/codestyle/base.md`.
+- Add other docs as required (docs/architecture/_, docs/api/_, docs/codestyle/\*).
+
 ## User Scenarios & Testing _(mandatory)_
 
 <!--
