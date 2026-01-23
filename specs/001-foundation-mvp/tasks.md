@@ -120,10 +120,10 @@ No custom patterns outside Nuxt UI Pro.
 
 ### 2.6 LLM Service Infrastructure
 
-- [ ] T046 Create LLM provider interface in `packages/nuxt-layer-api/server/services/llm/types.ts`
-- [ ] T047 [P] Implement OpenAI provider in `packages/nuxt-layer-api/server/services/llm/providers/openai.ts`
-- [ ] T048 [P] Implement Gemini provider in `packages/nuxt-layer-api/server/services/llm/providers/gemini.ts`
-- [ ] T049 Create LLM service factory in `packages/nuxt-layer-api/server/services/llm/index.ts` with provider selection logic
+- [x] T046 Create LLM provider interface in `packages/nuxt-layer-api/server/services/llm/types.ts`
+- [x] T047 [P] Implement OpenAI provider in `packages/nuxt-layer-api/server/services/llm/providers/openai.ts`
+- [x] T048 [P] Implement Gemini provider in `packages/nuxt-layer-api/server/services/llm/providers/gemini.ts`
+- [x] T049 Create LLM service factory in `packages/nuxt-layer-api/server/services/llm/index.ts` with provider selection logic
 
 ### 2.7 Site App Layers Structure
 
