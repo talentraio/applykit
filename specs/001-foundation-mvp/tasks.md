@@ -41,7 +41,7 @@ No custom patterns outside Nuxt UI Pro.
 - [x] TX020 Add integration tests for limits/usage counters (daily per-op per-role, 429 responses) in `packages/nuxt-layer-api/server/services/limits/`
 - [x] TX021 Add integration tests for BYOK key handling (encrypt at rest, hint only, never log full keys) in `packages/nuxt-layer-api/server/services/`
 - [x] TX030 Add integration tests for export caching + invalidation (cache key includes userId + generationId; invalidates on regeneration) in `packages/nuxt-layer-api/server/services/export/`
-- [ ] TX040 Add a minimal e2e happy-path smoke test (auth → parse → vacancy → generate → export) (can be skipped/flaky-tagged until stable)
+- [x] TX040 Add a minimal e2e happy-path smoke test (auth → parse → vacancy → generate → export) (can be skipped/flaky-tagged until stable)
 
 ---
 
@@ -114,9 +114,9 @@ No custom patterns outside Nuxt UI Pro.
 
 ### 2.5 Rate Limiting & Limits Service
 
-- [ ] T043 Create limits service in `packages/nuxt-layer-api/server/services/limits/index.ts` with role-based daily limits
-- [ ] T044 Create rate limiter utility in `packages/nuxt-layer-api/server/utils/rate-limiter.ts` (in-memory sliding window)
-- [ ] T045 Create usage tracking utility in `packages/nuxt-layer-api/server/utils/usage.ts` for logging operations
+- [x] T043 Create limits service in `packages/nuxt-layer-api/server/services/limits/index.ts` with role-based daily limits
+- [x] T044 Create rate limiter utility in `packages/nuxt-layer-api/server/utils/rate-limiter.ts` (in-memory sliding window)
+- [x] T045 Create usage tracking utility in `packages/nuxt-layer-api/server/utils/usage.ts` for logging operations
 
 ### 2.6 LLM Service Infrastructure
 
