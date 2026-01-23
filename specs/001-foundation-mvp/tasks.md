@@ -153,17 +153,17 @@ No custom patterns outside Nuxt UI Pro.
 
 ### Implementation for US1
 
-- [ ] T059 [US1] Create GET `/api/auth/google` endpoint in `packages/nuxt-layer-api/server/api/auth/google.get.ts`
-- [ ] T060 [US1] Create GET `/api/auth/google/callback` route in `packages/nuxt-layer-api/server/routes/auth/google/callback.get.ts`
-- [ ] T061 [US1] Create POST `/api/auth/logout` endpoint in `packages/nuxt-layer-api/server/api/auth/logout.post.ts`
-- [ ] T062 [US1] Create GET `/api/auth/me` endpoint in `packages/nuxt-layer-api/server/api/auth/me.get.ts`
-- [ ] T063 [US1] Create useAuth composable in `packages/nuxt-layer-api/app/composables/useAuth.ts`
-- [ ] T064 [US1] Add auth i18n keys to `packages/nuxt-layer-ui/locales/en.json` (auth.login.google, auth.logout, auth.error.*)
-- [ ] T065 [US1] Create login page in `apps/site/layers/auth/app/pages/login.vue` with Google sign-in button
-- [ ] T066 [US1] Create auth layout in `apps/site/layers/auth/app/layouts/auth.vue`
-- [ ] T067 [US1] Create auth guard middleware in `apps/site/layers/auth/app/middleware/auth.global.ts`
-- [ ] T068 [US1] Create useCurrentUser composable in `apps/site/layers/_base/app/composables/useCurrentUser.ts` (shared across site layers)
-- [ ] T069 [US1] Create dashboard page in `apps/site/app/pages/dashboard.vue` showing current user
+- [x] T059 [US1] Create GET `/api/auth/google` endpoint in `packages/nuxt-layer-api/server/api/auth/google.get.ts`
+- [x] T060 [US1] Create GET `/api/auth/google/callback` route in `packages/nuxt-layer-api/server/routes/auth/google/callback.get.ts`
+- [x] T061 [US1] Create POST `/api/auth/logout` endpoint in `packages/nuxt-layer-api/server/api/auth/logout.post.ts`
+- [x] T062 [US1] Create GET `/api/auth/me` endpoint in `packages/nuxt-layer-api/server/api/auth/me.get.ts`
+- [x] T063 [US1] Create useAuth composable in `packages/nuxt-layer-api/app/composables/useAuth.ts`
+- [x] T064 [US1] Add auth i18n keys to `packages/nuxt-layer-ui/locales/en.json` (auth.login.google, auth.logout, auth.error.*)
+- [x] T065 [US1] Create login page in `apps/site/layers/auth/app/pages/login.vue` with Google sign-in button
+- [x] T066 [US1] Create auth layout in `apps/site/layers/auth/app/layouts/auth.vue`
+- [x] T067 [US1] Create auth guard middleware in `apps/site/layers/auth/app/middleware/auth.global.ts`
+- [x] T068 [US1] Create useCurrentUser composable in `apps/site/layers/_base/app/composables/useCurrentUser.ts` (shared across site layers)
+- [x] T069 [US1] Create dashboard page in `apps/site/app/pages/dashboard.vue` showing current user
 
 **Checkpoint**: User can sign in with Google, see dashboard, sign out
 
