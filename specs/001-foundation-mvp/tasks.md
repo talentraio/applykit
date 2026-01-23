@@ -127,11 +127,11 @@ No custom patterns outside Nuxt UI Pro.
 
 ### 2.7 Site App Layers Structure
 
-- [ ] T050 [P] Create `apps/site/layers/_base/nuxt.config.ts` with alias `@site/base` + scaffold shared folders (`app/components`, `app/composables`, `app/stores`, `app/utils`, `app/middleware`)
-- [ ] T051 [P] Create `apps/site/layers/auth/nuxt.config.ts` with alias `@site/auth`
-- [ ] T052 [P] Create `apps/site/layers/user/nuxt.config.ts` with alias `@site/user`
-- [ ] T053 [P] Create `apps/site/layers/landing/nuxt.config.ts` with alias `@site/landing`
-- [ ] T054 Create `apps/site/layers/vacancy/nuxt.config.ts` with alias `@site/vacancy` + update `apps/site/nuxt.config.ts` to extend internal layers in order (`_base` first)
+- [x] T050 [P] Create `apps/site/layers/_base/nuxt.config.ts` with alias `@site/base` + scaffold shared folders (`app/components`, `app/composables`, `app/stores`, `app/utils`, `app/middleware`)
+- [x] T051 [P] Create `apps/site/layers/auth/nuxt.config.ts` with alias `@site/auth`
+- [x] T052 [P] Create `apps/site/layers/user/nuxt.config.ts` with alias `@site/user`
+- [x] T053 [P] Create `apps/site/layers/landing/nuxt.config.ts` with alias `@site/landing`
+- [x] T054 Create `apps/site/layers/vacancy/nuxt.config.ts` with alias `@site/vacancy` + update `apps/site/nuxt.config.ts` to extend internal layers in order (`_base` first)
 
 ### 2.8 Admin App Layers Structure
 
