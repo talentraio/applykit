@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-background">
+  <div class="auth-layout min-h-screen bg-background">
     <slot />
   </div>
 </template>
@@ -13,4 +13,5 @@
  *
  * T066 [US1] Auth layout
  */
+defineOptions({ name: 'AuthLayout' })
 </script>

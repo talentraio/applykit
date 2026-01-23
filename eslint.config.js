@@ -1,4 +1,5 @@
 import antfu from '@antfu/eslint-config'
+import eslintConfigPrettier from 'eslint-config-prettier/flat'
 
 export default antfu(
   {
@@ -6,6 +7,7 @@ export default antfu(
     typescript: true,
     vue: true,
     rules: {
+      'antfu/if-newline': 'off',
       'antfu/top-level-function': 'off',
       'ts/consistent-type-definitions': ['error', 'type'],
       'vue/block-order': ['error', { order: ['template', 'script', 'style'] }]
@@ -34,5 +36,11 @@ export default antfu(
     rules: {
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }]
     }
+  },
+  {
+    files: ['apps/**/*.{ts,tsx,vue}'],
+    rules: {
+      'ts/explicit-function-return-type': 'off'
+    }
   }
-)
+).append(eslintConfigPrettier)

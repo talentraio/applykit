@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-4">
+  <div class="resume-uploader space-y-4">
     <!-- Dropzone -->
     <div
       class="relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors"
@@ -72,7 +72,7 @@
     <!-- Error display -->
     <UAlert
       v-if="uploadError"
-      color="red"
+      color="error"
       variant="soft"
       icon="i-lucide-alert-circle"
       :title="$t('resume.error.uploadFailed')"
@@ -92,6 +92,8 @@
  */
 
 import type { Resume } from '@int/schema'
+
+defineOptions({ name: 'ResumeUploader' })
 
 const props = defineProps<{
   /**

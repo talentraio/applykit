@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center p-4">
+  <div class="dashboard-page flex min-h-screen items-center justify-center p-4">
     <UPageCard class="w-full max-w-2xl">
       <template #header>
         <div class="flex items-center justify-between">
@@ -15,7 +15,7 @@
       <div v-if="user" class="space-y-6">
         <div>
           <p class="text-lg text-muted">
-            {{ $t('dashboard.welcome', { name: user.name }) }}
+            {{ $t('dashboard.welcome', { name: user.email.split('@')[0] }) }}
           </p>
         </div>
 
@@ -55,7 +55,10 @@
  * T069 [US1] Dashboard page
  */
 
+defineOptions({ name: 'DashboardPage' })
+
 const { user, logout } = useCurrentUser()
+
 const handleLogout = async () => {
   try {
     await logout()

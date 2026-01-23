@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto max-w-6xl p-4 py-8">
+  <div class="resume-detail-page container mx-auto max-w-6xl p-4 py-8">
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center py-12">
       <UIcon name="i-lucide-loader-2" class="h-8 w-8 animate-spin text-primary" />
@@ -8,7 +8,7 @@
     <!-- Error State -->
     <UAlert
       v-else-if="error || !resume"
-      color="red"
+      color="error"
       variant="soft"
       icon="i-lucide-alert-circle"
       :title="$t('resume.error.fetchFailed')"
@@ -38,7 +38,7 @@
             {{ resume.content.personalInfo.fullName }}
           </p>
         </div>
-        <UButton color="red" variant="soft" icon="i-lucide-trash-2" @click="confirmDelete">
+        <UButton color="error" variant="soft" icon="i-lucide-trash-2" @click="confirmDelete">
           {{ $t('common.delete') }}
         </UButton>
       </div>
@@ -55,7 +55,7 @@
             </p>
             <UBadge
               class="mt-2"
-              :color="resume.sourceFileType === 'pdf' ? 'red' : 'blue'"
+              :color="resume.sourceFileType === 'pdf' ? 'error' : 'primary'"
               variant="soft"
             >
               {{ resume.sourceFileType.toUpperCase() }}
@@ -99,6 +99,7 @@
           { key: 'preview', label: $t('resume.editor.previewTab'), icon: 'i-lucide-eye' }
         ]"
       >
+        <!-- @ts-expect-error NuxtUI v4 doesn't properly infer dynamic slot types from items -->
         <template #editor>
           <UPageCard>
             <ResumeJsonEditor
@@ -111,6 +112,7 @@
           </UPageCard>
         </template>
 
+        <!-- @ts-expect-error NuxtUI v4 doesn't properly infer dynamic slot types from items -->
         <template #preview>
           <UPageCard>
             <div class="prose prose-slate dark:prose-invert max-w-none">
@@ -223,7 +225,7 @@
       <!-- Save Error -->
       <UAlert
         v-if="saveError"
-        color="red"
+        color="error"
         variant="soft"
         icon="i-lucide-alert-circle"
         :title="$t('resume.error.updateFailed')"
@@ -259,7 +261,7 @@
             <UButton color="neutral" variant="soft" @click="showDeleteModal = false">
               {{ $t('common.cancel') }}
             </UButton>
-            <UButton color="red" :loading="isDeleting" @click="handleDelete">
+            <UButton color="error" :loading="isDeleting" @click="handleDelete">
               {{ isDeleting ? $t('resume.delete.deleting') : $t('resume.delete.button') }}
             </UButton>
           </div>
@@ -281,9 +283,9 @@
 
 import type { ResumeContent } from '@int/schema'
 
-definePageMeta({
-  middleware: 'auth'
-})
+defineOptions({ name: 'ResumeDetailPage' })
+
+// Auth is handled by global middleware
 
 const route = useRoute()
 const router = useRouter()

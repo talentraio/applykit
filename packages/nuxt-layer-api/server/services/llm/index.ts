@@ -126,7 +126,10 @@ export async function callLLM(
 
     // Get platform provider preference
     const preferredProvider = await systemConfigRepository.getPlatformProvider()
-    provider = options?.provider || preferredProvider
+    // Map gemini_flash to gemini for LLM provider type
+    const mappedProvider: LLMProvider =
+      preferredProvider === 'gemini_flash' ? 'gemini' : preferredProvider
+    provider = options?.provider || mappedProvider
 
     // Get platform key
     const platformKey = getPlatformKey(provider)

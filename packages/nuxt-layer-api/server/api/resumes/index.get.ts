@@ -8,12 +8,12 @@ import { resumeRepository } from '../../data/repositories'
  *
  * Related: T073 (US2)
  */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event)
 
   // Get resumes for user
-  const resumes = await resumeRepository.findByUserId(session.user.id)
+  const resumes = await resumeRepository.findByUserId((session.user as { id: string }).id)
 
   return resumes
 })

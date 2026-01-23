@@ -1,6 +1,7 @@
 import type { SourceFileType } from '@int/schema'
 import type { Buffer } from 'node:buffer'
 import mammoth from 'mammoth'
+// @ts-expect-error - pdf-parse has issues with ESM types
 import pdfParse from 'pdf-parse'
 
 /**

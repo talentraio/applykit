@@ -50,7 +50,7 @@ export const userRepository = {
         role: data.role ?? 'public'
       })
       .returning()
-    return result[0]
+    return result[0]!
   },
 
   /**

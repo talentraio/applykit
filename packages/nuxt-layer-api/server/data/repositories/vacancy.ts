@@ -58,7 +58,7 @@ export const vacancyRepository = {
         notes: data.notes ?? null
       })
       .returning()
-    return result[0]
+    return result[0]!
   },
 
   /**

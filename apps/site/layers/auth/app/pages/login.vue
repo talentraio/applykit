@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen flex-col items-center justify-center p-4">
+  <div class="auth-login-page flex min-h-screen flex-col items-center justify-center p-4">
     <UPageCard class="w-full max-w-md">
       <UAuthForm :providers="providers" :title="$t('auth.login.welcome')" icon="i-lucide-log-in">
         <template #description>
@@ -11,6 +11,8 @@
 </template>
 
 <script setup lang="ts">
+defineOptions({ name: 'AuthLoginPage' })
+
 const { t } = useI18n()
 
 definePageMeta({

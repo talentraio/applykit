@@ -19,12 +19,10 @@ import * as schema from './schema'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const databaseUrl = process.env.DATABASE_URL
 
-// Type-safe database instance
-type DB =
-  | ReturnType<typeof drizzlePostgres<typeof schema>>
-  | ReturnType<typeof drizzleSQLite<typeof schema>>
+// Type-safe database instance - use PostgreSQL type for consistency
+type PostgresDB = ReturnType<typeof drizzlePostgres<typeof schema>>
 
-const db: DB = (() => {
+const db = (() => {
   if (isDevelopment && !databaseUrl) {
     // SQLite for local development
     const sqlite = new Database('.data/local.db')
@@ -50,7 +48,6 @@ const db: DB = (() => {
 
   console.warn('🗄️  Database: PostgreSQL (production)')
   return instance
-})()
+})() as PostgresDB
 
 export { db }
-export type { DB }

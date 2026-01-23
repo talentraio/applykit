@@ -9,7 +9,7 @@ import { resumeRepository } from '../../data/repositories'
  *
  * Related: T077 (US2)
  */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event)
 
@@ -18,24 +18,24 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       statusCode: 400,
-      message: 'Resume ID is required',
+      message: 'Resume ID is required'
     })
   }
 
   // Check if resume exists and belongs to user
-  const resume = await resumeRepository.findByIdAndUserId(id, session.user.id)
+  const resume = await resumeRepository.findByIdAndUserId(id, (session.user as { id: string }).id)
   if (!resume) {
     throw createError({
       statusCode: 404,
-      message: 'Resume not found',
+      message: 'Resume not found'
     })
   }
 
   // Delete resume
-  await resumeRepository.delete(id, session.user.id)
+  await resumeRepository.delete(id, (session.user as { id: string }).id)
 
   return {
     success: true,
-    message: 'Resume deleted successfully',
+    message: 'Resume deleted successfully'
   }
 })

@@ -77,7 +77,7 @@ export const generationRepository = {
         expiresAt
       })
       .returning()
-    return result[0]
+    return result[0]!
   },
 
   /**

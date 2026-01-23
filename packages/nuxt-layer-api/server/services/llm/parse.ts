@@ -77,7 +77,7 @@ export class ParseLLMError extends Error {
 function extractJSON(text: string): string {
   // Try to find JSON in markdown code block
   const codeBlockMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/)
-  if (codeBlockMatch) {
+  if (codeBlockMatch && codeBlockMatch[1]) {
     return codeBlockMatch[1].trim()
   }
 
@@ -117,10 +117,8 @@ export async function parseResumeWithLLM(
       // Call LLM
       const response = await callLLM(
         {
-          messages: [
-            { role: 'system', content: PARSE_SYSTEM_PROMPT },
-            { role: 'user', content: createParseUserPrompt(text) }
-          ],
+          systemMessage: PARSE_SYSTEM_PROMPT,
+          prompt: createParseUserPrompt(text),
           temperature,
           maxTokens: 4000
         },

@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto max-w-4xl p-4 py-8">
+  <div class="resume-upload-page container mx-auto max-w-4xl p-4 py-8">
     <!-- Header -->
     <div class="mb-8">
       <div class="mb-4">
@@ -43,7 +43,7 @@
     </UPageCard>
 
     <!-- Rate Limit Info -->
-    <UAlert color="blue" variant="soft" icon="i-lucide-zap" class="mt-6">
+    <UAlert color="primary" variant="soft" icon="i-lucide-zap" class="mt-6">
       <template #title> Parse Limits </template>
       <template #description>
         Free users can parse up to 3 resumes per day. Premium users get higher limits or can use
@@ -65,9 +65,9 @@
 
 import type { Resume } from '@int/schema'
 
-definePageMeta({
-  middleware: 'auth'
-})
+defineOptions({ name: 'ResumeUploadPage' })
+
+// Auth is handled by global middleware
 
 const router = useRouter()
 

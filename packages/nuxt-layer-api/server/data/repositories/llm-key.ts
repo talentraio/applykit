@@ -57,7 +57,7 @@ export const llmKeyRepository = {
         .set({ keyHint })
         .where(and(eq(llmKeys.userId, userId), eq(llmKeys.provider, provider)))
         .returning()
-      return result[0]
+      return result[0]!
     } else {
       // Insert new
       const result = await db
@@ -68,7 +68,7 @@ export const llmKeyRepository = {
           keyHint
         })
         .returning()
-      return result[0]
+      return result[0]!
     }
   },
 

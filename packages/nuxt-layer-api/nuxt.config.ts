@@ -10,6 +10,7 @@ export default defineNuxtConfig({
       // Session duration: 7 days
       maxAge: 60 * 60 * 24 * 7,
       name: 'nuxt-session',
+      password: process.env.NUXT_SESSION_PASSWORD || 'change-me-in-production-min-32-chars',
       cookie: {
         sameSite: 'lax',
         // Secure in production (HTTPS), false in dev

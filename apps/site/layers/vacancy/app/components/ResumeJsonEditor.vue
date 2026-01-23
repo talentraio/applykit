@@ -1,12 +1,12 @@
 <template>
-  <div class="space-y-4">
+  <div class="resume-json-editor space-y-4">
     <!-- Toolbar -->
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-2">
-        <UBadge v-if="hasUnsavedChanges" color="amber" variant="soft">
+        <UBadge v-if="hasUnsavedChanges" color="warning" variant="soft">
           {{ $t('resume.editor.unsavedChanges') }}
         </UBadge>
-        <UBadge v-if="saveSuccess" color="green" variant="soft">
+        <UBadge v-if="saveSuccess" color="success" variant="soft">
           {{ $t('resume.editor.saved') }}
         </UBadge>
       </div>
@@ -48,7 +48,7 @@
     <!-- Validation Error -->
     <UAlert
       v-if="validationError"
-      color="red"
+      color="error"
       variant="soft"
       icon="i-lucide-alert-circle"
       :title="$t('resume.editor.invalidJson')"
@@ -86,6 +86,8 @@
 
 import type { ResumeContent } from '@int/schema'
 import { ResumeContentSchema } from '@int/schema'
+
+defineOptions({ name: 'ResumeJsonEditor' })
 
 const props = defineProps<{
   /**
@@ -138,7 +140,11 @@ const parseJson = (): ResumeContent | null => {
     const result = ResumeContentSchema.safeParse(parsed)
 
     if (!result.success) {
-      const errors = result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+      const errors = result.error.errors
+        .map(
+          (e: { path: (string | number)[]; message: string }) => `${e.path.join('.')}: ${e.message}`
+        )
+        .join(', ')
       validationError.value = errors
       return null
     }

@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto max-w-6xl p-4 py-8">
+  <div class="resume-list-page container mx-auto max-w-6xl p-4 py-8">
     <!-- Header -->
     <div class="mb-8 flex items-center justify-between">
       <div>
@@ -23,7 +23,7 @@
     <!-- Error State -->
     <UAlert
       v-else-if="error"
-      color="red"
+      color="error"
       variant="soft"
       icon="i-lucide-alert-circle"
       :title="$t('resume.error.fetchFailed')"
@@ -120,7 +120,7 @@
               {{ $t('common.view') }}
             </UButton>
             <UButton
-              color="red"
+              color="error"
               variant="ghost"
               icon="i-lucide-trash-2"
               size="sm"
@@ -161,7 +161,7 @@
             <UButton color="neutral" variant="soft" @click="cancelDelete">
               {{ $t('common.cancel') }}
             </UButton>
-            <UButton color="red" :loading="isDeleting" @click="handleDelete(deleteConfirmId!)">
+            <UButton color="error" :loading="isDeleting" @click="handleDelete(deleteConfirmId!)">
               {{ isDeleting ? $t('resume.delete.deleting') : $t('resume.delete.button') }}
             </UButton>
           </div>
@@ -181,9 +181,9 @@
  * T082 [US2] Resumes list page
  */
 
-definePageMeta({
-  middleware: 'auth'
-})
+defineOptions({ name: 'ResumesListPage' })
+
+// Auth is handled by global middleware
 
 const router = useRouter()
 const { resumes, loading, error, deleteResume } = useResumes({ immediate: true })
@@ -250,6 +250,6 @@ const formatDate = (date: Date | string) => {
  * Get file type badge color
  */
 const getFileTypeBadge = (type: string) => {
-  return type === 'pdf' ? 'red' : 'blue'
+  return type === 'pdf' ? 'error' : 'primary'
 }
 </script>

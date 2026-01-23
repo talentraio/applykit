@@ -40,7 +40,7 @@ export const usageLogRepository = {
         cost: data.cost?.toString() ?? null
       })
       .returning()
-    return result[0]
+    return result[0]!
   },
 
   /**

@@ -8,7 +8,7 @@ import { resumeRepository } from '../../data/repositories'
  *
  * Related: T075 (US2)
  */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event)
 
@@ -17,17 +17,17 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       statusCode: 400,
-      message: 'Resume ID is required',
+      message: 'Resume ID is required'
     })
   }
 
   // Get resume with ownership check
-  const resume = await resumeRepository.findByIdAndUserId(id, session.user.id)
+  const resume = await resumeRepository.findByIdAndUserId(id, (session.user as { id: string }).id)
 
   if (!resume) {
     throw createError({
       statusCode: 404,
-      message: 'Resume not found',
+      message: 'Resume not found'
     })
   }
 

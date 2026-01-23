@@ -47,7 +47,7 @@ export const profileRepository = {
         phones: data.phones
       })
       .returning()
-    return result[0]
+    return result[0]!
   },
 
   /**

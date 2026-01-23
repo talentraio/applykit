@@ -83,7 +83,7 @@ export class GeminiProvider implements ILLMProvider {
       const response = await ai.models.generateContent({
         model,
         contents,
-        generationConfig: {
+        config: {
           temperature: request.temperature ?? 0.7,
           maxOutputTokens: request.maxTokens
         }
@@ -134,6 +134,10 @@ export class GeminiProvider implements ILLMProvider {
    */
   calculateCost(tokensUsed: number, model: string): number {
     const pricing = PRICING[model] || PRICING[DEFAULT_MODEL]
+
+    if (!pricing) {
+      return 0
+    }
 
     // Estimate: assume 50% input, 50% output tokens
     const inputTokens = tokensUsed * 0.5

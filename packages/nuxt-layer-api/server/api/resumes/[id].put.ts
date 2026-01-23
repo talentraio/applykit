@@ -22,9 +22,13 @@ const UpdateResumeSchema = z
     content: ResumeContentSchema.optional(),
     title: z.string().min(1).max(255).optional()
   })
-  .refine(data => data.content !== undefined || data.title !== undefined, {
-    message: 'At least one of content or title must be provided'
-  })
+  .refine(
+    (data: { content?: unknown; title?: string }) =>
+      data.content !== undefined || data.title !== undefined,
+    {
+      message: 'At least one of content or title must be provided'
+    }
+  )
 
 export default defineEventHandler(async event => {
   // Require authentication
@@ -54,7 +58,10 @@ export default defineEventHandler(async event => {
   const { content, title } = validation.data
 
   // Check if resume exists and belongs to user
-  const existingResume = await resumeRepository.findByIdAndUserId(id, session.user.id)
+  const existingResume = await resumeRepository.findByIdAndUserId(
+    id,
+    (session.user as { id: string }).id
+  )
   if (!existingResume) {
     throw createError({
       statusCode: 404,
@@ -65,7 +72,11 @@ export default defineEventHandler(async event => {
   // Update content if provided
   let updatedResume = existingResume
   if (content) {
-    const result = await resumeRepository.updateContent(id, session.user.id, content)
+    const result = await resumeRepository.updateContent(
+      id,
+      (session.user as { id: string }).id,
+      content
+    )
     if (result) {
       updatedResume = result
     }
@@ -73,7 +84,11 @@ export default defineEventHandler(async event => {
 
   // Update title if provided
   if (title) {
-    const result = await resumeRepository.updateTitle(id, session.user.id, title)
+    const result = await resumeRepository.updateTitle(
+      id,
+      (session.user as { id: string }).id,
+      title
+    )
     if (result) {
       updatedResume = result
     }

@@ -28,15 +28,13 @@ import { logUsage } from '../../utils/usage'
 export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event)
-  const userId = session.user.id
+  const userId = (session.user as { id: string }).id
 
   // Check rate limit
-  await checkRateLimit(event, userId, 'parse')
+  await checkRateLimit(userId, 'parse', { maxRequests: 10, windowSeconds: 60 })
 
   // Parse multipart form data
-  const { files } = await readFiles(event, {
-    includeFields: true
-  })
+  const { files } = await readFiles(event)
 
   // Validate file upload
   const fileArray = files.file
@@ -99,21 +97,13 @@ export default defineEventHandler(async event => {
     })
 
     // Log usage
-    await logUsage({
+    await logUsage(
       userId,
-      operation: 'parse',
-      provider: llmResult.provider,
-      providerType: userApiKey ? 'byok' : 'platform',
-      tokensUsed: llmResult.tokensUsed,
-      cost: llmResult.cost,
-      metadata: {
-        resumeId: resume.id,
-        fileType,
-        wordCount: parseResult.metadata?.wordCount,
-        pageCount: parseResult.metadata?.pageCount,
-        attemptsUsed: llmResult.attemptsUsed
-      }
-    })
+      'parse',
+      userApiKey ? 'byok' : 'platform',
+      llmResult.tokensUsed,
+      llmResult.cost
+    )
 
     return resume
   } catch (error) {
