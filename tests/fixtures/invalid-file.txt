@@ -1,0 +1,4 @@
+This is not a valid resume file.
+It should trigger a validation error when uploaded to the parse endpoint.
+
+Expected error: "Invalid file format. Please upload a DOCX or PDF file."

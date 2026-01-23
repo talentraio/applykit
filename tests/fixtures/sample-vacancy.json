@@ -1,0 +1,7 @@
+{
+  "company": "Tech Corp",
+  "jobPosition": "Senior Software Engineer",
+  "description": "We are looking for a Senior Software Engineer with expertise in:\n\n- TypeScript and Node.js development\n- React and Vue.js frontend frameworks\n- PostgreSQL and Redis databases\n- RESTful API design and implementation\n- CI/CD pipelines and DevOps practices\n- Agile development methodologies\n\nResponsibilities:\n- Design and implement scalable backend services\n- Collaborate with frontend team on API contracts\n- Mentor junior developers\n- Participate in code reviews and architectural decisions\n- Optimize application performance and reliability\n\nRequirements:\n- 5+ years of professional software development experience\n- Strong proficiency in TypeScript/JavaScript\n- Experience with modern web frameworks (React, Vue, or similar)\n- Solid understanding of database design and optimization\n- Excellent problem-solving and communication skills\n- Bachelor's degree in Computer Science or related field\n\nNice to have:\n- Experience with Nuxt or Next.js\n- Knowledge of Docker and Kubernetes\n- Familiarity with AWS or other cloud platforms\n- Open source contributions\n\nWe offer:\n- Competitive salary and equity\n- Remote-first work environment\n- Health insurance and 401(k)\n- Professional development budget\n- Flexible working hours",
+  "url": "https://example.com/jobs/senior-software-engineer",
+  "notes": "This is a sample vacancy for testing. Match score should be high for candidates with TypeScript, React, and Node.js experience."
+}
