@@ -55,8 +55,8 @@ const count = await storage.deleteByPrefix('exports/user-123/')
 The factory automatically selects the appropriate backend:
 
 ```typescript
-// Development (no BLOB_READ_WRITE_TOKEN) → Local filesystem
-// Production (BLOB_READ_WRITE_TOKEN set) → Vercel Blob
+// Development (no NUXT_STORAGE_BLOB_READ_WRITE_TOKEN) → Local filesystem
+// Production (NUXT_STORAGE_BLOB_READ_WRITE_TOKEN set) → Vercel Blob
 const storage = getStorage()
 ```
 
@@ -83,7 +83,7 @@ const storage = createStorage({
 ### Vercel Blob Storage (Production)
 
 - **Package**: `@vercel/blob`
-- **Environment**: `BLOB_READ_WRITE_TOKEN`
+- **Environment**: `NUXT_STORAGE_BLOB_READ_WRITE_TOKEN`
 - **Features**:
   - CDN-backed global distribution
   - Automatic HTTPS URLs
@@ -94,7 +94,7 @@ const storage = createStorage({
 
 ```bash
 # Auto-detected on Vercel
-BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
+NUXT_STORAGE_BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 ```
 
 ### Local Filesystem (Development)
@@ -110,10 +110,10 @@ BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 
 ```bash
 # Optional: Custom base directory
-STORAGE_BASE_DIR=/custom/path
+NUXT_STORAGE_BASE_DIR=/custom/path
 
 # Optional: Custom base URL
-STORAGE_BASE_URL=http://localhost:3000/files
+NUXT_STORAGE_BASE_URL=http://localhost:3000/files
 ```
 
 ## Storage Adapter Interface

@@ -81,13 +81,13 @@
  * JSON editor for viewing and editing parsed resume content
  * Includes validation and save functionality
  *
- * T081 [US2] ResumeJsonEditor component
+ * T081 [US2] UserResumeJsonEditor component
  */
 
 import type { ResumeContent } from '@int/schema'
 import { ResumeContentSchema } from '@int/schema'
 
-defineOptions({ name: 'ResumeJsonEditor' })
+defineOptions({ name: 'UserResumeJsonEditor' })
 
 const props = defineProps<{
   /**

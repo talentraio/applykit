@@ -1,7 +1,8 @@
-export default defineNuxtConfig({
-  alias: {
-    '@admin/users': import.meta.url,
-  },
+import { fileURLToPath } from 'node:url'
 
-  compatibilityDate: '2024-04-03',
+export default defineNuxtConfig({
+  compatibilityDate: '2026-01-22',
+
+  alias: { '@admin/users': fileURLToPath(new URL('./', import.meta.url)) },
+  components: [{ path: '@admin/users/components', prefix: 'Users' }]
 })

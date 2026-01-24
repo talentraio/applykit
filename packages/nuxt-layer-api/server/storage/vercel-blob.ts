@@ -1,20 +1,21 @@
 import type { PutOptions, StorageAdapter } from './types'
 import { Buffer } from 'node:buffer'
-import process from 'node:process'
 import { del, head, list, put } from '@vercel/blob'
 
 /**
  * Vercel Blob Storage Adapter
  *
  * Production storage backend using Vercel Blob Storage
- * Automatically uses BLOB_READ_WRITE_TOKEN from environment
+ * Automatically uses NUXT_STORAGE_BLOB_READ_WRITE_TOKEN from environment
  */
 export class VercelBlobAdapter implements StorageAdapter {
   private token?: string
 
   constructor(token?: string) {
+    const runtimeConfig = useRuntimeConfig()
+
     // Token is optional - Vercel auto-detects in production
-    this.token = token || process.env.BLOB_READ_WRITE_TOKEN
+    this.token = token || runtimeConfig.storage?.blobReadWriteToken
   }
 
   async put(path: string, data: Buffer | Blob, options?: PutOptions): Promise<string> {

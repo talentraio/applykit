@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync } from 'node:fs'
+import { dirname } from 'node:path'
 import process from 'node:process'
 import Database from 'better-sqlite3'
 import { drizzle as drizzleSQLite } from 'drizzle-orm/better-sqlite3'
@@ -8,34 +10,46 @@ import * as schema from './schema'
 /**
  * Database connection with environment-based configuration
  *
- * - SQLite for local development (file: .data/local.db)
- * - PostgreSQL for production (connection string from env)
+ * - SQLite for local development (path from runtimeConfig.db.sqlitePath)
+ * - PostgreSQL for production (connection string from runtimeConfig)
  *
  * Environment variables:
- * - DATABASE_URL: PostgreSQL connection string (production)
+ * - NUXT_DATABASE_URL: PostgreSQL connection string (production)
  * - NODE_ENV: 'production' or 'development'
  */
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
-const databaseUrl = process.env.DATABASE_URL
 
 // Type-safe database instance - use PostgreSQL type for consistency
 type PostgresDB = ReturnType<typeof drizzlePostgres<typeof schema>>
 
 const db = (() => {
+  const runtimeConfig = useRuntimeConfig()
+  const sqlitePath = runtimeConfig.db?.sqlitePath
+  const databaseUrl = runtimeConfig.databaseUrl
+
   if (isDevelopment && !databaseUrl) {
     // SQLite for local development
-    const sqlite = new Database('.data/local.db')
+    if (!sqlitePath) {
+      throw new Error('runtimeConfig.db.sqlitePath is required for SQLite local development')
+    }
+
+    const dbDir = dirname(sqlitePath)
+    if (!existsSync(dbDir)) {
+      mkdirSync(dbDir, { recursive: true })
+    }
+
+    const sqlite = new Database(sqlitePath)
     sqlite.pragma('journal_mode = WAL') // Better concurrency
     const instance = drizzleSQLite(sqlite, { schema })
 
-    console.warn('🗄️  Database: SQLite (local development)')
+    console.warn(`🗄️  Database: SQLite (local development) at ${sqlitePath}`)
     return instance
   }
 
   // PostgreSQL for production
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL environment variable is required for production')
+    throw new Error('NUXT_DATABASE_URL environment variable is required for production')
   }
 
   const client = postgres(databaseUrl, {

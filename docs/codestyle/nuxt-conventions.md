@@ -34,6 +34,13 @@ Recommended:
   - minimal: forward headers/cookies on server, attach required headers
   - no extra magic in MVP
 
+## Environment variables (runtimeConfig)
+
+- Use `useRuntimeConfig()` for all Nuxt runtime values.
+- Do **not** read `process.env` in runtime code (except `NODE_ENV`); reserve it for CLI configs.
+- Env vars must use `NUXT_` (server-only) or `NUXT_PUBLIC_` (client-exposed) prefixes.
+- In `nuxt.config.ts`, provide **defaults only**; rely on Nuxt env injection for overrides.
+
 ## Versions & documentation
 
 - Nuxt: **v4**

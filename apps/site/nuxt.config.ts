@@ -1,4 +1,8 @@
+import { fileURLToPath } from 'node:url'
+
 export default defineNuxtConfig({
+  compatibilityDate: '2026-01-22',
+
   extends: [
     '@int/ui',
     '@int/api',
@@ -10,14 +14,16 @@ export default defineNuxtConfig({
     './layers/vacancy'
   ],
 
-  compatibilityDate: '2024-04-03',
-
   devtools: {
     enabled: true
   },
 
   typescript: {
     strict: true,
-    typeCheck: true
-  }
+    // Disable typeCheck in dev to avoid blocking on known NuxtUI v4 type issues
+    // Run `pnpm typecheck` separately for type validation
+    typeCheck: false
+  },
+
+  alias: { '@site': fileURLToPath(new URL('./', import.meta.url)) }
 })

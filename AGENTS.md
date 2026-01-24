@@ -42,4 +42,6 @@
 ## Configuration & Secrets
 
 - Copy `.env.example` to `.env` and fill required values (OAuth, DB, storage).
-- `DATABASE_URL` is optional for local development (SQLite is used if unset).
+- Use `useRuntimeConfig()` for env values; avoid `process.env` in runtime code (except `NODE_ENV`).
+- Env vars must use `NUXT_` (server-only) or `NUXT_PUBLIC_` (client-exposed) prefixes; set defaults only in `nuxt.config.ts`.
+- `NUXT_DATABASE_URL` is optional for local development (SQLite is used if unset).

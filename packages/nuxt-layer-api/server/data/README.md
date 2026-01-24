@@ -17,7 +17,7 @@ This directory contains the complete database infrastructure:
 
 ```bash
 # No setup needed - SQLite file created automatically
-# Database location: packages/nuxt-layer-api/.data/local.db
+# Database location (default): packages/nuxt-layer-api/.data/local.db (runtimeConfig.db.sqlitePath)
 pnpm dev
 ```
 
@@ -25,7 +25,7 @@ pnpm dev
 
 ```bash
 # Set environment variable
-export DATABASE_URL="postgresql://user:pass@host:5432/dbname"
+export NUXT_DATABASE_URL="postgresql://user:pass@host:5432/dbname"
 ```
 
 ## Schema
@@ -193,10 +193,10 @@ server/data/
 
 ## Environment Variables
 
-| Variable       | Required        | Default     | Purpose                      |
-| -------------- | --------------- | ----------- | ---------------------------- |
-| `DATABASE_URL` | Production only | -           | PostgreSQL connection string |
-| `NODE_ENV`     | No              | development | Environment mode             |
+| Variable            | Required        | Default     | Purpose                      |
+| ------------------- | --------------- | ----------- | ---------------------------- |
+| `NUXT_DATABASE_URL` | Production only | -           | PostgreSQL connection string |
+| `NODE_ENV`          | No              | development | Environment mode             |
 
 ## Repository Methods Summary
 

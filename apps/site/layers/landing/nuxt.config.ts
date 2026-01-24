@@ -1,7 +1,8 @@
-export default defineNuxtConfig({
-  alias: {
-    '@site/landing': import.meta.url,
-  },
+import { fileURLToPath } from 'node:url'
 
-  compatibilityDate: '2024-04-03',
+export default defineNuxtConfig({
+  compatibilityDate: '2026-01-22',
+
+  alias: { '@site/landing': fileURLToPath(new URL('./', import.meta.url)) },
+  components: [{ path: '@site/landing/components', prefix: 'Landing' }]
 })

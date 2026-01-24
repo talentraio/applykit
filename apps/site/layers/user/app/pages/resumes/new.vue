@@ -17,7 +17,7 @@
 
     <!-- Upload Card -->
     <UPageCard>
-      <ResumeUploader
+      <UserResumeUploader
         :loading="isUploading"
         @upload="handleUpload"
         @success="handleSuccess"

@@ -266,7 +266,7 @@ test.describe.skip('Happy Path - Complete User Journey', () => {
  *    - NUXT_SESSION_PASSWORD=test-session-password-32-chars
  *    - NUXT_OAUTH_GOOGLE_CLIENT_ID=test-client-id
  *    - NUXT_OAUTH_GOOGLE_CLIENT_SECRET=test-client-secret
- *    - DATABASE_URL=postgresql://test:test@localhost:5432/test_db
+ *    - NUXT_DATABASE_URL=postgresql://test:test@localhost:5432/test_db
  *
  * 2. Test Database:
  *    - Run: pnpm db:migrate

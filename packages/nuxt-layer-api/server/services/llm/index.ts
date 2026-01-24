@@ -1,6 +1,5 @@
 import type { LLMProvider } from '@int/schema'
 import type { ILLMProvider, LLMRequest, LLMResponse } from './types'
-import process from 'node:process'
 import { systemConfigRepository } from '../../data/repositories'
 import { createGeminiProvider } from './providers/gemini'
 import { createOpenAIProvider } from './providers/openai'
@@ -50,13 +49,15 @@ export function getProvider(provider: LLMProvider): ILLMProvider {
 }
 
 /**
- * Get platform API key for provider from environment
+ * Get platform API key for provider from runtime config
  */
 function getPlatformKey(provider: LLMProvider): string | undefined {
+  const runtimeConfig = useRuntimeConfig()
+
   if (provider === 'openai') {
-    return process.env.OPENAI_API_KEY
+    return runtimeConfig.llm?.openaiApiKey
   } else if (provider === 'gemini') {
-    return process.env.GEMINI_API_KEY
+    return runtimeConfig.llm?.geminiApiKey
   }
   return undefined
 }

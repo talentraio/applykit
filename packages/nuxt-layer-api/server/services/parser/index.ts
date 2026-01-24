@@ -1,8 +1,7 @@
 import type { SourceFileType } from '@int/schema'
 import type { Buffer } from 'node:buffer'
 import mammoth from 'mammoth'
-// @ts-expect-error - pdf-parse has issues with ESM types
-import pdfParse from 'pdf-parse'
+import { PDFParse } from 'pdf-parse'
 
 /**
  * Document Parser Service
@@ -93,19 +92,24 @@ async function parseDocx(buffer: Buffer): Promise<ParseResult> {
  * @returns Extracted text
  */
 async function parsePdf(buffer: Buffer): Promise<ParseResult> {
-  try {
-    const data = await pdfParse(buffer)
+  let parser: InstanceType<typeof PDFParse> | null = null
 
-    if (!data.text || data.text.trim().length === 0) {
+  try {
+    // pdf-parse v2.x uses class-based API
+    parser = new PDFParse({ data: buffer })
+    const result = await parser.getText()
+    const info = await parser.getInfo()
+
+    if (!result.text || result.text.trim().length === 0) {
       throw new ParseError('PDF file contains no text', 'pdf', 'EMPTY_FILE')
     }
 
-    const wordCount = data.text.trim().split(/\s+/).length
+    const wordCount = result.text.trim().split(/\s+/).length
 
     return {
-      text: data.text,
+      text: result.text,
       metadata: {
-        pageCount: data.numpages,
+        pageCount: info.total,
         wordCount
       }
     }
@@ -119,6 +123,11 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
       'pdf',
       'PARSE_FAILED'
     )
+  } finally {
+    // Always destroy parser to free resources
+    if (parser) {
+      await parser.destroy()
+    }
   }
 }
 

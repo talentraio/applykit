@@ -92,17 +92,10 @@
       </UPageCard>
 
       <!-- Tabs -->
-      <UTabs
-        v-model="activeTab"
-        :items="[
-          { key: 'editor', label: $t('resume.editor.jsonTab'), icon: 'i-lucide-code' },
-          { key: 'preview', label: $t('resume.editor.previewTab'), icon: 'i-lucide-eye' }
-        ]"
-      >
-        <!-- @ts-expect-error NuxtUI v4 doesn't properly infer dynamic slot types from items -->
+      <UTabs v-model="activeTab" :items="tabItems">
         <template #editor>
           <UPageCard>
-            <ResumeJsonEditor
+            <UserResumeJsonEditor
               v-if="resume"
               :model-value="resume.content"
               :resume-id="resume.id"
@@ -112,7 +105,6 @@
           </UPageCard>
         </template>
 
-        <!-- @ts-expect-error NuxtUI v4 doesn't properly infer dynamic slot types from items -->
         <template #preview>
           <UPageCard>
             <div class="prose prose-slate dark:prose-invert max-w-none">
@@ -294,6 +286,21 @@ const { t } = useI18n()
 const resumeId = computed(() => route.params.id as string)
 
 const { current: resume, loading, error, fetchResume, deleteResume } = useResumes()
+
+const tabItems = computed(() => [
+  {
+    label: t('resume.editor.jsonTab'),
+    icon: 'i-lucide-code',
+    value: 'editor',
+    slot: 'editor'
+  },
+  {
+    label: t('resume.editor.previewTab'),
+    icon: 'i-lucide-eye',
+    value: 'preview',
+    slot: 'preview'
+  }
+])
 
 const showDeleteModal = ref(false)
 const isDeleting = ref(false)

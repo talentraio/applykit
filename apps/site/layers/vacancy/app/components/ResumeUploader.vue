@@ -93,7 +93,7 @@
 
 import type { Resume } from '@int/schema'
 
-defineOptions({ name: 'ResumeUploader' })
+defineOptions({ name: 'UserResumeUploader' })
 
 const props = defineProps<{
   /**

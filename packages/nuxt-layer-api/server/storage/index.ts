@@ -35,8 +35,9 @@ export function createStorage(config?: StorageConfig): StorageAdapter {
   }
 
   // Auto-detect based on environment
+  const runtimeConfig = useRuntimeConfig()
   const isDevelopment = process.env.NODE_ENV === 'development'
-  const hasVercelToken = Boolean(process.env.BLOB_READ_WRITE_TOKEN)
+  const hasVercelToken = Boolean(runtimeConfig.storage?.blobReadWriteToken)
 
   // Use local storage in development unless Vercel token is explicitly provided
   if (isDevelopment && !hasVercelToken) {
