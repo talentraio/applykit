@@ -1,18 +1,21 @@
-import { put, del, head, list } from '@vercel/blob'
-import type { StorageAdapter, PutOptions } from './types'
+import type { PutOptions, StorageAdapter } from './types'
+import { Buffer } from 'node:buffer'
+import { del, head, list, put } from '@vercel/blob'
 
 /**
  * Vercel Blob Storage Adapter
  *
  * Production storage backend using Vercel Blob Storage
- * Automatically uses BLOB_READ_WRITE_TOKEN from environment
+ * Automatically uses NUXT_STORAGE_BLOB_READ_WRITE_TOKEN from environment
  */
 export class VercelBlobAdapter implements StorageAdapter {
   private token?: string
 
   constructor(token?: string) {
+    const runtimeConfig = useRuntimeConfig()
+
     // Token is optional - Vercel auto-detects in production
-    this.token = token || process.env.BLOB_READ_WRITE_TOKEN
+    this.token = token || runtimeConfig.storage?.blobReadWriteToken
   }
 
   async put(path: string, data: Buffer | Blob, options?: PutOptions): Promise<string> {
@@ -21,14 +24,17 @@ export class VercelBlobAdapter implements StorageAdapter {
         access: 'public',
         token: this.token,
         contentType: options?.contentType,
-        cacheControlMaxAge: options?.cacheControl ? this.parseCacheControl(options.cacheControl) : undefined,
-        addRandomSuffix: false, // We control the path exactly
+        cacheControlMaxAge: options?.cacheControl
+          ? this.parseCacheControl(options.cacheControl)
+          : undefined,
+        addRandomSuffix: false // We control the path exactly
       })
 
       return blob.url
-    }
-    catch (error) {
-      throw new Error(`Failed to upload file to Vercel Blob: ${error instanceof Error ? error.message : String(error)}`)
+    } catch (error) {
+      throw new Error(
+        `Failed to upload file to Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -48,13 +54,14 @@ export class VercelBlobAdapter implements StorageAdapter {
 
       const arrayBuffer = await response.arrayBuffer()
       return Buffer.from(arrayBuffer)
-    }
-    catch (error) {
+    } catch (error) {
       // If head() throws 404, file doesn't exist
       if (error instanceof Error && error.message.includes('not found')) {
         return null
       }
-      throw new Error(`Failed to get file from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`)
+      throw new Error(
+        `Failed to get file from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -64,13 +71,14 @@ export class VercelBlobAdapter implements StorageAdapter {
       const metadata = await head(path, { token: this.token })
       await del(metadata.url, { token: this.token })
       return true
-    }
-    catch (error) {
+    } catch (error) {
       // If file doesn't exist, return false
       if (error instanceof Error && error.message.includes('not found')) {
         return false
       }
-      throw new Error(`Failed to delete file from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`)
+      throw new Error(
+        `Failed to delete file from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -78,9 +86,10 @@ export class VercelBlobAdapter implements StorageAdapter {
     try {
       const metadata = await head(path, { token: this.token })
       return metadata.url
-    }
-    catch (error) {
-      throw new Error(`Failed to get URL from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`)
+    } catch (error) {
+      throw new Error(
+        `Failed to get URL from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -89,13 +98,14 @@ export class VercelBlobAdapter implements StorageAdapter {
       const result = await list({
         prefix,
         token: this.token,
-        limit: 1000, // Vercel Blob default limit
+        limit: 1000 // Vercel Blob default limit
       })
 
       return result.blobs.map(blob => blob.pathname)
-    }
-    catch (error) {
-      throw new Error(`Failed to list files from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`)
+    } catch (error) {
+      throw new Error(
+        `Failed to list files from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -105,7 +115,7 @@ export class VercelBlobAdapter implements StorageAdapter {
       const result = await list({
         prefix,
         token: this.token,
-        limit: 1000,
+        limit: 1000
       })
 
       if (result.blobs.length === 0) {
@@ -117,9 +127,10 @@ export class VercelBlobAdapter implements StorageAdapter {
       await del(urls, { token: this.token })
 
       return result.blobs.length
-    }
-    catch (error) {
-      throw new Error(`Failed to delete files by prefix from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`)
+    } catch (error) {
+      throw new Error(
+        `Failed to delete files by prefix from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 

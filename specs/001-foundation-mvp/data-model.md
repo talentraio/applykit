@@ -66,7 +66,7 @@ Primary identity for authenticated users.
 
 ```typescript
 // packages/nuxt-layer-api/server/data/schema.ts
-import { pgTable, uuid, varchar, timestamp, pgEnum } from 'drizzle-orm/pg-core'
+import { pgEnum, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 
 export const roleEnum = pgEnum('role', ['super_admin', 'friend', 'public'])
 
@@ -76,7 +76,7 @@ export const users = pgTable('users', {
   googleId: varchar('google_id', { length: 255 }).notNull().unique(),
   role: roleEnum('role').notNull().default('public'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
 ```
 
@@ -95,7 +95,7 @@ export const UserSchema = z.object({
   googleId: z.string(),
   role: RoleSchema,
   createdAt: z.date(),
-  updatedAt: z.date(),
+  updatedAt: z.date()
 })
 
 export type User = z.infer<typeof UserSchema>
@@ -106,6 +106,7 @@ export type UserPublic = z.infer<typeof UserPublicSchema>
 ```
 
 #### Indexes
+
 - `email` (unique)
 - `googleId` (unique)
 
@@ -122,7 +123,10 @@ export const workFormatEnum = pgEnum('work_format', ['remote', 'hybrid', 'onsite
 
 export const profiles = pgTable('profiles', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
   firstName: varchar('first_name', { length: 100 }).notNull(),
   lastName: varchar('last_name', { length: 100 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
@@ -132,7 +136,7 @@ export const profiles = pgTable('profiles', {
   languages: jsonb('languages').notNull().$type<LanguageEntry[]>(),
   phones: jsonb('phones').$type<PhoneEntry[]>(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
 ```
 
@@ -147,13 +151,13 @@ export type WorkFormat = z.infer<typeof WorkFormatSchema>
 
 export const LanguageEntrySchema = z.object({
   language: z.string().min(1),
-  level: z.string().min(1), // e.g., "Native", "Fluent", "Intermediate", "Basic"
+  level: z.string().min(1) // e.g., "Native", "Fluent", "Intermediate", "Basic"
 })
 export type LanguageEntry = z.infer<typeof LanguageEntrySchema>
 
 export const PhoneEntrySchema = z.object({
   number: z.string().min(1),
-  label: z.string().optional(), // e.g., "Mobile", "Work"
+  label: z.string().optional() // e.g., "Mobile", "Work"
 })
 export type PhoneEntry = z.infer<typeof PhoneEntrySchema>
 
@@ -169,7 +173,7 @@ export const ProfileSchema = z.object({
   languages: z.array(LanguageEntrySchema).min(1),
   phones: z.array(PhoneEntrySchema).optional(),
   createdAt: z.date(),
-  updatedAt: z.date(),
+  updatedAt: z.date()
 })
 
 export type Profile = z.infer<typeof ProfileSchema>
@@ -179,12 +183,12 @@ export const ProfileInputSchema = ProfileSchema.omit({
   id: true,
   userId: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 })
 export type ProfileInput = z.infer<typeof ProfileInputSchema>
 
 // Profile completeness check
-export const isProfileComplete = (profile: Profile | null): boolean => {
+export function isProfileComplete(profile: Profile | null): boolean {
   if (!profile) return false
   return (
     profile.firstName.length > 0 &&
@@ -198,6 +202,7 @@ export const isProfileComplete = (profile: Profile | null): boolean => {
 ```
 
 #### Indexes
+
 - `userId` (unique, FK)
 
 ---
@@ -213,13 +218,15 @@ export const sourceFileTypeEnum = pgEnum('source_file_type', ['docx', 'pdf'])
 
 export const resumes = pgTable('resumes', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   title: varchar('title', { length: 255 }).notNull(),
   content: jsonb('content').notNull().$type<ResumeContent>(),
   sourceFileName: varchar('source_file_name', { length: 255 }).notNull(),
   sourceFileType: sourceFileTypeEnum('source_file_type').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
 ```
 
@@ -238,12 +245,12 @@ export const PersonalInfoSchema = z.object({
   phone: z.string().optional(),
   location: z.string().optional(),
   linkedin: z.string().url().optional(),
-  website: z.string().url().optional(),
+  website: z.string().url().optional()
 })
 
 export const ExperienceLinkSchema = z.object({
   name: z.string().min(1),
-  link: z.string().url(),
+  link: z.string().url()
 })
 
 export const ExperienceEntrySchema = z.object({
@@ -253,7 +260,7 @@ export const ExperienceEntrySchema = z.object({
   endDate: DateMonthSchema.nullable().optional(), // null = "present"
   description: z.string(),
   projects: z.array(z.string()).optional(),
-  links: z.array(ExperienceLinkSchema).optional(),
+  links: z.array(ExperienceLinkSchema).optional()
 })
 
 export const EducationEntrySchema = z.object({
@@ -261,18 +268,18 @@ export const EducationEntrySchema = z.object({
   degree: z.string().min(1),
   field: z.string().optional(),
   startDate: DateMonthSchema,
-  endDate: DateMonthSchema.optional(),
+  endDate: DateMonthSchema.optional()
 })
 
 export const CertificationEntrySchema = z.object({
   name: z.string().min(1),
   issuer: z.string().optional(),
-  date: DateMonthSchema.optional(),
+  date: DateMonthSchema.optional()
 })
 
 export const ResumeLanguageSchema = z.object({
   language: z.string().min(1),
-  level: z.string().min(1),
+  level: z.string().min(1)
 })
 
 export const ResumeContentSchema = z.object({
@@ -282,7 +289,7 @@ export const ResumeContentSchema = z.object({
   education: z.array(EducationEntrySchema),
   skills: z.array(z.string()),
   certifications: z.array(CertificationEntrySchema).optional(),
-  languages: z.array(ResumeLanguageSchema).optional(),
+  languages: z.array(ResumeLanguageSchema).optional()
 })
 
 export type ResumeContent = z.infer<typeof ResumeContentSchema>
@@ -298,13 +305,14 @@ export const ResumeSchema = z.object({
   sourceFileName: z.string().min(1).max(255),
   sourceFileType: SourceFileTypeSchema,
   createdAt: z.date(),
-  updatedAt: z.date(),
+  updatedAt: z.date()
 })
 
 export type Resume = z.infer<typeof ResumeSchema>
 ```
 
 #### Indexes
+
 - `userId` (FK)
 - `createdAt` (for sorting)
 
@@ -319,14 +327,16 @@ Job vacancy created by user.
 ```typescript
 export const vacancies = pgTable('vacancies', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   company: varchar('company', { length: 255 }).notNull(),
   jobPosition: varchar('job_position', { length: 255 }),
   description: text('description').notNull(),
   url: varchar('url', { length: 2048 }),
   notes: text('notes'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
 ```
 
@@ -345,7 +355,7 @@ export const VacancySchema = z.object({
   url: z.string().url().max(2048).nullable().optional(),
   notes: z.string().nullable().optional(),
   createdAt: z.date(),
-  updatedAt: z.date(),
+  updatedAt: z.date()
 })
 
 export type Vacancy = z.infer<typeof VacancySchema>
@@ -354,20 +364,19 @@ export const VacancyInputSchema = VacancySchema.omit({
   id: true,
   userId: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 })
 
 export type VacancyInput = z.infer<typeof VacancyInputSchema>
 
 // Display title helper
-export const getVacancyTitle = (vacancy: Vacancy): string => {
-  return vacancy.jobPosition
-    ? `${vacancy.company} (${vacancy.jobPosition})`
-    : vacancy.company
+export function getVacancyTitle(vacancy: Vacancy): string {
+  return vacancy.jobPosition ? `${vacancy.company} (${vacancy.jobPosition})` : vacancy.company
 }
 ```
 
 #### Indexes
+
 - `userId` (FK)
 - `createdAt` (for sorting)
 
@@ -382,13 +391,17 @@ Tailored resume version generated for a vacancy.
 ```typescript
 export const generations = pgTable('generations', {
   id: uuid('id').primaryKey().defaultRandom(),
-  vacancyId: uuid('vacancy_id').notNull().references(() => vacancies.id, { onDelete: 'cascade' }),
-  resumeId: uuid('resume_id').notNull().references(() => resumes.id, { onDelete: 'cascade' }),
+  vacancyId: uuid('vacancy_id')
+    .notNull()
+    .references(() => vacancies.id, { onDelete: 'cascade' }),
+  resumeId: uuid('resume_id')
+    .notNull()
+    .references(() => resumes.id, { onDelete: 'cascade' }),
   content: jsonb('content').notNull().$type<ResumeContent>(),
   matchScoreBefore: integer('match_score_before').notNull(),
   matchScoreAfter: integer('match_score_after').notNull(),
   generatedAt: timestamp('generated_at').notNull().defaultNow(),
-  expiresAt: timestamp('expires_at').notNull(), // 90 days from generation
+  expiresAt: timestamp('expires_at').notNull() // 90 days from generation
 })
 ```
 
@@ -407,13 +420,13 @@ export const GenerationSchema = z.object({
   matchScoreBefore: z.number().int().min(0).max(100),
   matchScoreAfter: z.number().int().min(0).max(100),
   generatedAt: z.date(),
-  expiresAt: z.date(),
+  expiresAt: z.date()
 })
 
 export type Generation = z.infer<typeof GenerationSchema>
 
 // Days until expiration helper
-export const getDaysUntilExpiration = (generation: Generation): number => {
+export function getDaysUntilExpiration(generation: Generation): number {
   const now = new Date()
   const diff = generation.expiresAt.getTime() - now.getTime()
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
@@ -421,6 +434,7 @@ export const getDaysUntilExpiration = (generation: Generation): number => {
 ```
 
 #### Indexes
+
 - `vacancyId` (FK)
 - `resumeId` (FK)
 - `generatedAt` (for getting latest)
@@ -439,10 +453,12 @@ export const llmProviderEnum = pgEnum('llm_provider', ['openai', 'gemini'])
 
 export const llmKeys = pgTable('llm_keys', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   provider: llmProviderEnum('provider').notNull(),
   keyHint: varchar('key_hint', { length: 4 }).notNull(), // last 4 chars
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: timestamp('created_at').notNull().defaultNow()
 })
 ```
 
@@ -460,13 +476,14 @@ export const LLMKeySchema = z.object({
   userId: z.string().uuid(),
   provider: LLMProviderSchema,
   keyHint: z.string().length(4),
-  createdAt: z.date(),
+  createdAt: z.date()
 })
 
 export type LLMKey = z.infer<typeof LLMKeySchema>
 ```
 
 #### Indexes
+
 - `userId` (FK)
 - `(userId, provider)` (unique - one key per provider per user)
 
@@ -484,12 +501,14 @@ export const providerTypeEnum = pgEnum('provider_type', ['platform', 'byok'])
 
 export const usageLogs = pgTable('usage_logs', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   operation: operationEnum('operation').notNull(),
   providerType: providerTypeEnum('provider_type').notNull(),
   tokensUsed: integer('tokens_used'),
   cost: decimal('cost', { precision: 10, scale: 6 }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: timestamp('created_at').notNull().defaultNow()
 })
 ```
 
@@ -512,13 +531,14 @@ export const UsageLogSchema = z.object({
   providerType: ProviderTypeSchema,
   tokensUsed: z.number().int().nullable().optional(),
   cost: z.number().nullable().optional(),
-  createdAt: z.date(),
+  createdAt: z.date()
 })
 
 export type UsageLog = z.infer<typeof UsageLogSchema>
 ```
 
 #### Indexes
+
 - `userId` (FK)
 - `createdAt` (for daily aggregation)
 - `(userId, operation, createdAt)` (for limit checking)
@@ -535,7 +555,7 @@ Key-value store for system-wide configuration.
 export const systemConfigs = pgTable('system_configs', {
   key: varchar('key', { length: 100 }).primaryKey(),
   value: jsonb('value').notNull(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
 ```
 
@@ -550,7 +570,7 @@ export const SystemConfigKeySchema = z.enum([
   'byok_enabled',
   'platform_provider',
   'global_budget_cap',
-  'global_budget_used',
+  'global_budget_used'
 ])
 
 export type SystemConfigKey = z.infer<typeof SystemConfigKeySchema>
@@ -564,7 +584,7 @@ export const SystemConfigValues = {
   byok_enabled: z.boolean(),
   platform_provider: PlatformProviderSchema,
   global_budget_cap: z.number().positive(),
-  global_budget_used: z.number().min(0),
+  global_budget_used: z.number().min(0)
 } as const
 
 // Default values
@@ -573,11 +593,12 @@ export const SystemConfigDefaults: Record<SystemConfigKey, unknown> = {
   byok_enabled: true,
   platform_provider: 'openai',
   global_budget_cap: 100, // $100/month
-  global_budget_used: 0,
+  global_budget_used: 0
 }
 ```
 
 #### Notes
+
 - Key-value store for flexibility
 - Typed access via helper functions
 - Cached in memory, invalidated on update
@@ -716,11 +737,11 @@ INSERT INTO system_configs (key, value) VALUES
 Example repository pattern for User entity:
 
 ```typescript
+import type { User, UserPublic } from '@int/schema'
 // packages/nuxt-layer-api/server/data/repositories/user.ts
 import { eq } from 'drizzle-orm'
 import { db } from '../db'
 import { users } from '../schema'
-import type { User, UserPublic } from '@int/schema'
 
 export const userRepository = {
   async findById(id: string): Promise<User | null> {
@@ -750,7 +771,7 @@ export const userRepository = {
       .where(eq(users.id, id))
       .returning()
     return result[0] ?? null
-  },
+  }
 }
 ```
 

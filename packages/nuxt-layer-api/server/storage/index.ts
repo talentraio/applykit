@@ -1,6 +1,7 @@
 import type { StorageAdapter, StorageConfig } from './types'
-import { createVercelBlobAdapter } from './vercel-blob'
+import process from 'node:process'
 import { createLocalAdapter } from './local'
+import { createVercelBlobAdapter } from './vercel-blob'
 
 /**
  * Storage Factory
@@ -34,8 +35,9 @@ export function createStorage(config?: StorageConfig): StorageAdapter {
   }
 
   // Auto-detect based on environment
+  const runtimeConfig = useRuntimeConfig()
   const isDevelopment = process.env.NODE_ENV === 'development'
-  const hasVercelToken = Boolean(process.env.BLOB_READ_WRITE_TOKEN)
+  const hasVercelToken = Boolean(runtimeConfig.storage?.blobReadWriteToken)
 
   // Use local storage in development unless Vercel token is explicitly provided
   if (isDevelopment && !hasVercelToken) {
@@ -72,4 +74,4 @@ export function resetStorage(): void {
 }
 
 // Re-export types
-export type { StorageAdapter, PutOptions, StorageConfig } from './types'
+export type { PutOptions, StorageAdapter, StorageConfig } from './types'

@@ -9,7 +9,7 @@ export const VacancySchema = z.object({
   url: z.string().url().max(2048).nullable().optional(),
   notes: z.string().nullable().optional(),
   createdAt: z.date(),
-  updatedAt: z.date(),
+  updatedAt: z.date()
 })
 
 export type Vacancy = z.infer<typeof VacancySchema>
@@ -18,14 +18,12 @@ export const VacancyInputSchema = VacancySchema.omit({
   id: true,
   userId: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 })
 
 export type VacancyInput = z.infer<typeof VacancyInputSchema>
 
 // Display title helper
-export const getVacancyTitle = (vacancy: Vacancy): string => {
-  return vacancy.jobPosition
-    ? `${vacancy.company} (${vacancy.jobPosition})`
-    : vacancy.company
+export function getVacancyTitle(vacancy: Vacancy): string {
+  return vacancy.jobPosition ? `${vacancy.company} (${vacancy.jobPosition})` : vacancy.company
 }

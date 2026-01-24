@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
-describe('Smoke test', () => {
+describe('smoke test', () => {
   it('should pass basic assertion', () => {
     expect(true).toBe(true)
   })

@@ -1,8 +1,8 @@
-import { eq, and, gte, sql } from 'drizzle-orm'
+import type { Operation, ProviderType } from '@int/schema'
+import type { UsageLog } from '../schema'
+import { and, eq, gte, sql } from 'drizzle-orm'
 import { db } from '../db'
 import { usageLogs } from '../schema'
-import type { UsageLog, NewUsageLog } from '../schema'
-import type { Operation, ProviderType } from '@int/schema'
 
 /**
  * Usage Log Repository
@@ -30,14 +30,17 @@ export const usageLogRepository = {
     tokensUsed?: number
     cost?: number
   }): Promise<UsageLog> {
-    const result = await db.insert(usageLogs).values({
-      userId: data.userId,
-      operation: data.operation,
-      providerType: data.providerType,
-      tokensUsed: data.tokensUsed ?? null,
-      cost: data.cost?.toString() ?? null,
-    }).returning()
-    return result[0]
+    const result = await db
+      .insert(usageLogs)
+      .values({
+        userId: data.userId,
+        operation: data.operation,
+        providerType: data.providerType,
+        tokensUsed: data.tokensUsed ?? null,
+        cost: data.cost?.toString() ?? null
+      })
+      .returning()
+    return result[0]!
   },
 
   /**
@@ -67,11 +70,7 @@ export const usageLogRepository = {
    * Admin/analytics feature
    */
   async findByUserId(userId: string, limit = 100): Promise<UsageLog[]> {
-    return await db
-      .select()
-      .from(usageLogs)
-      .where(eq(usageLogs.userId, userId))
-      .limit(limit)
+    return await db.select().from(usageLogs).where(eq(usageLogs.userId, userId)).limit(limit)
   },
 
   /**
@@ -139,24 +138,19 @@ export const usageLogRepository = {
     const result = await db
       .select({
         operation: usageLogs.operation,
-        count: sql<number>`count(*)`,
+        count: sql<number>`count(*)`
       })
       .from(usageLogs)
-      .where(
-        and(
-          eq(usageLogs.userId, userId),
-          gte(usageLogs.createdAt, startDate)
-        )
-      )
+      .where(and(eq(usageLogs.userId, userId), gte(usageLogs.createdAt, startDate)))
       .groupBy(usageLogs.operation)
 
     const breakdown: Record<Operation, number> = {
       parse: 0,
       generate: 0,
-      export: 0,
+      export: 0
     }
 
-    result.forEach((row) => {
+    result.forEach(row => {
       breakdown[row.operation as Operation] = Number(row.count)
     })
 
@@ -167,27 +161,25 @@ export const usageLogRepository = {
    * Get platform vs BYOK usage ratio
    * Analytics: track how many users use BYOK
    */
-  async getProviderTypeBreakdown(userId: string, days = 30): Promise<{ platform: number; byok: number }> {
+  async getProviderTypeBreakdown(
+    userId: string,
+    days = 30
+  ): Promise<{ platform: number; byok: number }> {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
     const result = await db
       .select({
         providerType: usageLogs.providerType,
-        count: sql<number>`count(*)`,
+        count: sql<number>`count(*)`
       })
       .from(usageLogs)
-      .where(
-        and(
-          eq(usageLogs.userId, userId),
-          gte(usageLogs.createdAt, startDate)
-        )
-      )
+      .where(and(eq(usageLogs.userId, userId), gte(usageLogs.createdAt, startDate)))
       .groupBy(usageLogs.providerType)
 
     const breakdown = { platform: 0, byok: 0 }
 
-    result.forEach((row) => {
+    result.forEach(row => {
       breakdown[row.providerType as ProviderType] = Number(row.count)
     })
 
@@ -208,5 +200,5 @@ export const usageLogRepository = {
       .returning({ id: usageLogs.id })
 
     return result.length
-  },
+  }
 }

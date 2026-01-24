@@ -1,5 +1,17 @@
-import { pgTable, uuid, varchar, timestamp, pgEnum, text, integer, jsonb, decimal, unique, index } from 'drizzle-orm/pg-core'
-import type { ResumeContent, LanguageEntry, PhoneEntry } from '@int/schema'
+import type { LanguageEntry, PhoneEntry, ResumeContent } from '@int/schema'
+import {
+  decimal,
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+  varchar
+} from 'drizzle-orm/pg-core'
 
 /**
  * Drizzle ORM Schema Definitions
@@ -33,7 +45,7 @@ export const users = pgTable('users', {
   googleId: varchar('google_id', { length: 255 }).notNull().unique(),
   role: roleEnum('role').notNull().default('public'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
 
 /**
@@ -43,7 +55,10 @@ export const users = pgTable('users', {
  */
 export const profiles = pgTable('profiles', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
   firstName: varchar('first_name', { length: 100 }).notNull(),
   lastName: varchar('last_name', { length: 100 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
@@ -53,66 +68,86 @@ export const profiles = pgTable('profiles', {
   languages: jsonb('languages').$type<LanguageEntry[]>().notNull(),
   phones: jsonb('phones').$type<PhoneEntry[]>(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
 
 /**
  * Resumes table
  * Base resume uploaded by user (DOCX/PDF parsed to JSON)
  */
-export const resumes = pgTable('resumes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  title: varchar('title', { length: 255 }).notNull(),
-  content: jsonb('content').$type<ResumeContent>().notNull(),
-  sourceFileName: varchar('source_file_name', { length: 255 }).notNull(),
-  sourceFileType: sourceFileTypeEnum('source_file_type').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => ({
-  userIdIdx: index('idx_resumes_user_id').on(table.userId),
-  createdAtIdx: index('idx_resumes_created_at').on(table.createdAt),
-}))
+export const resumes = pgTable(
+  'resumes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 255 }).notNull(),
+    content: jsonb('content').$type<ResumeContent>().notNull(),
+    sourceFileName: varchar('source_file_name', { length: 255 }).notNull(),
+    sourceFileType: sourceFileTypeEnum('source_file_type').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => ({
+    userIdIdx: index('idx_resumes_user_id').on(table.userId),
+    createdAtIdx: index('idx_resumes_created_at').on(table.createdAt)
+  })
+)
 
 /**
  * Vacancies table
  * Job vacancies created by user for tailoring resumes
  */
-export const vacancies = pgTable('vacancies', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  company: varchar('company', { length: 255 }).notNull(),
-  jobPosition: varchar('job_position', { length: 255 }),
-  description: text('description').notNull(),
-  url: varchar('url', { length: 2048 }),
-  notes: text('notes'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => ({
-  userIdIdx: index('idx_vacancies_user_id').on(table.userId),
-  createdAtIdx: index('idx_vacancies_created_at').on(table.createdAt),
-}))
+export const vacancies = pgTable(
+  'vacancies',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    company: varchar('company', { length: 255 }).notNull(),
+    jobPosition: varchar('job_position', { length: 255 }),
+    description: text('description').notNull(),
+    url: varchar('url', { length: 2048 }),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => ({
+    userIdIdx: index('idx_vacancies_user_id').on(table.userId),
+    createdAtIdx: index('idx_vacancies_created_at').on(table.createdAt)
+  })
+)
 
 /**
  * Generations table
  * Tailored resume versions generated for specific vacancies
  * Expires after 90 days
  */
-export const generations = pgTable('generations', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vacancyId: uuid('vacancy_id').notNull().references(() => vacancies.id, { onDelete: 'cascade' }),
-  resumeId: uuid('resume_id').notNull().references(() => resumes.id, { onDelete: 'cascade' }),
-  content: jsonb('content').$type<ResumeContent>().notNull(),
-  matchScoreBefore: integer('match_score_before').notNull(),
-  matchScoreAfter: integer('match_score_after').notNull(),
-  generatedAt: timestamp('generated_at').notNull().defaultNow(),
-  expiresAt: timestamp('expires_at').notNull(),
-}, (table) => ({
-  vacancyIdIdx: index('idx_generations_vacancy_id').on(table.vacancyId),
-  resumeIdIdx: index('idx_generations_resume_id').on(table.resumeId),
-  generatedAtIdx: index('idx_generations_generated_at').on(table.generatedAt),
-  expiresAtIdx: index('idx_generations_expires_at').on(table.expiresAt),
-}))
+export const generations = pgTable(
+  'generations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    vacancyId: uuid('vacancy_id')
+      .notNull()
+      .references(() => vacancies.id, { onDelete: 'cascade' }),
+    resumeId: uuid('resume_id')
+      .notNull()
+      .references(() => resumes.id, { onDelete: 'cascade' }),
+    content: jsonb('content').$type<ResumeContent>().notNull(),
+    matchScoreBefore: integer('match_score_before').notNull(),
+    matchScoreAfter: integer('match_score_after').notNull(),
+    generatedAt: timestamp('generated_at').notNull().defaultNow(),
+    expiresAt: timestamp('expires_at').notNull()
+  },
+  table => ({
+    vacancyIdIdx: index('idx_generations_vacancy_id').on(table.vacancyId),
+    resumeIdIdx: index('idx_generations_resume_id').on(table.resumeId),
+    generatedAtIdx: index('idx_generations_generated_at').on(table.generatedAt),
+    expiresAtIdx: index('idx_generations_expires_at').on(table.expiresAt)
+  })
+)
 
 /**
  * LLM Keys table
@@ -120,34 +155,50 @@ export const generations = pgTable('generations', {
  * CRITICAL: Only stores last 4 characters as hint
  * Full keys stored in browser localStorage only
  */
-export const llmKeys = pgTable('llm_keys', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  provider: llmProviderEnum('provider').notNull(),
-  keyHint: varchar('key_hint', { length: 4 }).notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (table) => ({
-  userIdIdx: index('idx_llm_keys_user_id').on(table.userId),
-  userProviderUnique: unique('llm_keys_user_provider_unique').on(table.userId, table.provider),
-}))
+export const llmKeys = pgTable(
+  'llm_keys',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    provider: llmProviderEnum('provider').notNull(),
+    keyHint: varchar('key_hint', { length: 4 }).notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => ({
+    userIdIdx: index('idx_llm_keys_user_id').on(table.userId),
+    userProviderUnique: unique('llm_keys_user_provider_unique').on(table.userId, table.provider)
+  })
+)
 
 /**
  * Usage Logs table
  * Tracks all operations for rate limiting, billing, and analytics
  */
-export const usageLogs = pgTable('usage_logs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  operation: operationEnum('operation').notNull(),
-  providerType: providerTypeEnum('provider_type').notNull(),
-  tokensUsed: integer('tokens_used'),
-  cost: decimal('cost', { precision: 10, scale: 6 }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (table) => ({
-  userIdIdx: index('idx_usage_logs_user_id').on(table.userId),
-  createdAtIdx: index('idx_usage_logs_created_at').on(table.createdAt),
-  userOperationDateIdx: index('idx_usage_logs_user_operation_date').on(table.userId, table.operation, table.createdAt),
-}))
+export const usageLogs = pgTable(
+  'usage_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    operation: operationEnum('operation').notNull(),
+    providerType: providerTypeEnum('provider_type').notNull(),
+    tokensUsed: integer('tokens_used'),
+    cost: decimal('cost', { precision: 10, scale: 6 }),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => ({
+    userIdIdx: index('idx_usage_logs_user_id').on(table.userId),
+    createdAtIdx: index('idx_usage_logs_created_at').on(table.createdAt),
+    userOperationDateIdx: index('idx_usage_logs_user_operation_date').on(
+      table.userId,
+      table.operation,
+      table.createdAt
+    )
+  })
+)
 
 /**
  * System Config table
@@ -157,7 +208,7 @@ export const usageLogs = pgTable('usage_logs', {
 export const systemConfigs = pgTable('system_configs', {
   key: varchar('key', { length: 100 }).primaryKey(),
   value: jsonb('value').notNull(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
 
 // ============================================================================

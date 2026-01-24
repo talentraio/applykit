@@ -5,6 +5,7 @@ Drizzle ORM-based data layer for the `@int/api` package with PostgreSQL (product
 ## Overview
 
 This directory contains the complete database infrastructure:
+
 - **Schema definitions** (`schema.ts`) - Drizzle ORM schemas matching domain types
 - **Database connection** (`db.ts`) - Environment-based connection management
 - **Migrations** (`migrations/`) - SQL migration files
@@ -13,34 +14,37 @@ This directory contains the complete database infrastructure:
 ## Database Configuration
 
 ### Local Development (SQLite)
+
 ```bash
 # No setup needed - SQLite file created automatically
-# Database location: packages/nuxt-layer-api/.data/local.db
+# Database location (default): packages/nuxt-layer-api/.data/local.db (runtimeConfig.db.sqlitePath)
 pnpm dev
 ```
 
 ### Production (PostgreSQL)
+
 ```bash
 # Set environment variable
-export DATABASE_URL="postgresql://user:pass@host:5432/dbname"
+export NUXT_DATABASE_URL="postgresql://user:pass@host:5432/dbname"
 ```
 
 ## Schema
 
 All tables are defined in `schema.ts` using Drizzle ORM:
 
-| Table | Purpose | Key Fields |
-|-------|---------|------------|
-| `users` | Authenticated users (Google OAuth) | email, googleId, role |
-| `profiles` | User profiles (1:1 with users) | firstName, lastName, workFormat, languages |
-| `resumes` | Uploaded resumes (parsed to JSON) | userId, title, content (JSONB) |
-| `vacancies` | Job vacancies for tailoring | userId, company, jobPosition, description |
-| `generations` | Tailored resume versions | vacancyId, resumeId, content, matchScores |
-| `llm_keys` | BYOK metadata (hint only!) | userId, provider, keyHint (4 chars) |
-| `usage_logs` | Operation tracking | userId, operation, providerType, cost |
-| `system_configs` | System configuration | key, value (JSONB) |
+| Table            | Purpose                            | Key Fields                                 |
+| ---------------- | ---------------------------------- | ------------------------------------------ |
+| `users`          | Authenticated users (Google OAuth) | email, googleId, role                      |
+| `profiles`       | User profiles (1:1 with users)     | firstName, lastName, workFormat, languages |
+| `resumes`        | Uploaded resumes (parsed to JSON)  | userId, title, content (JSONB)             |
+| `vacancies`      | Job vacancies for tailoring        | userId, company, jobPosition, description  |
+| `generations`    | Tailored resume versions           | vacancyId, resumeId, content, matchScores  |
+| `llm_keys`       | BYOK metadata (hint only!)         | userId, provider, keyHint (4 chars)        |
+| `usage_logs`     | Operation tracking                 | userId, operation, providerType, cost      |
+| `system_configs` | System configuration               | key, value (JSONB)                         |
 
 ### Enums
+
 - `role`: super_admin, friend, public
 - `work_format`: remote, hybrid, onsite
 - `source_file_type`: docx, pdf
@@ -51,6 +55,7 @@ All tables are defined in `schema.ts` using Drizzle ORM:
 ## Migrations
 
 ### Creating Migrations
+
 ```bash
 # Generate migration from schema changes
 pnpm db:generate
@@ -63,13 +68,16 @@ pnpm db:push
 ```
 
 ### Initial Migration
+
 The first migration (`001_init.sql`) creates:
+
 - All 8 tables with indexes
 - 6 enum types
 - Initial system configuration
 - Table and column comments
 
 ### Migration Files
+
 ```
 migrations/
 ├── 001_init.sql          # Initial schema (T026)
@@ -81,16 +89,17 @@ migrations/
 
 Available in `package.json`:
 
-| Script | Command | Purpose |
-|--------|---------|---------|
-| `pnpm db:generate` | `drizzle-kit generate` | Generate migration from schema |
-| `pnpm db:migrate` | `drizzle-kit migrate` | Apply migrations to database |
-| `pnpm db:push` | `drizzle-kit push` | Push schema directly (dev only) |
-| `pnpm db:studio` | `drizzle-kit studio` | Open Drizzle Studio GUI |
+| Script             | Command                | Purpose                         |
+| ------------------ | ---------------------- | ------------------------------- |
+| `pnpm db:generate` | `drizzle-kit generate` | Generate migration from schema  |
+| `pnpm db:migrate`  | `drizzle-kit migrate`  | Apply migrations to database    |
+| `pnpm db:push`     | `drizzle-kit push`     | Push schema directly (dev only) |
+| `pnpm db:studio`   | `drizzle-kit studio`   | Open Drizzle Studio GUI         |
 
 ## Drizzle Studio
 
 Visual database browser:
+
 ```bash
 pnpm db:studio
 # Opens at http://localhost:4983
@@ -101,9 +110,9 @@ pnpm db:studio
 Drizzle provides full type inference:
 
 ```typescript
+import type { NewUser, User } from './schema'
 import { db } from './db'
 import { users } from './schema'
-import type { User, NewUser } from './schema'
 
 // Fully typed queries
 const allUsers = await db.select().from(users)
@@ -113,7 +122,7 @@ const allUsers = await db.select().from(users)
 const newUser: NewUser = {
   email: 'user@example.com',
   googleId: 'google123',
-  role: 'public', // Type-safe enum
+  role: 'public' // Type-safe enum
 }
 await db.insert(users).values(newUser)
 ```
@@ -137,7 +146,7 @@ export const userRepository = {
   async create(data: NewUser) {
     const result = await db.insert(users).values(data).returning()
     return result[0]
-  },
+  }
 
   // More methods...
 }
@@ -146,13 +155,16 @@ export const userRepository = {
 ## Security Notes
 
 ### BYOK Keys (CRITICAL)
+
 The `llm_keys` table stores **ONLY** the last 4 characters:
+
 - ❌ NEVER store full API keys in database
 - ✅ ONLY store hint (last 4 chars) for user reference
 - ✅ Full keys stored in browser localStorage
 - ✅ Full keys transmitted per-request over HTTPS
 
 ### Connection Security
+
 - Production: Use SSL/TLS for PostgreSQL connections
 - Credentials: Store in environment variables, never in code
 - Connection pooling: Configured in `db.ts` (max 10 connections)
@@ -181,46 +193,53 @@ server/data/
 
 ## Environment Variables
 
-| Variable | Required | Default | Purpose |
-|----------|----------|---------|---------|
-| `DATABASE_URL` | Production only | - | PostgreSQL connection string |
-| `NODE_ENV` | No | development | Environment mode |
+| Variable            | Required        | Default     | Purpose                      |
+| ------------------- | --------------- | ----------- | ---------------------------- |
+| `NUXT_DATABASE_URL` | Production only | -           | PostgreSQL connection string |
+| `NODE_ENV`          | No              | development | Environment mode             |
 
 ## Repository Methods Summary
 
 Each repository provides standard CRUD operations plus domain-specific methods:
 
 ### userRepository (T028)
+
 - `findById`, `findByEmail`, `findByGoogleId`
 - `create`, `updateRole`, `updateLastLogin`
 - `existsByEmail`, `findByRole`
 
 ### profileRepository (T029)
+
 - `findByUserId`, `findById`
 - `create`, `update`, `delete`
 - `existsForUser`, `isComplete`
 
 ### resumeRepository (T030)
+
 - `findById`, `findByIdAndUserId`, `findByUserId`
 - `create`, `updateContent`, `updateTitle`, `delete`
 - `countByUserId`, `findLatestByUserId`
 
 ### vacancyRepository (T031)
+
 - `findById`, `findByIdAndUserId`, `findByUserId`
 - `create`, `update`, `delete`
 - `countByUserId`, `findLatestByUserId`
 
 ### generationRepository (T032)
+
 - `findById`, `findByVacancyId`, `findLatestByVacancyId`
 - `create`, `delete`, `deleteByVacancyId`, `deleteByResumeId`
 - `findExpired`, `deleteExpired`, `isValidGeneration`
 
 ### llmKeyRepository (T033)
+
 - `findById`, `findByUserAndProvider`, `findByUserId`
 - `upsert` (replaces existing), `delete`, `deleteByUserId`
 - `hasKeyForProvider`, `getKeyHint`
 
 ### usageLogRepository (T034)
+
 - `log`, `getDailyCount` (for rate limiting)
 - `findByUserId`, `findByDateRange`
 - `getTotalCost`, `getTotalTokens`
@@ -228,6 +247,7 @@ Each repository provides standard CRUD operations plus domain-specific methods:
 - `deleteOlderThan` (cleanup)
 
 ### systemConfigRepository (T035)
+
 - `get`, `getBoolean`, `getNumber`, `getPlatformProvider`
 - `set`, `setBoolean`, `setNumber`, `setPlatformProvider`
 - `getAll`, `resetToDefaults`

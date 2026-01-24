@@ -9,7 +9,7 @@
 
 import type { UserPublic } from '@int/schema'
 
-export interface AuthComposable {
+export type AuthComposable = {
   /**
    * Computed indicating if the user is logged in
    */
@@ -38,7 +38,7 @@ export function useAuth(): AuthComposable {
   /**
    * Logout and redirect to login page
    */
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       // Call logout endpoint to clear session
       await $fetch('/api/auth/logout', { method: 'POST' })
@@ -48,8 +48,7 @@ export function useAuth(): AuthComposable {
 
       // Redirect to login
       await navigateTo('/login')
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Logout failed:', error)
       throw error
     }
@@ -58,14 +57,14 @@ export function useAuth(): AuthComposable {
   /**
    * Navigate to Google OAuth login
    */
-  const loginWithGoogle = () => {
+  const loginWithGoogle = (): void => {
     navigateTo('/api/auth/google', { external: true })
   }
 
   /**
    * Refresh user session from server
    */
-  const refresh = async () => {
+  const refresh = async (): Promise<void> => {
     await fetch()
   }
 
@@ -74,6 +73,6 @@ export function useAuth(): AuthComposable {
     user: user as ComputedRef<UserPublic | null>,
     refresh,
     logout,
-    loginWithGoogle,
+    loginWithGoogle
   }
 }

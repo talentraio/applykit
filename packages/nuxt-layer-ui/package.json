@@ -1,7 +1,7 @@
 {
   "name": "@int/ui",
-  "version": "0.0.1",
   "type": "module",
+  "version": "0.0.1",
   "main": "./nuxt.config.ts",
   "scripts": {
     "dev": "nuxi dev .playground",
@@ -9,9 +9,9 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "nuxt": "^4.0.9",
     "@nuxt/ui": "^4.0.1",
-    "@nuxtjs/i18n": "^9.2.4"
+    "@nuxtjs/i18n": "^9.2.4",
+    "nuxt": "^4.0.9"
   },
   "devDependencies": {
     "typescript": "^5.7.3"

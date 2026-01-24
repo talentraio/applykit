@@ -1,8 +1,8 @@
-import { eq, desc, and } from 'drizzle-orm'
+import type { VacancyInput } from '@int/schema'
+import type { Vacancy } from '../schema'
+import { and, desc, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { vacancies } from '../schema'
-import type { Vacancy, NewVacancy } from '../schema'
-import type { VacancyInput } from '@int/schema'
 
 /**
  * Vacancy Repository
@@ -47,15 +47,18 @@ export const vacancyRepository = {
    * Create new vacancy
    */
   async create(userId: string, data: VacancyInput): Promise<Vacancy> {
-    const result = await db.insert(vacancies).values({
-      userId,
-      company: data.company,
-      jobPosition: data.jobPosition ?? null,
-      description: data.description,
-      url: data.url ?? null,
-      notes: data.notes ?? null,
-    }).returning()
-    return result[0]
+    const result = await db
+      .insert(vacancies)
+      .values({
+        userId,
+        company: data.company,
+        jobPosition: data.jobPosition ?? null,
+        description: data.description,
+        url: data.url ?? null,
+        notes: data.notes ?? null
+      })
+      .returning()
+    return result[0]!
   },
 
   /**
@@ -66,7 +69,7 @@ export const vacancyRepository = {
       .update(vacancies)
       .set({
         ...data,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(and(eq(vacancies.id, id), eq(vacancies.userId, userId)))
       .returning()
@@ -103,5 +106,5 @@ export const vacancyRepository = {
       .orderBy(desc(vacancies.createdAt))
       .limit(1)
     return result[0] ?? null
-  },
+  }
 }

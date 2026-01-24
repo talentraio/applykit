@@ -22,6 +22,7 @@ Create this file manually or use a template from `docs/examples/` (to be added).
 A text file to test invalid file format handling.
 
 Content:
+
 ```
 This is not a valid resume file.
 It should trigger a validation error.
@@ -62,7 +63,7 @@ describe('Vacancy API', () => {
   it('should create vacancy', async () => {
     const response = await $fetch('/api/vacancies', {
       method: 'POST',
-      body: sampleVacancy,
+      body: sampleVacancy
     })
     expect(response.company).toBe('Tech Corp')
   })

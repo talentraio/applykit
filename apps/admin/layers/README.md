@@ -17,14 +17,16 @@ apps/admin/layers/
 Defined in `apps/admin/nuxt.config.ts`:
 
 ```typescript
-extends: [
-  '@int/ui',        // UI components layer (external package)
-  '@int/api',       // API layer (external package)
-  './layers/_base', // 1. Base layer (shared utilities)
-  './layers/auth',  // 2. Auth layer (admin login, logout)
-  './layers/users', // 3. Users layer (user management)
-  './layers/system', // 4. System layer (platform settings)
-]
+export default defineNuxtConfig({
+  extends: [
+    '@int/ui', // UI components layer (external package)
+    '@int/api', // API layer (external package)
+    './layers/_base', // 1. Base layer (shared utilities)
+    './layers/auth', // 2. Auth layer (admin login, logout)
+    './layers/users', // 3. Users layer (user management)
+    './layers/system' // 4. System layer (platform settings)
+  ]
+})
 ```
 
 **Important**: `_base` must be first in the internal layers list to ensure shared components/composables/stores are available to all other layers.
@@ -38,6 +40,7 @@ extends: [
 Shared foundation for all admin layers.
 
 **Structure**:
+
 ```
 _base/
 ├── nuxt.config.ts
@@ -50,6 +53,7 @@ _base/
 ```
 
 **Purpose**:
+
 - Shared components used across multiple layers
 - Common composables (e.g., `useCurrentAdmin`, `useToast`)
 - Shared Pinia stores (e.g., `useAdminAuthStore`)
@@ -57,10 +61,11 @@ _base/
 - Global middleware
 
 **Usage**:
+
 ```typescript
+import MySharedComponent from '@admin/base/components/MySharedComponent.vue'
 // Import from base layer
 import { useToast } from '@admin/base/composables/useToast'
-import MySharedComponent from '@admin/base/components/MySharedComponent.vue'
 ```
 
 ### `auth` Layer
@@ -70,6 +75,7 @@ import MySharedComponent from '@admin/base/components/MySharedComponent.vue'
 Admin authentication and authorization.
 
 **Responsibilities**:
+
 - Admin login page
 - OAuth callback routes
 - Auth middleware (requires super_admin role)
@@ -77,11 +83,13 @@ Admin authentication and authorization.
 - Protected admin route guards
 
 **Key Files (to be created)**:
+
 - `app/pages/login.vue` - Admin login page
 - `app/layouts/auth.vue` - Auth layout
 - `app/middleware/admin.global.ts` - Admin guard middleware
 
 **Usage**:
+
 ```typescript
 // Import from auth layer
 import { useAdminAuthStore } from '@admin/auth/stores/useAdminAuthStore'
@@ -94,6 +102,7 @@ import { useAdminAuthStore } from '@admin/auth/stores/useAdminAuthStore'
 User management for platform administrators.
 
 **Responsibilities**:
+
 - User list page with filtering
 - User detail page
 - Role management (promote to friend/super_admin)
@@ -101,12 +110,14 @@ User management for platform administrators.
 - User activity tracking
 
 **Key Files (to be created)**:
+
 - `app/pages/users/index.vue` - User list page
 - `app/pages/users/[id].vue` - User detail page
 - `app/components/UserTable.vue` - User table component
 - `app/components/RoleSelector.vue` - Role management component
 
 **Usage**:
+
 ```typescript
 // Import from users layer
 import { useUsersStore } from '@admin/users/stores/useUsersStore'
@@ -119,6 +130,7 @@ import { useUsersStore } from '@admin/users/stores/useUsersStore'
 System settings and platform controls.
 
 **Responsibilities**:
+
 - Platform configuration
 - LLM budget management
 - Default provider selection
@@ -126,12 +138,14 @@ System settings and platform controls.
 - System health monitoring
 
 **Key Files (to be created)**:
+
 - `app/pages/system.vue` - System settings page
 - `app/components/BudgetSettings.vue` - LLM budget controls
 - `app/components/ProviderSettings.vue` - Default provider selector
 - `app/components/UsageChart.vue` - Platform usage charts
 
 **Usage**:
+
 ```typescript
 // Import from system layer
 import { useSystemStore } from '@admin/system/stores/useSystemStore'
@@ -143,15 +157,14 @@ import { useSystemStore } from '@admin/system/stores/useSystemStore'
 
 Components, composables, and utilities in each layer are automatically imported:
 
-```typescript
-// NO NEED for explicit imports:
-// ✅ Auto-imported from any layer
+```vue
 <template>
-  <MyComponent />  <!-- From any layer's app/components/ -->
+  <MyComponent />
+  <!-- From any layer's app/components/ -->
 </template>
 
 <script setup lang="ts">
-const admin = useCurrentAdmin()  // From any layer's app/composables/
+const admin = useCurrentAdmin() // From any layer's app/composables/
 const { formatDate } = useUtils() // From any layer's app/utils/
 </script>
 ```
@@ -161,19 +174,21 @@ const { formatDate } = useUtils() // From any layer's app/utils/
 Use layer aliases for explicit imports when needed:
 
 ```typescript
+import MyComponent from '@admin/auth/components/LoginForm.vue'
 // Explicit import using alias
 import { MyType } from '@admin/base/types'
-import MyComponent from '@admin/auth/components/LoginForm.vue'
 ```
 
 ### Layer Isolation
 
 Each layer is isolated and can:
+
 - Have its own `pages/`, `layouts/`, `components/`, `composables/`, etc.
 - Override or extend functionality from earlier layers
 - Use components/composables from earlier layers (via auto-import or alias)
 
 **Layer merging order**:
+
 1. External packages (`@int/ui`, `@int/api`)
 2. `_base` layer (shared foundation)
 3. Feature layers (auth, users, system)
@@ -211,7 +226,7 @@ Creates route: `/users`
 
 ```typescript
 // apps/admin/layers/users/types/index.ts
-export interface UserManagementData {
+export type UserManagementData = {
   userId: string
   currentRole: Role
   newRole: Role
@@ -219,6 +234,7 @@ export interface UserManagementData {
 ```
 
 Import explicitly:
+
 ```typescript
 import type { UserManagementData } from '@admin/users/types'
 ```
@@ -235,6 +251,7 @@ import type { UserManagementData } from '@admin/users/types'
 ### 2. Avoid Circular Dependencies
 
 Layers should not depend on layers loaded after them:
+
 - ✅ `system` can use `_base`
 - ✅ `system` can use `auth`
 - ❌ `auth` should not use `system`
@@ -281,12 +298,12 @@ export default defineNuxtRouteMiddleware(async () => {
 
 Use TypeScript and leverage auto-imports:
 
-```typescript
+```vue
 <script setup lang="ts">
 import type { User } from '@int/schema'
 
 const admin = useCurrentAdmin() // Auto-imported composable
-const toast = useToast()         // Auto-imported composable
+const toast = useToast() // Auto-imported composable
 </script>
 ```
 
@@ -305,6 +322,7 @@ _base/
 ```
 
 Run tests:
+
 ```bash
 pnpm test apps/admin/layers/_base
 pnpm test apps/admin/layers/users

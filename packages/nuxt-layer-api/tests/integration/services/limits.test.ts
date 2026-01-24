@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Role } from '@int/schema'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * Integration tests for limits service
@@ -11,18 +11,32 @@ import type { Role } from '@int/schema'
  */
 
 // Mock types - will be replaced with actual imports when services are implemented
-interface LimitsService {
-  checkLimit(userId: string, operation: 'parse' | 'generate' | 'export', role: Role): Promise<boolean>
-  getRemainingLimit(userId: string, operation: 'parse' | 'generate' | 'export', role: Role): Promise<number>
-  incrementUsage(userId: string, operation: 'parse' | 'generate' | 'export'): Promise<void>
+type LimitsService = {
+  checkLimit: (
+    userId: string,
+    operation: 'parse' | 'generate' | 'export',
+    role: Role
+  ) => Promise<boolean>
+  getRemainingLimit: (
+    userId: string,
+    operation: 'parse' | 'generate' | 'export',
+    role: Role
+  ) => Promise<number>
+  incrementUsage: (userId: string, operation: 'parse' | 'generate' | 'export') => Promise<void>
 }
 
-interface UsageTracker {
-  log(userId: string, operation: 'parse' | 'generate' | 'export', providerType: 'platform' | 'byok', tokensUsed?: number, cost?: number): Promise<void>
-  getDailyCount(userId: string, operation: 'parse' | 'generate' | 'export'): Promise<number>
+type UsageTracker = {
+  log: (
+    userId: string,
+    operation: 'parse' | 'generate' | 'export',
+    providerType: 'platform' | 'byok',
+    tokensUsed?: number,
+    cost?: number
+  ) => Promise<void>
+  getDailyCount: (userId: string, operation: 'parse' | 'generate' | 'export') => Promise<number>
 }
 
-describe.skip('Limits Service Integration Tests', () => {
+describe.skip('limits Service Integration Tests', () => {
   let limitsService: LimitsService
   let usageTracker: UsageTracker
 
@@ -35,7 +49,7 @@ describe.skip('Limits Service Integration Tests', () => {
     // usageTracker = createUsageTracker()
   })
 
-  describe('Role-based daily limits', () => {
+  describe('role-based daily limits', () => {
     it('should enforce public role limits (3 parse, 2 generate, 5 export per day)', async () => {
       const userId = 'test-user-public'
       const role: Role = 'public'
@@ -76,7 +90,7 @@ describe.skip('Limits Service Integration Tests', () => {
     })
   })
 
-  describe('Daily limit enforcement', () => {
+  describe('daily limit enforcement', () => {
     it('should block operations when daily limit is reached', async () => {
       const userId = 'test-user-limit'
       const role: Role = 'public'
@@ -127,7 +141,7 @@ describe.skip('Limits Service Integration Tests', () => {
     })
   })
 
-  describe('Per-operation tracking', () => {
+  describe('per-operation tracking', () => {
     it('should track parse, generate, and export operations separately', async () => {
       const userId = 'test-user-separate'
       const role: Role = 'public'
@@ -158,7 +172,7 @@ describe.skip('Limits Service Integration Tests', () => {
     })
   })
 
-  describe('Usage tracking integration', () => {
+  describe('usage tracking integration', () => {
     it('should log usage with operation details', async () => {
       const userId = 'test-user-logging'
       const operation = 'parse'
@@ -197,7 +211,7 @@ describe.skip('Limits Service Integration Tests', () => {
     })
   })
 
-  describe('Rate limiter (sliding window)', () => {
+  describe('rate limiter (sliding window)', () => {
     it('should implement sliding window rate limiting', async () => {
       // TODO: Test in-memory sliding window rate limiter
       // This should prevent burst requests within short time windows
@@ -216,7 +230,7 @@ describe.skip('Limits Service Integration Tests', () => {
     })
   })
 
-  describe('Edge cases', () => {
+  describe('edge cases', () => {
     it('should handle concurrent limit checks correctly', async () => {
       const userId = 'test-user-concurrent'
       const role: Role = 'public'
@@ -225,7 +239,7 @@ describe.skip('Limits Service Integration Tests', () => {
       const checks = await Promise.all([
         limitsService.checkLimit(userId, 'parse', role),
         limitsService.checkLimit(userId, 'parse', role),
-        limitsService.checkLimit(userId, 'parse', role),
+        limitsService.checkLimit(userId, 'parse', role)
       ])
 
       // All should succeed if within limit
@@ -245,8 +259,7 @@ describe.skip('Limits Service Integration Tests', () => {
       const role: Role = 'public'
 
       // @ts-expect-error - Testing invalid operation
-      await expect(limitsService.checkLimit(userId, 'invalid_operation', role))
-        .rejects.toThrow()
+      await expect(limitsService.checkLimit(userId, 'invalid_operation', role)).rejects.toThrow()
     })
   })
 })

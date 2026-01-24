@@ -16,21 +16,21 @@ export default defineEventHandler(async (event): Promise<UserPublic> => {
   if (!session || !session.user) {
     throw createError({
       statusCode: 401,
-      message: 'Not authenticated',
+      message: 'Not authenticated'
     })
   }
 
   const { userRepository } = await import('../../data/repositories/user')
 
   // Fetch full user from database
-  const user = await userRepository.findById(session.user.id)
+  const user = await userRepository.findById((session.user as { id: string }).id)
 
   if (!user) {
     // User was deleted but session still exists
     await clearUserSession(event)
     throw createError({
       statusCode: 404,
-      message: 'User not found',
+      message: 'User not found'
     })
   }
 
@@ -40,6 +40,6 @@ export default defineEventHandler(async (event): Promise<UserPublic> => {
     email: user.email,
     role: user.role,
     createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    updatedAt: user.updatedAt
   }
 })

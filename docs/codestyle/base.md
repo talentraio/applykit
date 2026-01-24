@@ -16,9 +16,9 @@ We format via **Prettier** (repo `.prettierrc`) and keep formatting discussions 
 
 Order is always:
 
-1) `<template>`
-2) `<script setup lang="ts">`
-3) `<style lang="scss">` (optional)
+1. `<template>`
+2. `<script setup lang="ts">`
+3. `<style lang="scss">` (optional)
 
 ## Component naming
 
@@ -96,8 +96,10 @@ defineOptions({ name: 'AuthFormRegistration' })
 
 <style lang="scss">
 .auth-form-registration {
-  &__header {}
-  &__title {}
+  &__header {
+  }
+  &__title {
+  }
 }
 </style>
 ```
@@ -113,6 +115,7 @@ defineOptions({ name: 'AuthFormRegistration' })
 We aim for an **Airbnb-like** style (enforced via ESLint where practical).
 
 Functions:
+
 - In Vue components, prefer **arrow functions**.
 - For one-liners, allow implicit returns:
   - `const isReady = () => status.value === 'ready';`
@@ -129,5 +132,6 @@ Functions:
 ## Linting (styles)
 
 Stylelint:
+
 - Use `stylelint-config-standard-scss` + `stylelint-config-recommended-vue`
 - Ignore Tailwind/Sass custom at-rules as configured in `.stylelintrc.js`

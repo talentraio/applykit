@@ -1,4 +1,4 @@
-import type { Role, Operation } from '@int/schema'
+import type { Operation, Role } from '@int/schema'
 import { getDailyUsageCount } from '../../utils/usage'
 
 /**
@@ -22,18 +22,18 @@ const DAILY_LIMITS: Record<Role, Record<Operation, number>> = {
   public: {
     parse: 3,
     generate: 2,
-    export: 5,
+    export: 5
   },
   friend: {
     parse: 10,
     generate: 8,
-    export: 20,
+    export: 20
   },
   super_admin: {
     parse: Number.POSITIVE_INFINITY,
     generate: Number.POSITIVE_INFINITY,
-    export: Number.POSITIVE_INFINITY,
-  },
+    export: Number.POSITIVE_INFINITY
+  }
 }
 
 /**
@@ -47,7 +47,7 @@ const DAILY_LIMITS: Record<Role, Record<Operation, number>> = {
 export async function checkLimit(
   userId: string,
   operation: Operation,
-  role: Role,
+  role: Role
 ): Promise<boolean> {
   // Super admin has no limits
   if (role === 'super_admin') {
@@ -71,7 +71,7 @@ export async function checkLimit(
 export async function getRemainingLimit(
   userId: string,
   operation: Operation,
-  role: Role,
+  role: Role
 ): Promise<number> {
   // Super admin has effectively unlimited
   if (role === 'super_admin') {
@@ -91,10 +91,7 @@ export async function getRemainingLimit(
  * @param operation - Operation type
  * @returns Daily limit
  */
-export function getDailyLimit(
-  role: Role,
-  operation: Operation,
-): number {
+export function getDailyLimit(role: Role, operation: Operation): number {
   return DAILY_LIMITS[role][operation]
 }
 
@@ -110,7 +107,7 @@ export function getDailyLimit(
 export async function requireLimit(
   userId: string,
   operation: Operation,
-  role: Role,
+  role: Role
 ): Promise<void> {
   const canProceed = await checkLimit(userId, operation, role)
 
@@ -123,8 +120,8 @@ export async function requireLimit(
       data: {
         operation,
         limit,
-        resetAt: getResetTime(),
-      },
+        resetAt: getResetTime()
+      }
     })
   }
 }
@@ -158,7 +155,7 @@ export function getAllLimits(role: Role): Record<Operation, number> {
  */
 export async function getUsageSummary(
   userId: string,
-  role: Role,
+  role: Role
 ): Promise<{
   role: Role
   operations: Array<{
@@ -173,27 +170,25 @@ export async function getUsageSummary(
   const operations: Operation[] = ['parse', 'generate', 'export']
 
   const operationStats = await Promise.all(
-    operations.map(async (operation) => {
+    operations.map(async operation => {
       const limit = getDailyLimit(role, operation)
       const used = await getDailyUsageCount(userId, operation)
       const remaining = Math.max(0, limit - used)
-      const percentage = limit === Number.POSITIVE_INFINITY
-        ? 0
-        : Math.round((used / limit) * 100)
+      const percentage = limit === Number.POSITIVE_INFINITY ? 0 : Math.round((used / limit) * 100)
 
       return {
         operation,
         used,
         limit,
         remaining,
-        percentage,
+        percentage
       }
-    }),
+    })
   )
 
   return {
     role,
     operations: operationStats,
-    resetAt: getResetTime(),
+    resetAt: getResetTime()
   }
 }

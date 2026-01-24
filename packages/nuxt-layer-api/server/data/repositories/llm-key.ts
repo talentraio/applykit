@@ -1,8 +1,8 @@
-import { eq, and } from 'drizzle-orm'
+import type { LLMProvider } from '@int/schema'
+import type { LLMKey } from '../schema'
+import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { llmKeys } from '../schema'
-import type { LLMKey, NewLLMKey } from '../schema'
-import type { LLMProvider } from '@int/schema'
 
 /**
  * LLM Key Repository
@@ -57,15 +57,18 @@ export const llmKeyRepository = {
         .set({ keyHint })
         .where(and(eq(llmKeys.userId, userId), eq(llmKeys.provider, provider)))
         .returning()
-      return result[0]
+      return result[0]!
     } else {
       // Insert new
-      const result = await db.insert(llmKeys).values({
-        userId,
-        provider,
-        keyHint,
-      }).returning()
-      return result[0]
+      const result = await db
+        .insert(llmKeys)
+        .values({
+          userId,
+          provider,
+          keyHint
+        })
+        .returning()
+      return result[0]!
     }
   },
 
@@ -105,5 +108,5 @@ export const llmKeyRepository = {
     const key = await this.findByUserAndProvider(userId, provider)
     if (!key) return null
     return `•••• ${key.keyHint}`
-  },
+  }
 }

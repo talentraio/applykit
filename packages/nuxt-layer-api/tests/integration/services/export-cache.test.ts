@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * Integration tests for export caching and invalidation
@@ -16,20 +16,23 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
  */
 
 // Mock types - will be replaced with actual imports when services are implemented
-interface ExportService {
-  exportToPDF(generationId: string, version: 'ats' | 'human'): Promise<{ url: string; cached: boolean }>
-  invalidateCache(userId: string, generationId: string): Promise<void>
-  getCacheKey(userId: string, generationId: string, version: 'ats' | 'human'): string
+type ExportService = {
+  exportToPDF: (
+    generationId: string,
+    version: 'ats' | 'human'
+  ) => Promise<{ url: string; cached: boolean }>
+  invalidateCache: (userId: string, generationId: string) => Promise<void>
+  getCacheKey: (userId: string, generationId: string, version: 'ats' | 'human') => string
 }
 
-interface CacheService {
-  get(key: string): Promise<string | null>
-  set(key: string, value: string, ttl?: number): Promise<void>
-  delete(key: string): Promise<void>
-  deleteByPattern(pattern: string): Promise<number>
+type CacheService = {
+  get: (key: string) => Promise<string | null>
+  set: (key: string, value: string, ttl?: number) => Promise<void>
+  delete: (key: string) => Promise<void>
+  deleteByPattern: (pattern: string) => Promise<number>
 }
 
-describe.skip('Export Cache Integration Tests', () => {
+describe.skip('export Cache Integration Tests', () => {
   let exportService: ExportService
   let cacheService: CacheService
 
@@ -41,7 +44,7 @@ describe.skip('Export Cache Integration Tests', () => {
     // cacheService = createCacheService()
   })
 
-  describe('Cache key generation', () => {
+  describe('cache key generation', () => {
     it('should include userId and generationId in cache key', () => {
       const userId = 'user-123'
       const generationId = 'gen-456'
@@ -87,7 +90,7 @@ describe.skip('Export Cache Integration Tests', () => {
     })
   })
 
-  describe('Cache hit/miss behavior', () => {
+  describe('cache hit/miss behavior', () => {
     it('should return cached PDF on cache hit', async () => {
       const userId = 'user-123'
       const generationId = 'gen-456'
@@ -114,7 +117,6 @@ describe.skip('Export Cache Integration Tests', () => {
     })
 
     it('should cache generated PDF for future requests', async () => {
-      const userId = 'user-123'
       const generationId = 'gen-456'
 
       // First request - cache miss, generates PDF
@@ -149,7 +151,7 @@ describe.skip('Export Cache Integration Tests', () => {
     })
   })
 
-  describe('Cache invalidation on regeneration', () => {
+  describe('cache invalidation on regeneration', () => {
     it('should invalidate cache when generation is regenerated', async () => {
       const userId = 'user-123'
       const generationId = 'gen-456'
@@ -218,7 +220,7 @@ describe.skip('Export Cache Integration Tests', () => {
     })
   })
 
-  describe('Cache isolation between users', () => {
+  describe('cache isolation between users', () => {
     it('should not share cache between different users', async () => {
       const generationId1 = 'gen-user1'
       const generationId2 = 'gen-user2'
@@ -237,7 +239,6 @@ describe.skip('Export Cache Integration Tests', () => {
 
     it('should invalidate cache only for specific user', async () => {
       const userId1 = 'user-1'
-      const userId2 = 'user-2'
       const generationId1 = 'gen-1'
       const generationId2 = 'gen-2'
 
@@ -256,7 +257,7 @@ describe.skip('Export Cache Integration Tests', () => {
     })
   })
 
-  describe('Cache expiration', () => {
+  describe('cache expiration', () => {
     it('should respect cache TTL', async () => {
       const generationId = 'gen-456'
       const shortTTL = 1 // 1 second
@@ -294,12 +295,12 @@ describe.skip('Export Cache Integration Tests', () => {
     })
   })
 
-  describe('Cache storage format', () => {
+  describe('cache storage format', () => {
     it('should store PDF URL or blob reference in cache', async () => {
       const userId = 'user-123'
       const generationId = 'gen-456'
 
-      const result = await exportService.exportToPDF(generationId, 'ats')
+      await exportService.exportToPDF(generationId, 'ats')
 
       const cacheKey = exportService.getCacheKey(userId, generationId, 'ats')
       const cached = await cacheService.get(cacheKey)
@@ -323,7 +324,7 @@ describe.skip('Export Cache Integration Tests', () => {
     })
   })
 
-  describe('Concurrent request handling', () => {
+  describe('concurrent request handling', () => {
     it('should handle concurrent export requests for same generation', async () => {
       const generationId = 'gen-456'
 
@@ -331,7 +332,7 @@ describe.skip('Export Cache Integration Tests', () => {
       const results = await Promise.all([
         exportService.exportToPDF(generationId, 'ats'),
         exportService.exportToPDF(generationId, 'ats'),
-        exportService.exportToPDF(generationId, 'ats'),
+        exportService.exportToPDF(generationId, 'ats')
       ])
 
       // First should be cache miss, rest should be cache hit
@@ -351,7 +352,7 @@ describe.skip('Export Cache Integration Tests', () => {
       // Concurrent invalidation and export
       await Promise.all([
         exportService.invalidateCache(userId, generationId),
-        exportService.exportToPDF(generationId, 'ats'),
+        exportService.exportToPDF(generationId, 'ats')
       ])
 
       // Should handle gracefully without errors
@@ -360,7 +361,7 @@ describe.skip('Export Cache Integration Tests', () => {
     })
   })
 
-  describe('Error handling', () => {
+  describe('error handling', () => {
     it('should handle cache service errors gracefully', async () => {
       const generationId = 'gen-456'
 
@@ -377,8 +378,7 @@ describe.skip('Export Cache Integration Tests', () => {
       const generationId = 'gen-invalid'
 
       // Simulate PDF generation error
-      await expect(exportService.exportToPDF(generationId, 'ats'))
-        .rejects.toThrow()
+      await expect(exportService.exportToPDF(generationId, 'ats')).rejects.toThrow()
     })
 
     it('should handle invalidation errors gracefully', async () => {
@@ -389,8 +389,7 @@ describe.skip('Export Cache Integration Tests', () => {
       vi.spyOn(cacheService, 'deleteByPattern').mockRejectedValue(new Error('Delete failed'))
 
       // Should not throw, but log error
-      await expect(exportService.invalidateCache(userId, generationId))
-        .resolves.not.toThrow()
+      await expect(exportService.invalidateCache(userId, generationId)).resolves.not.toThrow()
     })
   })
 })

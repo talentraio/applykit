@@ -11,6 +11,7 @@ Build an end-to-end resume tailoring MVP: users upload DOCX/PDF resumes, LLM par
 
 **Language/Version**: TypeScript 5.x (Nuxt 4 / Vue 3)
 **Primary Dependencies**:
+
 - Nuxt v4 (framework)
 - NuxtUI v4 (component library)
 - nuxt-auth-utils (authentication)
@@ -20,6 +21,7 @@ Build an end-to-end resume tailoring MVP: users upload DOCX/PDF resumes, LLM par
 - OpenAI SDK / Google AI SDK (LLM)
 
 **Storage**:
+
 - PostgreSQL (external: Supabase/Neon)
 - Vercel Blob (file storage via adapter)
 - SQLite (local development)
@@ -29,37 +31,40 @@ Build an end-to-end resume tailoring MVP: users upload DOCX/PDF resumes, LLM par
 **Project Type**: Web application (Nuxt monorepo with layers)
 
 **Performance Goals**:
+
 - API response <500ms p95 for CRUD operations
 - LLM operations: best-effort (dependent on provider)
 - PDF export: <10s for typical resume
 
 **Constraints**:
+
 - Data-access layer isolated (no ORM in API handlers)
 - Storage abstraction (put/get/delete interface)
 - i18n from day 1 (no hardcoded strings)
 - SSR islands for ATS/Human views
 
 **Scale/Scope**:
+
 - MVP: <1000 users
 - ~12 site pages, ~4 admin pages
 - 8 entities, 25+ API endpoints
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 The constitution template is not yet customized for this project. Applying ApplyKit-specific conventions from `docs/` and `CLAUDE.md`:
 
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| Nuxt v4 + NuxtUI v4 only | PASS | Confirmed in stack |
-| Monorepo with @int/* layers | PASS | Schema, API, UI layers defined |
-| Strict schemas in @int/schema | PASS | Zod + inferred types |
-| Store/actions pattern | PASS | Pinia stores planned |
-| SSR islands for ATS/Human | PASS | Specified in spec |
-| i18n from day 1 | PASS | Key conventions defined |
-| VueUse first | PASS | Will check before custom composables |
-| MCP docs rule | PASS | Will use Nuxt/NuxtUI MCP |
+| Principle                     | Status | Notes                                |
+| ----------------------------- | ------ | ------------------------------------ |
+| Nuxt v4 + NuxtUI v4 only      | PASS   | Confirmed in stack                   |
+| Monorepo with @int/\* layers  | PASS   | Schema, API, UI layers defined       |
+| Strict schemas in @int/schema | PASS   | Zod + inferred types                 |
+| Store/actions pattern         | PASS   | Pinia stores planned                 |
+| SSR islands for ATS/Human     | PASS   | Specified in spec                    |
+| i18n from day 1               | PASS   | Key conventions defined              |
+| VueUse first                  | PASS   | Will check before custom composables |
+| MCP docs rule                 | PASS   | Will use Nuxt/NuxtUI MCP             |
 
 **Gate Status: PASS** - No violations. Proceed to Phase 0.
 
@@ -190,12 +195,12 @@ tests/
 
 No constitution violations requiring justification.
 
-| Aspect | Decision | Rationale |
-|--------|----------|-----------|
-| 3 layer packages | Required | Schema/API/UI separation is standard for typed monorepos |
-| Repository pattern | Required | Enables DB/ORM migration without API changes (per clarification) |
-| Storage adapter | Required | Enables Vercel Blob ↔ S3/Netlify swap (per clarification) |
-| Background tasks via cron | Simpler | Avoids job queue dependency for MVP |
+| Aspect                    | Decision | Rationale                                                        |
+| ------------------------- | -------- | ---------------------------------------------------------------- |
+| 3 layer packages          | Required | Schema/API/UI separation is standard for typed monorepos         |
+| Repository pattern        | Required | Enables DB/ORM migration without API changes (per clarification) |
+| Storage adapter           | Required | Enables Vercel Blob ↔ S3/Netlify swap (per clarification)        |
+| Background tasks via cron | Simpler  | Avoids job queue dependency for MVP                              |
 
 ---
 
@@ -205,22 +210,22 @@ See [research.md](./research.md) for detailed findings.
 
 ### Key Decisions
 
-| Topic | Decision | Rationale |
-|-------|----------|-----------|
-| Database | PostgreSQL + Drizzle ORM | Type-safe, migration support, SQLite for local dev |
-| Auth | nuxt-auth-utils | Nuxt-native, lightweight, Google OAuth |
-| PDF | Playwright | Serverless-compatible, full CSS fidelity |
-| Storage | Vercel Blob + adapter | Portable, pay-per-use |
-| LLM | OpenAI primary, Gemini Flash fallback | Quality vs cost tradeoff |
-| Rate limiting | In-memory for MVP | Redis post-MVP if needed |
+| Topic         | Decision                              | Rationale                                          |
+| ------------- | ------------------------------------- | -------------------------------------------------- |
+| Database      | PostgreSQL + Drizzle ORM              | Type-safe, migration support, SQLite for local dev |
+| Auth          | nuxt-auth-utils                       | Nuxt-native, lightweight, Google OAuth             |
+| PDF           | Playwright                            | Serverless-compatible, full CSS fidelity           |
+| Storage       | Vercel Blob + adapter                 | Portable, pay-per-use                              |
+| LLM           | OpenAI primary, Gemini Flash fallback | Quality vs cost tradeoff                           |
+| Rate limiting | In-memory for MVP                     | Redis post-MVP if needed                           |
 
 ### Remaining Unknowns (Low Impact)
 
-| Topic | Default Decision | Can Revisit |
-|-------|------------------|-------------|
-| BYOK server storage | Browser-only for MVP | Post-MVP |
-| Admin app auth | Same Google OAuth, same session | If security concern arises |
-| Match score algorithm | LLM-provided | If accuracy issues |
+| Topic                 | Default Decision                | Can Revisit                |
+| --------------------- | ------------------------------- | -------------------------- |
+| BYOK server storage   | Browser-only for MVP            | Post-MVP                   |
+| Admin app auth        | Same Google OAuth, same session | If security concern arises |
+| Match score algorithm | LLM-provided                    | If accuracy issues         |
 
 ---
 

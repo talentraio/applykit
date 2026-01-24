@@ -1,6 +1,8 @@
+import type { PutOptions, StorageAdapter } from './types'
+import { Buffer } from 'node:buffer'
 import { promises as fs } from 'node:fs'
-import { join, dirname } from 'node:path'
-import type { StorageAdapter, PutOptions } from './types'
+import { dirname, join } from 'node:path'
+import process from 'node:process'
 
 /**
  * Local Filesystem Storage Adapter
@@ -13,15 +15,18 @@ export class LocalAdapter implements StorageAdapter {
   private baseUrl: string
 
   constructor(baseDir?: string) {
+    const runtimeConfig = useRuntimeConfig()
+    const configuredBaseDir = runtimeConfig.storage?.baseDir
+
     // Default to .data/storage/ for local development
-    this.baseDir = baseDir || join(process.cwd(), '.data', 'storage')
+    this.baseDir = baseDir || configuredBaseDir || join(process.cwd(), '.data', 'storage')
 
     // Generate local URL (for dev server)
     // In a real app, you'd serve these files via a Nuxt API route
-    this.baseUrl = process.env.STORAGE_BASE_URL || 'http://localhost:3000/api/storage'
+    this.baseUrl = runtimeConfig.storage?.baseUrl || 'http://localhost:3000/api/storage'
   }
 
-  async put(path: string, data: Buffer | Blob, options?: PutOptions): Promise<string> {
+  async put(path: string, data: Buffer | Blob, _options?: PutOptions): Promise<string> {
     try {
       const fullPath = join(this.baseDir, path)
 
@@ -36,9 +41,10 @@ export class LocalAdapter implements StorageAdapter {
 
       // Return URL
       return this.pathToUrl(path)
-    }
-    catch (error) {
-      throw new Error(`Failed to write file to local storage: ${error instanceof Error ? error.message : String(error)}`)
+    } catch (error) {
+      throw new Error(
+        `Failed to write file to local storage: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -47,12 +53,13 @@ export class LocalAdapter implements StorageAdapter {
       const fullPath = join(this.baseDir, path)
       const buffer = await fs.readFile(fullPath)
       return buffer
-    }
-    catch (error) {
+    } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return null
       }
-      throw new Error(`Failed to read file from local storage: ${error instanceof Error ? error.message : String(error)}`)
+      throw new Error(
+        `Failed to read file from local storage: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -61,12 +68,13 @@ export class LocalAdapter implements StorageAdapter {
       const fullPath = join(this.baseDir, path)
       await fs.unlink(fullPath)
       return true
-    }
-    catch (error) {
+    } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return false
       }
-      throw new Error(`Failed to delete file from local storage: ${error instanceof Error ? error.message : String(error)}`)
+      throw new Error(
+        `Failed to delete file from local storage: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -76,8 +84,7 @@ export class LocalAdapter implements StorageAdapter {
     try {
       await fs.access(fullPath)
       return this.pathToUrl(path)
-    }
-    catch (error) {
+    } catch {
       throw new Error(`File not found in local storage: ${path}`)
     }
   }
@@ -89,16 +96,16 @@ export class LocalAdapter implements StorageAdapter {
       // Check if directory exists
       try {
         await fs.access(fullPath)
-      }
-      catch {
+      } catch {
         return []
       }
 
       const files = await this.listRecursive(fullPath, prefix)
       return files
-    }
-    catch (error) {
-      throw new Error(`Failed to list files from local storage: ${error instanceof Error ? error.message : String(error)}`)
+    } catch (error) {
+      throw new Error(
+        `Failed to list files from local storage: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -113,9 +120,10 @@ export class LocalAdapter implements StorageAdapter {
       }
 
       return count
-    }
-    catch (error) {
-      throw new Error(`Failed to delete files by prefix from local storage: ${error instanceof Error ? error.message : String(error)}`)
+    } catch (error) {
+      throw new Error(
+        `Failed to delete files by prefix from local storage: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -133,8 +141,7 @@ export class LocalAdapter implements StorageAdapter {
       if (entry.isDirectory()) {
         const subFiles = await this.listRecursive(fullPath, relativePath)
         files.push(...subFiles)
-      }
-      else {
+      } else {
         files.push(relativePath)
       }
     }
@@ -147,7 +154,10 @@ export class LocalAdapter implements StorageAdapter {
    */
   private pathToUrl(path: string): string {
     // Encode path for URL
-    const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/')
+    const encodedPath = path
+      .split('/')
+      .map(segment => encodeURIComponent(segment))
+      .join('/')
     return `${this.baseUrl}/${encodedPath}`
   }
 }

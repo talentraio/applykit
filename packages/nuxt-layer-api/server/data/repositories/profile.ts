@@ -1,8 +1,8 @@
+import type { ProfileInput } from '@int/schema'
+import type { Profile } from '../schema'
 import { eq } from 'drizzle-orm'
 import { db } from '../db'
 import { profiles } from '../schema'
-import type { Profile, NewProfile } from '../schema'
-import type { ProfileInput } from '@int/schema'
 
 /**
  * Profile Repository
@@ -33,18 +33,21 @@ export const profileRepository = {
    * Called when user first fills out their profile
    */
   async create(userId: string, data: ProfileInput): Promise<Profile> {
-    const result = await db.insert(profiles).values({
-      userId,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      country: data.country,
-      searchRegion: data.searchRegion,
-      workFormat: data.workFormat,
-      languages: data.languages,
-      phones: data.phones,
-    }).returning()
-    return result[0]
+    const result = await db
+      .insert(profiles)
+      .values({
+        userId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        country: data.country,
+        searchRegion: data.searchRegion,
+        workFormat: data.workFormat,
+        languages: data.languages,
+        phones: data.phones
+      })
+      .returning()
+    return result[0]!
   },
 
   /**
@@ -56,7 +59,7 @@ export const profileRepository = {
       .update(profiles)
       .set({
         ...data,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(eq(profiles.userId, userId))
       .returning()
@@ -75,7 +78,11 @@ export const profileRepository = {
    * Check if profile exists for user
    */
   async existsForUser(userId: string): Promise<boolean> {
-    const result = await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.userId, userId)).limit(1)
+    const result = await db
+      .select({ id: profiles.id })
+      .from(profiles)
+      .where(eq(profiles.userId, userId))
+      .limit(1)
     return result.length > 0
   },
 
@@ -95,5 +102,5 @@ export const profileRepository = {
       profile.searchRegion.length > 0 &&
       profile.languages.length > 0
     )
-  },
+  }
 }

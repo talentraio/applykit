@@ -3,6 +3,7 @@
 All schema definitions live in `@int/schema` (Zod + inferred TS types).
 
 ## Resume root
+
 - `personal` (name, title, contacts, location)
 - `summary`
 - `skills[]`
@@ -13,9 +14,11 @@ All schema definitions live in `@int/schema` (Zod + inferred TS types).
 - `languages? { language, level }[]` (root-level)
 
 Dates:
+
 - Use `YYYY-MM`
 
 ## Vacancy
+
 - company: required
 - jobPosition: optional
 - description: string (MVP)
@@ -24,7 +27,9 @@ Dates:
 - generatedVersions: array (store as array even if UI shows only latest)
 
 ## Relevance metrics (store now, visualize later)
+
 Inside `generatedVersions[n].metrics`:
+
 - `matchBefore: number` (0..100)
 - `matchAfter: number` (0..100)
 - `delta: number`

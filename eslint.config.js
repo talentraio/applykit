@@ -1,25 +1,46 @@
 import antfu from '@antfu/eslint-config'
+import eslintConfigPrettier from 'eslint-config-prettier/flat'
 
-export default antfu({
-  type: 'lib',
-  typescript: true,
-  vue: true,
-  stylistic: {
-    indent: 2,
-    quotes: 'single',
-    semi: false
+export default antfu(
+  {
+    type: 'lib',
+    typescript: true,
+    vue: true,
+    rules: {
+      'antfu/if-newline': 'off',
+      'antfu/top-level-function': 'off',
+      'ts/consistent-type-definitions': ['error', 'type'],
+      'vue/block-order': ['error', { order: ['template', 'script', 'style'] }]
+    },
+    stylistic: {
+      indent: 2,
+      quotes: 'single',
+      semi: false
+    },
+    formatters: {
+      css: true,
+      html: true,
+      markdown: true
+    },
+    ignores: [
+      '**/node_modules/**',
+      '**/.nuxt/**',
+      '**/.output/**',
+      '**/dist/**',
+      '**/.cache/**',
+      '**/coverage/**'
+    ]
   },
-  formatters: {
-    css: true,
-    html: true,
-    markdown: true
+  {
+    files: ['**/*.{ts,tsx,vue}'],
+    rules: {
+      '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }]
+    }
   },
-  ignores: [
-    '**/node_modules/**',
-    '**/.nuxt/**',
-    '**/.output/**',
-    '**/dist/**',
-    '**/.cache/**',
-    '**/coverage/**'
-  ]
-})
+  {
+    files: ['apps/**/*.{ts,tsx,vue}'],
+    rules: {
+      'ts/explicit-function-return-type': 'off'
+    }
+  }
+).append(eslintConfigPrettier)

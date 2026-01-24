@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { getVacancyTitle, type Vacancy } from '../schemas/vacancy'
+import type { Vacancy } from '../schemas/vacancy'
+import { describe, expect, it } from 'vitest'
+import { getVacancyTitle } from '../schemas/vacancy'
 
 describe('getVacancyTitle', () => {
   it('should return "Company (Position)" when jobPosition is provided', () => {
@@ -10,7 +11,7 @@ describe('getVacancyTitle', () => {
       jobPosition: 'Senior Developer',
       description: 'Job description',
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     }
 
     expect(getVacancyTitle(vacancy)).toBe('Acme Corp (Senior Developer)')
@@ -24,7 +25,7 @@ describe('getVacancyTitle', () => {
       jobPosition: undefined,
       description: 'Job description',
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     }
 
     expect(getVacancyTitle(vacancy)).toBe('Acme Corp')
@@ -38,7 +39,7 @@ describe('getVacancyTitle', () => {
       jobPosition: null,
       description: 'Job description',
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     }
 
     expect(getVacancyTitle(vacancy)).toBe('Acme Corp')
@@ -52,7 +53,7 @@ describe('getVacancyTitle', () => {
       jobPosition: 'UI/UX Designer',
       description: 'Job description',
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     }
 
     expect(getVacancyTitle(vacancy)).toBe('Smith & Co. (UI/UX Designer)')

@@ -1,7 +1,7 @@
 {
   "name": "site",
-  "version": "0.0.1",
   "type": "module",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "dev": "nuxt dev",
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@int/api": "workspace:*",
+    "@int/schema": "workspace:*",
     "@int/ui": "workspace:*",
     "nuxt": "^4.0.9"
   },

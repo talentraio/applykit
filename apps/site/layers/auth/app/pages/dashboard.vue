@@ -1,40 +1,12 @@
-<script setup lang="ts">
-/**
- * Dashboard Page
- *
- * Main authenticated landing page showing user information
- * and quick access to key features
- *
- * T069 [US1] Dashboard page
- */
-
-const { user, logout } = useCurrentUser()
-const { t } = useI18n()
-
-const handleLogout = async () => {
-  try {
-    await logout()
-  }
-  catch (error) {
-    console.error('Logout failed:', error)
-  }
-}
-</script>
-
 <template>
-  <div class="flex min-h-screen items-center justify-center p-4">
+  <div class="dashboard-page flex min-h-screen items-center justify-center p-4">
     <UPageCard class="w-full max-w-2xl">
       <template #header>
         <div class="flex items-center justify-between">
           <h1 class="text-2xl font-bold">
             {{ $t('dashboard.title') }}
           </h1>
-          <UButton
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-log-out"
-            @click="handleLogout"
-          >
+          <UButton color="neutral" variant="soft" icon="i-lucide-log-out" @click="handleLogout">
             {{ $t('auth.logout') }}
           </UButton>
         </div>
@@ -43,7 +15,7 @@ const handleLogout = async () => {
       <div v-if="user" class="space-y-6">
         <div>
           <p class="text-lg text-muted">
-            {{ $t('dashboard.welcome', { name: user.name }) }}
+            {{ $t('dashboard.welcome', { name: user.email.split('@')[0] }) }}
           </p>
         </div>
 
@@ -72,3 +44,26 @@ const handleLogout = async () => {
     </UPageCard>
   </div>
 </template>
+
+<script setup lang="ts">
+/**
+ * Dashboard Page
+ *
+ * Main authenticated landing page showing user information
+ * and quick access to key features
+ *
+ * T069 [US1] Dashboard page
+ */
+
+defineOptions({ name: 'DashboardPage' })
+
+const { user, logout } = useCurrentUser()
+
+const handleLogout = async () => {
+  try {
+    await logout()
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
+}
+</script>

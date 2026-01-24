@@ -43,26 +43,29 @@ Create `.env` files for each app:
 
 ### Root `.env` (shared secrets)
 
+> Nuxt reads environment variables via `runtimeConfig` using the `NUXT_` / `NUXT_PUBLIC_` prefixes.
+> Avoid bare names like `DATABASE_URL` in this repo.
+
 ```bash
 # Database (local development uses SQLite by default)
-DATABASE_URL="file:./dev.db"
+NUXT_DATABASE_URL="file:./dev.db"
 
 # For PostgreSQL (production or local Docker):
-# DATABASE_URL="postgresql://user:pass@localhost:5432/applykit"
+# NUXT_DATABASE_URL="postgresql://user:pass@localhost:5432/applykit"
 
 # Google OAuth
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
+NUXT_OAUTH_GOOGLE_CLIENT_ID="your-google-client-id"
+NUXT_OAUTH_GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
 # Session secret (generate: openssl rand -hex 32)
-NUXT_SESSION_SECRET="your-session-secret"
+NUXT_SESSION_PASSWORD="your-session-secret"
 
 # LLM Providers (platform keys)
-OPENAI_API_KEY="sk-..."
-GOOGLE_AI_API_KEY="..." # Optional, for Gemini Flash
+NUXT_LLM_OPENAI_API_KEY="sk-..."
+NUXT_LLM_GEMINI_API_KEY="..." # Optional, for Gemini Flash
 
 # Storage (Vercel Blob)
-BLOB_READ_WRITE_TOKEN="vercel_blob_..."
+NUXT_STORAGE_BLOB_READ_WRITE_TOKEN="vercel_blob_..."
 
 # Base URL (for OAuth callbacks)
 NUXT_PUBLIC_BASE_URL="http://localhost:3000"
@@ -106,8 +109,8 @@ docker run --name applykit-db \
   -p 5432:5432 \
   -d postgres:16
 
-# Update DATABASE_URL in .env
-DATABASE_URL="postgresql://applykit:applykit@localhost:5432/applykit"
+# Update NUXT_DATABASE_URL in .env
+NUXT_DATABASE_URL="postgresql://applykit:applykit@localhost:5432/applykit"
 
 # Run migrations
 pnpm db:migrate
@@ -116,7 +119,7 @@ pnpm db:migrate
 ### Option C: Remote PostgreSQL (Supabase/Neon)
 
 1. Create project on Supabase or Neon
-2. Copy connection string to `DATABASE_URL`
+2. Copy connection string to `NUXT_DATABASE_URL`
 3. Run migrations: `pnpm db:migrate`
 
 ---
@@ -280,22 +283,27 @@ pnpm test:e2e -- --grep "happy path"
 ### Common Issues
 
 **"Module not found: @int/schema"**
+
 - Run `pnpm install` from root
 - Check `pnpm-workspace.yaml` includes packages
 
 **OAuth callback error**
+
 - Verify redirect URI in Google Console matches exactly
 - Check `NUXT_PUBLIC_BASE_URL` is correct
 
 **Database connection failed**
+
 - For SQLite: ensure `dev.db` directory is writable
-- For PostgreSQL: check `DATABASE_URL` format and credentials
+- For PostgreSQL: check `NUXT_DATABASE_URL` format and credentials
 
 **LLM parsing fails**
-- Verify `OPENAI_API_KEY` is set and valid
+
+- Verify `NUXT_LLM_OPENAI_API_KEY` is set and valid
 - Check rate limits on OpenAI dashboard
 
 **PDF export timeout**
+
 - Playwright needs Chromium; run `npx playwright install chromium`
 - Check serverless function timeout (increase if needed)
 
@@ -327,12 +335,14 @@ vercel
 ### Environment Variables on Vercel
 
 Set these in Vercel project settings:
-- `DATABASE_URL` (PostgreSQL connection string)
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `NUXT_SESSION_SECRET`
-- `OPENAI_API_KEY`
-- `BLOB_READ_WRITE_TOKEN`
+
+- `NUXT_DATABASE_URL` (PostgreSQL connection string)
+- `NUXT_OAUTH_GOOGLE_CLIENT_ID`
+- `NUXT_OAUTH_GOOGLE_CLIENT_SECRET`
+- `NUXT_SESSION_PASSWORD`
+- `NUXT_LLM_OPENAI_API_KEY`
+- `NUXT_LLM_GEMINI_API_KEY` (optional)
+- `NUXT_STORAGE_BLOB_READ_WRITE_TOKEN`
 - `NUXT_PUBLIC_BASE_URL` (production URL)
 
 ### Vercel Cron Jobs

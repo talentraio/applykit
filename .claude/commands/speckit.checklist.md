@@ -5,6 +5,7 @@ description: Generate a custom checklist for the current feature based on user r
 ## Repo conventions (apply to checklists)
 
 When generating checklists, keep them aligned with:
+
 - `.claude/skills/project-conventions/SKILL.md`
 - `docs/architecture/*`, `docs/api/*`, `docs/codestyle/*`
 - Nuxt v4 + NuxtUI v4; VueUse-first; i18n from day 1

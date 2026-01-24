@@ -10,7 +10,7 @@
  * Related: T044, TX020
  */
 
-interface RateLimitEntry {
+type RateLimitEntry = {
   count: number
   resetAt: number
 }
@@ -24,7 +24,7 @@ const rateLimitStore = new Map<string, RateLimitEntry>()
 /**
  * Rate limit configuration
  */
-interface RateLimitConfig {
+type RateLimitConfig = {
   /**
    * Maximum requests allowed in the window
    */
@@ -47,7 +47,7 @@ interface RateLimitConfig {
 export function checkRateLimit(
   identifier: string,
   operation: string,
-  config: RateLimitConfig,
+  config: RateLimitConfig
 ): boolean {
   const key = `${identifier}:${operation}`
   const now = Date.now()
@@ -57,7 +57,7 @@ export function checkRateLimit(
   if (!entry) {
     rateLimitStore.set(key, {
       count: 1,
-      resetAt: now + config.windowSeconds * 1000,
+      resetAt: now + config.windowSeconds * 1000
     })
     return true
   }
@@ -66,7 +66,7 @@ export function checkRateLimit(
   if (now >= entry.resetAt) {
     rateLimitStore.set(key, {
       count: 1,
-      resetAt: now + config.windowSeconds * 1000,
+      resetAt: now + config.windowSeconds * 1000
     })
     return true
   }
@@ -92,7 +92,7 @@ export function checkRateLimit(
 export function getRemainingRequests(
   identifier: string,
   operation: string,
-  config: RateLimitConfig,
+  config: RateLimitConfig
 ): number {
   const key = `${identifier}:${operation}`
   const now = Date.now()
@@ -112,10 +112,7 @@ export function getRemainingRequests(
  * @param operation - Operation being rate limited
  * @returns Seconds until reset, or 0 if no active limit
  */
-export function getResetTime(
-  identifier: string,
-  operation: string,
-): number {
+export function getResetTime(identifier: string, operation: string): number {
   const key = `${identifier}:${operation}`
   const now = Date.now()
   const entry = rateLimitStore.get(key)
@@ -134,15 +131,11 @@ export function getResetTime(
  * @param identifier - Unique identifier
  * @param operation - Optional operation (if not provided, clears all for identifier)
  */
-export function clearRateLimit(
-  identifier: string,
-  operation?: string,
-): void {
+export function clearRateLimit(identifier: string, operation?: string): void {
   if (operation) {
     const key = `${identifier}:${operation}`
     rateLimitStore.delete(key)
-  }
-  else {
+  } else {
     // Clear all operations for this identifier
     const prefix = `${identifier}:`
     for (const key of rateLimitStore.keys()) {
@@ -206,5 +199,5 @@ export const RateLimitPresets = {
   /**
    * Hourly - 1000 requests per hour
    */
-  hourly: { maxRequests: 1000, windowSeconds: 3600 },
+  hourly: { maxRequests: 1000, windowSeconds: 3600 }
 } as const

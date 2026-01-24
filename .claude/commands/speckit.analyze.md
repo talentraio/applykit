@@ -13,12 +13,12 @@ You **MUST** consider the user input before proceeding (if not empty).
 ## Repo conventions (source of truth)
 
 Use these as constraints while analyzing consistency:
+
 - `.claude/skills/project-conventions/SKILL.md`
 - `docs/architecture/*`, `docs/api/*`, `docs/codestyle/*`
 - Nuxt v4 + NuxtUI v4, i18n from day 1, VueUse-first
 - ATS/Human pages must remain SSR-friendly and use server-side islands rendering
 - Layer naming: repo path `packages/nuxt-layer-*/` vs package name `@int/*`
-
 
 ## Goal
 
@@ -136,16 +136,16 @@ Output a Markdown report (no file writes) with the following structure:
 
 ## Specification Analysis Report
 
-| ID | Category | Severity | Location(s) | Summary | Recommendation |
-|----|----------|----------|-------------|---------|----------------|
-| A1 | Duplication | HIGH | spec.md:L120-134 | Two similar requirements ... | Merge phrasing; keep clearer version |
+| ID  | Category    | Severity | Location(s)      | Summary                      | Recommendation                       |
+| --- | ----------- | -------- | ---------------- | ---------------------------- | ------------------------------------ |
+| A1  | Duplication | HIGH     | spec.md:L120-134 | Two similar requirements ... | Merge phrasing; keep clearer version |
 
 (Add one row per finding; generate stable IDs prefixed by category initial.)
 
 **Coverage Summary Table:**
 
 | Requirement Key | Has Task? | Task IDs | Notes |
-|-----------------|-----------|----------|-------|
+| --------------- | --------- | -------- | ----- |
 
 **Constitution Alignment Issues:** (if any)
 

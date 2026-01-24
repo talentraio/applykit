@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 /**
  * E2E Happy Path Smoke Test
@@ -31,7 +31,7 @@ test.describe.skip('Happy Path - Complete User Journey', () => {
       - React and Vue.js
       - PostgreSQL and Redis
       - CI/CD and DevOps
-    `,
+    `
   }
 
   test.beforeEach(async ({ page }) => {
@@ -39,7 +39,9 @@ test.describe.skip('Happy Path - Complete User Journey', () => {
     await page.goto('/')
   })
 
-  test('should complete full user journey: auth → parse → vacancy → generate → export', async ({ page }) => {
+  test('should complete full user journey: auth → parse → vacancy → generate → export', async ({
+    page
+  }) => {
     // ========================================
     // Step 1: Authentication
     // ========================================
@@ -72,7 +74,7 @@ test.describe.skip('Happy Path - Complete User Journey', () => {
 
       // Wait for parsing to complete
       await expect(page.getByText(/parsing complete/i)).toBeVisible({
-        timeout: 30000,
+        timeout: 30000
       })
 
       // Verify parsed data is displayed
@@ -118,7 +120,7 @@ test.describe.skip('Happy Path - Complete User Journey', () => {
       // Wait for generation to complete
       await expect(page.getByText(/generating/i)).toBeVisible()
       await expect(page.getByText(/generation complete/i)).toBeVisible({
-        timeout: 60000, // LLM generation can take time
+        timeout: 60000 // LLM generation can take time
       })
 
       // Verify match scores are displayed
@@ -197,10 +199,9 @@ test.describe.skip('Happy Path - Complete User Journey', () => {
         if (i < 3) {
           // First 3 should succeed (public role limit is 3)
           await expect(page.getByText(/parsing complete/i)).toBeVisible({
-            timeout: 30000,
+            timeout: 30000
           })
-        }
-        else {
+        } else {
           // 4th attempt should show limit error
           await expect(page.getByText(/daily limit exceeded/i)).toBeVisible()
           await expect(page.getByText(/limit: 3 per day/i)).toBeVisible()
@@ -265,7 +266,7 @@ test.describe.skip('Happy Path - Complete User Journey', () => {
  *    - NUXT_SESSION_PASSWORD=test-session-password-32-chars
  *    - NUXT_OAUTH_GOOGLE_CLIENT_ID=test-client-id
  *    - NUXT_OAUTH_GOOGLE_CLIENT_SECRET=test-client-secret
- *    - DATABASE_URL=postgresql://test:test@localhost:5432/test_db
+ *    - NUXT_DATABASE_URL=postgresql://test:test@localhost:5432/test_db
  *
  * 2. Test Database:
  *    - Run: pnpm db:migrate

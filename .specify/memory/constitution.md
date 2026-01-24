@@ -1,50 +1,63 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version change: N/A -> 1.0.0
+- Modified principles: N/A (new constitution)
+- Added sections: Core Principles, Additional Constraints, Development Workflow, Governance
+- Templates requiring updates:
+  - .specify/templates/spec-template.md (updated)
+  - .specify/templates/tasks-template.md (updated)
+- Follow-up TODOs: none
+-->
+
+# ApplyKit Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Documentation Is Binding
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+- Before any code changes, read and follow `docs/codestyle/base.md`.
+- Read any other docs needed for the task (docs/architecture/_, docs/api/_,
+  docs/codestyle/\*).
+- If docs and code disagree, update docs first or pause for clarification.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Nuxt Stack Invariants
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+- Nuxt v4 and NuxtUI v4 only.
+- Use Nuxt/NuxtUI MCP docs for framework-specific APIs. If MCP is unavailable,
+  stop and ask for a fix (do not guess).
+- Check VueUse first; prefer existing composables.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Schema-First Contracts
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+- Shared types live in `@int/schema` with Zod validation and inferred types.
+- Services validate external/LLM outputs; endpoints operate on typed values.
+- Client code must not pass generics to `$fetch` for typing.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Store/Action Data Flow
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+- Pinia stores own data flow; UI components call store actions.
+- API calls should follow the store/actions pattern, not ad-hoc fetch logic.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. i18n and SSR Requirements
+
+- All user-facing strings use i18n keys from day one.
+- ATS/Human views remain SSR-friendly and use server-side islands rendering.
+
+## Additional Constraints
+
+- Formatting is handled by Prettier; ESLint must not conflict with Prettier.
+- UI work must follow `docs/design/mvp.md` when applicable.
+
+## Development Workflow
+
+- Specs and tasks must include the documentation gate from Principle I.
+- Use spec-kit to generate specs/tasks and keep templates in sync.
+- Tests are required for risky logic (limits, auth, encryption, caching).
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- This constitution supersedes other guidance when conflicts arise.
+- Changes require updating this file and the spec-kit templates.
+- Reviews must verify compliance with the principles above.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-01-23 | **Last Amended**: 2026-01-23

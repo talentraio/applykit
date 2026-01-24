@@ -7,6 +7,7 @@ Multi-provider LLM service with support for OpenAI and Google Gemini.
 The LLM service provides a unified interface for calling different LLM providers with automatic provider selection, cost tracking, and BYOK (Bring Your Own Key) support.
 
 **Supported Providers:**
+
 - OpenAI (GPT-4o, GPT-4-turbo, GPT-3.5-turbo)
 - Google Gemini (Gemini 2.0 Flash, Gemini 1.5 Pro/Flash)
 
@@ -28,12 +29,12 @@ server/services/llm/
 ```typescript
 import { callLLM } from '~/server/services/llm'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const response = await callLLM({
     prompt: 'Explain quantum computing in simple terms',
     systemMessage: 'You are a helpful teacher',
     temperature: 0.7,
-    maxTokens: 500,
+    maxTokens: 500
   })
 
   console.log(response.content)
@@ -49,7 +50,7 @@ export default defineEventHandler(async (event) => {
 ```typescript
 import { callLLM } from '~/server/services/llm'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   // User provides their own API key (from request header)
   const userApiKey = getHeader(event, 'x-api-key')
 
@@ -60,12 +61,12 @@ export default defineEventHandler(async (event) => {
   const response = await callLLM(
     {
       prompt: 'Summarize this resume...',
-      maxTokens: 1000,
+      maxTokens: 1000
     },
     {
       userApiKey,
-      provider: 'openai', // or 'gemini'
-    },
+      provider: 'openai' // or 'gemini'
+    }
   )
 
   return response
@@ -78,7 +79,7 @@ export default defineEventHandler(async (event) => {
 // Uses platform API key from environment
 // Automatically checks budget and increments usage
 const response = await callLLM({
-  prompt: 'Generate resume summary...',
+  prompt: 'Generate resume summary...'
 })
 
 // Platform budget is tracked in system_configs table
@@ -89,7 +90,7 @@ const response = await callLLM({
 ```typescript
 import { validateKey } from '~/server/services/llm'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const { provider, apiKey } = await readBody(event)
 
   const isValid = await validateKey(provider, apiKey)
@@ -127,10 +128,10 @@ The service automatically selects the appropriate provider and key:
 
 ```bash
 # OpenAI
-OPENAI_API_KEY=sk-proj-...
+NUXT_LLM_OPENAI_API_KEY=sk-proj-...
 
 # Google Gemini
-GEMINI_API_KEY=AIza...
+NUXT_LLM_GEMINI_API_KEY=AIza...
 
 # Platform settings (in database - system_configs table)
 # - platform_llm_enabled: true/false
@@ -161,32 +162,27 @@ const { allowed, reason } = await systemConfigRepository.canUsePlatformLLM()
 
 ### OpenAI
 
-| Model | Input (per 1M tokens) | Output (per 1M tokens) | Best For |
-|-------|----------------------|------------------------|----------|
-| gpt-4o | $5.00 | $15.00 | Complex tasks |
-| gpt-4o-mini | $0.15 | $0.60 | Fast, cheap (default) |
-| gpt-4-turbo | $10.00 | $30.00 | High quality |
-| gpt-3.5-turbo | $0.50 | $1.50 | Simple tasks |
+| Model         | Input (per 1M tokens) | Output (per 1M tokens) | Best For              |
+| ------------- | --------------------- | ---------------------- | --------------------- |
+| gpt-4o        | $5.00                 | $15.00                 | Complex tasks         |
+| gpt-4o-mini   | $0.15                 | $0.60                  | Fast, cheap (default) |
+| gpt-4-turbo   | $10.00                | $30.00                 | High quality          |
+| gpt-3.5-turbo | $0.50                 | $1.50                  | Simple tasks          |
 
 ### Google Gemini
 
-| Model | Input (per 1M tokens) | Output (per 1M tokens) | Best For |
-|-------|----------------------|------------------------|----------|
-| gemini-2.0-flash | $0.10 | $0.40 | Fast, cheap (default) |
-| gemini-1.5-flash | $0.075 | $0.30 | Very cheap |
-| gemini-1.5-pro | $1.25 | $5.00 | Complex tasks |
+| Model            | Input (per 1M tokens) | Output (per 1M tokens) | Best For              |
+| ---------------- | --------------------- | ---------------------- | --------------------- |
+| gemini-2.0-flash | $0.10                 | $0.40                  | Fast, cheap (default) |
+| gemini-1.5-flash | $0.075                | $0.30                  | Very cheap            |
+| gemini-1.5-pro   | $1.25                 | $5.00                  | Complex tasks         |
 
 ## Error Handling
 
 ### Error Types
 
 ```typescript
-import {
-  LLMError,
-  LLMAuthError,
-  LLMRateLimitError,
-  LLMQuotaError,
-} from '~/server/services/llm'
+import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '~/server/services/llm'
 
 try {
   const response = await callLLM({ prompt: '...' })
@@ -267,7 +263,7 @@ await logUsage(
   'generate', // operation
   response.providerType, // 'platform' or 'byok'
   response.tokensUsed,
-  response.cost,
+  response.cost
 )
 ```
 
@@ -277,7 +273,7 @@ await logUsage(
 
 ```typescript
 // server/api/resumes/parse.post.ts
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const user = event.context.user
   const { resumeText } = await readBody(event)
 
@@ -288,7 +284,7 @@ export default defineEventHandler(async (event) => {
   const response = await callLLM({
     prompt: `Parse this resume into structured JSON:\n\n${resumeText}`,
     systemMessage: 'You are a resume parser. Return only valid JSON.',
-    maxTokens: 2000,
+    maxTokens: 2000
   })
 
   // Log usage
@@ -305,7 +301,7 @@ export default defineEventHandler(async (event) => {
 
 ```typescript
 // server/api/vacancies/[id]/generate.post.ts
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const user = event.context.user
   const vacancyId = getRouterParam(event, 'id')
 
@@ -321,7 +317,7 @@ export default defineEventHandler(async (event) => {
     prompt: `Tailor this resume for this job:\n\nResume: ${JSON.stringify(resume.content)}\n\nJob: ${vacancy.description}`,
     systemMessage: 'You are a resume expert. Optimize the resume for ATS.',
     temperature: 0.7,
-    maxTokens: 3000,
+    maxTokens: 3000
   })
 
   // Log usage
@@ -333,7 +329,7 @@ export default defineEventHandler(async (event) => {
     resumeId: resume.id,
     content: JSON.parse(response.content),
     matchScoreBefore: 0, // TODO: calculate
-    matchScoreAfter: 0,  // TODO: calculate
+    matchScoreAfter: 0 // TODO: calculate
   })
 
   return generation
@@ -354,7 +350,7 @@ vi.spyOn(llmService, 'callLLM').mockResolvedValue({
   cost: 0.001,
   model: 'gpt-4o-mini',
   provider: 'openai',
-  providerType: 'platform',
+  providerType: 'platform'
 })
 ```
 
@@ -365,7 +361,7 @@ describe('LLM Service', () => {
   it('should call OpenAI', async () => {
     const response = await callLLM({
       prompt: 'Say hello',
-      maxTokens: 10,
+      maxTokens: 10
     })
 
     expect(response.content).toBeTruthy()
@@ -384,14 +380,16 @@ describe('LLM Service', () => {
    - Gemini: gemini-1.5-flash ($0.075/$0.30 per 1M tokens)
 
 2. **Set appropriate max_tokens**:
+
    ```typescript
    await callLLM({
      prompt: '...',
-     maxTokens: 500, // Don't request more than needed
+     maxTokens: 500 // Don't request more than needed
    })
    ```
 
 3. **Cache results when possible**:
+
    ```typescript
    const cacheKey = `llm:${hashInput(prompt)}`
    let result = await cache.get(cacheKey)
@@ -405,6 +403,7 @@ describe('LLM Service', () => {
 ### Rate Limiting
 
 Platform keys are subject to provider rate limits:
+
 - OpenAI: Tier-based (see OpenAI dashboard)
 - Gemini: 60 requests/minute (free tier)
 

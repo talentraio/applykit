@@ -19,9 +19,10 @@ Use this guide when working with state.
   - `dependsOn: ['pinia']`
 
 Flow:
-1) Load base dictionaries (countries, etc.)
-2) If the user is authenticated, load profile/user data
-3) Store results into Pinia
+
+1. Load base dictionaries (countries, etc.)
+2. If the user is authenticated, load profile/user data
+3. Store results into Pinia
 
 ## Page data fetching
 

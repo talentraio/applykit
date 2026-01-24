@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config'
 import { resolve } from 'node:path'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
@@ -18,8 +18,20 @@ export default defineConfig({
         '**/.playground/**'
       ]
     },
-    include: ['**/*.{test,spec}.{js,ts}'],
-    exclude: ['node_modules', '.nuxt', '.output', 'dist']
+    include: [
+      'packages/*/tests/**/*.{test,spec}.{js,ts}',
+      'packages/*/__tests__/**/*.{test,spec}.{js,ts}',
+      'apps/*/tests/**/*.{test,spec}.{js,ts}',
+      'tests/unit/**/*.{test,spec}.{js,ts}'
+    ],
+    exclude: [
+      '**/node_modules/**',
+      '**/.nuxt/**',
+      '**/.output/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/.{idea,git,cache,output,temp}/**'
+    ]
   },
   resolve: {
     alias: {

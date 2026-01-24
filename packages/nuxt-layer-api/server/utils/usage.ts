@@ -1,5 +1,5 @@
-import { usageLogRepository } from '../data/repositories'
 import type { Operation, ProviderType } from '@int/schema'
+import { usageLogRepository } from '../data/repositories'
 
 /**
  * Usage Tracking Utility
@@ -24,14 +24,14 @@ export async function logUsage(
   operation: Operation,
   providerType: ProviderType,
   tokensUsed?: number,
-  cost?: number,
+  cost?: number
 ): Promise<void> {
-  await usageLogRepository.create({
+  await usageLogRepository.log({
     userId,
     operation,
     providerType,
-    tokensUsed: tokensUsed ?? null,
-    cost: cost?.toString() ?? null,
+    tokensUsed,
+    cost
   })
 }
 
@@ -42,10 +42,7 @@ export async function logUsage(
  * @param operation - Operation type
  * @returns Number of operations today
  */
-export async function getDailyUsageCount(
-  userId: string,
-  operation: Operation,
-): Promise<number> {
+export async function getDailyUsageCount(userId: string, operation: Operation): Promise<number> {
   return await usageLogRepository.getDailyCount(userId, operation)
 }
 
@@ -56,7 +53,11 @@ export async function getDailyUsageCount(
  * @returns Total tokens used today
  */
 export async function getDailyTokensUsed(userId: string): Promise<number> {
-  return await usageLogRepository.getDailyTokensUsed(userId)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  return await usageLogRepository.getTotalTokens(userId, today, tomorrow)
 }
 
 /**
@@ -66,7 +67,11 @@ export async function getDailyTokensUsed(userId: string): Promise<number> {
  * @returns Total cost in USD
  */
 export async function getDailyCost(userId: string): Promise<number> {
-  return await usageLogRepository.getDailyCost(userId)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  return await usageLogRepository.getTotalCost(userId, today, tomorrow)
 }
 
 /**
@@ -80,9 +85,9 @@ export async function getDailyCost(userId: string): Promise<number> {
 export async function getUsageHistory(
   userId: string,
   startDate: Date,
-  endDate: Date,
-) {
-  return await usageLogRepository.findByUserAndDateRange(userId, startDate, endDate)
+  endDate: Date
+): ReturnType<typeof usageLogRepository.findByDateRange> {
+  return await usageLogRepository.findByDateRange(userId, startDate, endDate)
 }
 
 /**
@@ -92,7 +97,7 @@ export async function logParse(
   userId: string,
   providerType: ProviderType,
   tokensUsed?: number,
-  cost?: number,
+  cost?: number
 ): Promise<void> {
   await logUsage(userId, 'parse', providerType, tokensUsed, cost)
 }
@@ -104,7 +109,7 @@ export async function logGenerate(
   userId: string,
   providerType: ProviderType,
   tokensUsed?: number,
-  cost?: number,
+  cost?: number
 ): Promise<void> {
   await logUsage(userId, 'generate', providerType, tokensUsed, cost)
 }
@@ -116,7 +121,7 @@ export async function logExport(
   userId: string,
   providerType: ProviderType,
   tokensUsed?: number,
-  cost?: number,
+  cost?: number
 ): Promise<void> {
   await logUsage(userId, 'export', providerType, tokensUsed, cost)
 }

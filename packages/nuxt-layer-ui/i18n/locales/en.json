@@ -1,0 +1,121 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "view": "View",
+    "loading": "Loading...",
+    "submit": "Submit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "yes": "Yes",
+    "no": "No",
+    "error": {
+      "generic": "An error occurred. Please try again.",
+      "network": "Network error. Please check your connection.",
+      "notFound": "Resource not found.",
+      "unauthorized": "You are not authorized to perform this action.",
+      "forbidden": "Access forbidden.",
+      "validation": "Please check your input and try again."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to your account",
+      "google": "Sign in with Google",
+      "welcome": "Welcome back",
+      "description": "Sign in to access your resume tailoring workspace"
+    },
+    "logout": "Sign out",
+    "user": {
+      "profile": "Profile",
+      "settings": "Settings"
+    },
+    "error": {
+      "oauthFailed": "Authentication failed. Please try again.",
+      "sessionExpired": "Your session has expired. Please sign in again.",
+      "unauthorized": "You must be signed in to access this page.",
+      "generic": "An authentication error occurred. Please try again."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {name}!",
+    "email": "Email",
+    "role": "Role"
+  },
+  "resume": {
+    "list": {
+      "title": "My Resumes",
+      "empty": "No resumes yet",
+      "emptyDescription": "Upload your first resume to get started",
+      "uploadButton": "Upload Resume",
+      "count": "{count} resume(s)"
+    },
+    "upload": {
+      "title": "Upload Resume",
+      "dropzone": "Drop your resume here or click to browse",
+      "dropzoneActive": "Drop file here",
+      "formats": "Supported formats: DOCX, PDF",
+      "maxSize": "Maximum file size: 10MB",
+      "button": "Choose File",
+      "uploading": "Uploading and parsing...",
+      "success": "Resume uploaded successfully",
+      "parsing": "Parsing resume with AI..."
+    },
+    "editor": {
+      "title": "Edit Resume",
+      "jsonTab": "JSON Editor",
+      "previewTab": "Preview",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "saved": "Changes saved",
+      "unsavedChanges": "You have unsaved changes",
+      "invalidJson": "Invalid JSON format",
+      "personalInfo": "Personal Information",
+      "experience": "Experience",
+      "education": "Education",
+      "skills": "Skills",
+      "certifications": "Certifications",
+      "languages": "Languages"
+    },
+    "detail": {
+      "title": "Resume Details",
+      "sourceFile": "Source File",
+      "uploadedAt": "Uploaded At",
+      "lastModified": "Last Modified",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "download": "Download Original"
+      }
+    },
+    "delete": {
+      "confirm": "Are you sure you want to delete this resume?",
+      "description": "This action cannot be undone. All associated tailored versions will also be deleted.",
+      "button": "Delete Resume",
+      "deleting": "Deleting...",
+      "success": "Resume deleted successfully"
+    },
+    "error": {
+      "uploadFailed": "Failed to upload resume",
+      "parseFailed": "Failed to parse resume. Please try again.",
+      "invalidFormat": "Invalid file format. Only DOCX and PDF are supported.",
+      "fileTooLarge": "File is too large. Maximum size is 10MB.",
+      "fetchFailed": "Failed to load resume",
+      "updateFailed": "Failed to update resume",
+      "deleteFailed": "Failed to delete resume",
+      "emptyFile": "File is empty or contains no text",
+      "corruptedFile": "File appears to be corrupted",
+      "rateLimitExceeded": "Daily parse limit exceeded. Please try again tomorrow or use your own API key."
+    }
+  }
+}
