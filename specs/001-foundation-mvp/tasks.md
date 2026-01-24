@@ -204,13 +204,13 @@ No custom patterns outside Nuxt UI Pro.
 
 ### Implementation for US3
 
-- [ ] T085 [US3] Create GET `/api/profile` endpoint in `packages/nuxt-layer-api/server/api/profile/index.get.ts`
-- [ ] T086 [US3] Create PUT `/api/profile` endpoint in `packages/nuxt-layer-api/server/api/profile/index.put.ts`
-- [ ] T087 [US3] Create GET `/api/profile/complete` endpoint in `packages/nuxt-layer-api/server/api/profile/complete.get.ts`
-- [ ] T088 [US3] Create useProfile composable in `packages/nuxt-layer-api/app/composables/useProfile.ts`
-- [ ] T089 [US3] Add profile i18n keys to `packages/nuxt-layer-ui/locales/en.json` (profile.title, profile.form._, profile.error._)
-- [ ] T090 [US3] Create ProfileForm component in `apps/site/layers/user/app/components/ProfileForm.vue` with all required fields
-- [ ] T091 [US3] Create profile page in `apps/site/layers/user/app/pages/profile.vue`
+- [x] T085 [US3] Create GET `/api/profile` endpoint in `packages/nuxt-layer-api/server/api/profile/index.get.ts`
+- [x] T086 [US3] Create PUT `/api/profile` endpoint in `packages/nuxt-layer-api/server/api/profile/index.put.ts`
+- [x] T087 [US3] Create GET `/api/profile/complete` endpoint in `packages/nuxt-layer-api/server/api/profile/complete.get.ts`
+- [x] T088 [US3] Create useProfile composable in `packages/nuxt-layer-api/app/composables/useProfile.ts`
+- [x] T089 [US3] Add profile i18n keys to `packages/nuxt-layer-ui/locales/en.json` (profile.title, profile.form._, profile.error._)
+- [x] T090 [US3] Create ProfileForm component in `apps/site/layers/user/app/components/ProfileForm.vue` with all required fields
+- [x] T091 [US3] Create profile page in `apps/site/layers/user/app/pages/profile.vue`
 
 **Checkpoint**: User can complete profile, completeness check validates required fields
 

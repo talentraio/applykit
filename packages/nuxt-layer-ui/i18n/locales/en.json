@@ -117,5 +117,59 @@
       "corruptedFile": "File appears to be corrupted",
       "rateLimitExceeded": "Daily parse limit exceeded. Please try again tomorrow or use your own API key."
     }
+  },
+  "profile": {
+    "title": "My Profile",
+    "form": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "country": "Country",
+      "searchRegion": "Search Region",
+      "workFormat": "Work Format",
+      "languages": "Languages",
+      "phones": "Phone Numbers",
+      "language": "Language",
+      "languageLevel": "Level",
+      "addLanguage": "Add Language",
+      "removeLanguage": "Remove",
+      "phoneNumber": "Phone Number",
+      "phoneLabel": "Label",
+      "addPhone": "Add Phone Number",
+      "removePhone": "Remove",
+      "workFormatOptions": {
+        "remote": "Remote",
+        "office": "Office",
+        "hybrid": "Hybrid",
+        "any": "Any"
+      },
+      "languageLevelOptions": {
+        "native": "Native",
+        "fluent": "Fluent",
+        "intermediate": "Intermediate",
+        "basic": "Basic"
+      },
+      "phoneLabelOptions": {
+        "mobile": "Mobile",
+        "work": "Work",
+        "home": "Home"
+      }
+    },
+    "completeness": {
+      "complete": "Your profile is complete",
+      "incomplete": "Please complete your profile to generate tailored resumes",
+      "missing": "Missing required fields"
+    },
+    "save": {
+      "button": "Save Profile",
+      "saving": "Saving...",
+      "success": "Profile saved successfully"
+    },
+    "error": {
+      "fetchFailed": "Failed to load profile",
+      "saveFailed": "Failed to save profile",
+      "invalidData": "Please check your input and try again",
+      "completenessCheckFailed": "Failed to check profile completeness"
+    }
   }
 }
