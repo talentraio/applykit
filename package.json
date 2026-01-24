@@ -13,6 +13,7 @@
     "typecheck": "pnpm -r --parallel typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "lint:styles": "stylelint \"**/*.{vue,css,scss}\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint-staged": "lint-staged",
