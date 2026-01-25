@@ -25,12 +25,14 @@
  * Per docs/design/mvp.md - reuses SaaS template navigation/app shell patterns
  */
 
+import type { ButtonProps } from '#ui/types';
+
 defineOptions({ name: 'UiPageHeader' });
 
 defineProps<{
   title: string;
   description?: string;
   headline?: string;
-  links?: any[]; // UPageHeader has its own type validation
+  links?: ButtonProps[];
 }>();
 </script>
