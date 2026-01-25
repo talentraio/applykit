@@ -1,87 +1,79 @@
 <template>
-  <div class="site-default-layout min-h-screen bg-background">
-    <!-- Header / Navigation -->
-    <header class="site-default-layout__header border-b">
-      <div class="container mx-auto flex h-16 items-center justify-between px-4">
-        <!-- Logo -->
-        <NuxtLink to="/dashboard" class="site-default-layout__logo flex items-center gap-2">
-          <span class="text-xl font-bold text-primary">ApplyKit</span>
-        </NuxtLink>
+  <UiAppShell class="site-default-layout">
+    <UDashboardNavbar :title="appTitle" :links="navLinks">
+      <template #right>
+        <UDropdown :items="userMenuItems">
+          <UButton
+            icon="i-lucide-user"
+            color="neutral"
+            variant="ghost"
+            :label="$t('nav.account')"
+          />
+        </UDropdown>
+      </template>
+    </UDashboardNavbar>
 
-        <!-- Navigation -->
-        <nav class="site-default-layout__nav flex items-center gap-6">
-          <NuxtLink
-            to="/dashboard"
-            class="text-sm font-medium text-muted transition-colors hover:text-foreground"
-            active-class="text-foreground"
-          >
-            {{ $t('nav.dashboard') }}
-          </NuxtLink>
-          <NuxtLink
-            to="/resumes"
-            class="text-sm font-medium text-muted transition-colors hover:text-foreground"
-            active-class="text-foreground"
-          >
-            {{ $t('nav.resumes') }}
-          </NuxtLink>
-          <NuxtLink
-            to="/vacancies"
-            class="text-sm font-medium text-muted transition-colors hover:text-foreground"
-            active-class="text-foreground"
-          >
-            {{ $t('nav.vacancies') }}
-          </NuxtLink>
-        </nav>
-
-        <!-- User Menu -->
-        <div class="site-default-layout__user flex items-center gap-4">
-          <NuxtLink
-            to="/profile"
-            class="text-sm font-medium text-muted transition-colors hover:text-foreground"
-          >
-            {{ $t('nav.profile') }}
-          </NuxtLink>
-          <UButton color="neutral" variant="ghost" size="sm" @click="handleLogout">
-            {{ $t('auth.logout') }}
-          </UButton>
-        </div>
-      </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="site-default-layout__main">
+    <UMain>
       <slot />
-    </main>
-  </div>
+    </UMain>
+  </UiAppShell>
 </template>
 
 <script setup lang="ts">
 /**
  * Default Site Layout
  *
- * Main layout with navigation header for authenticated pages.
- * Used for dashboard, resumes, vacancies, profile pages.
+ * Main layout using Nuxt UI Pro Dashboard components
+ * Per docs/design/mvp.md - SaaS template patterns
  *
  * TR010 - Created as part of architecture refactoring
  * T152 [Phase 12] Default layout with navigation
+ * TR014 - Refactored to use Nuxt UI Pro components
  */
+
+import type { DropdownMenuItem } from '#ui/types';
 
 defineOptions({ name: 'SiteDefaultLayout' });
 
+const { t } = useI18n();
 const { logout } = useAuth();
 
-const handleLogout = async () => {
-  await logout();
-};
-</script>
+const appTitle = 'ApplyKit';
 
-<style lang="scss">
-.site-default-layout {
-  &__header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    background: var(--ui-bg);
+const navLinks = computed(() => [
+  {
+    label: t('nav.dashboard'),
+    to: '/dashboard',
+    icon: 'i-lucide-layout-dashboard'
+  },
+  {
+    label: t('nav.resumes'),
+    to: '/resumes',
+    icon: 'i-lucide-file-text'
+  },
+  {
+    label: t('nav.vacancies'),
+    to: '/vacancies',
+    icon: 'i-lucide-briefcase'
   }
-}
-</style>
+]);
+
+const userMenuItems = computed<DropdownMenuItem[][]>(() => [
+  [
+    {
+      label: t('nav.profile'),
+      icon: 'i-lucide-user',
+      to: '/profile'
+    }
+  ],
+  [
+    {
+      label: t('auth.logout'),
+      icon: 'i-lucide-log-out',
+      click: async () => {
+        await logout();
+      }
+    }
+  ]
+]);
+</script>
