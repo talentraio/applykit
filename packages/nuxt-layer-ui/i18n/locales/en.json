@@ -199,6 +199,32 @@
       "completenessCheckFailed": "Failed to check profile completeness"
     }
   },
+  "generation": {
+    "button": "Generate Tailored Resume",
+    "inProgress": "Generating...",
+    "matchScore": {
+      "title": "Match Score",
+      "before": "Before: {score}%",
+      "after": "After: {score}%",
+      "improvement": "Improvement: +{points}%",
+      "description": "How well your resume matches this job"
+    },
+    "lifetime": {
+      "title": "Expiration",
+      "expiresIn": "Expires in {days} day(s)",
+      "expires": "Expires {date}",
+      "expired": "This generation has expired",
+      "duration": "90 days"
+    },
+    "error": {
+      "generationFailed": "Failed to generate tailored resume",
+      "rateLimitExceeded": "Daily generation limit exceeded. Please try again tomorrow or use your own API key.",
+      "profileIncomplete": "Please complete your profile before generating resumes",
+      "noResume": "No resume found. Please upload a resume first.",
+      "invalidVacancy": "Vacancy not found or access denied",
+      "generic": "An error occurred during generation. Please try again."
+    }
+  },
   "vacancy": {
     "list": {
       "title": "Job Vacancies",
