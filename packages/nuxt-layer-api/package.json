@@ -27,6 +27,7 @@
     "openai": "catalog:",
     "pdf-parse": "catalog:",
     "pinia": "catalog:",
+    "playwright-core": "catalog:",
     "postgres": "catalog:",
     "zod": "catalog:"
   },

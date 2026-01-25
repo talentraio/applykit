@@ -37,6 +37,7 @@ catalog:
   openai: ^6.16.0
   pdf-parse: ^2.4.5
   pinia: ^3.0.4
+  playwright-core: ^1.49.1
   postcss-html: ^1.8.1
   postcss-scss: ^4.0.9
   postgres: ^3.4.8

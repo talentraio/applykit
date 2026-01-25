@@ -87,6 +87,9 @@ catalogs:
     pinia:
       specifier: ^3.0.4
       version: 3.0.4
+    playwright-core:
+      specifier: ^1.49.1
+      version: 1.57.0
     postcss-html:
       specifier: ^1.8.1
       version: 1.8.1
@@ -274,6 +277,9 @@ importers:
       pinia:
         specifier: 'catalog:'
         version: 3.0.4(typescript@5.9.3)(vue@3.5.27(typescript@5.9.3))
+      playwright-core:
+        specifier: 'catalog:'
+        version: 1.57.0
       postgres:
         specifier: 'catalog:'
         version: 3.4.8

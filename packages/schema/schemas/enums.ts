@@ -27,3 +27,7 @@ export type ProviderType = z.infer<typeof ProviderTypeSchema>;
 // Platform providers (specific LLM models for platform use)
 export const PlatformProviderSchema = z.enum(['openai', 'gemini_flash']);
 export type PlatformProvider = z.infer<typeof PlatformProviderSchema>;
+
+// Export format types
+export const ExportFormatSchema = z.enum(['ats', 'human']);
+export type ExportFormat = z.infer<typeof ExportFormatSchema>;

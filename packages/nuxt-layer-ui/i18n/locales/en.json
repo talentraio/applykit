@@ -225,6 +225,29 @@
       "generic": "An error occurred during generation. Please try again."
     }
   },
+  "export": {
+    "button": {
+      "ats": "Export ATS Version",
+      "human": "Export Human Version",
+      "download": "Download PDF"
+    },
+    "inProgress": "Generating PDF...",
+    "success": "PDF exported successfully",
+    "format": {
+      "ats": "ATS Format",
+      "human": "Human-Readable Format",
+      "atsDescription": "Plain text format optimized for Applicant Tracking Systems",
+      "humanDescription": "Professionally styled format for human readers"
+    },
+    "error": {
+      "exportFailed": "Failed to export resume",
+      "noGeneration": "No tailored resume found. Please generate a resume first.",
+      "generationExpired": "This tailored resume has expired. Please regenerate it.",
+      "rateLimitExceeded": "Daily export limit exceeded. Please try again tomorrow.",
+      "invalidFormat": "Invalid export format specified",
+      "generic": "An error occurred during export. Please try again."
+    }
+  },
   "vacancy": {
     "list": {
       "title": "Job Vacancies",
