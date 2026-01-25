@@ -1,7 +1,7 @@
-import type { LLMProvider, ResumeContent } from '@int/schema'
-import { ResumeContentSchema } from '@int/schema'
-import { callLLM, LLMError } from './index'
-import { createParseUserPrompt, PARSE_SYSTEM_PROMPT } from './prompts/parse'
+import type { LLMProvider, ResumeContent } from '@int/schema';
+import { ResumeContentSchema } from '@int/schema';
+import { callLLM, LLMError } from './index';
+import { createParseUserPrompt, PARSE_SYSTEM_PROMPT } from './prompts/parse';
 
 /**
  * LLM Parse Service
@@ -19,34 +19,34 @@ export type ParseOptions = {
   /**
    * User-provided API key (BYOK)
    */
-  userApiKey?: string
+  userApiKey?: string;
 
   /**
    * Preferred provider
    */
-  provider?: LLMProvider
+  provider?: LLMProvider;
 
   /**
    * Maximum retry attempts (default: 2)
    */
-  maxRetries?: number
+  maxRetries?: number;
 
   /**
    * Temperature for LLM (default: 0.1 for deterministic parsing)
    */
-  temperature?: number
-}
+  temperature?: number;
+};
 
 /**
  * Parse result
  */
 export type ParseLLMResult = {
-  content: ResumeContent
-  cost: number
-  tokensUsed: number
-  provider: LLMProvider
-  attemptsUsed: number
-}
+  content: ResumeContent;
+  cost: number;
+  tokensUsed: number;
+  provider: LLMProvider;
+  attemptsUsed: number;
+};
 
 /**
  * Parse error class
@@ -61,8 +61,8 @@ export class ParseLLMError extends Error {
       | 'INVALID_JSON',
     public readonly details?: unknown
   ) {
-    super(message)
-    this.name = 'ParseLLMError'
+    super(message);
+    this.name = 'ParseLLMError';
   }
 }
 
@@ -76,18 +76,18 @@ export class ParseLLMError extends Error {
  */
 function extractJSON(text: string): string {
   // Try to find JSON in markdown code block
-  const codeBlockMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/)
+  const codeBlockMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
   if (codeBlockMatch && codeBlockMatch[1]) {
-    return codeBlockMatch[1].trim()
+    return codeBlockMatch[1].trim();
   }
 
   // Try to find JSON object
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
-    return jsonMatch[0].trim()
+    return jsonMatch[0].trim();
   }
 
-  return text.trim()
+  return text.trim();
 }
 
 /**
@@ -102,16 +102,16 @@ export async function parseResumeWithLLM(
   text: string,
   options: ParseOptions = {}
 ): Promise<ParseLLMResult> {
-  const { userApiKey, provider, maxRetries = 2, temperature = 0.1 } = options
+  const { userApiKey, provider, maxRetries = 2, temperature = 0.1 } = options;
 
-  let attempts = 0
-  let totalCost = 0
-  let totalTokens = 0
-  let lastError: Error | null = null
-  let actualProvider: LLMProvider | undefined
+  let attempts = 0;
+  let totalCost = 0;
+  let totalTokens = 0;
+  let lastError: Error | null = null;
+  let actualProvider: LLMProvider | undefined;
 
   while (attempts < maxRetries) {
-    attempts++
+    attempts++;
 
     try {
       // Call LLM
@@ -126,29 +126,29 @@ export async function parseResumeWithLLM(
           userApiKey,
           provider
         }
-      )
+      );
 
-      actualProvider = response.provider
-      totalCost += response.cost
-      totalTokens += response.tokensUsed
+      actualProvider = response.provider;
+      totalCost += response.cost;
+      totalTokens += response.tokensUsed;
 
       // Extract JSON from response
-      const jsonString = extractJSON(response.content)
+      const jsonString = extractJSON(response.content);
 
       // Parse JSON
-      let parsedJSON: unknown
+      let parsedJSON: unknown;
       try {
-        parsedJSON = JSON.parse(jsonString)
+        parsedJSON = JSON.parse(jsonString);
       } catch (jsonError) {
         throw new ParseLLMError(
           `Failed to parse JSON: ${jsonError instanceof Error ? jsonError.message : 'Unknown error'}`,
           'INVALID_JSON',
           { response: response.content }
-        )
+        );
       }
 
       // Validate with Zod
-      const validationResult = ResumeContentSchema.safeParse(parsedJSON)
+      const validationResult = ResumeContentSchema.safeParse(parsedJSON);
 
       if (validationResult.success) {
         // Success!
@@ -158,7 +158,7 @@ export async function parseResumeWithLLM(
           tokensUsed: totalTokens,
           provider: actualProvider,
           attemptsUsed: attempts
-        }
+        };
       }
 
       // Validation failed
@@ -166,39 +166,39 @@ export async function parseResumeWithLLM(
         `Validation failed: ${JSON.stringify(validationResult.error.errors)}`,
         'VALIDATION_FAILED',
         validationResult.error.errors
-      )
+      );
 
       console.warn(
         `Parse validation failed (attempt ${attempts}/${maxRetries}):`,
         validationResult.error.errors
-      )
+      );
 
       // If this is the last attempt, throw error
       if (attempts >= maxRetries) {
-        throw lastError
+        throw lastError;
       }
 
       // Otherwise, retry with more specific instructions
       // (Could enhance this to include validation errors in the prompt)
     } catch (error) {
       if (error instanceof ParseLLMError) {
-        lastError = error
+        lastError = error;
       } else if (error instanceof LLMError) {
-        throw new ParseLLMError(`LLM error: ${error.message}`, 'LLM_ERROR', error)
+        throw new ParseLLMError(`LLM error: ${error.message}`, 'LLM_ERROR', error);
       } else {
         lastError = new ParseLLMError(
           `Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`,
           'LLM_ERROR',
           error
-        )
+        );
       }
 
       // If this is the last attempt, throw error
       if (attempts >= maxRetries) {
-        throw lastError
+        throw lastError;
       }
 
-      console.warn(`Parse attempt ${attempts}/${maxRetries} failed:`, lastError.message)
+      console.warn(`Parse attempt ${attempts}/${maxRetries} failed:`, lastError.message);
     }
   }
 
@@ -207,5 +207,5 @@ export async function parseResumeWithLLM(
     `Failed to parse resume after ${attempts} attempts: ${lastError?.message || 'Unknown error'}`,
     'MAX_RETRIES_EXCEEDED',
     lastError
-  )
+  );
 }

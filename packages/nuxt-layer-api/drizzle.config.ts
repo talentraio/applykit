@@ -1,5 +1,5 @@
-import process from 'node:process'
-import { defineConfig } from 'drizzle-kit'
+import process from 'node:process';
+import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
   schema: './server/data/schema.ts',
@@ -10,4 +10,4 @@ export default defineConfig({
   },
   verbose: true,
   strict: true
-})
+});

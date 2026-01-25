@@ -43,7 +43,7 @@ export const expectedLimits = {
   public: { parse: 3, generate: 2, export: 5 }, // per day
   friend: { parse: 10, generate: 8, export: 20 }, // per day
   super_admin: 'unlimited'
-}
+};
 ```
 
 ---
@@ -79,12 +79,12 @@ Tests for BYOK (Bring Your Own Key) security:
 ```typescript
 // Database stores ONLY hint
 type LLMKey = {
-  id: string
-  userId: string
-  provider: 'openai' | 'gemini'
-  keyHint: string // Last 4 chars ONLY
-  createdAt: Date
-}
+  id: string;
+  userId: string;
+  provider: 'openai' | 'gemini';
+  keyHint: string; // Last 4 chars ONLY
+  createdAt: Date;
+};
 
 // Full key lives in browser localStorage
 // Sent with each request, used once, cleared from memory
@@ -122,11 +122,11 @@ Tests for export PDF caching and invalidation:
 // Example Human: export:user-123:gen-456:human
 
 type CacheService = {
-  get: (key: string) => Promise<string | null>
-  set: (key: string, value: string, ttl?: number) => Promise<void>
-  delete: (key: string) => Promise<void>
-  deleteByPattern: (pattern: string) => Promise<number>
-}
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, value: string, ttl?: number) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+  deleteByPattern: (pattern: string) => Promise<number>;
+};
 
 // Cache value: PDF URL from Vercel Blob storage
 // TTL: Match generation expiration (90 days) or shorter

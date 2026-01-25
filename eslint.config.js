@@ -1,5 +1,5 @@
-import antfu from '@antfu/eslint-config'
-import eslintConfigPrettier from 'eslint-config-prettier/flat'
+import antfu from '@antfu/eslint-config';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
 
 export default antfu(
   {
@@ -43,4 +43,4 @@ export default antfu(
       'ts/explicit-function-return-type': 'off'
     }
   }
-).append(eslintConfigPrettier)
+).append(eslintConfigPrettier);

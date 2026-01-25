@@ -6,8 +6,8 @@
 
 declare module '#auth-utils' {
   type User = {
-    id: string
-  }
+    id: string;
+  };
 }
 
-export {}
+export {};

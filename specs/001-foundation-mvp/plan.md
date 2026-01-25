@@ -109,7 +109,10 @@ apps/
 │   │   ├── auth/                  # @site/auth     (login/register, auth UI)
 │   │   │   ├── app/
 │   │   │   └── nuxt.config.ts
-│   │   ├── user/                  # @site/user     (profile/settings feature UI)
+│   │   ├── profile/               # @site/profile  (user profile management)
+│   │   │   ├── app/
+│   │   │   └── nuxt.config.ts
+│   │   ├── resume/                # @site/resume   (resume upload, editing, management)
 │   │   │   ├── app/
 │   │   │   └── nuxt.config.ts
 │   │   └── vacancy/               # @site/vacancy  (vacancy pages + business logic)

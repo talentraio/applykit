@@ -1,19 +1,19 @@
-import { z } from 'zod'
-import { WorkFormatSchema } from './enums'
+import { z } from 'zod';
+import { WorkFormatSchema } from './enums';
 
-export { type WorkFormat, WorkFormatSchema } from './enums'
+export { type WorkFormat, WorkFormatSchema } from './enums';
 
 export const LanguageEntrySchema = z.object({
   language: z.string().min(1),
   level: z.string().min(1) // e.g., "Native", "Fluent", "Intermediate", "Basic"
-})
-export type LanguageEntry = z.infer<typeof LanguageEntrySchema>
+});
+export type LanguageEntry = z.infer<typeof LanguageEntrySchema>;
 
 export const PhoneEntrySchema = z.object({
   number: z.string().min(1),
   label: z.string().optional() // e.g., "Mobile", "Work"
-})
-export type PhoneEntry = z.infer<typeof PhoneEntrySchema>
+});
+export type PhoneEntry = z.infer<typeof PhoneEntrySchema>;
 
 export const ProfileSchema = z.object({
   id: z.string().uuid(),
@@ -28,9 +28,9 @@ export const ProfileSchema = z.object({
   phones: z.array(PhoneEntrySchema).optional(),
   createdAt: z.date(),
   updatedAt: z.date()
-})
+});
 
-export type Profile = z.infer<typeof ProfileSchema>
+export type Profile = z.infer<typeof ProfileSchema>;
 
 // For create/update (omit auto-generated fields)
 export const ProfileInputSchema = ProfileSchema.omit({
@@ -38,12 +38,12 @@ export const ProfileInputSchema = ProfileSchema.omit({
   userId: true,
   createdAt: true,
   updatedAt: true
-})
-export type ProfileInput = z.infer<typeof ProfileInputSchema>
+});
+export type ProfileInput = z.infer<typeof ProfileInputSchema>;
 
 // Profile completeness check
 export function isProfileComplete(profile: Profile | null): boolean {
-  if (!profile) return false
+  if (!profile) return false;
   return (
     profile.firstName.length > 0 &&
     profile.lastName.length > 0 &&
@@ -51,5 +51,5 @@ export function isProfileComplete(profile: Profile | null): boolean {
     profile.country.length === 2 &&
     profile.searchRegion.length > 0 &&
     profile.languages.length > 0
-  )
+  );
 }

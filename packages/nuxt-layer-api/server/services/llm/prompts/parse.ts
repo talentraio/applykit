@@ -108,7 +108,7 @@ export const PARSE_SYSTEM_PROMPT = `You are a resume parsing assistant. Your tas
 - Ensure all dates follow YYYY-MM format strictly
 - Ensure all URLs are complete with protocol
 - Do not invent information that is not in the source text
-- If information is ambiguous, make your best reasonable interpretation`
+- If information is ambiguous, make your best reasonable interpretation`;
 
 /**
  * Create user prompt for resume parsing
@@ -125,5 +125,5 @@ Remember to:
 - Use YYYY-MM format for all dates
 - Include full URLs with protocol
 - Extract all skills, experience, and education
-- Return only valid JSON`
+- Return only valid JSON`;
 }

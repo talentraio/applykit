@@ -46,28 +46,28 @@ Sample vacancy data for API tests:
 ### In Playwright Tests
 
 ```typescript
-import { test } from '@playwright/test'
+import { test } from '@playwright/test';
 
 test('should parse resume', async ({ page }) => {
-  const fileInput = page.locator('input[type="file"]')
-  await fileInput.setInputFiles('./tests/fixtures/sample-resume.docx')
-})
+  const fileInput = page.locator('input[type="file"]');
+  await fileInput.setInputFiles('./tests/fixtures/sample-resume.docx');
+});
 ```
 
 ### In API Tests
 
 ```typescript
-import sampleVacancy from '../fixtures/sample-vacancy.json'
+import sampleVacancy from '../fixtures/sample-vacancy.json';
 
 describe('Vacancy API', () => {
   it('should create vacancy', async () => {
     const response = await $fetch('/api/vacancies', {
       method: 'POST',
       body: sampleVacancy
-    })
-    expect(response.company).toBe('Tech Corp')
-  })
-})
+    });
+    expect(response.company).toBe('Tech Corp');
+  });
+});
 ```
 
 ## Creating Sample Resume

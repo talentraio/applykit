@@ -11,15 +11,15 @@
  */
 
 type RateLimitEntry = {
-  count: number
-  resetAt: number
-}
+  count: number;
+  resetAt: number;
+};
 
 /**
  * In-memory store for rate limit tracking
  * Key format: {identifier}:{operation}
  */
-const rateLimitStore = new Map<string, RateLimitEntry>()
+const rateLimitStore = new Map<string, RateLimitEntry>();
 
 /**
  * Rate limit configuration
@@ -28,13 +28,13 @@ type RateLimitConfig = {
   /**
    * Maximum requests allowed in the window
    */
-  maxRequests: number
+  maxRequests: number;
 
   /**
    * Time window in seconds
    */
-  windowSeconds: number
-}
+  windowSeconds: number;
+};
 
 /**
  * Check if request is within rate limit
@@ -49,17 +49,17 @@ export function checkRateLimit(
   operation: string,
   config: RateLimitConfig
 ): boolean {
-  const key = `${identifier}:${operation}`
-  const now = Date.now()
-  const entry = rateLimitStore.get(key)
+  const key = `${identifier}:${operation}`;
+  const now = Date.now();
+  const entry = rateLimitStore.get(key);
 
   // No previous entry - allow request
   if (!entry) {
     rateLimitStore.set(key, {
       count: 1,
       resetAt: now + config.windowSeconds * 1000
-    })
-    return true
+    });
+    return true;
   }
 
   // Window has expired - reset counter
@@ -67,18 +67,18 @@ export function checkRateLimit(
     rateLimitStore.set(key, {
       count: 1,
       resetAt: now + config.windowSeconds * 1000
-    })
-    return true
+    });
+    return true;
   }
 
   // Window still active - check count
   if (entry.count < config.maxRequests) {
-    entry.count++
-    return true
+    entry.count++;
+    return true;
   }
 
   // Limit exceeded
-  return false
+  return false;
 }
 
 /**
@@ -94,15 +94,15 @@ export function getRemainingRequests(
   operation: string,
   config: RateLimitConfig
 ): number {
-  const key = `${identifier}:${operation}`
-  const now = Date.now()
-  const entry = rateLimitStore.get(key)
+  const key = `${identifier}:${operation}`;
+  const now = Date.now();
+  const entry = rateLimitStore.get(key);
 
   if (!entry || now >= entry.resetAt) {
-    return config.maxRequests
+    return config.maxRequests;
   }
 
-  return Math.max(0, config.maxRequests - entry.count)
+  return Math.max(0, config.maxRequests - entry.count);
 }
 
 /**
@@ -113,15 +113,15 @@ export function getRemainingRequests(
  * @returns Seconds until reset, or 0 if no active limit
  */
 export function getResetTime(identifier: string, operation: string): number {
-  const key = `${identifier}:${operation}`
-  const now = Date.now()
-  const entry = rateLimitStore.get(key)
+  const key = `${identifier}:${operation}`;
+  const now = Date.now();
+  const entry = rateLimitStore.get(key);
 
   if (!entry || now >= entry.resetAt) {
-    return 0
+    return 0;
   }
 
-  return Math.ceil((entry.resetAt - now) / 1000)
+  return Math.ceil((entry.resetAt - now) / 1000);
 }
 
 /**
@@ -133,14 +133,14 @@ export function getResetTime(identifier: string, operation: string): number {
  */
 export function clearRateLimit(identifier: string, operation?: string): void {
   if (operation) {
-    const key = `${identifier}:${operation}`
-    rateLimitStore.delete(key)
+    const key = `${identifier}:${operation}`;
+    rateLimitStore.delete(key);
   } else {
     // Clear all operations for this identifier
-    const prefix = `${identifier}:`
+    const prefix = `${identifier}:`;
     for (const key of rateLimitStore.keys()) {
       if (key.startsWith(prefix)) {
-        rateLimitStore.delete(key)
+        rateLimitStore.delete(key);
       }
     }
   }
@@ -151,7 +151,7 @@ export function clearRateLimit(identifier: string, operation?: string): void {
  * Useful for testing
  */
 export function clearAllRateLimits(): void {
-  rateLimitStore.clear()
+  rateLimitStore.clear();
 }
 
 /**
@@ -159,17 +159,17 @@ export function clearAllRateLimits(): void {
  * Call this from a background task or cron job
  */
 export function cleanupExpiredEntries(): number {
-  const now = Date.now()
-  let cleaned = 0
+  const now = Date.now();
+  let cleaned = 0;
 
   for (const [key, entry] of rateLimitStore.entries()) {
     if (now >= entry.resetAt) {
-      rateLimitStore.delete(key)
-      cleaned++
+      rateLimitStore.delete(key);
+      cleaned++;
     }
   }
 
-  return cleaned
+  return cleaned;
 }
 
 /**
@@ -200,4 +200,4 @@ export const RateLimitPresets = {
    * Hourly - 1000 requests per hour
    */
   hourly: { maxRequests: 1000, windowSeconds: 3600 }
-} as const
+} as const;

@@ -1,7 +1,7 @@
-import type { SourceFileType } from '@int/schema'
-import type { Buffer } from 'node:buffer'
-import mammoth from 'mammoth'
-import { PDFParse } from 'pdf-parse'
+import type { SourceFileType } from '@int/schema';
+import type { Buffer } from 'node:buffer';
+import mammoth from 'mammoth';
+import { PDFParse } from 'pdf-parse';
 
 /**
  * Document Parser Service
@@ -29,8 +29,8 @@ export class ParseError extends Error {
       | 'TOO_LARGE'
       | 'PARSE_FAILED'
   ) {
-    super(message)
-    this.name = 'ParseError'
+    super(message);
+    this.name = 'ParseError';
   }
 }
 
@@ -38,17 +38,17 @@ export class ParseError extends Error {
  * Parse result
  */
 export type ParseResult = {
-  text: string
+  text: string;
   metadata?: {
-    pageCount?: number
-    wordCount?: number
-  }
-}
+    pageCount?: number;
+    wordCount?: number;
+  };
+};
 
 /**
  * Maximum file size in bytes (10 MB)
  */
-const MAX_FILE_SIZE = 10 * 1024 * 1024
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 /**
  * Parse DOCX file to plain text
@@ -58,30 +58,30 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024
  */
 async function parseDocx(buffer: Buffer): Promise<ParseResult> {
   try {
-    const result = await mammoth.extractRawText({ buffer })
+    const result = await mammoth.extractRawText({ buffer });
 
     if (!result.value || result.value.trim().length === 0) {
-      throw new ParseError('DOCX file contains no text', 'docx', 'EMPTY_FILE')
+      throw new ParseError('DOCX file contains no text', 'docx', 'EMPTY_FILE');
     }
 
-    const wordCount = result.value.trim().split(/\s+/).length
+    const wordCount = result.value.trim().split(/\s+/).length;
 
     return {
       text: result.value,
       metadata: {
         wordCount
       }
-    }
+    };
   } catch (error) {
     if (error instanceof ParseError) {
-      throw error
+      throw error;
     }
 
     throw new ParseError(
       `Failed to parse DOCX: ${error instanceof Error ? error.message : 'Unknown error'}`,
       'docx',
       'PARSE_FAILED'
-    )
+    );
   }
 }
 
@@ -92,19 +92,19 @@ async function parseDocx(buffer: Buffer): Promise<ParseResult> {
  * @returns Extracted text
  */
 async function parsePdf(buffer: Buffer): Promise<ParseResult> {
-  let parser: InstanceType<typeof PDFParse> | null = null
+  let parser: InstanceType<typeof PDFParse> | null = null;
 
   try {
     // pdf-parse v2.x uses class-based API
-    parser = new PDFParse({ data: buffer })
-    const result = await parser.getText()
-    const info = await parser.getInfo()
+    parser = new PDFParse({ data: buffer });
+    const result = await parser.getText();
+    const info = await parser.getInfo();
 
     if (!result.text || result.text.trim().length === 0) {
-      throw new ParseError('PDF file contains no text', 'pdf', 'EMPTY_FILE')
+      throw new ParseError('PDF file contains no text', 'pdf', 'EMPTY_FILE');
     }
 
-    const wordCount = result.text.trim().split(/\s+/).length
+    const wordCount = result.text.trim().split(/\s+/).length;
 
     return {
       text: result.text,
@@ -112,21 +112,21 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
         pageCount: info.total,
         wordCount
       }
-    }
+    };
   } catch (error) {
     if (error instanceof ParseError) {
-      throw error
+      throw error;
     }
 
     throw new ParseError(
       `Failed to parse PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
       'pdf',
       'PARSE_FAILED'
-    )
+    );
   } finally {
     // Always destroy parser to free resources
     if (parser) {
-      await parser.destroy()
+      await parser.destroy();
     }
   }
 }
@@ -149,24 +149,24 @@ export async function parseDocument(
       `File size exceeds maximum allowed size (${MAX_FILE_SIZE / 1024 / 1024}MB)`,
       fileType,
       'TOO_LARGE'
-    )
+    );
   }
 
   // Validate buffer
   if (buffer.length === 0) {
-    throw new ParseError('File is empty', fileType, 'EMPTY_FILE')
+    throw new ParseError('File is empty', fileType, 'EMPTY_FILE');
   }
 
   // Parse based on file type
   switch (fileType) {
     case 'docx':
-      return await parseDocx(buffer)
+      return await parseDocx(buffer);
 
     case 'pdf':
-      return await parsePdf(buffer)
+      return await parsePdf(buffer);
 
     default:
-      throw new ParseError(`Unsupported file type: ${fileType}`, fileType, 'UNSUPPORTED_FORMAT')
+      throw new ParseError(`Unsupported file type: ${fileType}`, fileType, 'UNSUPPORTED_FORMAT');
   }
 }
 
@@ -185,18 +185,18 @@ export function validateFile(buffer: Buffer, fileType: SourceFileType): boolean 
       `File size exceeds maximum allowed size (${MAX_FILE_SIZE / 1024 / 1024}MB)`,
       fileType,
       'TOO_LARGE'
-    )
+    );
   }
 
   // Check empty
   if (buffer.length === 0) {
-    throw new ParseError('File is empty', fileType, 'EMPTY_FILE')
+    throw new ParseError('File is empty', fileType, 'EMPTY_FILE');
   }
 
   // Check supported format
   if (fileType !== 'docx' && fileType !== 'pdf') {
-    throw new ParseError(`Unsupported file type: ${fileType}`, fileType, 'UNSUPPORTED_FORMAT')
+    throw new ParseError(`Unsupported file type: ${fileType}`, fileType, 'UNSUPPORTED_FORMAT');
   }
 
-  return true
+  return true;
 }

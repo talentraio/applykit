@@ -1,8 +1,8 @@
-import type { Role } from '@int/schema'
-import type { NewUser, User } from '../schema'
-import { eq } from 'drizzle-orm'
-import { db } from '../db'
-import { users } from '../schema'
+import type { Role } from '@int/schema';
+import type { NewUser, User } from '../schema';
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { users } from '../schema';
 
 /**
  * User Repository
@@ -15,8 +15,8 @@ export const userRepository = {
    * Find user by ID
    */
   async findById(id: string): Promise<User | null> {
-    const result = await db.select().from(users).where(eq(users.id, id)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -24,8 +24,8 @@ export const userRepository = {
    * Used for login and user lookup
    */
   async findByEmail(email: string): Promise<User | null> {
-    const result = await db.select().from(users).where(eq(users.email, email)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -33,8 +33,8 @@ export const userRepository = {
    * Used during OAuth callback to find or create user
    */
   async findByGoogleId(googleId: string): Promise<User | null> {
-    const result = await db.select().from(users).where(eq(users.googleId, googleId)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(users).where(eq(users.googleId, googleId)).limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -49,8 +49,8 @@ export const userRepository = {
         googleId: data.googleId,
         role: data.role ?? 'public'
       })
-      .returning()
-    return result[0]!
+      .returning();
+    return result[0]!;
   },
 
   /**
@@ -62,15 +62,15 @@ export const userRepository = {
       .update(users)
       .set({ role, updatedAt: new Date() })
       .where(eq(users.id, id))
-      .returning()
-    return result[0] ?? null
+      .returning();
+    return result[0] ?? null;
   },
 
   /**
    * Update user's last login timestamp
    */
   async updateLastLogin(id: string): Promise<void> {
-    await db.update(users).set({ updatedAt: new Date() }).where(eq(users.id, id))
+    await db.update(users).set({ updatedAt: new Date() }).where(eq(users.id, id));
   },
 
   /**
@@ -81,8 +81,8 @@ export const userRepository = {
       .select({ id: users.id })
       .from(users)
       .where(eq(users.email, email))
-      .limit(1)
-    return result.length > 0
+      .limit(1);
+    return result.length > 0;
   },
 
   /**
@@ -90,6 +90,6 @@ export const userRepository = {
    * Admin-only for user management
    */
   async findByRole(role: Role): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.role, role))
+    return await db.select().from(users).where(eq(users.role, role));
   }
-}
+};

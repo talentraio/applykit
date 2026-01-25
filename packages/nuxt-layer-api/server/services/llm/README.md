@@ -27,7 +27,7 @@ server/services/llm/
 ### Basic LLM Call
 
 ```typescript
-import { callLLM } from '~/server/services/llm'
+import { callLLM } from '~/server/services/llm';
 
 export default defineEventHandler(async event => {
   const response = await callLLM({
@@ -35,27 +35,27 @@ export default defineEventHandler(async event => {
     systemMessage: 'You are a helpful teacher',
     temperature: 0.7,
     maxTokens: 500
-  })
+  });
 
-  console.log(response.content)
-  console.log(`Tokens used: ${response.tokensUsed}`)
-  console.log(`Cost: $${response.cost.toFixed(4)}`)
+  console.log(response.content);
+  console.log(`Tokens used: ${response.tokensUsed}`);
+  console.log(`Cost: $${response.cost.toFixed(4)}`);
 
-  return { content: response.content }
-})
+  return { content: response.content };
+});
 ```
 
 ### BYOK (Bring Your Own Key)
 
 ```typescript
-import { callLLM } from '~/server/services/llm'
+import { callLLM } from '~/server/services/llm';
 
 export default defineEventHandler(async event => {
   // User provides their own API key (from request header)
-  const userApiKey = getHeader(event, 'x-api-key')
+  const userApiKey = getHeader(event, 'x-api-key');
 
   if (!userApiKey) {
-    throw createError({ statusCode: 400, message: 'API key required' })
+    throw createError({ statusCode: 400, message: 'API key required' });
   }
 
   const response = await callLLM(
@@ -67,10 +67,10 @@ export default defineEventHandler(async event => {
       userApiKey,
       provider: 'openai' // or 'gemini'
     }
-  )
+  );
 
-  return response
-})
+  return response;
+});
 ```
 
 ### Platform LLM
@@ -80,7 +80,7 @@ export default defineEventHandler(async event => {
 // Automatically checks budget and increments usage
 const response = await callLLM({
   prompt: 'Generate resume summary...'
-})
+});
 
 // Platform budget is tracked in system_configs table
 ```
@@ -88,21 +88,21 @@ const response = await callLLM({
 ### Validate API Key
 
 ```typescript
-import { validateKey } from '~/server/services/llm'
+import { validateKey } from '~/server/services/llm';
 
 export default defineEventHandler(async event => {
-  const { provider, apiKey } = await readBody(event)
+  const { provider, apiKey } = await readBody(event);
 
-  const isValid = await validateKey(provider, apiKey)
+  const isValid = await validateKey(provider, apiKey);
 
   if (isValid) {
     // Store key metadata (hint only) in database
-    await llmKeyRepository.upsert(user.id, provider, getKeyHint(apiKey))
-    return { success: true }
+    await llmKeyRepository.upsert(user.id, provider, getKeyHint(apiKey));
+    return { success: true };
   }
 
-  throw createError({ statusCode: 401, message: 'Invalid API key' })
-})
+  throw createError({ statusCode: 401, message: 'Invalid API key' });
+});
 ```
 
 ## Provider Selection Logic
@@ -143,19 +143,19 @@ NUXT_LLM_GEMINI_API_KEY=AIza...
 ### System Configuration
 
 ```typescript
-import { systemConfigRepository } from '~/server/data/repositories'
+import { systemConfigRepository } from '~/server/data/repositories';
 
 // Enable platform LLM
-await systemConfigRepository.setBoolean('platform_llm_enabled', true)
+await systemConfigRepository.setBoolean('platform_llm_enabled', true);
 
 // Set platform provider
-await systemConfigRepository.setPlatformProvider('openai')
+await systemConfigRepository.setPlatformProvider('openai');
 
 // Set budget cap
-await systemConfigRepository.setNumber('global_budget_cap', 100.0)
+await systemConfigRepository.setNumber('global_budget_cap', 100.0);
 
 // Check if platform LLM can be used
-const { allowed, reason } = await systemConfigRepository.canUsePlatformLLM()
+const { allowed, reason } = await systemConfigRepository.canUsePlatformLLM();
 ```
 
 ## Models and Pricing
@@ -182,23 +182,23 @@ const { allowed, reason } = await systemConfigRepository.canUsePlatformLLM()
 ### Error Types
 
 ```typescript
-import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '~/server/services/llm'
+import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '~/server/services/llm';
 
 try {
-  const response = await callLLM({ prompt: '...' })
+  const response = await callLLM({ prompt: '...' });
 } catch (error) {
   if (error instanceof LLMAuthError) {
     // Invalid API key
-    return { error: 'Invalid API key' }
+    return { error: 'Invalid API key' };
   } else if (error instanceof LLMRateLimitError) {
     // Rate limit exceeded
-    return { error: 'Rate limit exceeded, try again later' }
+    return { error: 'Rate limit exceeded, try again later' };
   } else if (error instanceof LLMQuotaError) {
     // Quota exceeded
-    return { error: 'Quota exceeded' }
+    return { error: 'Quota exceeded' };
   } else if (error instanceof LLMError) {
     // Generic LLM error
-    return { error: error.message }
+    return { error: error.message };
   }
 }
 ```
@@ -224,30 +224,30 @@ try {
 
 ```typescript
 // ❌ WRONG: Never do this
-console.log('User API key:', userApiKey)
-await db.insert({ apiKey: userApiKey })
+console.log('User API key:', userApiKey);
+await db.insert({ apiKey: userApiKey });
 
 // ✅ CORRECT: Always sanitize
-console.log('User API key:', sanitizeApiKey(userApiKey))
-await db.insert({ keyHint: getKeyHint(userApiKey) })
+console.log('User API key:', sanitizeApiKey(userApiKey));
+await db.insert({ keyHint: getKeyHint(userApiKey) });
 ```
 
 ### Key Storage
 
 ```typescript
-import { getKeyHint, sanitizeApiKey } from '~/server/services/llm'
+import { getKeyHint, sanitizeApiKey } from '~/server/services/llm';
 
 // Store only hint in database
-const hint = getKeyHint('sk-proj-1234567890abcdefghijklmnopqrstuvwxyz')
+const hint = getKeyHint('sk-proj-1234567890abcdefghijklmnopqrstuvwxyz');
 // → 'wxyz'
 
-await llmKeyRepository.upsert(userId, 'openai', hint)
+await llmKeyRepository.upsert(userId, 'openai', hint);
 
 // Sanitize for logging
-const safe = sanitizeApiKey('sk-proj-1234567890abcdefghijklmnopqrstuvwxyz')
+const safe = sanitizeApiKey('sk-proj-1234567890abcdefghijklmnopqrstuvwxyz');
 // → '****wxyz'
 
-console.log(`Stored key: ${safe}`)
+console.log(`Stored key: ${safe}`);
 ```
 
 ## Usage Tracking
@@ -255,7 +255,7 @@ console.log(`Stored key: ${safe}`)
 All LLM calls are automatically logged to `usage_logs` table:
 
 ```typescript
-import { logUsage } from '~/server/utils/usage'
+import { logUsage } from '~/server/utils/usage';
 
 // After LLM call
 await logUsage(
@@ -264,7 +264,7 @@ await logUsage(
   response.providerType, // 'platform' or 'byok'
   response.tokensUsed,
   response.cost
-)
+);
 ```
 
 ## Integration Examples
@@ -274,27 +274,27 @@ await logUsage(
 ```typescript
 // server/api/resumes/parse.post.ts
 export default defineEventHandler(async event => {
-  const user = event.context.user
-  const { resumeText } = await readBody(event)
+  const user = event.context.user;
+  const { resumeText } = await readBody(event);
 
   // Check limit
-  await requireLimit(user.id, 'parse', user.role)
+  await requireLimit(user.id, 'parse', user.role);
 
   // Call LLM
   const response = await callLLM({
     prompt: `Parse this resume into structured JSON:\n\n${resumeText}`,
     systemMessage: 'You are a resume parser. Return only valid JSON.',
     maxTokens: 2000
-  })
+  });
 
   // Log usage
-  await logParse(user.id, response.providerType, response.tokensUsed, response.cost)
+  await logParse(user.id, response.providerType, response.tokensUsed, response.cost);
 
   // Parse JSON response
-  const resumeData = JSON.parse(response.content)
+  const resumeData = JSON.parse(response.content);
 
-  return resumeData
-})
+  return resumeData;
+});
 ```
 
 ### Generate Tailored Resume
@@ -302,15 +302,15 @@ export default defineEventHandler(async event => {
 ```typescript
 // server/api/vacancies/[id]/generate.post.ts
 export default defineEventHandler(async event => {
-  const user = event.context.user
-  const vacancyId = getRouterParam(event, 'id')
+  const user = event.context.user;
+  const vacancyId = getRouterParam(event, 'id');
 
   // Check limit
-  await requireLimit(user.id, 'generate', user.role)
+  await requireLimit(user.id, 'generate', user.role);
 
   // Get data
-  const vacancy = await vacancyRepository.findById(vacancyId)
-  const resume = await resumeRepository.findLatestByUserId(user.id)
+  const vacancy = await vacancyRepository.findById(vacancyId);
+  const resume = await resumeRepository.findLatestByUserId(user.id);
 
   // Call LLM
   const response = await callLLM({
@@ -318,10 +318,10 @@ export default defineEventHandler(async event => {
     systemMessage: 'You are a resume expert. Optimize the resume for ATS.',
     temperature: 0.7,
     maxTokens: 3000
-  })
+  });
 
   // Log usage
-  await logGenerate(user.id, response.providerType, response.tokensUsed, response.cost)
+  await logGenerate(user.id, response.providerType, response.tokensUsed, response.cost);
 
   // Save generation
   const generation = await generationRepository.create({
@@ -330,10 +330,10 @@ export default defineEventHandler(async event => {
     content: JSON.parse(response.content),
     matchScoreBefore: 0, // TODO: calculate
     matchScoreAfter: 0 // TODO: calculate
-  })
+  });
 
-  return generation
-})
+  return generation;
+});
 ```
 
 ## Testing
@@ -341,8 +341,8 @@ export default defineEventHandler(async event => {
 ### Mock LLM Service
 
 ```typescript
-import { vi } from 'vitest'
-import * as llmService from '~/server/services/llm'
+import { vi } from 'vitest';
+import * as llmService from '~/server/services/llm';
 
 vi.spyOn(llmService, 'callLLM').mockResolvedValue({
   content: 'Mocked response',
@@ -351,7 +351,7 @@ vi.spyOn(llmService, 'callLLM').mockResolvedValue({
   model: 'gpt-4o-mini',
   provider: 'openai',
   providerType: 'platform'
-})
+});
 ```
 
 ### Test with Real API
@@ -362,13 +362,13 @@ describe('LLM Service', () => {
     const response = await callLLM({
       prompt: 'Say hello',
       maxTokens: 10
-    })
+    });
 
-    expect(response.content).toBeTruthy()
-    expect(response.tokensUsed).toBeGreaterThan(0)
-    expect(response.cost).toBeGreaterThan(0)
-  })
-})
+    expect(response.content).toBeTruthy();
+    expect(response.tokensUsed).toBeGreaterThan(0);
+    expect(response.cost).toBeGreaterThan(0);
+  });
+});
 ```
 
 ## Performance
@@ -385,18 +385,18 @@ describe('LLM Service', () => {
    await callLLM({
      prompt: '...',
      maxTokens: 500 // Don't request more than needed
-   })
+   });
    ```
 
 3. **Cache results when possible**:
 
    ```typescript
-   const cacheKey = `llm:${hashInput(prompt)}`
-   let result = await cache.get(cacheKey)
+   const cacheKey = `llm:${hashInput(prompt)}`;
+   let result = await cache.get(cacheKey);
 
    if (!result) {
-     result = await callLLM({ prompt })
-     await cache.set(cacheKey, result, 3600) // 1 hour
+     result = await callLLM({ prompt });
+     await cache.set(cacheKey, result, 3600); // 1 hour
    }
    ```
 
@@ -410,10 +410,10 @@ Platform keys are subject to provider rate limits:
 Use in-memory rate limiter to prevent hitting these limits:
 
 ```typescript
-import { checkRateLimit, RateLimitPresets } from '~/server/utils/rate-limiter'
+import { checkRateLimit, RateLimitPresets } from '~/server/utils/rate-limiter';
 
 if (!checkRateLimit(userId, 'llm-call', RateLimitPresets.strict)) {
-  throw createError({ statusCode: 429, message: 'Too many requests' })
+  throw createError({ statusCode: 429, message: 'Too many requests' });
 }
 ```
 

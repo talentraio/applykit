@@ -26,7 +26,7 @@ export default defineNuxtConfig({
     './layers/users', // 3. Users layer (user management)
     './layers/system' // 4. System layer (platform settings)
   ]
-})
+});
 ```
 
 **Important**: `_base` must be first in the internal layers list to ensure shared components/composables/stores are available to all other layers.
@@ -63,9 +63,9 @@ _base/
 **Usage**:
 
 ```typescript
-import MySharedComponent from '@admin/base/components/MySharedComponent.vue'
+import MySharedComponent from '@admin/base/components/MySharedComponent.vue';
 // Import from base layer
-import { useToast } from '@admin/base/composables/useToast'
+import { useToast } from '@admin/base/composables/useToast';
 ```
 
 ### `auth` Layer
@@ -92,7 +92,7 @@ Admin authentication and authorization.
 
 ```typescript
 // Import from auth layer
-import { useAdminAuthStore } from '@admin/auth/stores/useAdminAuthStore'
+import { useAdminAuthStore } from '@admin/auth/stores/useAdminAuthStore';
 ```
 
 ### `users` Layer
@@ -120,7 +120,7 @@ User management for platform administrators.
 
 ```typescript
 // Import from users layer
-import { useUsersStore } from '@admin/users/stores/useUsersStore'
+import { useUsersStore } from '@admin/users/stores/useUsersStore';
 ```
 
 ### `system` Layer
@@ -148,7 +148,7 @@ System settings and platform controls.
 
 ```typescript
 // Import from system layer
-import { useSystemStore } from '@admin/system/stores/useSystemStore'
+import { useSystemStore } from '@admin/system/stores/useSystemStore';
 ```
 
 ## Nuxt Layer Conventions
@@ -164,8 +164,8 @@ Components, composables, and utilities in each layer are automatically imported:
 </template>
 
 <script setup lang="ts">
-const admin = useCurrentAdmin() // From any layer's app/composables/
-const { formatDate } = useUtils() // From any layer's app/utils/
+const admin = useCurrentAdmin(); // From any layer's app/composables/
+const { formatDate } = useUtils(); // From any layer's app/utils/
 </script>
 ```
 
@@ -174,9 +174,9 @@ const { formatDate } = useUtils() // From any layer's app/utils/
 Use layer aliases for explicit imports when needed:
 
 ```typescript
-import MyComponent from '@admin/auth/components/LoginForm.vue'
+import MyComponent from '@admin/auth/components/LoginForm.vue';
 // Explicit import using alias
-import { MyType } from '@admin/base/types'
+import { MyType } from '@admin/base/types';
 ```
 
 ### Layer Isolation
@@ -227,16 +227,16 @@ Creates route: `/users`
 ```typescript
 // apps/admin/layers/users/types/index.ts
 export type UserManagementData = {
-  userId: string
-  currentRole: Role
-  newRole: Role
-}
+  userId: string;
+  currentRole: Role;
+  newRole: Role;
+};
 ```
 
 Import explicitly:
 
 ```typescript
-import type { UserManagementData } from '@admin/users/types'
+import type { UserManagementData } from '@admin/users/types';
 ```
 
 ## Best Practices
@@ -263,9 +263,9 @@ Use Pinia stores in `_base/app/stores/` for state shared across layers:
 ```typescript
 // apps/admin/layers/_base/app/stores/useAdminAuthStore.ts
 export const useAdminAuthStore = defineStore('adminAuth', () => {
-  const admin = ref(null)
+  const admin = ref(null);
   // ...
-})
+});
 ```
 
 ### 4. Layer-Specific State
@@ -275,9 +275,9 @@ Use Pinia stores in feature layers for layer-specific state:
 ```typescript
 // apps/admin/layers/users/app/stores/useUsersStore.ts
 export const useUsersStore = defineStore('users', () => {
-  const users = ref([])
+  const users = ref([]);
   // ...
-})
+});
 ```
 
 ### 5. Admin-Only Access
@@ -287,11 +287,11 @@ All admin routes must verify `super_admin` role:
 ```typescript
 // apps/admin/layers/auth/app/middleware/admin.global.ts
 export default defineNuxtRouteMiddleware(async () => {
-  const { user } = useUserSession()
+  const { user } = useUserSession();
   if (!user.value || user.value.role !== 'super_admin') {
-    return navigateTo('/login')
+    return navigateTo('/login');
   }
-})
+});
 ```
 
 ### 6. Type Safety
@@ -300,10 +300,10 @@ Use TypeScript and leverage auto-imports:
 
 ```vue
 <script setup lang="ts">
-import type { User } from '@int/schema'
+import type { User } from '@int/schema';
 
-const admin = useCurrentAdmin() // Auto-imported composable
-const toast = useToast() // Auto-imported composable
+const admin = useCurrentAdmin(); // Auto-imported composable
+const toast = useToast(); // Auto-imported composable
 </script>
 ```
 
@@ -353,7 +353,7 @@ The Nuxt build process automatically merges all layers in the correct order.
 ```typescript
 // Verify admin role in middleware
 if (user.role !== 'super_admin') {
-  throw createError({ statusCode: 403, message: 'Admin access required' })
+  throw createError({ statusCode: 403, message: 'Admin access required' });
 }
 ```
 

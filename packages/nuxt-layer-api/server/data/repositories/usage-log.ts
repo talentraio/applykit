@@ -1,8 +1,8 @@
-import type { Operation, ProviderType } from '@int/schema'
-import type { UsageLog } from '../schema'
-import { and, eq, gte, sql } from 'drizzle-orm'
-import { db } from '../db'
-import { usageLogs } from '../schema'
+import type { Operation, ProviderType } from '@int/schema';
+import type { UsageLog } from '../schema';
+import { and, eq, gte, sql } from 'drizzle-orm';
+import { db } from '../db';
+import { usageLogs } from '../schema';
 
 /**
  * Usage Log Repository
@@ -15,8 +15,8 @@ export const usageLogRepository = {
    * Find usage log by ID
    */
   async findById(id: string): Promise<UsageLog | null> {
-    const result = await db.select().from(usageLogs).where(eq(usageLogs.id, id)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(usageLogs).where(eq(usageLogs.id, id)).limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -24,11 +24,11 @@ export const usageLogRepository = {
    * Called after every parse, generate, or export operation
    */
   async log(data: {
-    userId: string
-    operation: Operation
-    providerType: ProviderType
-    tokensUsed?: number
-    cost?: number
+    userId: string;
+    operation: Operation;
+    providerType: ProviderType;
+    tokensUsed?: number;
+    cost?: number;
   }): Promise<UsageLog> {
     const result = await db
       .insert(usageLogs)
@@ -39,8 +39,8 @@ export const usageLogRepository = {
         tokensUsed: data.tokensUsed ?? null,
         cost: data.cost?.toString() ?? null
       })
-      .returning()
-    return result[0]!
+      .returning();
+    return result[0]!;
   },
 
   /**
@@ -48,8 +48,8 @@ export const usageLogRepository = {
    * Used for rate limiting (check daily limits)
    */
   async getDailyCount(userId: string, operation: Operation): Promise<number> {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const result = await db
       .select({ count: sql<number>`count(*)` })
@@ -60,9 +60,9 @@ export const usageLogRepository = {
           eq(usageLogs.operation, operation),
           gte(usageLogs.createdAt, today)
         )
-      )
+      );
 
-    return Number(result[0]?.count ?? 0)
+    return Number(result[0]?.count ?? 0);
   },
 
   /**
@@ -70,7 +70,7 @@ export const usageLogRepository = {
    * Admin/analytics feature
    */
   async findByUserId(userId: string, limit = 100): Promise<UsageLog[]> {
-    return await db.select().from(usageLogs).where(eq(usageLogs.userId, userId)).limit(limit)
+    return await db.select().from(usageLogs).where(eq(usageLogs.userId, userId)).limit(limit);
   },
 
   /**
@@ -87,7 +87,7 @@ export const usageLogRepository = {
           gte(usageLogs.createdAt, startDate),
           sql`${usageLogs.createdAt} <= ${endDate}`
         )
-      )
+      );
   },
 
   /**
@@ -104,9 +104,9 @@ export const usageLogRepository = {
           gte(usageLogs.createdAt, startDate),
           sql`${usageLogs.createdAt} <= ${endDate}`
         )
-      )
+      );
 
-    return Number(result[0]?.total ?? 0)
+    return Number(result[0]?.total ?? 0);
   },
 
   /**
@@ -122,9 +122,9 @@ export const usageLogRepository = {
           gte(usageLogs.createdAt, startDate),
           sql`${usageLogs.createdAt} <= ${endDate}`
         )
-      )
+      );
 
-    return Number(result[0]?.total ?? 0)
+    return Number(result[0]?.total ?? 0);
   },
 
   /**
@@ -132,8 +132,8 @@ export const usageLogRepository = {
    * Analytics: how many parse/generate/export operations
    */
   async getOperationBreakdown(userId: string, days = 30): Promise<Record<Operation, number>> {
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - days)
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
 
     const result = await db
       .select({
@@ -142,19 +142,19 @@ export const usageLogRepository = {
       })
       .from(usageLogs)
       .where(and(eq(usageLogs.userId, userId), gte(usageLogs.createdAt, startDate)))
-      .groupBy(usageLogs.operation)
+      .groupBy(usageLogs.operation);
 
     const breakdown: Record<Operation, number> = {
       parse: 0,
       generate: 0,
       export: 0
-    }
+    };
 
     result.forEach(row => {
-      breakdown[row.operation as Operation] = Number(row.count)
-    })
+      breakdown[row.operation as Operation] = Number(row.count);
+    });
 
-    return breakdown
+    return breakdown;
   },
 
   /**
@@ -165,8 +165,8 @@ export const usageLogRepository = {
     userId: string,
     days = 30
   ): Promise<{ platform: number; byok: number }> {
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - days)
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
 
     const result = await db
       .select({
@@ -175,15 +175,15 @@ export const usageLogRepository = {
       })
       .from(usageLogs)
       .where(and(eq(usageLogs.userId, userId), gte(usageLogs.createdAt, startDate)))
-      .groupBy(usageLogs.providerType)
+      .groupBy(usageLogs.providerType);
 
-    const breakdown = { platform: 0, byok: 0 }
+    const breakdown = { platform: 0, byok: 0 };
 
     result.forEach(row => {
-      breakdown[row.providerType as ProviderType] = Number(row.count)
-    })
+      breakdown[row.providerType as ProviderType] = Number(row.count);
+    });
 
-    return breakdown
+    return breakdown;
   },
 
   /**
@@ -191,14 +191,14 @@ export const usageLogRepository = {
    * Keep logs for compliance/billing period (e.g., 1 year)
    */
   async deleteOlderThan(days: number): Promise<number> {
-    const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - days)
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
 
     const result = await db
       .delete(usageLogs)
       .where(sql`${usageLogs.createdAt} < ${cutoffDate}`)
-      .returning({ id: usageLogs.id })
+      .returning({ id: usageLogs.id });
 
-    return result.length
+    return result.length;
   }
-}
+};

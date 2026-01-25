@@ -1,8 +1,8 @@
-import { z } from 'zod'
-import { OperationSchema, ProviderTypeSchema } from './enums'
+import { z } from 'zod';
+import { OperationSchema, ProviderTypeSchema } from './enums';
 
-export { type Operation, OperationSchema } from './enums'
-export { type ProviderType, ProviderTypeSchema } from './enums'
+export { type Operation, OperationSchema } from './enums';
+export { type ProviderType, ProviderTypeSchema } from './enums';
 
 export const UsageLogSchema = z.object({
   id: z.string().uuid(),
@@ -12,6 +12,6 @@ export const UsageLogSchema = z.object({
   tokensUsed: z.number().int().nullable().optional(),
   cost: z.number().nullable().optional(),
   createdAt: z.date()
-})
+});
 
-export type UsageLog = z.infer<typeof UsageLogSchema>
+export type UsageLog = z.infer<typeof UsageLogSchema>;

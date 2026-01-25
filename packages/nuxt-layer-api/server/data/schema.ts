@@ -1,4 +1,4 @@
-import type { LanguageEntry, PhoneEntry, ResumeContent } from '@int/schema'
+import type { LanguageEntry, PhoneEntry, ResumeContent } from '@int/schema';
 import {
   decimal,
   index,
@@ -11,7 +11,7 @@ import {
   unique,
   uuid,
   varchar
-} from 'drizzle-orm/pg-core'
+} from 'drizzle-orm/pg-core';
 
 /**
  * Drizzle ORM Schema Definitions
@@ -24,12 +24,12 @@ import {
 // Enums
 // ============================================================================
 
-export const roleEnum = pgEnum('role', ['super_admin', 'friend', 'public'])
-export const workFormatEnum = pgEnum('work_format', ['remote', 'hybrid', 'onsite'])
-export const sourceFileTypeEnum = pgEnum('source_file_type', ['docx', 'pdf'])
-export const llmProviderEnum = pgEnum('llm_provider', ['openai', 'gemini'])
-export const operationEnum = pgEnum('operation', ['parse', 'generate', 'export'])
-export const providerTypeEnum = pgEnum('provider_type', ['platform', 'byok'])
+export const roleEnum = pgEnum('role', ['super_admin', 'friend', 'public']);
+export const workFormatEnum = pgEnum('work_format', ['remote', 'hybrid', 'onsite']);
+export const sourceFileTypeEnum = pgEnum('source_file_type', ['docx', 'pdf']);
+export const llmProviderEnum = pgEnum('llm_provider', ['openai', 'gemini']);
+export const operationEnum = pgEnum('operation', ['parse', 'generate', 'export']);
+export const providerTypeEnum = pgEnum('provider_type', ['platform', 'byok']);
 
 // ============================================================================
 // Tables
@@ -46,7 +46,7 @@ export const users = pgTable('users', {
   role: roleEnum('role').notNull().default('public'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
-})
+});
 
 /**
  * Profiles table
@@ -69,7 +69,7 @@ export const profiles = pgTable('profiles', {
   phones: jsonb('phones').$type<PhoneEntry[]>(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
-})
+});
 
 /**
  * Resumes table
@@ -93,7 +93,7 @@ export const resumes = pgTable(
     userIdIdx: index('idx_resumes_user_id').on(table.userId),
     createdAtIdx: index('idx_resumes_created_at').on(table.createdAt)
   })
-)
+);
 
 /**
  * Vacancies table
@@ -118,7 +118,7 @@ export const vacancies = pgTable(
     userIdIdx: index('idx_vacancies_user_id').on(table.userId),
     createdAtIdx: index('idx_vacancies_created_at').on(table.createdAt)
   })
-)
+);
 
 /**
  * Generations table
@@ -147,7 +147,7 @@ export const generations = pgTable(
     generatedAtIdx: index('idx_generations_generated_at').on(table.generatedAt),
     expiresAtIdx: index('idx_generations_expires_at').on(table.expiresAt)
   })
-)
+);
 
 /**
  * LLM Keys table
@@ -170,7 +170,7 @@ export const llmKeys = pgTable(
     userIdIdx: index('idx_llm_keys_user_id').on(table.userId),
     userProviderUnique: unique('llm_keys_user_provider_unique').on(table.userId, table.provider)
   })
-)
+);
 
 /**
  * Usage Logs table
@@ -198,7 +198,7 @@ export const usageLogs = pgTable(
       table.createdAt
     )
   })
-)
+);
 
 /**
  * System Config table
@@ -209,32 +209,32 @@ export const systemConfigs = pgTable('system_configs', {
   key: varchar('key', { length: 100 }).primaryKey(),
   value: jsonb('value').notNull(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
-})
+});
 
 // ============================================================================
 // Type exports for use in repositories
 // ============================================================================
 
-export type User = typeof users.$inferSelect
-export type NewUser = typeof users.$inferInsert
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
 
-export type Profile = typeof profiles.$inferSelect
-export type NewProfile = typeof profiles.$inferInsert
+export type Profile = typeof profiles.$inferSelect;
+export type NewProfile = typeof profiles.$inferInsert;
 
-export type Resume = typeof resumes.$inferSelect
-export type NewResume = typeof resumes.$inferInsert
+export type Resume = typeof resumes.$inferSelect;
+export type NewResume = typeof resumes.$inferInsert;
 
-export type Vacancy = typeof vacancies.$inferSelect
-export type NewVacancy = typeof vacancies.$inferInsert
+export type Vacancy = typeof vacancies.$inferSelect;
+export type NewVacancy = typeof vacancies.$inferInsert;
 
-export type Generation = typeof generations.$inferSelect
-export type NewGeneration = typeof generations.$inferInsert
+export type Generation = typeof generations.$inferSelect;
+export type NewGeneration = typeof generations.$inferInsert;
 
-export type LLMKey = typeof llmKeys.$inferSelect
-export type NewLLMKey = typeof llmKeys.$inferInsert
+export type LLMKey = typeof llmKeys.$inferSelect;
+export type NewLLMKey = typeof llmKeys.$inferInsert;
 
-export type UsageLog = typeof usageLogs.$inferSelect
-export type NewUsageLog = typeof usageLogs.$inferInsert
+export type UsageLog = typeof usageLogs.$inferSelect;
+export type NewUsageLog = typeof usageLogs.$inferInsert;
 
-export type SystemConfig = typeof systemConfigs.$inferSelect
-export type NewSystemConfig = typeof systemConfigs.$inferInsert
+export type SystemConfig = typeof systemConfigs.$inferSelect;
+export type NewSystemConfig = typeof systemConfigs.$inferInsert;

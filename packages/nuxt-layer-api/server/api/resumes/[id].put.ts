@@ -1,6 +1,6 @@
-import { ResumeContentSchema } from '@int/schema'
-import { z } from 'zod'
-import { resumeRepository } from '../../data/repositories'
+import { ResumeContentSchema } from '@int/schema';
+import { z } from 'zod';
+import { resumeRepository } from '../../data/repositories';
 
 /**
  * PUT /api/resumes/:id
@@ -28,57 +28,57 @@ const UpdateResumeSchema = z
     {
       message: 'At least one of content or title must be provided'
     }
-  )
+  );
 
 export default defineEventHandler(async event => {
   // Require authentication
-  const session = await requireUserSession(event)
+  const session = await requireUserSession(event);
 
   // Get resume ID from route params
-  const id = getRouterParam(event, 'id')
+  const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
       statusCode: 400,
       message: 'Resume ID is required'
-    })
+    });
   }
 
   // Parse and validate request body
-  const body = await readBody(event)
-  const validation = UpdateResumeSchema.safeParse(body)
+  const body = await readBody(event);
+  const validation = UpdateResumeSchema.safeParse(body);
 
   if (!validation.success) {
     throw createError({
       statusCode: 400,
       message: 'Invalid request body',
       data: validation.error.errors
-    })
+    });
   }
 
-  const { content, title } = validation.data
+  const { content, title } = validation.data;
 
   // Check if resume exists and belongs to user
   const existingResume = await resumeRepository.findByIdAndUserId(
     id,
     (session.user as { id: string }).id
-  )
+  );
   if (!existingResume) {
     throw createError({
       statusCode: 404,
       message: 'Resume not found'
-    })
+    });
   }
 
   // Update content if provided
-  let updatedResume = existingResume
+  let updatedResume = existingResume;
   if (content) {
     const result = await resumeRepository.updateContent(
       id,
       (session.user as { id: string }).id,
       content
-    )
+    );
     if (result) {
-      updatedResume = result
+      updatedResume = result;
     }
   }
 
@@ -88,11 +88,11 @@ export default defineEventHandler(async event => {
       id,
       (session.user as { id: string }).id,
       title
-    )
+    );
     if (result) {
-      updatedResume = result
+      updatedResume = result;
     }
   }
 
-  return updatedResume
-})
+  return updatedResume;
+});

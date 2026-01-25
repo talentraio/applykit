@@ -6,12 +6,12 @@
 
 declare module '#auth-utils' {
   type User = {
-    id: string
-  }
+    id: string;
+  };
 
   type UserSession = {
-    user: User
-  }
+    user: User;
+  };
 }
 
-export {}
+export {};

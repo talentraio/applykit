@@ -129,7 +129,7 @@ No custom patterns outside Nuxt UI Pro.
 
 - [x] T050 [P] Create `apps/site/layers/_base/nuxt.config.ts` with alias `@site/base` + scaffold shared folders (`app/components`, `app/composables`, `app/stores`, `app/utils`, `app/middleware`)
 - [x] T051 [P] Create `apps/site/layers/auth/nuxt.config.ts` with alias `@site/auth`
-- [x] T052 [P] Create `apps/site/layers/user/nuxt.config.ts` with alias `@site/user`
+- [x] T052 [P] Create `apps/site/layers/profile/nuxt.config.ts` with alias `@site/profile` and `apps/site/layers/resume/nuxt.config.ts` with alias `@site/resume` (refactored from single user layer)
 - [x] T053 [P] Create `apps/site/layers/landing/nuxt.config.ts` with alias `@site/landing`
 - [x] T054 Create `apps/site/layers/vacancy/nuxt.config.ts` with alias `@site/vacancy` + update `apps/site/nuxt.config.ts` to extend internal layers in order (`_base` first)
 
@@ -153,10 +153,13 @@ No custom patterns outside Nuxt UI Pro.
 ### Implementation for US1
 
 - [x] T059 [US1] Create GET `/api/auth/google` endpoint in `packages/nuxt-layer-api/server/api/auth/google.get.ts`
-- [x] T060 [US1] Create GET `/api/auth/google/callback` route in `packages/nuxt-layer-api/server/routes/auth/google/callback.get.ts`
+- [x] T060 [US1] **[FIXED]** Create Google OAuth route in `packages/nuxt-layer-api/server/routes/auth/google.get.ts`
+  - _Fixed: Moved to `server/routes/auth/google.get.ts` per nuxt-auth-utils best practices. Handler manages both redirect and callback on same endpoint. Spec updated._
 - [x] T061 [US1] Create POST `/api/auth/logout` endpoint in `packages/nuxt-layer-api/server/api/auth/logout.post.ts`
-- [x] T062 [US1] Create GET `/api/auth/me` endpoint in `packages/nuxt-layer-api/server/api/auth/me.get.ts`
-- [x] T063 [US1] Create useAuth composable in `packages/nuxt-layer-api/app/composables/useAuth.ts`
+- [x] T062 [US1] **[NEEDS FIX]** Create GET `/api/auth/me` endpoint in `packages/nuxt-layer-api/server/api/auth/me.get.ts`
+  - _Issue: Returns only `UserPublic`, spec requires `{ user: UserPublic, profile: Profile | null }`_
+- [x] T063 [US1] **[NEEDS FIX]** Create useAuth composable in `packages/nuxt-layer-api/app/composables/useAuth.ts`
+  - _Issue: Uses direct `$fetch` instead of store actions + infrastructure API_
 - [x] T064 [US1] Add auth i18n keys to `packages/nuxt-layer-ui/locales/en.json` (auth.login.google, auth.logout, auth.error.\*)
 - [x] T065 [US1] Create login page in `apps/site/layers/auth/app/pages/login.vue` with Google sign-in button
 - [x] T066 [US1] Create auth layout in `apps/site/layers/auth/app/layouts/auth.vue`
@@ -184,13 +187,16 @@ No custom patterns outside Nuxt UI Pro.
 - [x] T075 [US2] Create GET `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].get.ts`
 - [x] T076 [US2] Create PUT `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].put.ts`
 - [x] T077 [US2] Create DELETE `/api/resumes/[id]` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].delete.ts`
-- [x] T078 [US2] Create useResumes composable in `packages/nuxt-layer-api/app/composables/useResumes.ts`
+- [x] T078 [US2] **[NEEDS FIX]** Create useResumes composable in `packages/nuxt-layer-api/app/composables/useResumes.ts`
+  - _Issues: (1) Uses direct `$fetch` with generic types instead of store + infrastructure, (2) State lives in composable instead of Pinia store, (3) Uses `onMounted` instead of `useAsyncData`/`callOnce`, (4) Site-specific logic in shared @int/api package_
 - [x] T079 [US2] Add resume i18n keys to `packages/nuxt-layer-ui/locales/en.json` (resume.list._, resume.upload._, resume.editor._, resume.error._)
-- [x] T080 [US2] Create ResumeUploader component in `apps/site/layers/user/app/components/ResumeUploader.vue` with dropzone
-- [x] T081 [US2] Create ResumeJsonEditor component in `apps/site/layers/user/app/components/ResumeJsonEditor.vue`
-- [x] T082 [US2] Create resumes list page in `apps/site/layers/user/app/pages/resumes/index.vue`
-- [x] T083 [US2] Create resume upload page in `apps/site/layers/user/app/pages/resumes/new.vue`
-- [x] T084 [US2] Create resume detail page in `apps/site/layers/user/app/pages/resumes/[id].vue` with JSON editor
+- [x] T080 [US2] **[FIXED]** Create ResumeUploader component in `apps/site/layers/resume/app/components/ResumeUploader.vue` with dropzone
+  - _Fixed: Moved to `resume` layer (TR011)_
+- [x] T081 [US2] **[FIXED]** Create ResumeJsonEditor component in `apps/site/layers/resume/app/components/ResumeJsonEditor.vue`
+  - _Fixed: Moved to `resume` layer (TR011)_
+- [x] T082 [US2] Create resumes list page in `apps/site/layers/resume/app/pages/resumes/index.vue`
+- [x] T083 [US2] Create resume upload page in `apps/site/layers/resume/app/pages/resumes/new.vue`
+- [x] T084 [US2] Create resume detail page in `apps/site/layers/resume/app/pages/resumes/[id].vue` with JSON editor
 
 **Checkpoint**: User can upload resume, see parsed JSON, edit and save
 
@@ -207,10 +213,13 @@ No custom patterns outside Nuxt UI Pro.
 - [x] T085 [US3] Create GET `/api/profile` endpoint in `packages/nuxt-layer-api/server/api/profile/index.get.ts`
 - [x] T086 [US3] Create PUT `/api/profile` endpoint in `packages/nuxt-layer-api/server/api/profile/index.put.ts`
 - [x] T087 [US3] Create GET `/api/profile/complete` endpoint in `packages/nuxt-layer-api/server/api/profile/complete.get.ts`
-- [x] T088 [US3] Create useProfile composable in `packages/nuxt-layer-api/app/composables/useProfile.ts`
-- [x] T089 [US3] Add profile i18n keys to `packages/nuxt-layer-ui/locales/en.json` (profile.title, profile.form._, profile.error._)
-- [x] T090 [US3] Create ProfileForm component in `apps/site/layers/user/app/components/ProfileForm.vue` with all required fields
-- [x] T091 [US3] Create profile page in `apps/site/layers/user/app/pages/profile.vue`
+- [x] T088 [US3] **[NEEDS FIX]** Create useProfile composable in `packages/nuxt-layer-api/app/composables/useProfile.ts`
+  - _Issues: (1) Uses direct `$fetch` with generic types instead of store + infrastructure, (2) State lives in composable instead of Pinia store, (3) Uses `onMounted` instead of `useAsyncData`/`callOnce`_
+- [x] T089 [US3] **[NEEDS FIX]** Add profile i18n keys to `packages/nuxt-layer-ui/locales/en.json` (profile.title, profile.form._, profile.error._)
+  - _Issue: Missing section title keys (profile.section.basic, profile.section.languages, profile.section.phones) and empty state messages_
+- [x] T090 [US3] **[FIXED]** Create ProfileForm component in `apps/site/layers/profile/app/components/ProfileForm/` with all required fields
+  - _Fixed: (1) Decomposed into sub-components (index.vue, Basic.vue, Languages.vue, Phone.vue, Actions.vue), (2) Root BEM class now `profile-form` (layer prefix not needed with new layer structure), (3) Moved to `profile` layer (TR011)_
+- [x] T091 [US3] Create profile page in `apps/site/layers/profile/app/pages/profile.vue`
 
 **Checkpoint**: User can complete profile, completeness check validates required fields
 
@@ -231,8 +240,8 @@ No custom patterns outside Nuxt UI Pro.
 - [ ] T096 [US4] Create DELETE `/api/vacancies/[id]` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id].delete.ts`
 - [ ] T097 [US4] Create useVacancies composable in `packages/nuxt-layer-api/app/composables/useVacancies.ts`
 - [ ] T098 [US4] Add vacancy i18n keys to `packages/nuxt-layer-ui/locales/en.json` (vacancy.list._, vacancy.form._, vacancy.detail.\*)
-- [ ] T099 [US4] Create VacancyForm component in `apps/site/layers/vacancy/app/components/VacancyForm.vue`
-- [ ] T100 [US4] Create VacancyCard component in `apps/site/layers/vacancy/app/components/VacancyCard.vue` with "Company (Position)" format
+- [ ] T099 [US4] Create VacancyForm component in `apps/site/layers/vacancy/app/components/Form.vue`
+- [ ] T100 [US4] Create VacancyCard component in `apps/site/layers/vacancy/app/components/Card.vue` with "Company (Position)" format
 - [ ] T101 [US4] Create vacancies list page in `apps/site/layers/vacancy/app/pages/vacancies/index.vue`
 - [ ] T102 [US4] Create new vacancy page in `apps/site/layers/vacancy/app/pages/vacancies/new.vue`
 - [ ] T103 [US4] Create vacancy detail page in `apps/site/layers/vacancy/app/pages/vacancies/[id].vue`
@@ -301,8 +310,8 @@ No custom patterns outside Nuxt UI Pro.
 - [ ] T127 [US7] Create DELETE `/api/keys/[id]` endpoint in `packages/nuxt-layer-api/server/api/keys/[id].delete.ts`
 - [ ] T128 [US7] Create useKeys composable in `packages/nuxt-layer-api/app/composables/useKeys.ts`
 - [ ] T129 [US7] Add settings i18n keys to `packages/nuxt-layer-ui/locales/en.json` (settings.title, settings.keys.\*)
-- [ ] T130 [US7] Create KeyManager component in `apps/site/layers/user/app/components/KeyManager.vue` with localStorage integration
-- [ ] T131 [US7] Create settings page in `apps/site/layers/user/app/pages/settings.vue` with key management
+- [ ] T130 [US7] Create KeyManager component in `apps/site/layers/profile/app/components/KeyManager.vue` with localStorage integration
+- [ ] T131 [US7] Create settings page in `apps/site/layers/profile/app/pages/settings.vue` with key management
 
 **Checkpoint**: User can add/remove BYOK key hints, keys stored in browser
 
@@ -468,6 +477,132 @@ Task: "Create SystemConfig schema in packages/schema/schemas/system.ts"
 ```
 Setup → Foundational → US1 (Auth) → US2/US3/US4 (parallel) → US5 → US6 → MVP Complete
 ```
+
+---
+
+## Phase 13: Architecture Refactoring (Priority: P0 - BLOCKING)
+
+**Purpose**: Fix architectural violations in completed tasks before continuing with new features
+
+**CRITICAL**: These fixes must be completed before resuming US4+ development to avoid propagating incorrect patterns.
+
+### Refactoring Overview
+
+The following tasks were marked **[NEEDS FIX]** due to deviations from the agreed architecture (see `docs/codestyle/pinia.md` and `docs/codestyle/api-fetching.md`):
+
+1. **API calls must go through**: Store actions → infrastructure/\*.api.ts → useApi() → $api
+2. **State must live in Pinia stores**, not composables
+3. **SSR data fetching** via `useAsyncData`/`callOnce`, not `onMounted`
+4. **No direct `$fetch`** in client code, no generic typing with `$fetch<T>`
+
+### Refactoring Tasks
+
+- [x] TR001 **Fix OAuth callback route location** (T060)
+  - Created `packages/nuxt-layer-api/server/routes/auth/google.get.ts` (single endpoint per nuxt-auth-utils best practices)
+  - Removed old `server/api/auth/google.get.ts`
+  - Updated spec to reflect single /auth/google endpoint
+
+- [x] TR002 **Fix /api/auth/me response** (T062)
+  - Modified endpoint to return `{ user: UserPublic, profile: Profile | null }`
+  - Updated `authApi.fetchMe()` return type in `infrastructure/auth.api.ts`
+
+- [x] TR003 **Create infrastructure API files**
+  - Completed `packages/nuxt-layer-api/app/infrastructure/auth.api.ts`
+  - Fixed `packages/nuxt-layer-api/app/infrastructure/user.api.ts`
+  - Created `apps/site/layers/resume/app/infrastructure/resume.api.ts` (moved to resume layer in TR011)
+
+- [x] TR004 **Implement Pinia auth store**
+  - Filled `packages/nuxt-layer-api/app/stores/auth.ts` with:
+    - State: `user`, `profile`, `loading`, `initialized`
+    - Actions: `fetchMe()`, `logout()`, `setProfile()` (using infrastructure API)
+    - Getters: `isAuthenticated`, `isProfileComplete`, `userRole`
+
+- [x] TR005 **Implement Pinia stores for site**
+  - Split into two stores (TR011):
+    - `useProfileStore` in `apps/site/layers/profile/app/stores/index.ts` with actions: `saveProfile()`, `checkProfileCompleteness()`
+    - `useResumeStore` in `apps/site/layers/resume/app/stores/index.ts` with state: `resumes`, `currentResume` and actions: `fetchResumes()`, `fetchResume(id)`, `uploadResume()`, `updateResume()`, `deleteResume()`
+    - Uses infrastructure API for all calls
+
+- [x] TR006 **Refactor useAuth composable** (T063)
+  - Removed direct `$fetch` calls
+  - Proxies to auth store actions
+  - Thin wrapper over store
+
+- [x] TR007 **Refactor useResumes composable** (T078)
+  - Moved to `apps/site/layers/resume/app/composables/useResumes.ts` (TR011)
+  - Removed all state (uses store state)
+  - Removed `onMounted` auto-fetch
+  - Proxies to resume store actions
+
+- [x] TR008 **Refactor useProfile composable** (T088)
+  - Moved to `apps/site/layers/profile/app/composables/useProfile.ts` (TR011)
+  - Removed all state (uses store state)
+  - Proxies to profile store actions
+
+- [x] TR009 **Move resume components to dedicated layer** (T080, T081)
+  - Moved `ResumeUploader.vue` to resume layer
+  - Moved `ResumeJsonEditor.vue` to resume layer
+  - Updated imports/references
+
+- [x] TR010 **Create app shell**
+  - Created `apps/site/app/app.vue`
+  - Created `apps/site/app/layouts/default.vue` (with navigation)
+  - Created `apps/admin/app/app.vue`
+  - Created `apps/admin/app/layouts/default.vue` (with admin navigation)
+
+- [x] TR011 **Create SSR init plugin**
+  - Created `apps/site/layers/_base/app/plugins/init-data.server.ts`
+  - Loads user session and profile on SSR if authenticated
+
+- [x] TR012 **Decompose ProfileForm component** (T090)
+  - Split into folder structure:
+    - `ProfileForm/index.vue`
+    - `ProfileForm/Actions.vue`
+    - `ProfileForm/section/Basic.vue`
+    - `ProfileForm/section/Languages.vue`
+    - `ProfileForm/section/Phone.vue`
+  - Fixed root BEM class to `profile-form`
+
+- [x] TR013 **Split user layer into profile and resume layers**
+  - Created two separate domain layers:
+    - `apps/site/layers/profile/` - Profile management
+      - Store: `useProfileStore` (saveProfile, checkProfileCompleteness)
+      - Composable: `useProfile`
+      - Components: `ProfileForm/` with sections
+      - Pages: `profile.vue`
+      - Alias: `@site/profile`, prefix: `Profile`
+    - `apps/site/layers/resume/` - Resume management
+      - Store: `useResumeStore` (resume CRUD operations)
+      - Composable: `useResumes`
+      - Components: `ResumeUploader.vue`, `ResumeJsonEditor.vue`
+      - Pages: `resumes/` (index, new, [id])
+      - Infrastructure: `resume.api.ts`
+      - Alias: `@site/resume`, prefix: `Resume`
+  - Removed `apps/site/layers/user/`
+  - Updated `apps/site/nuxt.config.ts` to extend new layers
+  - Updated documentation in `docs/` and `specs/`
+  - Benefits: Clear domain separation, independent development, better maintainability
+
+- [x] TR013 **Add missing i18n keys** (T089)
+  - Added `profile.section.basic`, `profile.section.languages`, `profile.section.phones`
+  - Added `profile.languages.empty`, `profile.phones.empty`
+  - ProfileForm uses i18n keys
+
+### Refactoring Dependencies
+
+```
+TR001, TR002, TR003 can run in parallel
+    ↓
+TR004 (auth store) depends on TR002, TR003
+    ↓
+TR005 (user store) depends on TR003
+    ↓
+TR006, TR007, TR008 depend on TR004, TR005
+    ↓
+TR009, TR010, TR011, TR012, TR013 can run in parallel
+```
+
+**Checkpoint**: All architectural violations fixed. Resume US4+ development using correct patterns.
 
 ---
 

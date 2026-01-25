@@ -1,4 +1,4 @@
-import { resumeRepository } from '../../data/repositories'
+import { resumeRepository } from '../../data/repositories';
 
 /**
  * DELETE /api/resumes/:id
@@ -11,31 +11,31 @@ import { resumeRepository } from '../../data/repositories'
  */
 export default defineEventHandler(async event => {
   // Require authentication
-  const session = await requireUserSession(event)
+  const session = await requireUserSession(event);
 
   // Get resume ID from route params
-  const id = getRouterParam(event, 'id')
+  const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
       statusCode: 400,
       message: 'Resume ID is required'
-    })
+    });
   }
 
   // Check if resume exists and belongs to user
-  const resume = await resumeRepository.findByIdAndUserId(id, (session.user as { id: string }).id)
+  const resume = await resumeRepository.findByIdAndUserId(id, (session.user as { id: string }).id);
   if (!resume) {
     throw createError({
       statusCode: 404,
       message: 'Resume not found'
-    })
+    });
   }
 
   // Delete resume
-  await resumeRepository.delete(id, (session.user as { id: string }).id)
+  await resumeRepository.delete(id, (session.user as { id: string }).id);
 
   return {
     success: true,
     message: 'Resume deleted successfully'
-  }
-})
+  };
+});

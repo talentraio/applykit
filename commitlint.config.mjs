@@ -12,5 +12,5 @@
 // - style: formatting-only changes (no logic)
 // - revert: revert a previous commit
 export default {
-  extends: ['@commitlint/config-conventional'],
-}
+  extends: ['@commitlint/config-conventional']
+};

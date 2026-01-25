@@ -8,3 +8,43 @@ packages:
 
   # Applications
   - 'apps/*'
+
+catalog:
+  '@antfu/eslint-config': ^7.2.0
+  '@commitlint/cli': ^19.0.0
+  '@commitlint/config-conventional': ^19.0.0
+  '@google/genai': ^1.38.0
+  '@nuxt/ui': ^4.0.1
+  '@nuxtjs/i18n': ^9.2.4 # Need migration to v 10.2.1
+  '@pinia/nuxt': ^0.11.3
+  '@playwright/test': ^1.49.1
+  '@types/better-sqlite3': ^7.6.13
+  '@vercel/blob': ^2.0.0
+  '@vitest/coverage-v8': ^2.1.8
+  better-sqlite3: ^12.6.2
+  drizzle-kit: ^0.30.2
+  drizzle-orm: ^0.38.4
+  eslint: ^9.18.0
+  eslint-config-prettier: ^10.1.8
+  eslint-plugin-format: ^1.3.1
+  h3-formidable: ^1.0.0
+  husky: ^9.0.0
+  lint-staged: ^15.0.0
+  mammoth: ^1.11.0
+  nuxt: ^4.0.9
+  nuxt-auth-utils: ^0.5.27
+  openai: ^6.16.0
+  pdf-parse: ^2.4.5
+  pinia: ^3.0.4
+  postcss-html: ^1.8.1
+  postcss-scss: ^4.0.9
+  postgres: ^3.4.8
+  prettier: ^3.4.2
+  stylelint: ^17.0.0
+  stylelint-config-recommended-vue: ^1.6.1
+  stylelint-config-standard-scss: ^17.0.0
+  tsx: ^4.21.0
+  typescript: ^5.7.3
+  vitest: ^2.1.8
+  vue-tsc: ^3.2.3
+  zod: ^3.24.1

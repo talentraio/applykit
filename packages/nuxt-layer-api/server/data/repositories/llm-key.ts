@@ -1,8 +1,8 @@
-import type { LLMProvider } from '@int/schema'
-import type { LLMKey } from '../schema'
-import { and, eq } from 'drizzle-orm'
-import { db } from '../db'
-import { llmKeys } from '../schema'
+import type { LLMProvider } from '@int/schema';
+import type { LLMKey } from '../schema';
+import { and, eq } from 'drizzle-orm';
+import { db } from '../db';
+import { llmKeys } from '../schema';
 
 /**
  * LLM Key Repository
@@ -16,8 +16,8 @@ export const llmKeyRepository = {
    * Find key by ID
    */
   async findById(id: string): Promise<LLMKey | null> {
-    const result = await db.select().from(llmKeys).where(eq(llmKeys.id, id)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(llmKeys).where(eq(llmKeys.id, id)).limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -29,8 +29,8 @@ export const llmKeyRepository = {
       .select()
       .from(llmKeys)
       .where(and(eq(llmKeys.userId, userId), eq(llmKeys.provider, provider)))
-      .limit(1)
-    return result[0] ?? null
+      .limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -38,7 +38,7 @@ export const llmKeyRepository = {
    * Returns metadata only (hint, provider, created date)
    */
   async findByUserId(userId: string): Promise<LLMKey[]> {
-    return await db.select().from(llmKeys).where(eq(llmKeys.userId, userId))
+    return await db.select().from(llmKeys).where(eq(llmKeys.userId, userId));
   },
 
   /**
@@ -48,7 +48,7 @@ export const llmKeyRepository = {
    */
   async upsert(userId: string, provider: LLMProvider, keyHint: string): Promise<LLMKey> {
     // Check if key exists
-    const existing = await this.findByUserAndProvider(userId, provider)
+    const existing = await this.findByUserAndProvider(userId, provider);
 
     if (existing) {
       // Update existing
@@ -56,8 +56,8 @@ export const llmKeyRepository = {
         .update(llmKeys)
         .set({ keyHint })
         .where(and(eq(llmKeys.userId, userId), eq(llmKeys.provider, provider)))
-        .returning()
-      return result[0]!
+        .returning();
+      return result[0]!;
     } else {
       // Insert new
       const result = await db
@@ -67,8 +67,8 @@ export const llmKeyRepository = {
           provider,
           keyHint
         })
-        .returning()
-      return result[0]!
+        .returning();
+      return result[0]!;
     }
   },
 
@@ -77,7 +77,7 @@ export const llmKeyRepository = {
    * User-initiated removal of BYOK key
    */
   async delete(id: string, userId: string): Promise<void> {
-    await db.delete(llmKeys).where(and(eq(llmKeys.id, id), eq(llmKeys.userId, userId)))
+    await db.delete(llmKeys).where(and(eq(llmKeys.id, id), eq(llmKeys.userId, userId)));
   },
 
   /**
@@ -85,7 +85,7 @@ export const llmKeyRepository = {
    * Called during user account deletion
    */
   async deleteByUserId(userId: string): Promise<void> {
-    await db.delete(llmKeys).where(eq(llmKeys.userId, userId))
+    await db.delete(llmKeys).where(eq(llmKeys.userId, userId));
   },
 
   /**
@@ -96,8 +96,8 @@ export const llmKeyRepository = {
       .select({ id: llmKeys.id })
       .from(llmKeys)
       .where(and(eq(llmKeys.userId, userId), eq(llmKeys.provider, provider)))
-      .limit(1)
-    return result.length > 0
+      .limit(1);
+    return result.length > 0;
   },
 
   /**
@@ -105,8 +105,8 @@ export const llmKeyRepository = {
    * Returns "•••• HINT" format for UI
    */
   async getKeyHint(userId: string, provider: LLMProvider): Promise<string | null> {
-    const key = await this.findByUserAndProvider(userId, provider)
-    if (!key) return null
-    return `•••• ${key.keyHint}`
+    const key = await this.findByUserAndProvider(userId, provider);
+    if (!key) return null;
+    return `•••• ${key.keyHint}`;
   }
-}
+};

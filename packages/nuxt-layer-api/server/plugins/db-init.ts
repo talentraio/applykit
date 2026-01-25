@@ -1,8 +1,8 @@
-import { existsSync } from 'node:fs'
-import { mkdir } from 'node:fs/promises'
-import { dirname } from 'node:path'
-import process from 'node:process'
-import Database from 'better-sqlite3'
+import { existsSync } from 'node:fs';
+import { mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
+import process from 'node:process';
+import Database from 'better-sqlite3';
 
 /**
  * Nitro plugin for SQLite database initialization
@@ -13,38 +13,38 @@ import Database from 'better-sqlite3'
  * In production, PostgreSQL is used and this plugin does nothing.
  */
 export default defineNitroPlugin(async () => {
-  const isDevelopment = process.env.NODE_ENV !== 'production'
-  const runtimeConfig = useRuntimeConfig()
-  const databaseUrl = runtimeConfig.databaseUrl
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const runtimeConfig = useRuntimeConfig();
+  const databaseUrl = runtimeConfig.databaseUrl;
 
   // Skip in production (PostgreSQL is used)
   if (!isDevelopment || databaseUrl) {
-    return
+    return;
   }
 
-  const dbPath = runtimeConfig.db?.sqlitePath
+  const dbPath = runtimeConfig.db?.sqlitePath;
 
   if (!dbPath) {
-    throw new Error('runtimeConfig.db.sqlitePath is required for SQLite local development')
+    throw new Error('runtimeConfig.db.sqlitePath is required for SQLite local development');
   }
 
   // Create .data directory if it doesn't exist
-  const dbDir = dirname(dbPath)
+  const dbDir = dirname(dbPath);
   if (!existsSync(dbDir)) {
-    await mkdir(dbDir, { recursive: true })
-    console.warn(`Created database directory: ${dbDir}`)
+    await mkdir(dbDir, { recursive: true });
+    console.warn(`Created database directory: ${dbDir}`);
   }
 
   // Check if database needs initialization
-  const needsInit = !existsSync(dbPath) || isEmptyDatabase(dbPath)
+  const needsInit = !existsSync(dbPath) || isEmptyDatabase(dbPath);
 
   if (!needsInit) {
-    return
+    return;
   }
 
-  console.warn(`Initializing SQLite database at ${dbPath}...`)
+  console.warn(`Initializing SQLite database at ${dbPath}...`);
 
-  const db = new Database(dbPath)
+  const db = new Database(dbPath);
 
   try {
     db.exec(`
@@ -158,26 +158,26 @@ export default defineNitroPlugin(async () => {
         ('platform_provider', '"openai"'),
         ('global_budget_cap', '100'),
         ('global_budget_used', '0');
-    `)
+    `);
 
-    console.warn('SQLite database initialized successfully')
+    console.warn('SQLite database initialized successfully');
   } finally {
-    db.close()
+    db.close();
   }
-})
+});
 
 /**
  * Check if database file exists but has no tables
  */
 function isEmptyDatabase(dbPath: string): boolean {
   try {
-    const db = new Database(dbPath, { readonly: true })
+    const db = new Database(dbPath, { readonly: true });
     const result = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
-      .all()
-    db.close()
-    return result.length === 0
+      .all();
+    db.close();
+    return result.length === 0;
   } catch {
-    return true
+    return true;
   }
 }

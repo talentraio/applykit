@@ -46,12 +46,12 @@ const publicRoutes = [
   '/api/auth/google/callback',
   '/api/health',
   '/api/your-new-public-route' // Add here
-]
+];
 
 const publicPatterns = [
   /^\/api\/auth\//,
   /^\/api\/public\// // Or add pattern here
-]
+];
 ```
 
 ### Usage in Route Handlers
@@ -62,14 +62,14 @@ After auth middleware runs, you can access the user from `event.context`:
 // server/api/profile.get.ts
 export default defineEventHandler(async event => {
   // User is guaranteed to exist (auth middleware already checked)
-  const user = event.context.user
+  const user = event.context.user;
 
   return {
     id: user.id,
     email: user.email,
     role: user.role
-  }
-})
+  };
+});
 ```
 
 ### Manual Session Check
@@ -80,14 +80,14 @@ If you need to manually check authentication in a public route:
 // server/api/optional-auth.get.ts
 export default defineEventHandler(async event => {
   // Optional: get session without throwing error
-  const session = await getUserSession(event)
+  const session = await getUserSession(event);
 
   if (session.user) {
-    return { message: `Hello ${session.user.email}` }
+    return { message: `Hello ${session.user.email}` };
   }
 
-  return { message: 'Hello guest' }
-})
+  return { message: 'Hello guest' };
+});
 ```
 
 ## Admin Middleware
@@ -106,12 +106,12 @@ Admin middleware automatically runs after auth middleware:
 // server/api/admin/users.get.ts
 export default defineEventHandler(async event => {
   // User is guaranteed to be super_admin (admin middleware checked)
-  const user = event.context.user
-  const isAdmin = event.context.isAdmin // true
+  const user = event.context.user;
+  const isAdmin = event.context.isAdmin; // true
 
   // Perform admin operations
-  return await userRepository.findAll()
-})
+  return await userRepository.findAll();
+});
 ```
 
 ### Error Responses
@@ -135,13 +135,13 @@ Sessions are managed by `nuxt-auth-utils` with encrypted cookies.
 ```typescript
 type UserSession = {
   user: {
-    id: string
-    email: string
-    role: 'super_admin' | 'friend' | 'public'
-    googleId: string
-  }
-  loggedInAt?: Date
-}
+    id: string;
+    email: string;
+    role: 'super_admin' | 'friend' | 'public';
+    googleId: string;
+  };
+  loggedInAt?: Date;
+};
 ```
 
 ### Session Helpers
@@ -150,10 +150,10 @@ Available in server routes:
 
 ```typescript
 // Get session (returns empty object if not authenticated)
-const session = await getUserSession(event)
+const session = await getUserSession(event);
 
 // Require session (throws 401 if not authenticated)
-const session = await requireUserSession(event)
+const session = await requireUserSession(event);
 
 // Set session (after login)
 await setUserSession(event, {
@@ -164,13 +164,13 @@ await setUserSession(event, {
     googleId: user.googleId
   },
   loggedInAt: new Date()
-})
+});
 
 // Clear session (logout)
-await clearUserSession(event)
+await clearUserSession(event);
 
 // Replace session (update user data)
-await replaceUserSession(event, newSessionData)
+await replaceUserSession(event, newSessionData);
 ```
 
 ## Environment Variables
@@ -222,15 +222,15 @@ Cookie size limit is ~4KB. For larger data:
 await setUserSession(event, {
   user: { id: '123', email: 'user@example.com' },
   resume: hugeResumeObject // Too large!
-})
+});
 
 // ✅ Store only ID, fetch from DB when needed
 await setUserSession(event, {
   user: { id: '123', email: 'user@example.com' }
-})
+});
 
 // Later, in route handler:
-const resume = await resumeRepository.findById(user.id)
+const resume = await resumeRepository.findById(user.id);
 ```
 
 ## Testing
@@ -238,7 +238,7 @@ const resume = await resumeRepository.findById(user.id)
 ### Mocking Authenticated User
 
 ```typescript
-import { vi } from 'vitest'
+import { vi } from 'vitest';
 
 // Mock getUserSession
 vi.mock('#imports', () => ({
@@ -249,7 +249,7 @@ vi.mock('#imports', () => ({
       role: 'public'
     }
   })
-}))
+}));
 ```
 
 ### Testing Protected Routes
@@ -257,24 +257,24 @@ vi.mock('#imports', () => ({
 ```typescript
 describe('Protected API Route', () => {
   it('should return 401 for unauthenticated user', async () => {
-    vi.mocked(getUserSession).mockResolvedValue({})
+    vi.mocked(getUserSession).mockResolvedValue({});
 
     const response = await $fetch('/api/protected', {
       ignoreResponseError: true
-    })
+    });
 
-    expect(response.statusCode).toBe(401)
-  })
+    expect(response.statusCode).toBe(401);
+  });
 
   it('should return data for authenticated user', async () => {
     vi.mocked(getUserSession).mockResolvedValue({
       user: { id: '123', email: 'user@example.com', role: 'public' }
-    })
+    });
 
-    const response = await $fetch('/api/protected')
-    expect(response).toBeDefined()
-  })
-})
+    const response = await $fetch('/api/protected');
+    expect(response).toBeDefined();
+  });
+});
 ```
 
 ## Related

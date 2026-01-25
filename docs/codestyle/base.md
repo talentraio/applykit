@@ -12,6 +12,49 @@ We format via **Prettier** (repo `.prettierrc`) and keep formatting discussions 
 - Push business logic out of UI components into **stores** and **composables**.
 - Prefer **computed / derived getters** over duplicating state.
 
+### Component decomposition
+
+Large components should be split into smaller, focused sub-components. Use a folder structure:
+
+```
+components/
+  ProfileForm/
+    index.vue           # Main container, orchestrates sub-components
+    Actions.vue         # Form actions (submit, cancel buttons)
+    section/
+      Basic.vue         # Basic info section
+      Languages.vue     # Languages list section
+      Phone.vue         # Phone numbers section
+```
+
+**When to decompose:**
+
+- Template exceeds ~150 lines
+- Component has multiple distinct sections (form sections, tabs, etc.)
+- Logic can be isolated (each section handles its own add/remove)
+- Reusability potential (section components can be reused)
+
+**Decomposition rules:**
+
+1. **Main component** (`index.vue`): orchestrates layout, handles form submission, manages overall state
+2. **Section components**: handle their own UI, emit events for state changes
+3. **Actions component**: submit/cancel buttons, loading states
+4. Keep props drilling minimal — use provide/inject or store for deep data
+
+**Example structure for ProfileForm:**
+
+```vue
+<!-- ProfileForm/index.vue -->
+<template>
+  <form class="user-profile-form" @submit.prevent="handleSubmit">
+    <UserProfileFormSectionBasic v-model="formData" />
+    <UserProfileFormSectionLanguages v-model="formData.languages" />
+    <UserProfileFormSectionPhone v-model="formData.phones" />
+    <UserProfileFormActions :saving="saving" @cancel="$emit('cancel')" />
+  </form>
+</template>
+```
+
 ## Vue SFC structure
 
 Order is always:
@@ -25,7 +68,7 @@ Order is always:
 - Every component must declare a stable name:
 
 ```ts
-defineOptions({ name: 'AuthFormRegistration' })
+defineOptions({ name: 'AuthFormRegistration' });
 ```
 
 - Use **PascalCase** for component names and file names.
@@ -66,14 +109,31 @@ Encapsulation rules:
 - Even if a component uses only Tailwind utilities, the **root element must have a semantic class**
   that represents the component and acts as the BEM block.
 
-Examples (kebab-case, semantic):
+### BEM naming with layer prefix
 
-- `auth-form-registration`
-- `auth-form-registration-header`
-- `vacancy-card`
-- `resume-preview`
+**Important**: The root BEM class must reflect the **full component name** including the layer prefix.
 
-### BEM naming
+Each layer has a component prefix configured in `nuxt.config.ts`:
+
+```typescript
+// apps/site/layers/profile/nuxt.config.ts
+components: [{ path: '@site/profile/app/components', prefix: 'Profile' }];
+
+// apps/site/layers/resume/nuxt.config.ts
+components: [{ path: '@site/resume/app/components', prefix: 'Resume' }];
+```
+
+So a component `ProfileForm/index.vue` in the `profile` layer will be registered as `ProfileForm`.
+The root BEM class must match: `profile-form`.
+
+Examples (kebab-case, semantic, **with prefix**):
+
+- `profile-form` (in profile layer → `<ProfileForm />`)
+- `resume-uploader` (in resume layer → `<ResumeUploader />`)
+- `vacancy-card` (in vacancy layer)
+- `auth-login-form` (in auth layer)
+
+### BEM naming rules
 
 - Block: `.block`
 - Element: `.block__element`
@@ -83,19 +143,19 @@ Example:
 
 ```vue
 <template>
-  <form class="auth-form-registration flex flex-col gap-4">
-    <header class="auth-form-registration__header">
-      <h1 class="auth-form-registration__title text-xl font-semibold">Create account</h1>
+  <form class="user-profile-form flex flex-col gap-4">
+    <header class="user-profile-form__header">
+      <h1 class="user-profile-form__title text-xl font-semibold">Profile</h1>
     </header>
   </form>
 </template>
 
 <script setup lang="ts">
-defineOptions({ name: 'AuthFormRegistration' })
+defineOptions({ name: 'UserProfileForm' });
 </script>
 
 <style lang="scss">
-.auth-form-registration {
+.user-profile-form {
   &__header {
   }
   &__title {

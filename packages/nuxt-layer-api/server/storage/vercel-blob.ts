@@ -1,6 +1,6 @@
-import type { PutOptions, StorageAdapter } from './types'
-import { Buffer } from 'node:buffer'
-import { del, head, list, put } from '@vercel/blob'
+import type { PutOptions, StorageAdapter } from './types';
+import { Buffer } from 'node:buffer';
+import { del, head, list, put } from '@vercel/blob';
 
 /**
  * Vercel Blob Storage Adapter
@@ -9,13 +9,13 @@ import { del, head, list, put } from '@vercel/blob'
  * Automatically uses NUXT_STORAGE_BLOB_READ_WRITE_TOKEN from environment
  */
 export class VercelBlobAdapter implements StorageAdapter {
-  private token?: string
+  private token?: string;
 
   constructor(token?: string) {
-    const runtimeConfig = useRuntimeConfig()
+    const runtimeConfig = useRuntimeConfig();
 
     // Token is optional - Vercel auto-detects in production
-    this.token = token || runtimeConfig.storage?.blobReadWriteToken
+    this.token = token || runtimeConfig.storage?.blobReadWriteToken;
   }
 
   async put(path: string, data: Buffer | Blob, options?: PutOptions): Promise<string> {
@@ -28,68 +28,68 @@ export class VercelBlobAdapter implements StorageAdapter {
           ? this.parseCacheControl(options.cacheControl)
           : undefined,
         addRandomSuffix: false // We control the path exactly
-      })
+      });
 
-      return blob.url
+      return blob.url;
     } catch (error) {
       throw new Error(
         `Failed to upload file to Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
-      )
+      );
     }
   }
 
   async get(path: string): Promise<Buffer | null> {
     try {
       // First check if file exists
-      const metadata = await head(path, { token: this.token })
+      const metadata = await head(path, { token: this.token });
 
       // Fetch the file content
-      const response = await fetch(metadata.url)
+      const response = await fetch(metadata.url);
       if (!response.ok) {
         if (response.status === 404) {
-          return null
+          return null;
         }
-        throw new Error(`Failed to fetch blob: ${response.statusText}`)
+        throw new Error(`Failed to fetch blob: ${response.statusText}`);
       }
 
-      const arrayBuffer = await response.arrayBuffer()
-      return Buffer.from(arrayBuffer)
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
     } catch (error) {
       // If head() throws 404, file doesn't exist
       if (error instanceof Error && error.message.includes('not found')) {
-        return null
+        return null;
       }
       throw new Error(
         `Failed to get file from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
-      )
+      );
     }
   }
 
   async delete(path: string): Promise<boolean> {
     try {
       // First get the full URL for this path
-      const metadata = await head(path, { token: this.token })
-      await del(metadata.url, { token: this.token })
-      return true
+      const metadata = await head(path, { token: this.token });
+      await del(metadata.url, { token: this.token });
+      return true;
     } catch (error) {
       // If file doesn't exist, return false
       if (error instanceof Error && error.message.includes('not found')) {
-        return false
+        return false;
       }
       throw new Error(
         `Failed to delete file from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
-      )
+      );
     }
   }
 
   async getUrl(path: string): Promise<string> {
     try {
-      const metadata = await head(path, { token: this.token })
-      return metadata.url
+      const metadata = await head(path, { token: this.token });
+      return metadata.url;
     } catch (error) {
       throw new Error(
         `Failed to get URL from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
-      )
+      );
     }
   }
 
@@ -99,13 +99,13 @@ export class VercelBlobAdapter implements StorageAdapter {
         prefix,
         token: this.token,
         limit: 1000 // Vercel Blob default limit
-      })
+      });
 
-      return result.blobs.map(blob => blob.pathname)
+      return result.blobs.map(blob => blob.pathname);
     } catch (error) {
       throw new Error(
         `Failed to list files from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
-      )
+      );
     }
   }
 
@@ -116,21 +116,21 @@ export class VercelBlobAdapter implements StorageAdapter {
         prefix,
         token: this.token,
         limit: 1000
-      })
+      });
 
       if (result.blobs.length === 0) {
-        return 0
+        return 0;
       }
 
       // Delete all files (Vercel Blob supports batch delete)
-      const urls = result.blobs.map(blob => blob.url)
-      await del(urls, { token: this.token })
+      const urls = result.blobs.map(blob => blob.url);
+      await del(urls, { token: this.token });
 
-      return result.blobs.length
+      return result.blobs.length;
     } catch (error) {
       throw new Error(
         `Failed to delete files by prefix from Vercel Blob: ${error instanceof Error ? error.message : String(error)}`
-      )
+      );
     }
   }
 
@@ -139,8 +139,8 @@ export class VercelBlobAdapter implements StorageAdapter {
    * Example: "public, max-age=31536000" => 31536000
    */
   private parseCacheControl(cacheControl: string): number | undefined {
-    const match = cacheControl.match(/max-age=(\d+)/)
-    return match ? Number.parseInt(match[1], 10) : undefined
+    const match = cacheControl.match(/max-age=(\d+)/);
+    return match ? Number.parseInt(match[1], 10) : undefined;
   }
 }
 
@@ -148,5 +148,5 @@ export class VercelBlobAdapter implements StorageAdapter {
  * Create a Vercel Blob storage adapter instance
  */
 export function createVercelBlobAdapter(token?: string): StorageAdapter {
-  return new VercelBlobAdapter(token)
+  return new VercelBlobAdapter(token);
 }

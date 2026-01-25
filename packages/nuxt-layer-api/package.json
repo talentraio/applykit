@@ -7,30 +7,33 @@
     "dev": "nuxi dev .playground",
     "build": "nuxt build .playground",
     "typecheck": "nuxt typecheck",
+    "postinstall": "nuxt prepare & nuxt prepare .playground",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@google/genai": "^1.38.0",
+    "@google/genai": "catalog:",
     "@int/schema": "workspace:*",
-    "@vercel/blob": "^2.0.0",
-    "better-sqlite3": "^12.6.2",
-    "drizzle-orm": "^0.38.4",
-    "h3-formidable": "^1.0.0",
-    "mammoth": "^1.11.0",
-    "nuxt": "^4.0.9",
-    "nuxt-auth-utils": "^0.5.27",
-    "openai": "^6.16.0",
-    "pdf-parse": "^2.4.5",
-    "postgres": "^3.4.8",
-    "zod": "^3.24.1"
+    "@pinia/nuxt": "catalog:",
+    "@vercel/blob": "catalog:",
+    "better-sqlite3": "catalog:",
+    "drizzle-orm": "catalog:",
+    "h3-formidable": "catalog:",
+    "mammoth": "catalog:",
+    "nuxt": "catalog:",
+    "nuxt-auth-utils": "catalog:",
+    "openai": "catalog:",
+    "pdf-parse": "catalog:",
+    "pinia": "catalog:",
+    "postgres": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
-    "drizzle-kit": "^0.30.2",
-    "tsx": "^4.21.0",
-    "typescript": "^5.7.3"
+    "@types/better-sqlite3": "catalog:",
+    "drizzle-kit": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }

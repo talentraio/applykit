@@ -1,10 +1,10 @@
-import process from 'node:process'
-import { fileURLToPath } from 'node:url'
+import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
 
-  modules: ['nuxt-auth-utils'],
+  modules: ['nuxt-auth-utils', '@pinia/nuxt'],
 
   runtimeConfig: {
     db: {
@@ -38,6 +38,9 @@ export default defineNuxtConfig({
         clientId: '',
         clientSecret: ''
       }
+    },
+    public: {
+      apiCallTimeoutMs: 10000
     }
   },
 
@@ -47,4 +50,4 @@ export default defineNuxtConfig({
   },
 
   alias: { '@layer/api': fileURLToPath(new URL('./', import.meta.url)) }
-})
+});

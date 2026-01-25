@@ -1,4 +1,4 @@
-import { resumeRepository } from '../../data/repositories'
+import { resumeRepository } from '../../data/repositories';
 
 /**
  * GET /api/resumes
@@ -10,10 +10,10 @@ import { resumeRepository } from '../../data/repositories'
  */
 export default defineEventHandler(async event => {
   // Require authentication
-  const session = await requireUserSession(event)
+  const session = await requireUserSession(event);
 
   // Get resumes for user
-  const resumes = await resumeRepository.findByUserId((session.user as { id: string }).id)
+  const resumes = await resumeRepository.findByUserId((session.user as { id: string }).id);
 
-  return resumes
-})
+  return resumes;
+});
