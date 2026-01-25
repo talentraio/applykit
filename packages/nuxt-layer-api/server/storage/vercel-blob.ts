@@ -140,7 +140,7 @@ export class VercelBlobAdapter implements StorageAdapter {
    */
   private parseCacheControl(cacheControl: string): number | undefined {
     const match = cacheControl.match(/max-age=(\d+)/);
-    return match ? Number.parseInt(match[1], 10) : undefined;
+    return match && match[1] ? Number.parseInt(match[1], 10) : undefined;
   }
 }
 
