@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const VacancySchema = z.object({
   id: z.string().uuid(),
@@ -10,20 +10,20 @@ export const VacancySchema = z.object({
   notes: z.string().nullable().optional(),
   createdAt: z.date(),
   updatedAt: z.date()
-})
+});
 
-export type Vacancy = z.infer<typeof VacancySchema>
+export type Vacancy = z.infer<typeof VacancySchema>;
 
 export const VacancyInputSchema = VacancySchema.omit({
   id: true,
   userId: true,
   createdAt: true,
   updatedAt: true
-})
+});
 
-export type VacancyInput = z.infer<typeof VacancyInputSchema>
+export type VacancyInput = z.infer<typeof VacancyInputSchema>;
 
 // Display title helper
 export function getVacancyTitle(vacancy: Vacancy): string {
-  return vacancy.jobPosition ? `${vacancy.company} (${vacancy.jobPosition})` : vacancy.company
+  return vacancy.jobPosition ? `${vacancy.company} (${vacancy.jobPosition})` : vacancy.company;
 }

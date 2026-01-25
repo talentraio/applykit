@@ -1,11 +1,11 @@
-import { readFile } from 'node:fs/promises'
-import { SourceFileTypeSchema } from '@int/schema'
-import { readFiles } from 'h3-formidable'
-import { resumeRepository } from '../../data/repositories'
-import { parseResumeWithLLM } from '../../services/llm/parse'
-import { parseDocument } from '../../services/parser'
-import { checkRateLimit } from '../../utils/rate-limiter'
-import { logUsage } from '../../utils/usage'
+import { readFile } from 'node:fs/promises';
+import { SourceFileTypeSchema } from '@int/schema';
+import { readFiles } from 'h3-formidable';
+import { resumeRepository } from '../../data/repositories';
+import { parseResumeWithLLM } from '../../services/llm/parse';
+import { parseDocument } from '../../services/parser';
+import { checkRateLimit } from '../../utils/rate-limiter';
+import { logUsage } from '../../utils/usage';
 
 /**
  * POST /api/resumes
@@ -27,65 +27,65 @@ import { logUsage } from '../../utils/usage'
  */
 export default defineEventHandler(async event => {
   // Require authentication
-  const session = await requireUserSession(event)
-  const userId = (session.user as { id: string }).id
+  const session = await requireUserSession(event);
+  const userId = (session.user as { id: string }).id;
 
   // Check rate limit
-  await checkRateLimit(userId, 'parse', { maxRequests: 10, windowSeconds: 60 })
+  await checkRateLimit(userId, 'parse', { maxRequests: 10, windowSeconds: 60 });
 
   // Parse multipart form data
-  const { files } = await readFiles(event)
+  const { files } = await readFiles(event);
 
   // Validate file upload
-  const fileArray = files.file
+  const fileArray = files.file;
   if (!fileArray || fileArray.length === 0) {
     throw createError({
       statusCode: 400,
       message: 'No file uploaded'
-    })
+    });
   }
 
-  const file = fileArray[0]
+  const file = fileArray[0];
 
   // Determine file type from mimetype
-  let fileType: 'docx' | 'pdf'
+  let fileType: 'docx' | 'pdf';
   if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    fileType = 'docx'
+    fileType = 'docx';
   } else if (file.mimetype === 'application/pdf') {
-    fileType = 'pdf'
+    fileType = 'pdf';
   } else {
     throw createError({
       statusCode: 400,
       message: `Unsupported file type: ${file.mimetype}. Only DOCX and PDF are supported.`
-    })
+    });
   }
 
   // Validate file type with schema
-  const fileTypeValidation = SourceFileTypeSchema.safeParse(fileType)
+  const fileTypeValidation = SourceFileTypeSchema.safeParse(fileType);
   if (!fileTypeValidation.success) {
     throw createError({
       statusCode: 400,
       message: 'Invalid file type'
-    })
+    });
   }
 
   // Read file buffer
-  const buffer = await readFile(file.filepath)
+  const buffer = await readFile(file.filepath);
 
   try {
     // Parse document to plain text
-    const parseResult = await parseDocument(buffer, fileType)
+    const parseResult = await parseDocument(buffer, fileType);
 
     // Get BYOK key from header if present
-    const userApiKey = getHeader(event, 'x-api-key')
+    const userApiKey = getHeader(event, 'x-api-key');
 
     // Parse with LLM
     const llmResult = await parseResumeWithLLM(parseResult.text, {
       userApiKey: userApiKey || undefined
-    })
+    });
 
     // Determine title (use provided or default to filename without extension)
-    const title = file.originalFilename?.replace(/\.(docx|pdf)$/i, '') || 'Untitled Resume'
+    const title = file.originalFilename?.replace(/\.(docx|pdf)$/i, '') || 'Untitled Resume';
 
     // Save to database
     const resume = await resumeRepository.create({
@@ -94,7 +94,7 @@ export default defineEventHandler(async event => {
       content: llmResult.content,
       sourceFileName: file.originalFilename || 'unknown',
       sourceFileType: fileType
-    })
+    });
 
     // Log usage
     await logUsage(
@@ -103,21 +103,21 @@ export default defineEventHandler(async event => {
       userApiKey ? 'byok' : 'platform',
       llmResult.tokensUsed,
       llmResult.cost
-    )
+    );
 
-    return resume
+    return resume;
   } catch (error) {
     // Handle parsing errors
     if (error instanceof Error) {
       throw createError({
         statusCode: 422,
         message: `Failed to parse resume: ${error.message}`
-      })
+      });
     }
 
     throw createError({
       statusCode: 500,
       message: 'Failed to parse resume'
-    })
+    });
   }
-})
+});

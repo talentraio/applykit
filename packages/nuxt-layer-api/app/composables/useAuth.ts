@@ -1,78 +1,97 @@
 /**
  * Authentication Composable
  *
- * Provides authentication utilities for client-side components
- * Wraps nuxt-auth-utils useUserSession with app-specific logic
+ * Thin proxy over auth store for convenient access in components.
+ * Does NOT hold state - all state lives in useApiAuthStore.
  *
  * T063 [US1] useAuth composable
+ * TR006 - Refactored to use store instead of direct $fetch
  */
 
-import type { UserPublic } from '@int/schema'
+import type { Profile, UserPublic } from '@int/schema';
+import { useApiAuthStore } from '../stores/auth';
 
 export type AuthComposable = {
   /**
    * Computed indicating if the user is logged in
    */
-  loggedIn: ComputedRef<boolean>
+  loggedIn: ComputedRef<boolean>;
   /**
    * The current user object if logged in, null otherwise
    */
-  user: ComputedRef<UserPublic | null>
+  user: ComputedRef<UserPublic | null>;
+  /**
+   * The current profile object if exists, null otherwise
+   */
+  profile: ComputedRef<Profile | null>;
+  /**
+   * Loading state
+   */
+  loading: ComputedRef<boolean>;
+  /**
+   * Check if profile is complete
+   */
+  isProfileComplete: ComputedRef<boolean>;
   /**
    * Fetch/refresh the user session from the server
    */
-  refresh: () => Promise<void>
+  refresh: () => Promise<void>;
   /**
    * Logout the current user
    */
-  logout: () => Promise<void>
+  logout: () => Promise<void>;
   /**
    * Navigate to Google OAuth login
    */
-  loginWithGoogle: () => void
-}
+  loginWithGoogle: () => void;
+};
 
 export function useAuth(): AuthComposable {
-  const { loggedIn, user, fetch, clear } = useUserSession()
+  const store = useApiAuthStore();
+  const { clear } = useUserSession();
 
   /**
    * Logout and redirect to login page
    */
   const logout = async (): Promise<void> => {
     try {
-      // Call logout endpoint to clear session
-      await $fetch('/api/auth/logout', { method: 'POST' })
+      // Call store logout action (handles API call)
+      await store.logout();
 
-      // Clear client-side session
-      await clear()
+      // Clear client-side session (nuxt-auth-utils)
+      await clear();
 
       // Redirect to login
-      await navigateTo('/login')
+      await navigateTo('/login');
     } catch (error) {
-      console.error('Logout failed:', error)
-      throw error
+      console.error('Logout failed:', error);
+      throw error;
     }
-  }
+  };
 
   /**
    * Navigate to Google OAuth login
+   * Note: OAuth routes are in server/routes/, not server/api/
    */
   const loginWithGoogle = (): void => {
-    navigateTo('/api/auth/google', { external: true })
-  }
+    navigateTo('/auth/google', { external: true });
+  };
 
   /**
    * Refresh user session from server
    */
   const refresh = async (): Promise<void> => {
-    await fetch()
-  }
+    await store.fetchMe();
+  };
 
   return {
-    loggedIn,
-    user: user as ComputedRef<UserPublic | null>,
+    loggedIn: computed(() => store.isAuthenticated),
+    user: computed(() => store.user),
+    profile: computed(() => store.profile),
+    loading: computed(() => store.loading),
+    isProfileComplete: computed(() => store.isProfileComplete),
     refresh,
     logout,
     loginWithGoogle
-  }
+  };
 }

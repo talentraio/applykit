@@ -11,18 +11,12 @@
 /**
  * Public routes that don't require authentication
  */
-const publicRoutes = [
-  '/api/auth/google',
-  '/api/auth/google/callback',
-  '/api/health',
-]
+const publicRoutes = ['/api/auth/google', '/api/auth/google/callback', '/api/health'];
 
 /**
  * Route patterns that don't require authentication (regex)
  */
-const publicPatterns = [
-  /^\/api\/auth\//,
-]
+const publicPatterns = [/^\/api\/auth\//];
 
 /**
  * Check if a route is public (doesn't require auth)
@@ -30,31 +24,31 @@ const publicPatterns = [
 function isPublicRoute(path: string): boolean {
   // Exact match
   if (publicRoutes.includes(path)) {
-    return true
+    return true;
   }
 
   // Pattern match
-  return publicPatterns.some(pattern => pattern.test(path))
+  return publicPatterns.some(pattern => pattern.test(path));
 }
 
-export default defineEventHandler(async (event) => {
-  const path = getRequestURL(event).pathname
+export default defineEventHandler(async event => {
+  const path = getRequestURL(event).pathname;
 
   // Only apply to API routes
   if (!path.startsWith('/api/')) {
-    return
+    return;
   }
 
   // Skip public routes
   if (isPublicRoute(path)) {
-    return
+    return;
   }
 
   // Require authenticated session
   // This will automatically throw 401 if not authenticated
-  const session = await requireUserSession(event)
+  const session = await requireUserSession(event);
 
   // Store user in event context for easy access in route handlers
-  event.context.user = session.user
-  event.context.session = session
-})
+  event.context.user = session.user;
+  event.context.session = session;
+});

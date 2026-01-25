@@ -1,5 +1,5 @@
-import type { Operation, Role } from '@int/schema'
-import { getDailyUsageCount } from '../../utils/usage'
+import type { Operation, Role } from '@int/schema';
+import { getDailyUsageCount } from '../../utils/usage';
 
 /**
  * Limits Service
@@ -34,7 +34,7 @@ const DAILY_LIMITS: Record<Role, Record<Operation, number>> = {
     generate: Number.POSITIVE_INFINITY,
     export: Number.POSITIVE_INFINITY
   }
-}
+};
 
 /**
  * Check if user can perform operation (hasn't hit daily limit)
@@ -51,13 +51,13 @@ export async function checkLimit(
 ): Promise<boolean> {
   // Super admin has no limits
   if (role === 'super_admin') {
-    return true
+    return true;
   }
 
-  const limit = DAILY_LIMITS[role][operation]
-  const used = await getDailyUsageCount(userId, operation)
+  const limit = DAILY_LIMITS[role][operation];
+  const used = await getDailyUsageCount(userId, operation);
 
-  return used < limit
+  return used < limit;
 }
 
 /**
@@ -75,13 +75,13 @@ export async function getRemainingLimit(
 ): Promise<number> {
   // Super admin has effectively unlimited
   if (role === 'super_admin') {
-    return Number.POSITIVE_INFINITY
+    return Number.POSITIVE_INFINITY;
   }
 
-  const limit = DAILY_LIMITS[role][operation]
-  const used = await getDailyUsageCount(userId, operation)
+  const limit = DAILY_LIMITS[role][operation];
+  const used = await getDailyUsageCount(userId, operation);
 
-  return Math.max(0, limit - used)
+  return Math.max(0, limit - used);
 }
 
 /**
@@ -92,7 +92,7 @@ export async function getRemainingLimit(
  * @returns Daily limit
  */
 export function getDailyLimit(role: Role, operation: Operation): number {
-  return DAILY_LIMITS[role][operation]
+  return DAILY_LIMITS[role][operation];
 }
 
 /**
@@ -109,10 +109,10 @@ export async function requireLimit(
   operation: Operation,
   role: Role
 ): Promise<void> {
-  const canProceed = await checkLimit(userId, operation, role)
+  const canProceed = await checkLimit(userId, operation, role);
 
   if (!canProceed) {
-    const limit = getDailyLimit(role, operation)
+    const limit = getDailyLimit(role, operation);
     throw createError({
       statusCode: 429,
       statusMessage: 'Too Many Requests',
@@ -122,7 +122,7 @@ export async function requireLimit(
         limit,
         resetAt: getResetTime()
       }
-    })
+    });
   }
 }
 
@@ -131,9 +131,9 @@ export async function requireLimit(
  * @returns ISO timestamp of next reset
  */
 function getResetTime(): string {
-  const tomorrow = new Date()
-  tomorrow.setUTCHours(24, 0, 0, 0) // Next midnight UTC
-  return tomorrow.toISOString()
+  const tomorrow = new Date();
+  tomorrow.setUTCHours(24, 0, 0, 0); // Next midnight UTC
+  return tomorrow.toISOString();
 }
 
 /**
@@ -143,7 +143,7 @@ function getResetTime(): string {
  * @returns All operation limits for the role
  */
 export function getAllLimits(role: Role): Record<Operation, number> {
-  return DAILY_LIMITS[role]
+  return DAILY_LIMITS[role];
 }
 
 /**
@@ -157,24 +157,24 @@ export async function getUsageSummary(
   userId: string,
   role: Role
 ): Promise<{
-  role: Role
+  role: Role;
   operations: Array<{
-    operation: Operation
-    used: number
-    limit: number
-    remaining: number
-    percentage: number
-  }>
-  resetAt: string
+    operation: Operation;
+    used: number;
+    limit: number;
+    remaining: number;
+    percentage: number;
+  }>;
+  resetAt: string;
 }> {
-  const operations: Operation[] = ['parse', 'generate', 'export']
+  const operations: Operation[] = ['parse', 'generate', 'export'];
 
   const operationStats = await Promise.all(
     operations.map(async operation => {
-      const limit = getDailyLimit(role, operation)
-      const used = await getDailyUsageCount(userId, operation)
-      const remaining = Math.max(0, limit - used)
-      const percentage = limit === Number.POSITIVE_INFINITY ? 0 : Math.round((used / limit) * 100)
+      const limit = getDailyLimit(role, operation);
+      const used = await getDailyUsageCount(userId, operation);
+      const remaining = Math.max(0, limit - used);
+      const percentage = limit === Number.POSITIVE_INFINITY ? 0 : Math.round((used / limit) * 100);
 
       return {
         operation,
@@ -182,13 +182,13 @@ export async function getUsageSummary(
         limit,
         remaining,
         percentage
-      }
+      };
     })
-  )
+  );
 
   return {
     role,
     operations: operationStats,
     resetAt: getResetTime()
-  }
+  };
 }

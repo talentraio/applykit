@@ -110,12 +110,12 @@ pnpm db:studio
 Drizzle provides full type inference:
 
 ```typescript
-import type { NewUser, User } from './schema'
-import { db } from './db'
-import { users } from './schema'
+import type { NewUser, User } from './schema';
+import { db } from './db';
+import { users } from './schema';
 
 // Fully typed queries
-const allUsers = await db.select().from(users)
+const allUsers = await db.select().from(users);
 //    ^? User[]
 
 // Insert with type checking
@@ -123,8 +123,8 @@ const newUser: NewUser = {
   email: 'user@example.com',
   googleId: 'google123',
   role: 'public' // Type-safe enum
-}
-await db.insert(users).values(newUser)
+};
+await db.insert(users).values(newUser);
 ```
 
 ## Repositories
@@ -133,23 +133,23 @@ Data access layer pattern (to be implemented in T028-T035):
 
 ```typescript
 // Example: packages/nuxt-layer-api/server/data/repositories/user.ts
-import { eq } from 'drizzle-orm'
-import { db } from '../db'
-import { users } from '../schema'
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { users } from '../schema';
 
 export const userRepository = {
   async findById(id: string) {
-    const result = await db.select().from(users).where(eq(users.id, id))
-    return result[0] ?? null
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0] ?? null;
   },
 
   async create(data: NewUser) {
-    const result = await db.insert(users).values(data).returning()
-    return result[0]
+    const result = await db.insert(users).values(data).returning();
+    return result[0];
   }
 
   // More methods...
-}
+};
 ```
 
 ## Security Notes

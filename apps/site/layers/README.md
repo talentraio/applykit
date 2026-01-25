@@ -24,11 +24,12 @@ export default defineNuxtConfig({
     '@int/api', // API layer (external package)
     './layers/_base', // 1. Base layer (shared utilities)
     './layers/auth', // 2. Auth layer (login, logout)
-    './layers/user', // 3. User layer (profile, settings)
-    './layers/landing', // 4. Landing layer (homepage)
-    './layers/vacancy' // 5. Vacancy layer (job management)
+    './layers/profile', // 3. Profile layer (user profile management)
+    './layers/resume', // 4. Resume layer (resume management)
+    './layers/landing', // 5. Landing layer (homepage)
+    './layers/vacancy' // 6. Vacancy layer (job management)
   ]
-})
+});
 ```
 
 **Important**: `_base` must be first in the internal layers list to ensure shared components/composables/stores are available to all other layers.
@@ -65,9 +66,9 @@ _base/
 **Usage**:
 
 ```typescript
-import MySharedComponent from '@site/base/components/MySharedComponent.vue'
+import MySharedComponent from '@site/base/components/MySharedComponent.vue';
 // Import from base layer
-import { useToast } from '@site/base/composables/useToast'
+import { useToast } from '@site/base/composables/useToast';
 ```
 
 ### `auth` Layer
@@ -94,34 +95,67 @@ Authentication and session management.
 
 ```typescript
 // Import from auth layer
-import { useAuthStore } from '@site/auth/stores/useAuthStore'
+import { useAuthStore } from '@site/auth/stores/useAuthStore';
 ```
 
-### `user` Layer
+### `profile` Layer
 
-**Alias**: `@site/user`
+**Alias**: `@site/profile`
 
-User profile and settings management.
+User profile management and editing.
 
 **Responsibilities**:
 
 - User profile pages
-- Settings pages
-- Profile editing
-- BYOK key management
-- Usage dashboard
+- Profile editing forms
+- Profile completeness checks
+- Personal information management
 
-**Key Files (to be created)**:
+**Key Files**:
 
 - `app/pages/profile.vue` - Profile page
-- `app/pages/settings.vue` - Settings page
-- `app/pages/dashboard.vue` - User dashboard
+- `app/components/ProfileForm/` - Profile form components
+- `app/stores/index.ts` - useProfileStore
+- `app/composables/useProfile.ts` - Profile composable
 
 **Usage**:
 
 ```typescript
-// Import from user layer
-import { useProfileStore } from '@site/user/stores/useProfileStore'
+// Import from profile layer
+import { useProfileStore } from '@site/profile/app/stores';
+
+const { profile, saveProfile } = useProfile();
+```
+
+### `resume` Layer
+
+**Alias**: `@site/resume`
+
+Resume management, upload, and editing.
+
+**Responsibilities**:
+
+- Resume upload and parsing
+- Resume list and detail pages
+- Resume editing (JSON editor)
+- Resume CRUD operations
+
+**Key Files**:
+
+- `app/pages/resumes/` - Resume pages (list, detail, upload)
+- `app/components/ResumeUploader.vue` - Upload component
+- `app/components/ResumeJsonEditor.vue` - JSON editor
+- `app/stores/index.ts` - useResumeStore
+- `app/composables/useResumes.ts` - Resumes composable
+- `app/infrastructure/resume.api.ts` - Resume API client
+
+**Usage**:
+
+```typescript
+// Import from resume layer
+import { useResumeStore } from '@site/resume/app/stores';
+
+const { resumes, uploadResume } = useResumes();
 ```
 
 ### `landing` Layer
@@ -147,7 +181,7 @@ Homepage and marketing pages.
 
 ```typescript
 // Import from landing layer
-import HeroSection from '@site/landing/components/Hero.vue'
+import HeroSection from '@site/landing/components/Hero.vue';
 ```
 
 ### `vacancy` Layer
@@ -175,7 +209,7 @@ Job vacancy management and resume generation.
 
 ```typescript
 // Import from vacancy layer
-import { useVacancyStore } from '@site/vacancy/stores/useVacancyStore'
+import { useVacancyStore } from '@site/vacancy/stores/useVacancyStore';
 ```
 
 ## Nuxt Layer Conventions
@@ -191,8 +225,8 @@ Components, composables, and utilities in each layer are automatically imported:
 </template>
 
 <script setup lang="ts">
-const user = useCurrentUser() // From any layer's app/composables/
-const { formatDate } = useUtils() // From any layer's app/utils/
+const user = useCurrentUser(); // From any layer's app/composables/
+const { formatDate } = useUtils(); // From any layer's app/utils/
 </script>
 ```
 
@@ -201,9 +235,9 @@ const { formatDate } = useUtils() // From any layer's app/utils/
 Use layer aliases for explicit imports when needed:
 
 ```typescript
-import MyComponent from '@site/auth/components/LoginForm.vue'
+import MyComponent from '@site/auth/components/LoginForm.vue';
 // Explicit import using alias
-import { MyType } from '@site/base/types'
+import { MyType } from '@site/base/types';
 ```
 
 ### Layer Isolation
@@ -254,16 +288,16 @@ Creates route: `/vacancies`
 ```typescript
 // apps/site/layers/vacancy/types/index.ts
 export type VacancyFormData = {
-  company: string
-  position: string
-  description: string
-}
+  company: string;
+  position: string;
+  description: string;
+};
 ```
 
 Import explicitly:
 
 ```typescript
-import type { VacancyFormData } from '@site/vacancy/types'
+import type { VacancyFormData } from '@site/vacancy/types';
 ```
 
 ## Best Practices
@@ -291,9 +325,9 @@ Use Pinia stores in `_base/app/stores/` for state shared across layers:
 ```typescript
 // apps/site/layers/_base/app/stores/useAuthStore.ts
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(null)
+  const user = ref(null);
   // ...
-})
+});
 ```
 
 ### 4. Layer-Specific State
@@ -303,9 +337,9 @@ Use Pinia stores in feature layers for layer-specific state:
 ```typescript
 // apps/site/layers/vacancy/app/stores/useVacancyStore.ts
 export const useVacancyStore = defineStore('vacancy', () => {
-  const vacancies = ref([])
+  const vacancies = ref([]);
   // ...
-})
+});
 ```
 
 ### 5. Type Safety
@@ -314,10 +348,10 @@ Use TypeScript and leverage auto-imports:
 
 ```vue
 <script setup lang="ts">
-import type { User } from '@int/schema'
+import type { User } from '@int/schema';
 
-const user = useCurrentUser() // Auto-imported composable
-const toast = useToast() // Auto-imported composable
+const user = useCurrentUser(); // Auto-imported composable
+const toast = useToast(); // Auto-imported composable
 </script>
 ```
 

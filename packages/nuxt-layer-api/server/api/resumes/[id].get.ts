@@ -1,4 +1,4 @@
-import { resumeRepository } from '../../data/repositories'
+import { resumeRepository } from '../../data/repositories';
 
 /**
  * GET /api/resumes/:id
@@ -10,26 +10,26 @@ import { resumeRepository } from '../../data/repositories'
  */
 export default defineEventHandler(async event => {
   // Require authentication
-  const session = await requireUserSession(event)
+  const session = await requireUserSession(event);
 
   // Get resume ID from route params
-  const id = getRouterParam(event, 'id')
+  const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
       statusCode: 400,
       message: 'Resume ID is required'
-    })
+    });
   }
 
   // Get resume with ownership check
-  const resume = await resumeRepository.findByIdAndUserId(id, (session.user as { id: string }).id)
+  const resume = await resumeRepository.findByIdAndUserId(id, (session.user as { id: string }).id);
 
   if (!resume) {
     throw createError({
       statusCode: 404,
       message: 'Resume not found'
-    })
+    });
   }
 
-  return resume
-})
+  return resume;
+});

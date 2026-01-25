@@ -1,4 +1,4 @@
-import { profileRepository } from '../../data/repositories'
+import { profileRepository } from '../../data/repositories';
 
 /**
  * GET /api/profile/complete
@@ -12,12 +12,12 @@ import { profileRepository } from '../../data/repositories'
  */
 export default defineEventHandler(async event => {
   // Require authentication
-  const session = await requireUserSession(event)
+  const session = await requireUserSession(event);
 
   // Check profile completeness
-  const isComplete = await profileRepository.isComplete((session.user as { id: string }).id)
+  const isComplete = await profileRepository.isComplete((session.user as { id: string }).id);
 
   return {
     complete: isComplete
-  }
-})
+  };
+});

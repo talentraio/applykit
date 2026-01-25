@@ -1,6 +1,6 @@
-import type { ILLMProvider, LLMRequest, LLMResponse } from '../types'
-import OpenAI from 'openai'
-import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '../types'
+import type { ILLMProvider, LLMRequest, LLMResponse } from '../types';
+import OpenAI from 'openai';
+import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '../types';
 
 /**
  * OpenAI Provider
@@ -24,18 +24,18 @@ const PRICING: Record<string, { input: number; output: number }> = {
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
   'gpt-4-turbo': { input: 10.0, output: 30.0 },
   'gpt-3.5-turbo': { input: 0.5, output: 1.5 }
-}
+};
 
 /**
  * Default model to use
  */
-const DEFAULT_MODEL = 'gpt-4o-mini'
+const DEFAULT_MODEL = 'gpt-4o-mini';
 
 /**
  * OpenAI LLM Provider Implementation
  */
 export class OpenAIProvider implements ILLMProvider {
-  readonly name = 'openai' as const
+  readonly name = 'openai' as const;
 
   /**
    * Validate OpenAI API key
@@ -43,24 +43,24 @@ export class OpenAIProvider implements ILLMProvider {
    */
   async validateKey(apiKey: string): Promise<boolean> {
     try {
-      const client = new OpenAI({ apiKey })
+      const client = new OpenAI({ apiKey });
 
       // Make minimal API call to verify key
       await client.chat.completions.create({
         model: DEFAULT_MODEL,
         messages: [{ role: 'user', content: 'test' }],
         max_tokens: 1
-      })
+      });
 
-      return true
+      return true;
     } catch (error) {
       if (error instanceof OpenAI.AuthenticationError) {
-        return false
+        return false;
       }
       // Other errors might be transient (rate limit, network, etc.)
       // We'll consider the key valid but log the error
-      console.warn(`OpenAI key validation failed with non-auth error: ${error}`)
-      return true
+      console.warn(`OpenAI key validation failed with non-auth error: ${error}`);
+      return true;
     }
   }
 
@@ -72,8 +72,8 @@ export class OpenAIProvider implements ILLMProvider {
     apiKey: string,
     providerType: 'platform' | 'byok'
   ): Promise<LLMResponse> {
-    const client = new OpenAI({ apiKey })
-    const model = request.model || DEFAULT_MODEL
+    const client = new OpenAI({ apiKey });
+    const model = request.model || DEFAULT_MODEL;
 
     try {
       const completion = await client.chat.completions.create({
@@ -86,11 +86,11 @@ export class OpenAIProvider implements ILLMProvider {
         ],
         temperature: request.temperature ?? 0.7,
         max_tokens: request.maxTokens
-      })
+      });
 
-      const content = completion.choices[0]?.message?.content || ''
-      const tokensUsed = completion.usage?.total_tokens || 0
-      const cost = this.calculateCost(tokensUsed, model)
+      const content = completion.choices[0]?.message?.content || '';
+      const tokensUsed = completion.usage?.total_tokens || 0;
+      const cost = this.calculateCost(tokensUsed, model);
 
       return {
         content,
@@ -99,19 +99,19 @@ export class OpenAIProvider implements ILLMProvider {
         model,
         provider: 'openai',
         providerType
-      }
+      };
     } catch (error) {
       // Handle specific OpenAI errors
       if (error instanceof OpenAI.AuthenticationError) {
-        throw new LLMAuthError('openai')
+        throw new LLMAuthError('openai');
       } else if (error instanceof OpenAI.RateLimitError) {
-        throw new LLMRateLimitError('openai')
+        throw new LLMRateLimitError('openai');
       } else if (error instanceof OpenAI.PermissionDeniedError) {
-        throw new LLMQuotaError('openai')
+        throw new LLMQuotaError('openai');
       } else if (error instanceof OpenAI.APIError) {
-        throw new LLMError(`OpenAI API error: ${error.message}`, 'openai', error.code || undefined)
+        throw new LLMError(`OpenAI API error: ${error.message}`, 'openai', error.code || undefined);
       } else {
-        throw new LLMError(error instanceof Error ? error.message : 'Unknown error', 'openai')
+        throw new LLMError(error instanceof Error ? error.message : 'Unknown error', 'openai');
       }
     }
   }
@@ -120,7 +120,7 @@ export class OpenAIProvider implements ILLMProvider {
    * Get default model
    */
   getDefaultModel(): string {
-    return DEFAULT_MODEL
+    return DEFAULT_MODEL;
   }
 
   /**
@@ -129,20 +129,20 @@ export class OpenAIProvider implements ILLMProvider {
    * In reality, you'd track input and output tokens separately
    */
   calculateCost(tokensUsed: number, model: string): number {
-    const pricing = PRICING[model] || PRICING[DEFAULT_MODEL]
+    const pricing = PRICING[model] || PRICING[DEFAULT_MODEL];
 
     if (!pricing) {
-      return 0
+      return 0;
     }
 
     // Estimate: assume 50% input, 50% output tokens
-    const inputTokens = tokensUsed * 0.5
-    const outputTokens = tokensUsed * 0.5
+    const inputTokens = tokensUsed * 0.5;
+    const outputTokens = tokensUsed * 0.5;
 
-    const inputCost = (inputTokens / 1_000_000) * pricing.input
-    const outputCost = (outputTokens / 1_000_000) * pricing.output
+    const inputCost = (inputTokens / 1_000_000) * pricing.input;
+    const outputCost = (outputTokens / 1_000_000) * pricing.output;
 
-    return inputCost + outputCost
+    return inputCost + outputCost;
   }
 }
 
@@ -150,5 +150,5 @@ export class OpenAIProvider implements ILLMProvider {
  * Create OpenAI provider instance
  */
 export function createOpenAIProvider(): ILLMProvider {
-  return new OpenAIProvider()
+  return new OpenAIProvider();
 }

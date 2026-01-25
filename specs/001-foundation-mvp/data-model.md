@@ -66,9 +66,9 @@ Primary identity for authenticated users.
 
 ```typescript
 // packages/nuxt-layer-api/server/data/schema.ts
-import { pgEnum, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { pgEnum, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
-export const roleEnum = pgEnum('role', ['super_admin', 'friend', 'public'])
+export const roleEnum = pgEnum('role', ['super_admin', 'friend', 'public']);
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -77,17 +77,17 @@ export const users = pgTable('users', {
   role: roleEnum('role').notNull().default('public'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
-})
+});
 ```
 
 #### Zod Schema
 
 ```typescript
 // packages/nuxt-layer-schema/schemas/user.ts
-import { z } from 'zod'
+import { z } from 'zod';
 
-export const RoleSchema = z.enum(['super_admin', 'friend', 'public'])
-export type Role = z.infer<typeof RoleSchema>
+export const RoleSchema = z.enum(['super_admin', 'friend', 'public']);
+export type Role = z.infer<typeof RoleSchema>;
 
 export const UserSchema = z.object({
   id: z.string().uuid(),
@@ -96,13 +96,13 @@ export const UserSchema = z.object({
   role: RoleSchema,
   createdAt: z.date(),
   updatedAt: z.date()
-})
+});
 
-export type User = z.infer<typeof UserSchema>
+export type User = z.infer<typeof UserSchema>;
 
 // For API responses (without sensitive fields)
-export const UserPublicSchema = UserSchema.omit({ googleId: true })
-export type UserPublic = z.infer<typeof UserPublicSchema>
+export const UserPublicSchema = UserSchema.omit({ googleId: true });
+export type UserPublic = z.infer<typeof UserPublicSchema>;
 ```
 
 #### Indexes
@@ -119,7 +119,7 @@ User profile with contact and job preferences.
 #### Drizzle Schema
 
 ```typescript
-export const workFormatEnum = pgEnum('work_format', ['remote', 'hybrid', 'onsite'])
+export const workFormatEnum = pgEnum('work_format', ['remote', 'hybrid', 'onsite']);
 
 export const profiles = pgTable('profiles', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -137,29 +137,29 @@ export const profiles = pgTable('profiles', {
   phones: jsonb('phones').$type<PhoneEntry[]>(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
-})
+});
 ```
 
 #### Zod Schema
 
 ```typescript
 // packages/nuxt-layer-schema/schemas/profile.ts
-import { z } from 'zod'
+import { z } from 'zod';
 
-export const WorkFormatSchema = z.enum(['remote', 'hybrid', 'onsite'])
-export type WorkFormat = z.infer<typeof WorkFormatSchema>
+export const WorkFormatSchema = z.enum(['remote', 'hybrid', 'onsite']);
+export type WorkFormat = z.infer<typeof WorkFormatSchema>;
 
 export const LanguageEntrySchema = z.object({
   language: z.string().min(1),
   level: z.string().min(1) // e.g., "Native", "Fluent", "Intermediate", "Basic"
-})
-export type LanguageEntry = z.infer<typeof LanguageEntrySchema>
+});
+export type LanguageEntry = z.infer<typeof LanguageEntrySchema>;
 
 export const PhoneEntrySchema = z.object({
   number: z.string().min(1),
   label: z.string().optional() // e.g., "Mobile", "Work"
-})
-export type PhoneEntry = z.infer<typeof PhoneEntrySchema>
+});
+export type PhoneEntry = z.infer<typeof PhoneEntrySchema>;
 
 export const ProfileSchema = z.object({
   id: z.string().uuid(),
@@ -174,9 +174,9 @@ export const ProfileSchema = z.object({
   phones: z.array(PhoneEntrySchema).optional(),
   createdAt: z.date(),
   updatedAt: z.date()
-})
+});
 
-export type Profile = z.infer<typeof ProfileSchema>
+export type Profile = z.infer<typeof ProfileSchema>;
 
 // For create/update (omit auto-generated fields)
 export const ProfileInputSchema = ProfileSchema.omit({
@@ -184,12 +184,12 @@ export const ProfileInputSchema = ProfileSchema.omit({
   userId: true,
   createdAt: true,
   updatedAt: true
-})
-export type ProfileInput = z.infer<typeof ProfileInputSchema>
+});
+export type ProfileInput = z.infer<typeof ProfileInputSchema>;
 
 // Profile completeness check
 export function isProfileComplete(profile: Profile | null): boolean {
-  if (!profile) return false
+  if (!profile) return false;
   return (
     profile.firstName.length > 0 &&
     profile.lastName.length > 0 &&
@@ -197,7 +197,7 @@ export function isProfileComplete(profile: Profile | null): boolean {
     profile.country.length === 2 &&
     profile.searchRegion.length > 0 &&
     profile.languages.length > 0
-  )
+  );
 }
 ```
 
@@ -214,7 +214,7 @@ Base resume uploaded by user.
 #### Drizzle Schema
 
 ```typescript
-export const sourceFileTypeEnum = pgEnum('source_file_type', ['docx', 'pdf'])
+export const sourceFileTypeEnum = pgEnum('source_file_type', ['docx', 'pdf']);
 
 export const resumes = pgTable('resumes', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -227,17 +227,17 @@ export const resumes = pgTable('resumes', {
   sourceFileType: sourceFileTypeEnum('source_file_type').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
-})
+});
 ```
 
 #### Zod Schema (ResumeContent)
 
 ```typescript
 // packages/nuxt-layer-schema/schemas/resume.ts
-import { z } from 'zod'
+import { z } from 'zod';
 
 // Date format: YYYY-MM
-const DateMonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Must be YYYY-MM format')
+const DateMonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Must be YYYY-MM format');
 
 export const PersonalInfoSchema = z.object({
   fullName: z.string().min(1),
@@ -246,12 +246,12 @@ export const PersonalInfoSchema = z.object({
   location: z.string().optional(),
   linkedin: z.string().url().optional(),
   website: z.string().url().optional()
-})
+});
 
 export const ExperienceLinkSchema = z.object({
   name: z.string().min(1),
   link: z.string().url()
-})
+});
 
 export const ExperienceEntrySchema = z.object({
   company: z.string().min(1),
@@ -261,7 +261,7 @@ export const ExperienceEntrySchema = z.object({
   description: z.string(),
   projects: z.array(z.string()).optional(),
   links: z.array(ExperienceLinkSchema).optional()
-})
+});
 
 export const EducationEntrySchema = z.object({
   institution: z.string().min(1),
@@ -269,18 +269,18 @@ export const EducationEntrySchema = z.object({
   field: z.string().optional(),
   startDate: DateMonthSchema,
   endDate: DateMonthSchema.optional()
-})
+});
 
 export const CertificationEntrySchema = z.object({
   name: z.string().min(1),
   issuer: z.string().optional(),
   date: DateMonthSchema.optional()
-})
+});
 
 export const ResumeLanguageSchema = z.object({
   language: z.string().min(1),
   level: z.string().min(1)
-})
+});
 
 export const ResumeContentSchema = z.object({
   personalInfo: PersonalInfoSchema,
@@ -290,12 +290,12 @@ export const ResumeContentSchema = z.object({
   skills: z.array(z.string()),
   certifications: z.array(CertificationEntrySchema).optional(),
   languages: z.array(ResumeLanguageSchema).optional()
-})
+});
 
-export type ResumeContent = z.infer<typeof ResumeContentSchema>
+export type ResumeContent = z.infer<typeof ResumeContentSchema>;
 
-export const SourceFileTypeSchema = z.enum(['docx', 'pdf'])
-export type SourceFileType = z.infer<typeof SourceFileTypeSchema>
+export const SourceFileTypeSchema = z.enum(['docx', 'pdf']);
+export type SourceFileType = z.infer<typeof SourceFileTypeSchema>;
 
 export const ResumeSchema = z.object({
   id: z.string().uuid(),
@@ -306,9 +306,9 @@ export const ResumeSchema = z.object({
   sourceFileType: SourceFileTypeSchema,
   createdAt: z.date(),
   updatedAt: z.date()
-})
+});
 
-export type Resume = z.infer<typeof ResumeSchema>
+export type Resume = z.infer<typeof ResumeSchema>;
 ```
 
 #### Indexes
@@ -337,14 +337,14 @@ export const vacancies = pgTable('vacancies', {
   notes: text('notes'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
-})
+});
 ```
 
 #### Zod Schema
 
 ```typescript
 // packages/nuxt-layer-schema/schemas/vacancy.ts
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const VacancySchema = z.object({
   id: z.string().uuid(),
@@ -356,22 +356,22 @@ export const VacancySchema = z.object({
   notes: z.string().nullable().optional(),
   createdAt: z.date(),
   updatedAt: z.date()
-})
+});
 
-export type Vacancy = z.infer<typeof VacancySchema>
+export type Vacancy = z.infer<typeof VacancySchema>;
 
 export const VacancyInputSchema = VacancySchema.omit({
   id: true,
   userId: true,
   createdAt: true,
   updatedAt: true
-})
+});
 
-export type VacancyInput = z.infer<typeof VacancyInputSchema>
+export type VacancyInput = z.infer<typeof VacancyInputSchema>;
 
 // Display title helper
 export function getVacancyTitle(vacancy: Vacancy): string {
-  return vacancy.jobPosition ? `${vacancy.company} (${vacancy.jobPosition})` : vacancy.company
+  return vacancy.jobPosition ? `${vacancy.company} (${vacancy.jobPosition})` : vacancy.company;
 }
 ```
 
@@ -402,15 +402,15 @@ export const generations = pgTable('generations', {
   matchScoreAfter: integer('match_score_after').notNull(),
   generatedAt: timestamp('generated_at').notNull().defaultNow(),
   expiresAt: timestamp('expires_at').notNull() // 90 days from generation
-})
+});
 ```
 
 #### Zod Schema
 
 ```typescript
 // packages/nuxt-layer-schema/schemas/generation.ts
-import { z } from 'zod'
-import { ResumeContentSchema } from './resume'
+import { z } from 'zod';
+import { ResumeContentSchema } from './resume';
 
 export const GenerationSchema = z.object({
   id: z.string().uuid(),
@@ -421,15 +421,15 @@ export const GenerationSchema = z.object({
   matchScoreAfter: z.number().int().min(0).max(100),
   generatedAt: z.date(),
   expiresAt: z.date()
-})
+});
 
-export type Generation = z.infer<typeof GenerationSchema>
+export type Generation = z.infer<typeof GenerationSchema>;
 
 // Days until expiration helper
 export function getDaysUntilExpiration(generation: Generation): number {
-  const now = new Date()
-  const diff = generation.expiresAt.getTime() - now.getTime()
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  const now = new Date();
+  const diff = generation.expiresAt.getTime() - now.getTime();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 ```
 
@@ -449,7 +449,7 @@ Metadata for user's BYOK keys (actual key stored in browser).
 #### Drizzle Schema
 
 ```typescript
-export const llmProviderEnum = pgEnum('llm_provider', ['openai', 'gemini'])
+export const llmProviderEnum = pgEnum('llm_provider', ['openai', 'gemini']);
 
 export const llmKeys = pgTable('llm_keys', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -459,17 +459,17 @@ export const llmKeys = pgTable('llm_keys', {
   provider: llmProviderEnum('provider').notNull(),
   keyHint: varchar('key_hint', { length: 4 }).notNull(), // last 4 chars
   createdAt: timestamp('created_at').notNull().defaultNow()
-})
+});
 ```
 
 #### Zod Schema
 
 ```typescript
 // packages/nuxt-layer-schema/schemas/llm-key.ts
-import { z } from 'zod'
+import { z } from 'zod';
 
-export const LLMProviderSchema = z.enum(['openai', 'gemini'])
-export type LLMProvider = z.infer<typeof LLMProviderSchema>
+export const LLMProviderSchema = z.enum(['openai', 'gemini']);
+export type LLMProvider = z.infer<typeof LLMProviderSchema>;
 
 export const LLMKeySchema = z.object({
   id: z.string().uuid(),
@@ -477,9 +477,9 @@ export const LLMKeySchema = z.object({
   provider: LLMProviderSchema,
   keyHint: z.string().length(4),
   createdAt: z.date()
-})
+});
 
-export type LLMKey = z.infer<typeof LLMKeySchema>
+export type LLMKey = z.infer<typeof LLMKeySchema>;
 ```
 
 #### Indexes
@@ -496,8 +496,8 @@ Tracks operations for rate limiting and billing.
 #### Drizzle Schema
 
 ```typescript
-export const operationEnum = pgEnum('operation', ['parse', 'generate', 'export'])
-export const providerTypeEnum = pgEnum('provider_type', ['platform', 'byok'])
+export const operationEnum = pgEnum('operation', ['parse', 'generate', 'export']);
+export const providerTypeEnum = pgEnum('provider_type', ['platform', 'byok']);
 
 export const usageLogs = pgTable('usage_logs', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -509,20 +509,20 @@ export const usageLogs = pgTable('usage_logs', {
   tokensUsed: integer('tokens_used'),
   cost: decimal('cost', { precision: 10, scale: 6 }),
   createdAt: timestamp('created_at').notNull().defaultNow()
-})
+});
 ```
 
 #### Zod Schema
 
 ```typescript
 // packages/nuxt-layer-schema/schemas/usage.ts
-import { z } from 'zod'
+import { z } from 'zod';
 
-export const OperationSchema = z.enum(['parse', 'generate', 'export'])
-export type Operation = z.infer<typeof OperationSchema>
+export const OperationSchema = z.enum(['parse', 'generate', 'export']);
+export type Operation = z.infer<typeof OperationSchema>;
 
-export const ProviderTypeSchema = z.enum(['platform', 'byok'])
-export type ProviderType = z.infer<typeof ProviderTypeSchema>
+export const ProviderTypeSchema = z.enum(['platform', 'byok']);
+export type ProviderType = z.infer<typeof ProviderTypeSchema>;
 
 export const UsageLogSchema = z.object({
   id: z.string().uuid(),
@@ -532,9 +532,9 @@ export const UsageLogSchema = z.object({
   tokensUsed: z.number().int().nullable().optional(),
   cost: z.number().nullable().optional(),
   createdAt: z.date()
-})
+});
 
-export type UsageLog = z.infer<typeof UsageLogSchema>
+export type UsageLog = z.infer<typeof UsageLogSchema>;
 ```
 
 #### Indexes
@@ -556,14 +556,14 @@ export const systemConfigs = pgTable('system_configs', {
   key: varchar('key', { length: 100 }).primaryKey(),
   value: jsonb('value').notNull(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
-})
+});
 ```
 
 #### Zod Schema
 
 ```typescript
 // packages/nuxt-layer-schema/schemas/system.ts
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const SystemConfigKeySchema = z.enum([
   'platform_llm_enabled',
@@ -571,12 +571,12 @@ export const SystemConfigKeySchema = z.enum([
   'platform_provider',
   'global_budget_cap',
   'global_budget_used'
-])
+]);
 
-export type SystemConfigKey = z.infer<typeof SystemConfigKeySchema>
+export type SystemConfigKey = z.infer<typeof SystemConfigKeySchema>;
 
-export const PlatformProviderSchema = z.enum(['openai', 'gemini_flash'])
-export type PlatformProvider = z.infer<typeof PlatformProviderSchema>
+export const PlatformProviderSchema = z.enum(['openai', 'gemini_flash']);
+export type PlatformProvider = z.infer<typeof PlatformProviderSchema>;
 
 // Type-safe config values
 export const SystemConfigValues = {
@@ -585,7 +585,7 @@ export const SystemConfigValues = {
   platform_provider: PlatformProviderSchema,
   global_budget_cap: z.number().positive(),
   global_budget_used: z.number().min(0)
-} as const
+} as const;
 
 // Default values
 export const SystemConfigDefaults: Record<SystemConfigKey, unknown> = {
@@ -594,7 +594,7 @@ export const SystemConfigDefaults: Record<SystemConfigKey, unknown> = {
   platform_provider: 'openai',
   global_budget_cap: 100, // $100/month
   global_budget_used: 0
-}
+};
 ```
 
 #### Notes
@@ -737,31 +737,31 @@ INSERT INTO system_configs (key, value) VALUES
 Example repository pattern for User entity:
 
 ```typescript
-import type { User, UserPublic } from '@int/schema'
+import type { User, UserPublic } from '@int/schema';
 // packages/nuxt-layer-api/server/data/repositories/user.ts
-import { eq } from 'drizzle-orm'
-import { db } from '../db'
-import { users } from '../schema'
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { users } from '../schema';
 
 export const userRepository = {
   async findById(id: string): Promise<User | null> {
-    const result = await db.select().from(users).where(eq(users.id, id)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0] ?? null;
   },
 
   async findByEmail(email: string): Promise<User | null> {
-    const result = await db.select().from(users).where(eq(users.email, email)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0] ?? null;
   },
 
   async findByGoogleId(googleId: string): Promise<User | null> {
-    const result = await db.select().from(users).where(eq(users.googleId, googleId)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(users).where(eq(users.googleId, googleId)).limit(1);
+    return result[0] ?? null;
   },
 
   async create(data: { email: string; googleId: string }): Promise<User> {
-    const result = await db.insert(users).values(data).returning()
-    return result[0]
+    const result = await db.insert(users).values(data).returning();
+    return result[0];
   },
 
   async updateRole(id: string, role: Role): Promise<User | null> {
@@ -769,10 +769,10 @@ export const userRepository = {
       .update(users)
       .set({ role, updatedAt: new Date() })
       .where(eq(users.id, id))
-      .returning()
-    return result[0] ?? null
+      .returning();
+    return result[0] ?? null;
   }
-}
+};
 ```
 
 This pattern is applied to all entities. Repositories return domain types from `@int/schema`, keeping ORM details internal.

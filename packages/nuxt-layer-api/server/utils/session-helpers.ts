@@ -9,7 +9,7 @@ export function getUserId(session: { user?: { id?: string } }): string {
     throw createError({
       statusCode: 401,
       message: 'User ID not found in session'
-    })
+    });
   }
-  return session.user.id
+  return session.user.id;
 }

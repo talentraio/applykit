@@ -228,53 +228,53 @@ All schemas defined with Zod; TypeScript types inferred.
 
 ```typescript
 type User = {
-  id: string // uuid
-  email: string
-  googleId: string
-  role: 'super_admin' | 'friend' | 'public'
-  createdAt: Date
-  updatedAt: Date
-}
+  id: string; // uuid
+  email: string;
+  googleId: string;
+  role: 'super_admin' | 'friend' | 'public';
+  createdAt: Date;
+  updatedAt: Date;
+};
 ```
 
 #### Profile
 
 ```typescript
 type Profile = {
-  id: string // uuid
-  userId: string // FK
-  firstName: string
-  lastName: string
-  email: string
-  country: string // ISO 3166-1 alpha-2
-  searchRegion: string
-  workFormat: 'remote' | 'hybrid' | 'onsite'
+  id: string; // uuid
+  userId: string; // FK
+  firstName: string;
+  lastName: string;
+  email: string;
+  country: string; // ISO 3166-1 alpha-2
+  searchRegion: string;
+  workFormat: 'remote' | 'hybrid' | 'onsite';
   languages: Array<{
-    language: string
-    level: string
-  }>
+    language: string;
+    level: string;
+  }>;
   phones?: Array<{
-    number: string
-    label?: string
-  }>
-  createdAt: Date
-  updatedAt: Date
-}
+    number: string;
+    label?: string;
+  }>;
+  createdAt: Date;
+  updatedAt: Date;
+};
 ```
 
 #### Resume (Base)
 
 ```typescript
 type Resume = {
-  id: string // uuid
-  userId: string // FK
-  title: string
-  content: ResumeContent // strict JSON schema
-  sourceFileName: string
-  sourceFileType: 'docx' | 'pdf'
-  createdAt: Date
-  updatedAt: Date
-}
+  id: string; // uuid
+  userId: string; // FK
+  title: string;
+  content: ResumeContent; // strict JSON schema
+  sourceFileName: string;
+  sourceFileType: 'docx' | 'pdf';
+  createdAt: Date;
+  updatedAt: Date;
+};
 ```
 
 #### ResumeContent (strict schema)
@@ -282,74 +282,74 @@ type Resume = {
 ```typescript
 type ResumeContent = {
   personalInfo: {
-    fullName: string
-    email: string
-    phone?: string
-    location?: string
-    linkedin?: string
-    website?: string
-  }
-  summary?: string
+    fullName: string;
+    email: string;
+    phone?: string;
+    location?: string;
+    linkedin?: string;
+    website?: string;
+  };
+  summary?: string;
   experience: Array<{
-    company: string
-    position: string
-    startDate: string // YYYY-MM
-    endDate?: string // YYYY-MM or null for "present"
-    description: string
-    projects?: string[]
+    company: string;
+    position: string;
+    startDate: string; // YYYY-MM
+    endDate?: string; // YYYY-MM or null for "present"
+    description: string;
+    projects?: string[];
     links?: Array<{
-      name: string
-      link: string
-    }>
-  }>
+      name: string;
+      link: string;
+    }>;
+  }>;
   education: Array<{
-    institution: string
-    degree: string
-    field?: string
-    startDate: string // YYYY-MM
-    endDate?: string // YYYY-MM
-  }>
-  skills: string[]
+    institution: string;
+    degree: string;
+    field?: string;
+    startDate: string; // YYYY-MM
+    endDate?: string; // YYYY-MM
+  }>;
+  skills: string[];
   certifications?: Array<{
-    name: string
-    issuer?: string
-    date?: string // YYYY-MM
-  }>
+    name: string;
+    issuer?: string;
+    date?: string; // YYYY-MM
+  }>;
   languages?: Array<{
-    language: string
-    level: string // e.g., "Native", "Fluent", "Intermediate", "Basic"
-  }>
-}
+    language: string;
+    level: string; // e.g., "Native", "Fluent", "Intermediate", "Basic"
+  }>;
+};
 ```
 
 #### Vacancy
 
 ```typescript
 type Vacancy = {
-  id: string // uuid
-  userId: string // FK
-  company: string
-  jobPosition?: string
-  description: string
-  url?: string
-  notes?: string
-  createdAt: Date
-  updatedAt: Date
-}
+  id: string; // uuid
+  userId: string; // FK
+  company: string;
+  jobPosition?: string;
+  description: string;
+  url?: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
 ```
 
 #### Generation
 
 ```typescript
 type Generation = {
-  id: string // uuid
-  vacancyId: string // FK
-  resumeId: string // FK
-  content: ResumeContent // tailored
-  matchScoreBefore: number // 0-100
-  matchScoreAfter: number // 0-100
-  generatedAt: Date
-}
+  id: string; // uuid
+  vacancyId: string; // FK
+  resumeId: string; // FK
+  content: ResumeContent; // tailored
+  matchScoreBefore: number; // 0-100
+  matchScoreAfter: number; // 0-100
+  generatedAt: Date;
+};
 ```
 
 > **Note:** UI shows only latest generation, but model supports history array for future features.
@@ -358,37 +358,37 @@ type Generation = {
 
 ```typescript
 type LLMKey = {
-  id: string // uuid
-  userId: string // FK
-  provider: 'openai' | 'gemini'
-  keyHint: string // last 4 chars
+  id: string; // uuid
+  userId: string; // FK
+  provider: 'openai' | 'gemini';
+  keyHint: string; // last 4 chars
   // Actual key stored encrypted or in browser only (MVP: browser only)
-  createdAt: Date
-}
+  createdAt: Date;
+};
 ```
 
 #### UsageLog
 
 ```typescript
 type UsageLog = {
-  id: string // uuid
-  userId: string // FK
-  operation: 'parse' | 'generate' | 'export'
-  provider: 'platform' | 'byok'
-  tokensUsed?: number
-  cost?: number
-  createdAt: Date
-}
+  id: string; // uuid
+  userId: string; // FK
+  operation: 'parse' | 'generate' | 'export';
+  provider: 'platform' | 'byok';
+  tokensUsed?: number;
+  cost?: number;
+  createdAt: Date;
+};
 ```
 
 #### SystemConfig
 
 ```typescript
 type SystemConfig = {
-  key: string
-  value: string | number | boolean
-  updatedAt: Date
-}
+  key: string;
+  value: string | number | boolean;
+  updatedAt: Date;
+};
 // Keys: platform_llm_enabled, byok_enabled, platform_provider, global_budget_cap, global_budget_used
 // platform_provider: 'openai' | 'gemini_flash'
 ```
@@ -401,12 +401,13 @@ Implementation: `packages/nuxt-layer-api/` (package: `@int/api`)
 
 ### Auth
 
-| Method | Endpoint                    | Description                |
-| ------ | --------------------------- | -------------------------- |
-| GET    | `/api/auth/google`          | Initiate Google OAuth      |
-| GET    | `/api/auth/google/callback` | OAuth callback             |
-| POST   | `/api/auth/logout`          | Clear session              |
-| GET    | `/api/auth/me`              | Get current user + profile |
+| Method | Endpoint           | Description                                                |
+| ------ | ------------------ | ---------------------------------------------------------- |
+| GET    | `/auth/google`     | Google OAuth (nuxt-auth-utils handles redirect + callback) |
+| POST   | `/api/auth/logout` | Clear session                                              |
+| GET    | `/api/auth/me`     | Get current user + profile                                 |
+
+> **Note:** OAuth routes are in `server/routes/` (not `server/api/`) per nuxt-auth-utils best practices. The handler manages both the initial redirect and callback on the same endpoint.
 
 ### Profile
 
@@ -704,7 +705,7 @@ admin.system.budget
 // apps/site/nuxt.config.ts
 export default defineNuxtConfig({
   extends: ['@int/ui', '@int/api']
-})
+});
 ```
 
 ---

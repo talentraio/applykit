@@ -1,4 +1,4 @@
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath } from 'node:url';
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
@@ -13,6 +13,8 @@ export default defineNuxtConfig({
     './layers/system'
   ],
 
+  modules: ['@pinia/nuxt'],
+
   devtools: {
     enabled: true
   },
@@ -22,5 +24,12 @@ export default defineNuxtConfig({
     typeCheck: false
   },
 
-  alias: { '@admin/system': fileURLToPath(new URL('./', import.meta.url)) }
-})
+  alias: { '@admin/system': fileURLToPath(new URL('./', import.meta.url)) },
+  pinia: {
+    storesDirs: [
+      fileURLToPath(new URL('./stores/*', import.meta.url)),
+      fileURLToPath(new URL('./stores/**', import.meta.url)),
+      fileURLToPath(new URL('./layers/**/stores/**', import.meta.url))
+    ]
+  }
+});

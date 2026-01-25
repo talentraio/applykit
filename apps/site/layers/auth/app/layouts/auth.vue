@@ -13,5 +13,5 @@
  *
  * T066 [US1] Auth layout
  */
-defineOptions({ name: 'AuthLayout' })
+defineOptions({ name: 'AuthLayout' });
 </script>

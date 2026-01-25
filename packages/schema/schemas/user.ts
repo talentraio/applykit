@@ -1,7 +1,7 @@
-import { z } from 'zod'
-import { RoleSchema } from './enums'
+import { z } from 'zod';
+import { RoleSchema } from './enums';
 
-export { type Role, RoleSchema } from './enums'
+export { type Role, RoleSchema } from './enums';
 
 export const UserSchema = z.object({
   id: z.string().uuid(),
@@ -10,10 +10,10 @@ export const UserSchema = z.object({
   role: RoleSchema,
   createdAt: z.date(),
   updatedAt: z.date()
-})
+});
 
-export type User = z.infer<typeof UserSchema>
+export type User = z.infer<typeof UserSchema>;
 
 // For API responses (without sensitive fields)
-export const UserPublicSchema = UserSchema.omit({ googleId: true })
-export type UserPublic = z.infer<typeof UserPublicSchema>
+export const UserPublicSchema = UserSchema.omit({ googleId: true });
+export type UserPublic = z.infer<typeof UserPublicSchema>;

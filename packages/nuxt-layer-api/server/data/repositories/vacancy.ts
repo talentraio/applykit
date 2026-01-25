@@ -1,8 +1,8 @@
-import type { VacancyInput } from '@int/schema'
-import type { Vacancy } from '../schema'
-import { and, desc, eq } from 'drizzle-orm'
-import { db } from '../db'
-import { vacancies } from '../schema'
+import type { VacancyInput } from '@int/schema';
+import type { Vacancy } from '../schema';
+import { and, desc, eq } from 'drizzle-orm';
+import { db } from '../db';
+import { vacancies } from '../schema';
 
 /**
  * Vacancy Repository
@@ -15,8 +15,8 @@ export const vacancyRepository = {
    * Find vacancy by ID
    */
   async findById(id: string): Promise<Vacancy | null> {
-    const result = await db.select().from(vacancies).where(eq(vacancies.id, id)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(vacancies).where(eq(vacancies.id, id)).limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -27,8 +27,8 @@ export const vacancyRepository = {
       .select()
       .from(vacancies)
       .where(and(eq(vacancies.id, id), eq(vacancies.userId, userId)))
-      .limit(1)
-    return result[0] ?? null
+      .limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -40,7 +40,7 @@ export const vacancyRepository = {
       .select()
       .from(vacancies)
       .where(eq(vacancies.userId, userId))
-      .orderBy(desc(vacancies.createdAt))
+      .orderBy(desc(vacancies.createdAt));
   },
 
   /**
@@ -57,8 +57,8 @@ export const vacancyRepository = {
         url: data.url ?? null,
         notes: data.notes ?? null
       })
-      .returning()
-    return result[0]!
+      .returning();
+    return result[0]!;
   },
 
   /**
@@ -72,8 +72,8 @@ export const vacancyRepository = {
         updatedAt: new Date()
       })
       .where(and(eq(vacancies.id, id), eq(vacancies.userId, userId)))
-      .returning()
-    return result[0] ?? null
+      .returning();
+    return result[0] ?? null;
   },
 
   /**
@@ -81,7 +81,7 @@ export const vacancyRepository = {
    * Also deletes associated generations (cascade)
    */
   async delete(id: string, userId: string): Promise<void> {
-    await db.delete(vacancies).where(and(eq(vacancies.id, id), eq(vacancies.userId, userId)))
+    await db.delete(vacancies).where(and(eq(vacancies.id, id), eq(vacancies.userId, userId)));
   },
 
   /**
@@ -91,8 +91,8 @@ export const vacancyRepository = {
     const result = await db
       .select({ count: vacancies.id })
       .from(vacancies)
-      .where(eq(vacancies.userId, userId))
-    return result.length
+      .where(eq(vacancies.userId, userId));
+    return result.length;
   },
 
   /**
@@ -104,7 +104,7 @@ export const vacancyRepository = {
       .from(vacancies)
       .where(eq(vacancies.userId, userId))
       .orderBy(desc(vacancies.createdAt))
-      .limit(1)
-    return result[0] ?? null
+      .limit(1);
+    return result[0] ?? null;
   }
-}
+};

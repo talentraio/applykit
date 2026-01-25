@@ -11,13 +11,13 @@
 </template>
 
 <script setup lang="ts">
-defineOptions({ name: 'AuthLoginPage' })
+defineOptions({ name: 'AuthLoginPage' });
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 definePageMeta({
   layout: 'auth'
-})
+});
 
 const providers = [
   {
@@ -26,8 +26,8 @@ const providers = [
     color: 'neutral' as const,
     onClick: async () => {
       // Redirect to Google OAuth endpoint
-      await navigateTo('/api/auth/google', { external: true })
+      await navigateTo('/api/auth/google', { external: true });
     }
   }
-]
+];
 </script>

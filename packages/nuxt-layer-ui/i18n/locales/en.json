@@ -7,6 +7,8 @@
     "create": "Create",
     "update": "Update",
     "view": "View",
+    "remove": "Remove",
+    "add": "Add",
     "loading": "Loading...",
     "submit": "Submit",
     "close": "Close",
@@ -18,6 +20,7 @@
     "clear": "Clear",
     "yes": "Yes",
     "no": "No",
+    "format": "Format",
     "error": {
       "generic": "An error occurred. Please try again.",
       "network": "Network error. Please check your connection.",
@@ -45,6 +48,13 @@
       "unauthorized": "You must be signed in to access this page.",
       "generic": "An authentication error occurred. Please try again."
     }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "resumes": "Resumes",
+    "vacancies": "Vacancies",
+    "profile": "Profile",
+    "settings": "Settings"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -120,28 +130,43 @@
   },
   "profile": {
     "title": "My Profile",
+    "section": {
+      "basic": "Basic Information",
+      "languages": "Languages",
+      "phones": "Phone Numbers"
+    },
+    "languages": {
+      "empty": "Add at least one language"
+    },
+    "phones": {
+      "empty": "No phone numbers added (optional)"
+    },
     "form": {
       "firstName": "First Name",
       "lastName": "Last Name",
       "email": "Email",
       "country": "Country",
+      "countryHint": "ISO 3166-1 alpha-2 code (e.g., US, GB, DE)",
       "searchRegion": "Search Region",
       "workFormat": "Work Format",
       "languages": "Languages",
       "phones": "Phone Numbers",
       "language": "Language",
       "languageLevel": "Level",
+      "languagePlaceholder": "English",
+      "levelPlaceholder": "Native",
       "addLanguage": "Add Language",
       "removeLanguage": "Remove",
       "phoneNumber": "Phone Number",
       "phoneLabel": "Label",
+      "phonePlaceholder": "+1 234 567 8900",
+      "labelPlaceholder": "Mobile",
       "addPhone": "Add Phone Number",
       "removePhone": "Remove",
       "workFormatOptions": {
         "remote": "Remote",
-        "office": "Office",
-        "hybrid": "Hybrid",
-        "any": "Any"
+        "onsite": "On-site",
+        "hybrid": "Hybrid"
       },
       "languageLevelOptions": {
         "native": "Native",
@@ -170,6 +195,13 @@
       "saveFailed": "Failed to save profile",
       "invalidData": "Please check your input and try again",
       "completenessCheckFailed": "Failed to check profile completeness"
+    }
+  },
+  "admin": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "system": "System"
     }
   }
 }

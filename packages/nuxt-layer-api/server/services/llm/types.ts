@@ -1,4 +1,4 @@
-import type { LLMProvider } from '@int/schema'
+import type { LLMProvider } from '@int/schema';
 
 /**
  * LLM Service Types
@@ -16,29 +16,29 @@ export type LLMRequest = {
   /**
    * The prompt/messages to send to the LLM
    */
-  prompt: string
+  prompt: string;
 
   /**
    * System message (optional)
    */
-  systemMessage?: string
+  systemMessage?: string;
 
   /**
    * Temperature (0-1, default: 0.7)
    * Higher = more creative, Lower = more focused
    */
-  temperature?: number
+  temperature?: number;
 
   /**
    * Maximum tokens to generate
    */
-  maxTokens?: number
+  maxTokens?: number;
 
   /**
    * Model to use (provider-specific)
    */
-  model?: string
-}
+  model?: string;
+};
 
 /**
  * LLM response
@@ -47,33 +47,33 @@ export type LLMResponse = {
   /**
    * Generated content
    */
-  content: string
+  content: string;
 
   /**
    * Tokens used in this request
    */
-  tokensUsed: number
+  tokensUsed: number;
 
   /**
    * Estimated cost in USD
    */
-  cost: number
+  cost: number;
 
   /**
    * Model that was used
    */
-  model: string
+  model: string;
 
   /**
    * Provider that processed the request
    */
-  provider: LLMProvider
+  provider: LLMProvider;
 
   /**
    * Whether platform key or BYOK was used
    */
-  providerType: 'platform' | 'byok'
-}
+  providerType: 'platform' | 'byok';
+};
 
 /**
  * LLM Provider Interface
@@ -84,7 +84,7 @@ export type ILLMProvider = {
   /**
    * Provider name (openai, gemini)
    */
-  readonly name: LLMProvider
+  readonly name: LLMProvider;
 
   /**
    * Validate API key
@@ -93,7 +93,7 @@ export type ILLMProvider = {
    * @param apiKey - API key to validate
    * @returns true if valid, false otherwise
    */
-  validateKey: (apiKey: string) => Promise<boolean>
+  validateKey: (apiKey: string) => Promise<boolean>;
 
   /**
    * Call the LLM with a request
@@ -107,12 +107,12 @@ export type ILLMProvider = {
     request: LLMRequest,
     apiKey: string,
     providerType: 'platform' | 'byok'
-  ) => Promise<LLMResponse>
+  ) => Promise<LLMResponse>;
 
   /**
    * Get default model for this provider
    */
-  getDefaultModel: () => string
+  getDefaultModel: () => string;
 
   /**
    * Calculate estimated cost for a request
@@ -121,8 +121,8 @@ export type ILLMProvider = {
    * @param model - Model used
    * @returns Cost in USD
    */
-  calculateCost: (tokensUsed: number, model: string) => number
-}
+  calculateCost: (tokensUsed: number, model: string) => number;
+};
 
 /**
  * LLM Service Configuration
@@ -131,32 +131,32 @@ export type LLMServiceConfig = {
   /**
    * Preferred provider (openai or gemini)
    */
-  preferredProvider?: LLMProvider
+  preferredProvider?: LLMProvider;
 
   /**
    * Platform API keys (from environment)
    */
   platformKeys?: {
-    openai?: string
-    gemini?: string
-  }
+    openai?: string;
+    gemini?: string;
+  };
 
   /**
    * Default temperature
    */
-  defaultTemperature?: number
+  defaultTemperature?: number;
 
   /**
    * Default max tokens
    */
-  defaultMaxTokens?: number
+  defaultMaxTokens?: number;
 
   /**
    * Enable request logging (for debugging)
    * CRITICAL: Never log full API keys
    */
-  enableLogging?: boolean
-}
+  enableLogging?: boolean;
+};
 
 /**
  * LLM Error Types
@@ -167,29 +167,29 @@ export class LLMError extends Error {
     public provider: LLMProvider,
     public code?: string
   ) {
-    super(message)
-    this.name = 'LLMError'
+    super(message);
+    this.name = 'LLMError';
   }
 }
 
 export class LLMAuthError extends LLMError {
   constructor(provider: LLMProvider) {
-    super('Invalid API key', provider, 'AUTH_ERROR')
-    this.name = 'LLMAuthError'
+    super('Invalid API key', provider, 'AUTH_ERROR');
+    this.name = 'LLMAuthError';
   }
 }
 
 export class LLMRateLimitError extends LLMError {
   constructor(provider: LLMProvider) {
-    super('Rate limit exceeded', provider, 'RATE_LIMIT')
-    this.name = 'LLMRateLimitError'
+    super('Rate limit exceeded', provider, 'RATE_LIMIT');
+    this.name = 'LLMRateLimitError';
   }
 }
 
 export class LLMQuotaError extends LLMError {
   constructor(provider: LLMProvider) {
-    super('Quota exceeded', provider, 'QUOTA_EXCEEDED')
-    this.name = 'LLMQuotaError'
+    super('Quota exceeded', provider, 'QUOTA_EXCEEDED');
+    this.name = 'LLMQuotaError';
   }
 }
 
@@ -202,10 +202,10 @@ export class LLMQuotaError extends LLMError {
  */
 export function sanitizeApiKey(apiKey: string): string {
   if (!apiKey || apiKey.length < 4) {
-    return '****'
+    return '****';
   }
-  const last4 = apiKey.slice(-4)
-  return `****${last4}`
+  const last4 = apiKey.slice(-4);
+  return `****${last4}`;
 }
 
 /**
@@ -216,7 +216,7 @@ export function sanitizeApiKey(apiKey: string): string {
  */
 export function getKeyHint(apiKey: string): string {
   if (!apiKey || apiKey.length < 4) {
-    return ''
+    return '';
   }
-  return apiKey.slice(-4)
+  return apiKey.slice(-4);
 }

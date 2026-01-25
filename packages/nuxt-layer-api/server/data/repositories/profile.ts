@@ -1,8 +1,8 @@
-import type { ProfileInput } from '@int/schema'
-import type { Profile } from '../schema'
-import { eq } from 'drizzle-orm'
-import { db } from '../db'
-import { profiles } from '../schema'
+import type { ProfileInput } from '@int/schema';
+import type { Profile } from '../schema';
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { profiles } from '../schema';
 
 /**
  * Profile Repository
@@ -16,16 +16,16 @@ export const profileRepository = {
    * Primary lookup method (one profile per user)
    */
   async findByUserId(userId: string): Promise<Profile | null> {
-    const result = await db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1);
+    return result[0] ?? null;
   },
 
   /**
    * Find profile by ID
    */
   async findById(id: string): Promise<Profile | null> {
-    const result = await db.select().from(profiles).where(eq(profiles.id, id)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(profiles).where(eq(profiles.id, id)).limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -46,8 +46,8 @@ export const profileRepository = {
         languages: data.languages,
         phones: data.phones
       })
-      .returning()
-    return result[0]!
+      .returning();
+    return result[0]!;
   },
 
   /**
@@ -62,8 +62,8 @@ export const profileRepository = {
         updatedAt: new Date()
       })
       .where(eq(profiles.userId, userId))
-      .returning()
-    return result[0] ?? null
+      .returning();
+    return result[0] ?? null;
   },
 
   /**
@@ -71,7 +71,7 @@ export const profileRepository = {
    * Cascades from user deletion
    */
   async delete(userId: string): Promise<void> {
-    await db.delete(profiles).where(eq(profiles.userId, userId))
+    await db.delete(profiles).where(eq(profiles.userId, userId));
   },
 
   /**
@@ -82,8 +82,8 @@ export const profileRepository = {
       .select({ id: profiles.id })
       .from(profiles)
       .where(eq(profiles.userId, userId))
-      .limit(1)
-    return result.length > 0
+      .limit(1);
+    return result.length > 0;
   },
 
   /**
@@ -91,8 +91,8 @@ export const profileRepository = {
    * Used to gate generation operations
    */
   async isComplete(userId: string): Promise<boolean> {
-    const profile = await this.findByUserId(userId)
-    if (!profile) return false
+    const profile = await this.findByUserId(userId);
+    if (!profile) return false;
 
     return (
       profile.firstName.length > 0 &&
@@ -101,6 +101,6 @@ export const profileRepository = {
       profile.country.length === 2 &&
       profile.searchRegion.length > 0 &&
       profile.languages.length > 0
-    )
+    );
   }
-}
+};

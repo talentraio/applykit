@@ -1,5 +1,5 @@
-import type { LLMProvider } from '@int/schema'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { LLMProvider } from '@int/schema';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Integration tests for BYOK (Bring Your Own Key) handling
@@ -19,25 +19,25 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock types - will be replaced with actual imports when services are implemented
 type LLMKeyService = {
-  storeKeyMetadata: (userId: string, provider: LLMProvider, keyHint: string) => Promise<string>
+  storeKeyMetadata: (userId: string, provider: LLMProvider, keyHint: string) => Promise<string>;
   getKeyMetadata: (
     userId: string,
     provider: LLMProvider
-  ) => Promise<{ id: string; keyHint: string } | null>
-  deleteKeyMetadata: (userId: string, keyId: string) => Promise<void>
+  ) => Promise<{ id: string; keyHint: string } | null>;
+  deleteKeyMetadata: (userId: string, keyId: string) => Promise<void>;
   listUserKeys: (
     userId: string
-  ) => Promise<Array<{ id: string; provider: LLMProvider; keyHint: string }>>
-}
+  ) => Promise<Array<{ id: string; provider: LLMProvider; keyHint: string }>>;
+};
 
 type LLMService = {
-  validateKey: (provider: LLMProvider, apiKey: string) => Promise<boolean>
+  validateKey: (provider: LLMProvider, apiKey: string) => Promise<boolean>;
   callLLM: (
     provider: LLMProvider,
     apiKey: string,
     prompt: string
-  ) => Promise<{ result: string; tokensUsed: number }>
-}
+  ) => Promise<{ result: string; tokensUsed: number }>;
+};
 
 // Mock logger to verify no keys are logged
 const mockLogger = {
@@ -45,19 +45,19 @@ const mockLogger = {
   warn: vi.fn(),
   error: vi.fn(),
   debug: vi.fn()
-}
+};
 
 describe.skip('bYOK Key Handling Integration Tests', () => {
-  let keyService: LLMKeyService
-  let llmService: LLMService
+  let keyService: LLMKeyService;
+  let llmService: LLMService;
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.clearAllMocks();
 
     // TODO: Initialize actual services when implemented
     // keyService = createLLMKeyService()
     // llmService = createLLMService()
-  })
+  });
 
   afterEach(() => {
     // Verify no full keys were logged
@@ -66,102 +66,102 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
       ...mockLogger.warn.mock.calls,
       ...mockLogger.error.mock.calls,
       ...mockLogger.debug.mock.calls
-    ]
+    ];
 
     allLogCalls.forEach(call => {
-      const logMessage = JSON.stringify(call)
+      const logMessage = JSON.stringify(call);
       // Check for patterns that look like API keys
-      expect(logMessage).not.toMatch(/sk-[a-zA-Z0-9]{20,}/) // OpenAI key pattern
-      expect(logMessage).not.toMatch(/AIza[a-zA-Z0-9]{35,}/) // Google API key pattern
-    })
-  })
+      expect(logMessage).not.toMatch(/sk-[a-zA-Z0-9]{20,}/); // OpenAI key pattern
+      expect(logMessage).not.toMatch(/AIza[a-zA-Z0-9]{35,}/); // Google API key pattern
+    });
+  });
 
   describe('key metadata storage (hint only)', () => {
     it('should store only the last 4 characters as hint', async () => {
-      const userId = 'test-user-1'
-      const provider: LLMProvider = 'openai'
-      const _fullKey = 'sk-proj-1234567890abcdefghijklmnopqrstuvwxyz'
-      const expectedHint = 'wxyz' // last 4 chars
+      const userId = 'test-user-1';
+      const provider: LLMProvider = 'openai';
+      const _fullKey = 'sk-proj-1234567890abcdefghijklmnopqrstuvwxyz';
+      const expectedHint = 'wxyz'; // last 4 chars
 
-      const keyId = await keyService.storeKeyMetadata(userId, provider, expectedHint)
-      expect(keyId).toBeTruthy()
+      const keyId = await keyService.storeKeyMetadata(userId, provider, expectedHint);
+      expect(keyId).toBeTruthy();
 
-      const metadata = await keyService.getKeyMetadata(userId, provider)
+      const metadata = await keyService.getKeyMetadata(userId, provider);
       expect(metadata).toMatchObject({
         id: keyId,
         keyHint: expectedHint
-      })
+      });
 
       // Verify full key is NOT stored
       // This would require checking the database directly
       // expect(databaseRecord.fullKey).toBeUndefined()
-    })
+    });
 
     it('should allow multiple keys for different providers', async () => {
-      const userId = 'test-user-multi'
+      const userId = 'test-user-multi';
 
-      await keyService.storeKeyMetadata(userId, 'openai', 'abcd')
-      await keyService.storeKeyMetadata(userId, 'gemini', 'wxyz')
+      await keyService.storeKeyMetadata(userId, 'openai', 'abcd');
+      await keyService.storeKeyMetadata(userId, 'gemini', 'wxyz');
 
-      const keys = await keyService.listUserKeys(userId)
-      expect(keys).toHaveLength(2)
-      expect(keys.find(k => k.provider === 'openai')).toBeDefined()
-      expect(keys.find(k => k.provider === 'gemini')).toBeDefined()
-    })
+      const keys = await keyService.listUserKeys(userId);
+      expect(keys).toHaveLength(2);
+      expect(keys.find(k => k.provider === 'openai')).toBeDefined();
+      expect(keys.find(k => k.provider === 'gemini')).toBeDefined();
+    });
 
     it('should replace existing key for same provider', async () => {
-      const userId = 'test-user-replace'
-      const provider: LLMProvider = 'openai'
+      const userId = 'test-user-replace';
+      const provider: LLMProvider = 'openai';
 
       // Store first key
-      await keyService.storeKeyMetadata(userId, provider, 'aaaa')
-      const first = await keyService.getKeyMetadata(userId, provider)
-      expect(first?.keyHint).toBe('aaaa')
+      await keyService.storeKeyMetadata(userId, provider, 'aaaa');
+      const first = await keyService.getKeyMetadata(userId, provider);
+      expect(first?.keyHint).toBe('aaaa');
 
       // Store second key (should replace)
-      await keyService.storeKeyMetadata(userId, provider, 'bbbb')
-      const second = await keyService.getKeyMetadata(userId, provider)
-      expect(second?.keyHint).toBe('bbbb')
+      await keyService.storeKeyMetadata(userId, provider, 'bbbb');
+      const second = await keyService.getKeyMetadata(userId, provider);
+      expect(second?.keyHint).toBe('bbbb');
 
       // Should still have only one key for this provider
-      const keys = await keyService.listUserKeys(userId)
-      const openaiKeys = keys.filter(k => k.provider === 'openai')
-      expect(openaiKeys).toHaveLength(1)
-    })
-  })
+      const keys = await keyService.listUserKeys(userId);
+      const openaiKeys = keys.filter(k => k.provider === 'openai');
+      expect(openaiKeys).toHaveLength(1);
+    });
+  });
 
   describe('key deletion', () => {
     it('should delete key metadata', async () => {
-      const userId = 'test-user-delete'
-      const provider: LLMProvider = 'openai'
+      const userId = 'test-user-delete';
+      const provider: LLMProvider = 'openai';
 
-      const keyId = await keyService.storeKeyMetadata(userId, provider, 'test')
-      expect(await keyService.getKeyMetadata(userId, provider)).toBeTruthy()
+      const keyId = await keyService.storeKeyMetadata(userId, provider, 'test');
+      expect(await keyService.getKeyMetadata(userId, provider)).toBeTruthy();
 
-      await keyService.deleteKeyMetadata(userId, keyId)
-      expect(await keyService.getKeyMetadata(userId, provider)).toBeNull()
-    })
+      await keyService.deleteKeyMetadata(userId, keyId);
+      expect(await keyService.getKeyMetadata(userId, provider)).toBeNull();
+    });
 
     it('should only allow users to delete their own keys', async () => {
-      const user1 = 'test-user-1'
-      const user2 = 'test-user-2'
+      const user1 = 'test-user-1';
+      const user2 = 'test-user-2';
 
-      const keyId = await keyService.storeKeyMetadata(user1, 'openai', 'test')
+      const keyId = await keyService.storeKeyMetadata(user1, 'openai', 'test');
 
       // User 2 trying to delete user 1's key should fail
       await expect(keyService.deleteKeyMetadata(user2, keyId)).rejects.toThrow(
         /not found|unauthorized/i
-      )
-    })
-  })
+      );
+    });
+  });
 
   describe('key encryption at rest', () => {
     it('should never store unencrypted keys in database', async () => {
-      const userId = 'test-user-encrypt'
-      const _fullKey = 'sk-proj-very-secret-key-1234567890'
-      const hint = '7890'
+      const userId = 'test-user-encrypt';
+      const _fullKey = 'sk-proj-very-secret-key-1234567890';
+      const hint = '7890';
 
-      await keyService.storeKeyMetadata(userId, 'openai', hint)
+      await keyService.storeKeyMetadata(userId, 'openai', hint);
 
       // TODO: When database layer is implemented, verify:
       // 1. Database record does NOT contain full key
@@ -171,8 +171,8 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
       // expect(dbRecord.full_key).toBeUndefined()
       // expect(dbRecord).not.toContain(fullKey)
 
-      expect(true).toBe(true) // Placeholder
-    })
+      expect(true).toBe(true); // Placeholder
+    });
 
     it('should use proper encryption for sensitive data', async () => {
       // TODO: If any encrypted data is stored (beyond hint), verify:
@@ -181,125 +181,126 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
       // 3. Encryption key is from secure environment variable
       // 4. Encrypted data is not reversible without encryption key
 
-      expect(true).toBe(true) // Placeholder
-    })
-  })
+      expect(true).toBe(true); // Placeholder
+    });
+  });
 
   describe('key validation', () => {
     it('should validate OpenAI keys without logging them', async () => {
-      const validKey = 'sk-proj-test-key-1234567890'
+      const validKey = 'sk-proj-test-key-1234567890';
 
       // Mock validation (actual would make API call)
-      const isValid = await llmService.validateKey('openai', validKey)
+      const isValid = await llmService.validateKey('openai', validKey);
 
       // Should validate without logging the key
-      expect(isValid).toBeDefined()
-      expect(mockLogger.info).not.toHaveBeenCalledWith(expect.stringContaining(validKey))
-    })
+      expect(isValid).toBeDefined();
+      expect(mockLogger.info).not.toHaveBeenCalledWith(expect.stringContaining(validKey));
+    });
 
     it('should validate Gemini keys without logging them', async () => {
-      const validKey = 'AIzaSyTest-Key-1234567890abcdefghijklmnop'
+      const validKey = 'AIzaSyTest-Key-1234567890abcdefghijklmnop';
 
-      const isValid = await llmService.validateKey('gemini', validKey)
+      const isValid = await llmService.validateKey('gemini', validKey);
 
-      expect(isValid).toBeDefined()
-      expect(mockLogger.info).not.toHaveBeenCalledWith(expect.stringContaining(validKey))
-    })
+      expect(isValid).toBeDefined();
+      expect(mockLogger.info).not.toHaveBeenCalledWith(expect.stringContaining(validKey));
+    });
 
     it('should handle validation errors without exposing keys', async () => {
-      const invalidKey = 'invalid-key'
+      const invalidKey = 'invalid-key';
 
-      await expect(llmService.validateKey('openai', invalidKey)).rejects.toThrow()
+      await expect(llmService.validateKey('openai', invalidKey)).rejects.toThrow();
 
       // Error messages should NOT contain the key
-      const errorCalls = mockLogger.error.mock.calls
+      const errorCalls = mockLogger.error.mock.calls;
       errorCalls.forEach(call => {
-        expect(call.toString()).not.toContain(invalidKey)
-      })
-    })
-  })
+        expect(call.toString()).not.toContain(invalidKey);
+      });
+    });
+  });
 
   describe('key usage in LLM calls', () => {
     it('should use BYOK key for API calls without logging', async () => {
-      const userKey = 'sk-proj-user-key-1234567890'
-      const prompt = 'Test prompt'
+      const userKey = 'sk-proj-user-key-1234567890';
+      const prompt = 'Test prompt';
 
-      const result = await llmService.callLLM('openai', userKey, prompt)
+      const result = await llmService.callLLM('openai', userKey, prompt);
 
-      expect(result).toHaveProperty('result')
-      expect(result).toHaveProperty('tokensUsed')
+      expect(result).toHaveProperty('result');
+      expect(result).toHaveProperty('tokensUsed');
 
       // Verify key was not logged
-      const allLogs = [...mockLogger.info.mock.calls, ...mockLogger.debug.mock.calls]
+      const allLogs = [...mockLogger.info.mock.calls, ...mockLogger.debug.mock.calls];
       allLogs.forEach(call => {
-        expect(JSON.stringify(call)).not.toContain(userKey)
-      })
-    })
+        expect(JSON.stringify(call)).not.toContain(userKey);
+      });
+    });
 
     it('should track BYOK usage separately from platform usage', async () => {
       // TODO: Verify usage logs mark provider_type as 'byok'
       // const usageLog = await usageRepository.findLatest(userId)
       // expect(usageLog.providerType).toBe('byok')
 
-      expect(true).toBe(true) // Placeholder
-    })
-  })
+      expect(true).toBe(true); // Placeholder
+    });
+  });
 
   describe('security edge cases', () => {
     it('should sanitize keys from error messages', async () => {
-      const sensitiveKey = 'sk-proj-secret-key-1234567890'
+      const sensitiveKey = 'sk-proj-secret-key-1234567890';
 
       try {
         // Simulate error with key in context
-        throw new Error(`Failed to authenticate with key: ${sensitiveKey}`)
+        throw new Error(`Failed to authenticate with key: ${sensitiveKey}`);
       } catch (error) {
         // Error handler should sanitize
-        const sanitized = error instanceof Error ? error.message.replace(/sk-[\w-]+/, 'sk-***') : ''
+        const sanitized =
+          error instanceof Error ? error.message.replace(/sk-[\w-]+/, 'sk-***') : '';
 
-        expect(sanitized).not.toContain(sensitiveKey)
-        expect(sanitized).toContain('sk-***')
+        expect(sanitized).not.toContain(sensitiveKey);
+        expect(sanitized).toContain('sk-***');
       }
-    })
+    });
 
     it('should not expose keys in API responses', async () => {
-      const userId = 'test-user-api'
-      await keyService.storeKeyMetadata(userId, 'openai', 'test')
+      const userId = 'test-user-api';
+      await keyService.storeKeyMetadata(userId, 'openai', 'test');
 
-      const metadata = await keyService.getKeyMetadata(userId, 'openai')
+      const metadata = await keyService.getKeyMetadata(userId, 'openai');
 
       // Response should only contain hint, not full key
-      expect(metadata).toHaveProperty('keyHint')
-      expect(metadata).not.toHaveProperty('fullKey')
-      expect(metadata).not.toHaveProperty('apiKey')
-    })
+      expect(metadata).toHaveProperty('keyHint');
+      expect(metadata).not.toHaveProperty('fullKey');
+      expect(metadata).not.toHaveProperty('apiKey');
+    });
 
     it('should prevent key leakage through timing attacks', async () => {
       // Validation should take similar time regardless of key validity
       // to prevent timing-based attacks
 
-      const validKey = 'sk-proj-valid-key-1234567890'
-      const invalidKey = 'sk-proj-invalid-key-0987654321'
+      const validKey = 'sk-proj-valid-key-1234567890';
+      const invalidKey = 'sk-proj-invalid-key-0987654321';
 
-      const start1 = Date.now()
-      await llmService.validateKey('openai', validKey).catch(() => {})
-      const time1 = Date.now() - start1
+      const start1 = Date.now();
+      await llmService.validateKey('openai', validKey).catch(() => {});
+      const time1 = Date.now() - start1;
 
-      const start2 = Date.now()
-      await llmService.validateKey('openai', invalidKey).catch(() => {})
-      const time2 = Date.now() - start2
+      const start2 = Date.now();
+      await llmService.validateKey('openai', invalidKey).catch(() => {});
+      const time2 = Date.now() - start2;
 
       // Times should be roughly similar (within 20% variance)
-      const ratio = Math.max(time1, time2) / Math.min(time1, time2)
-      expect(ratio).toBeLessThan(1.2)
-    })
+      const ratio = Math.max(time1, time2) / Math.min(time1, time2);
+      expect(ratio).toBeLessThan(1.2);
+    });
 
     it('should clear keys from memory after use', async () => {
       // TODO: Verify keys are not kept in memory longer than necessary
       // This is hard to test but important for security
 
-      expect(true).toBe(true) // Placeholder
-    })
-  })
+      expect(true).toBe(true); // Placeholder
+    });
+  });
 
   describe('client-side storage (browser localStorage)', () => {
     it('should document that keys are stored in browser only', () => {
@@ -315,12 +316,12 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
         4. Server stores only hint in database
         5. Full key sent with each API request from browser
         6. Server validates and uses key, then discards from memory
-      `
+      `;
 
-      expect(documentation).toContain('localStorage')
-      expect(documentation).toContain('hint only')
-    })
-  })
+      expect(documentation).toContain('localStorage');
+      expect(documentation).toContain('hint only');
+    });
+  });
 
   describe('hTTPS enforcement', () => {
     it('should only accept keys over HTTPS in production', () => {
@@ -329,10 +330,10 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
       //   throw new Error('HTTPS required for key transmission')
       // }
 
-      expect(true).toBe(true) // Placeholder
-    })
-  })
-})
+      expect(true).toBe(true); // Placeholder
+    });
+  });
+});
 
 /**
  * Security checklist for BYOK implementation:

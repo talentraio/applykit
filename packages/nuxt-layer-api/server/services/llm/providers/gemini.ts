@@ -1,6 +1,6 @@
-import type { ILLMProvider, LLMRequest, LLMResponse } from '../types'
-import { GoogleGenAI } from '@google/genai'
-import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '../types'
+import type { ILLMProvider, LLMRequest, LLMResponse } from '../types';
+import { GoogleGenAI } from '@google/genai';
+import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '../types';
 
 /**
  * Gemini Provider
@@ -23,18 +23,18 @@ const PRICING: Record<string, { input: number; output: number }> = {
   'gemini-2.0-flash': { input: 0.1, output: 0.4 },
   'gemini-1.5-flash': { input: 0.075, output: 0.3 },
   'gemini-1.5-pro': { input: 1.25, output: 5.0 }
-}
+};
 
 /**
  * Default model to use
  */
-const DEFAULT_MODEL = 'gemini-2.0-flash'
+const DEFAULT_MODEL = 'gemini-2.0-flash';
 
 /**
  * Gemini LLM Provider Implementation
  */
 export class GeminiProvider implements ILLMProvider {
-  readonly name = 'gemini' as const
+  readonly name = 'gemini' as const;
 
   /**
    * Validate Gemini API key
@@ -42,23 +42,23 @@ export class GeminiProvider implements ILLMProvider {
    */
   async validateKey(apiKey: string): Promise<boolean> {
     try {
-      const ai = new GoogleGenAI({ apiKey })
+      const ai = new GoogleGenAI({ apiKey });
 
       // Make minimal API call to verify key
       await ai.models.generateContent({
         model: DEFAULT_MODEL,
         contents: 'test'
-      })
+      });
 
-      return true
+      return true;
     } catch (error: any) {
       // Check for authentication errors
       if (error?.status === 401 || error?.status === 403) {
-        return false
+        return false;
       }
       // Other errors might be transient
-      console.warn(`Gemini key validation failed with non-auth error: ${error}`)
-      return true
+      console.warn(`Gemini key validation failed with non-auth error: ${error}`);
+      return true;
     }
   }
 
@@ -70,14 +70,14 @@ export class GeminiProvider implements ILLMProvider {
     apiKey: string,
     providerType: 'platform' | 'byok'
   ): Promise<LLMResponse> {
-    const ai = new GoogleGenAI({ apiKey })
-    const model = request.model || DEFAULT_MODEL
+    const ai = new GoogleGenAI({ apiKey });
+    const model = request.model || DEFAULT_MODEL;
 
     try {
       // Build the prompt with system message if provided
-      let contents = request.prompt
+      let contents = request.prompt;
       if (request.systemMessage) {
-        contents = `${request.systemMessage}\n\n${request.prompt}`
+        contents = `${request.systemMessage}\n\n${request.prompt}`;
       }
 
       const response = await ai.models.generateContent({
@@ -87,14 +87,14 @@ export class GeminiProvider implements ILLMProvider {
           temperature: request.temperature ?? 0.7,
           maxOutputTokens: request.maxTokens
         }
-      })
+      });
 
-      const content = response.text || ''
+      const content = response.text || '';
 
       // Note: Gemini API doesn't always return token usage in basic responses
       // We'll estimate based on content length if not available
-      const tokensUsed = this.estimateTokens(contents, content)
-      const cost = this.calculateCost(tokensUsed, model)
+      const tokensUsed = this.estimateTokens(contents, content);
+      const cost = this.calculateCost(tokensUsed, model);
 
       return {
         content,
@@ -103,20 +103,20 @@ export class GeminiProvider implements ILLMProvider {
         model,
         provider: 'gemini',
         providerType
-      }
+      };
     } catch (error: any) {
       // Handle specific Gemini errors based on status code
-      const status = error?.status
-      const message = error?.message || 'Unknown error'
+      const status = error?.status;
+      const message = error?.message || 'Unknown error';
 
       if (status === 401 || status === 403) {
-        throw new LLMAuthError('gemini')
+        throw new LLMAuthError('gemini');
       } else if (status === 429) {
-        throw new LLMRateLimitError('gemini')
+        throw new LLMRateLimitError('gemini');
       } else if (status === 400 && message.includes('quota')) {
-        throw new LLMQuotaError('gemini')
+        throw new LLMQuotaError('gemini');
       } else {
-        throw new LLMError(`Gemini API error: ${message}`, 'gemini', status?.toString())
+        throw new LLMError(`Gemini API error: ${message}`, 'gemini', status?.toString());
       }
     }
   }
@@ -125,7 +125,7 @@ export class GeminiProvider implements ILLMProvider {
    * Get default model
    */
   getDefaultModel(): string {
-    return DEFAULT_MODEL
+    return DEFAULT_MODEL;
   }
 
   /**
@@ -133,20 +133,20 @@ export class GeminiProvider implements ILLMProvider {
    * Note: This is a simplified calculation assuming 50/50 split between input/output
    */
   calculateCost(tokensUsed: number, model: string): number {
-    const pricing = PRICING[model] || PRICING[DEFAULT_MODEL]
+    const pricing = PRICING[model] || PRICING[DEFAULT_MODEL];
 
     if (!pricing) {
-      return 0
+      return 0;
     }
 
     // Estimate: assume 50% input, 50% output tokens
-    const inputTokens = tokensUsed * 0.5
-    const outputTokens = tokensUsed * 0.5
+    const inputTokens = tokensUsed * 0.5;
+    const outputTokens = tokensUsed * 0.5;
 
-    const inputCost = (inputTokens / 1_000_000) * pricing.input
-    const outputCost = (outputTokens / 1_000_000) * pricing.output
+    const inputCost = (inputTokens / 1_000_000) * pricing.input;
+    const outputCost = (outputTokens / 1_000_000) * pricing.output;
 
-    return inputCost + outputCost
+    return inputCost + outputCost;
   }
 
   /**
@@ -155,8 +155,8 @@ export class GeminiProvider implements ILLMProvider {
    * This is used when the API doesn't return token usage
    */
   private estimateTokens(input: string, output: string): number {
-    const totalChars = input.length + output.length
-    return Math.ceil(totalChars / 4)
+    const totalChars = input.length + output.length;
+    return Math.ceil(totalChars / 4);
   }
 }
 
@@ -164,5 +164,5 @@ export class GeminiProvider implements ILLMProvider {
  * Create Gemini provider instance
  */
 export function createGeminiProvider(): ILLMProvider {
-  return new GeminiProvider()
+  return new GeminiProvider();
 }

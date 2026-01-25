@@ -1,4 +1,4 @@
-import { profileRepository } from '../../data/repositories'
+import { profileRepository } from '../../data/repositories';
 
 /**
  * GET /api/profile
@@ -10,10 +10,8 @@ import { profileRepository } from '../../data/repositories'
  */
 export default defineEventHandler(async event => {
   // Require authentication
-  const session = await requireUserSession(event)
+  const session = await requireUserSession(event);
 
   // Get profile for user
-  const profile = await profileRepository.findByUserId((session.user as { id: string }).id)
-
-  return profile
-})
+  return await profileRepository.findByUserId((session.user as { id: string }).id);
+});

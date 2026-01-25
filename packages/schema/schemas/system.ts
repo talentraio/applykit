@@ -1,7 +1,7 @@
-import { z } from 'zod'
-import { PlatformProviderSchema } from './enums'
+import { z } from 'zod';
+import { PlatformProviderSchema } from './enums';
 
-export { type PlatformProvider, PlatformProviderSchema } from './enums'
+export { type PlatformProvider, PlatformProviderSchema } from './enums';
 
 export const SystemConfigKeySchema = z.enum([
   'platform_llm_enabled',
@@ -9,9 +9,9 @@ export const SystemConfigKeySchema = z.enum([
   'platform_provider',
   'global_budget_cap',
   'global_budget_used'
-])
+]);
 
-export type SystemConfigKey = z.infer<typeof SystemConfigKeySchema>
+export type SystemConfigKey = z.infer<typeof SystemConfigKeySchema>;
 
 // Type-safe config values
 export const SystemConfigValues = {
@@ -20,7 +20,7 @@ export const SystemConfigValues = {
   platform_provider: PlatformProviderSchema,
   global_budget_cap: z.number().positive(),
   global_budget_used: z.number().min(0)
-} as const
+} as const;
 
 // Default values
 export const SystemConfigDefaults: Record<SystemConfigKey, unknown> = {
@@ -29,4 +29,4 @@ export const SystemConfigDefaults: Record<SystemConfigKey, unknown> = {
   platform_provider: 'openai',
   global_budget_cap: 100, // $100/month
   global_budget_used: 0
-}
+};

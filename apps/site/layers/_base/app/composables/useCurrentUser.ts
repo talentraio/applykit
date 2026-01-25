@@ -7,26 +7,26 @@
  * T068 [US1] useCurrentUser composable
  */
 
-import type { UserPublic } from '@int/schema'
+import type { UserPublic } from '@int/schema';
 
 export type CurrentUserComposable = {
   /**
    * The current authenticated user, or null if not logged in
    */
-  user: ComputedRef<UserPublic | null>
+  user: ComputedRef<UserPublic | null>;
   /**
    * Whether a user is currently logged in
    */
-  isLoggedIn: ComputedRef<boolean>
+  isLoggedIn: ComputedRef<boolean>;
   /**
    * Refresh the user session from the server
    */
-  refresh: () => Promise<void>
+  refresh: () => Promise<void>;
   /**
    * Logout the current user
    */
-  logout: () => Promise<void>
-}
+  logout: () => Promise<void>;
+};
 
 /**
  * Access the current user's data
@@ -48,12 +48,12 @@ export type CurrentUserComposable = {
  * ```
  */
 export function useCurrentUser(): CurrentUserComposable {
-  const { user, loggedIn, refresh, logout } = useAuth()
+  const { user, loggedIn, refresh, logout } = useAuth();
 
   return {
     user,
     isLoggedIn: loggedIn,
     refresh,
     logout
-  }
+  };
 }

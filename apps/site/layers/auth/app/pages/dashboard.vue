@@ -55,15 +55,15 @@
  * T069 [US1] Dashboard page
  */
 
-defineOptions({ name: 'DashboardPage' })
+defineOptions({ name: 'DashboardPage' });
 
-const { user, logout } = useCurrentUser()
+const { user, logout } = useCurrentUser();
 
 const handleLogout = async () => {
   try {
-    await logout()
+    await logout();
   } catch (error) {
-    console.error('Logout failed:', error)
+    console.error('Logout failed:', error);
   }
-}
+};
 </script>

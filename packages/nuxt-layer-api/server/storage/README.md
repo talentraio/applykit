@@ -24,30 +24,30 @@ server/storage/
 ### Basic Operations
 
 ```typescript
-import { getStorage } from '~/server/storage'
+import { getStorage } from '~/server/storage';
 
-const storage = getStorage()
+const storage = getStorage();
 
 // Upload a file
 const url = await storage.put('exports/user-123/resume.pdf', pdfBuffer, {
   contentType: 'application/pdf',
   cacheControl: 'public, max-age=31536000'
-})
+});
 
 // Get a file
-const buffer = await storage.get('exports/user-123/resume.pdf')
+const buffer = await storage.get('exports/user-123/resume.pdf');
 
 // Delete a file
-const deleted = await storage.delete('exports/user-123/resume.pdf')
+const deleted = await storage.delete('exports/user-123/resume.pdf');
 
 // Get public URL
-const url = await storage.getUrl('exports/user-123/resume.pdf')
+const url = await storage.getUrl('exports/user-123/resume.pdf');
 
 // List files by prefix
-const files = await storage.list('exports/user-123/')
+const files = await storage.list('exports/user-123/');
 
 // Delete all files with prefix
-const count = await storage.deleteByPrefix('exports/user-123/')
+const count = await storage.deleteByPrefix('exports/user-123/');
 ```
 
 ### Environment-Based Selection
@@ -57,25 +57,25 @@ The factory automatically selects the appropriate backend:
 ```typescript
 // Development (no NUXT_STORAGE_BLOB_READ_WRITE_TOKEN) → Local filesystem
 // Production (NUXT_STORAGE_BLOB_READ_WRITE_TOKEN set) → Vercel Blob
-const storage = getStorage()
+const storage = getStorage();
 ```
 
 ### Explicit Configuration
 
 ```typescript
-import { createStorage } from '~/server/storage'
+import { createStorage } from '~/server/storage';
 
 // Force Vercel Blob
 const storage = createStorage({
   type: 'vercel-blob',
   options: { token: 'your-token' }
-})
+});
 
 // Force local with custom directory
 const storage = createStorage({
   type: 'local',
   options: { baseDir: '/custom/path' }
-})
+});
 ```
 
 ## Backends
@@ -119,33 +119,33 @@ NUXT_STORAGE_BASE_URL=http://localhost:3000/files
 ## Storage Adapter Interface
 
 ```typescript
-import type { Buffer } from 'node:buffer'
+import type { Buffer } from 'node:buffer';
 
 type StorageAdapter = {
   // Upload a file
-  put: (path: string, data: Buffer | Blob, options?: PutOptions) => Promise<string>
+  put: (path: string, data: Buffer | Blob, options?: PutOptions) => Promise<string>;
 
   // Retrieve a file
-  get: (path: string) => Promise<Buffer | null>
+  get: (path: string) => Promise<Buffer | null>;
 
   // Delete a file
-  delete: (path: string) => Promise<boolean>
+  delete: (path: string) => Promise<boolean>;
 
   // Get public URL
-  getUrl: (path: string) => Promise<string>
+  getUrl: (path: string) => Promise<string>;
 
   // List files by prefix
-  list: (prefix: string) => Promise<string[]>
+  list: (prefix: string) => Promise<string[]>;
 
   // Delete files by prefix
-  deleteByPrefix: (prefix: string) => Promise<number>
-}
+  deleteByPrefix: (prefix: string) => Promise<number>;
+};
 
 type PutOptions = {
-  contentType?: string // MIME type (e.g., 'application/pdf')
-  cacheControl?: string // Cache header (e.g., 'public, max-age=31536000')
-  metadata?: Record<string, string> // Custom metadata
-}
+  contentType?: string; // MIME type (e.g., 'application/pdf')
+  cacheControl?: string; // Cache header (e.g., 'public, max-age=31536000')
+  metadata?: Record<string, string>; // Custom metadata
+};
 ```
 
 ## Path Conventions
@@ -172,18 +172,18 @@ All methods throw errors for unexpected failures, but return null/false for expe
 
 ```typescript
 // Returns null if file doesn't exist (expected)
-const buffer = await storage.get('nonexistent.pdf')
+const buffer = await storage.get('nonexistent.pdf');
 // → null
 
 // Returns false if file doesn't exist (expected)
-const deleted = await storage.delete('nonexistent.pdf')
+const deleted = await storage.delete('nonexistent.pdf');
 // → false
 
 // Throws error for unexpected failures
 try {
-  await storage.put('file.pdf', buffer)
+  await storage.put('file.pdf', buffer);
 } catch (error) {
-  console.error('Upload failed:', error)
+  console.error('Upload failed:', error);
 }
 ```
 
@@ -192,23 +192,23 @@ try {
 ### Export Service
 
 ```typescript
-import { getStorage } from '~/server/storage'
+import { getStorage } from '~/server/storage';
 
 export async function exportToPDF(generationId: string, version: 'ats' | 'human') {
-  const storage = getStorage()
-  const generation = await generationRepository.findById(generationId)
+  const storage = getStorage();
+  const generation = await generationRepository.findById(generationId);
 
   // Generate PDF
-  const pdfBuffer = await generatePDF(generation, version)
+  const pdfBuffer = await generatePDF(generation, version);
 
   // Upload to storage
-  const path = `exports/${generation.userId}/${generationId}-${version}.pdf`
+  const path = `exports/${generation.userId}/${generationId}-${version}.pdf`;
   const url = await storage.put(path, pdfBuffer, {
     contentType: 'application/pdf',
     cacheControl: 'public, max-age=2592000' // 30 days
-  })
+  });
 
-  return { url, cached: false }
+  return { url, cached: false };
 }
 ```
 
@@ -216,13 +216,13 @@ export async function exportToPDF(generationId: string, version: 'ats' | 'human'
 
 ```typescript
 export async function invalidateExports(userId: string, generationId: string) {
-  const storage = getStorage()
+  const storage = getStorage();
 
   // Delete all exports for this generation (both ATS and Human)
-  const prefix = `exports/${userId}/${generationId}-`
-  const count = await storage.deleteByPrefix(prefix)
+  const prefix = `exports/${userId}/${generationId}-`;
+  const count = await storage.deleteByPrefix(prefix);
 
-  console.log(`Deleted ${count} export files`)
+  console.log(`Deleted ${count} export files`);
 }
 ```
 
@@ -231,8 +231,8 @@ export async function invalidateExports(userId: string, generationId: string) {
 For unit tests, you can mock the storage adapter:
 
 ```typescript
-import { Buffer } from 'node:buffer'
-import { vi } from 'vitest'
+import { Buffer } from 'node:buffer';
+import { vi } from 'vitest';
 
 const mockStorage = {
   put: vi.fn().mockResolvedValue('https://example.com/file.pdf'),
@@ -241,18 +241,18 @@ const mockStorage = {
   getUrl: vi.fn().mockResolvedValue('https://example.com/file.pdf'),
   list: vi.fn().mockResolvedValue([]),
   deleteByPrefix: vi.fn().mockResolvedValue(0)
-}
+};
 ```
 
 Or use the local adapter for integration tests:
 
 ```typescript
-import { createStorage } from '~/server/storage'
+import { createStorage } from '~/server/storage';
 
 const storage = createStorage({
   type: 'local',
   options: { baseDir: '/tmp/test-storage' }
-})
+});
 ```
 
 ## Performance Considerations

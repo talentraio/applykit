@@ -1,8 +1,8 @@
-import type { ResumeContent, SourceFileType } from '@int/schema'
-import type { Resume } from '../schema'
-import { and, desc, eq } from 'drizzle-orm'
-import { db } from '../db'
-import { resumes } from '../schema'
+import type { ResumeContent, SourceFileType } from '@int/schema';
+import type { Resume } from '../schema';
+import { and, desc, eq } from 'drizzle-orm';
+import { db } from '../db';
+import { resumes } from '../schema';
 
 /**
  * Resume Repository
@@ -15,8 +15,8 @@ export const resumeRepository = {
    * Find resume by ID
    */
   async findById(id: string): Promise<Resume | null> {
-    const result = await db.select().from(resumes).where(eq(resumes.id, id)).limit(1)
-    return result[0] ?? null
+    const result = await db.select().from(resumes).where(eq(resumes.id, id)).limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -27,8 +27,8 @@ export const resumeRepository = {
       .select()
       .from(resumes)
       .where(and(eq(resumes.id, id), eq(resumes.userId, userId)))
-      .limit(1)
-    return result[0] ?? null
+      .limit(1);
+    return result[0] ?? null;
   },
 
   /**
@@ -40,7 +40,7 @@ export const resumeRepository = {
       .select()
       .from(resumes)
       .where(eq(resumes.userId, userId))
-      .orderBy(desc(resumes.createdAt))
+      .orderBy(desc(resumes.createdAt));
   },
 
   /**
@@ -48,11 +48,11 @@ export const resumeRepository = {
    * Called after parsing uploaded file
    */
   async create(data: {
-    userId: string
-    title: string
-    content: ResumeContent
-    sourceFileName: string
-    sourceFileType: SourceFileType
+    userId: string;
+    title: string;
+    content: ResumeContent;
+    sourceFileName: string;
+    sourceFileType: SourceFileType;
   }): Promise<Resume> {
     const result = await db
       .insert(resumes)
@@ -63,8 +63,8 @@ export const resumeRepository = {
         sourceFileName: data.sourceFileName,
         sourceFileType: data.sourceFileType
       })
-      .returning()
-    return result[0]!
+      .returning();
+    return result[0]!;
   },
 
   /**
@@ -79,8 +79,8 @@ export const resumeRepository = {
         updatedAt: new Date()
       })
       .where(and(eq(resumes.id, id), eq(resumes.userId, userId)))
-      .returning()
-    return result[0] ?? null
+      .returning();
+    return result[0] ?? null;
   },
 
   /**
@@ -94,8 +94,8 @@ export const resumeRepository = {
         updatedAt: new Date()
       })
       .where(and(eq(resumes.id, id), eq(resumes.userId, userId)))
-      .returning()
-    return result[0] ?? null
+      .returning();
+    return result[0] ?? null;
   },
 
   /**
@@ -103,7 +103,7 @@ export const resumeRepository = {
    * Also deletes associated generations (cascade)
    */
   async delete(id: string, userId: string): Promise<void> {
-    await db.delete(resumes).where(and(eq(resumes.id, id), eq(resumes.userId, userId)))
+    await db.delete(resumes).where(and(eq(resumes.id, id), eq(resumes.userId, userId)));
   },
 
   /**
@@ -113,8 +113,8 @@ export const resumeRepository = {
     const result = await db
       .select({ count: resumes.id })
       .from(resumes)
-      .where(eq(resumes.userId, userId))
-    return result.length
+      .where(eq(resumes.userId, userId));
+    return result.length;
   },
 
   /**
@@ -126,7 +126,7 @@ export const resumeRepository = {
       .from(resumes)
       .where(eq(resumes.userId, userId))
       .orderBy(desc(resumes.createdAt))
-      .limit(1)
-    return result[0] ?? null
+      .limit(1);
+    return result[0] ?? null;
   }
-}
+};
