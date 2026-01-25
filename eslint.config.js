@@ -19,8 +19,8 @@ export default antfu(
     },
     formatters: {
       css: true,
-      html: true,
-      markdown: true
+      html: true
+      // markdown: false - handled by Prettier only, not ESLint
     },
     ignores: [
       '**/node_modules/**',
@@ -28,7 +28,8 @@ export default antfu(
       '**/.output/**',
       '**/dist/**',
       '**/.cache/**',
-      '**/coverage/**'
+      '**/coverage/**',
+      '**/*.md' // Exclude markdown files from ESLint - handled by Prettier only
     ]
   },
   {
