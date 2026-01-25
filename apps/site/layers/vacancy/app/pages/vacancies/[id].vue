@@ -86,19 +86,26 @@
             <VacancyLifetimeIndicator :generation="latestGeneration" />
 
             <!-- Actions -->
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
               <VacancyGenerateButton :loading="isGenerating" @generate="handleGenerate" />
-              <UButton variant="outline" icon="i-lucide-file-text" @click="viewTailoredResume">
-                {{ $t('common.view') }} Resume
+              <UButton variant="outline" icon="i-lucide-file-text" @click="viewAtsResume">
+                {{ $t('vacancy.detail.actions.viewAts') }}
+              </UButton>
+              <UButton variant="outline" icon="i-lucide-layout-template" @click="viewHumanResume">
+                {{ $t('vacancy.detail.actions.viewHuman') }}
               </UButton>
             </div>
+            <VacancyExportButtons
+              :vacancy-id="vacancyId"
+              :generation-id="latestGeneration.id"
+              :disabled="isGenerating"
+            />
           </div>
 
           <!-- No generation yet -->
           <div v-else class="space-y-4">
             <p class="text-sm text-muted">
-              Generate a tailored resume optimized for this vacancy. The AI will analyze the job
-              description and emphasize your most relevant skills and experience.
+              {{ $t('vacancy.detail.generateHint') }}
             </p>
             <VacancyGenerateButton
               :loading="isGenerating"
@@ -233,7 +240,11 @@ const toast = useToast();
 const { t, d } = useI18n();
 
 // Get vacancy ID from route
-const vacancyId = computed(() => route.params.id as string);
+const vacancyId = computed(() => {
+  const id = route.params.id;
+  if (Array.isArray(id)) return id[0] ?? '';
+  return id ?? '';
+});
 
 // Use vacancy store via composable
 const { current: vacancy, fetchVacancy, updateVacancy, deleteVacancy } = useVacancies();
@@ -353,8 +364,7 @@ const handleGenerate = async () => {
     await generate(vacancyId.value);
 
     toast.add({
-      title: t('common.success'),
-      description: 'Resume generated successfully',
+      title: t('generation.success'),
       color: 'success'
     });
 
@@ -374,14 +384,14 @@ const handleGenerate = async () => {
   }
 };
 
-const viewTailoredResume = () => {
+const viewAtsResume = () => {
   if (!latestGeneration.value) return;
-  // TODO: Navigate to tailored resume view page (will be implemented in US6)
-  toast.add({
-    title: 'Coming soon',
-    description: 'Resume viewing will be available in the next update',
-    color: 'info'
-  });
+  router.push(`/vacancies/${vacancyId.value}/ats`);
+};
+
+const viewHumanResume = () => {
+  if (!latestGeneration.value) return;
+  router.push(`/vacancies/${vacancyId.value}/human`);
 };
 </script>
 

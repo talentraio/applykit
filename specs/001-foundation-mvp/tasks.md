@@ -286,12 +286,12 @@ No custom patterns outside Nuxt UI Pro.
 - [x] T116 [US6] Create POST `/api/vacancies/[id]/export` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/export.post.ts`
 - [x] T117 [US6] Create useExport composable in `packages/nuxt-layer-api/app/composables/useExport.ts`
 - [x] T118 [US6] Add export i18n keys to `packages/nuxt-layer-ui/locales/en.json` (export.button.ats, export.button.human, export.inProgress, export.success, export.error.\*)
-- [ ] T119 [US6] Create ResumeAtsView component in `apps/site/layers/vacancy/app/components/ResumeAtsView.vue` (SSR island)
-- [ ] T120 [US6] Create ResumeHumanView component in `apps/site/layers/vacancy/app/components/ResumeHumanView.vue` (SSR island)
-- [ ] T121 [US6] Create ATS view page in `apps/site/layers/vacancy/app/pages/vacancies/[id]/ats.vue` with server component
-- [ ] T122 [US6] Create Human view page in `apps/site/app/pages/vacancies/[id]/human.vue` with server component
-- [ ] T123 [US6] Create ExportButtons component in `apps/site/layers/vacancy/app/components/ExportButtons.vue` (ATS + Human)
-- [ ] T124 [US6] Update vacancy detail page `apps/site/layers/vacancy/app/pages/vacancies/[id].vue` with view/export buttons
+- [x] T119 [US6] Create ResumeAtsView component in `apps/site/layers/vacancy/app/components/ResumeAtsView.vue` (SSR island)
+- [x] T120 [US6] Create ResumeHumanView component in `apps/site/layers/vacancy/app/components/ResumeHumanView.vue` (SSR island)
+- [x] T121 [US6] Create ATS view page in `apps/site/layers/vacancy/app/pages/vacancies/[id]/ats.vue` with server component
+- [x] T122 [US6] Create Human view page in `apps/site/app/pages/vacancies/[id]/human.vue` with server component
+- [x] T123 [US6] Create ExportButtons component in `apps/site/layers/vacancy/app/components/ExportButtons.vue` (ATS + Human)
+- [x] T124 [US6] Update vacancy detail page `apps/site/layers/vacancy/app/pages/vacancies/[id].vue` with view/export buttons
 
 **Checkpoint**: User can view ATS/Human versions and export PDFs
 
