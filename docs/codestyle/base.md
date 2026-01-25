@@ -174,12 +174,80 @@ defineOptions({ name: 'UserProfileForm' });
 
 We aim for an **Airbnb-like** style (enforced via ESLint where practical).
 
+### Type Safety: Avoid `any` and type assertions
+
+**CRITICAL RULE**: Type safety is non-negotiable in this codebase.
+
+**Forbidden (except in exceptional cases):**
+
+- `any` type
+- Type assertions like `value as SomeType`
+- Suppressing TypeScript errors with type casts
+
+**Allowed:**
+
+- `as const` for literal type narrowing
+- `{} as const` for const object assertions
+- `as unknown as Type` when truly necessary with clear justification
+
+**Required approach:**
+
+1. **Find the proper type** from the library/framework you're using
+2. **Import it explicitly** instead of using `any`
+3. **Fix the root cause** of type errors instead of suppressing them
+
+**Examples:**
+
+```ts
+// ❌ BAD - using any to suppress errors
+defineProps<{
+  links?: any[]; // Never do this!
+}>();
+
+// ✅ GOOD - import proper type from library
+import type { ButtonProps } from '#ui/types';
+
+defineProps<{
+  links?: ButtonProps[];
+}>();
+
+// ❌ BAD - type assertion without justification
+const result = data as MyType;
+
+// ✅ GOOD - type guard with runtime validation
+const isMyType = (value: unknown): value is MyType => {
+  return typeof value === 'object' && value !== null && 'field' in value;
+};
+
+if (isMyType(data)) {
+  // TypeScript knows data is MyType here
+}
+
+// ✅ ACCEPTABLE - as const for literal types
+const config = {
+  mode: 'production',
+  version: 1
+} as const;
+
+// ✅ ACCEPTABLE with justification - unavoidable type conversion
+// Justification: Third-party library returns unknown, we validated with Zod
+const validated = zodSchema.parse(data);
+const typed = validated as MyType; // Safe after Zod validation
+```
+
+**When you encounter a type error:**
+
+1. Read the error message carefully
+2. Check library documentation for the correct type
+3. Import and use the proper type
+4. If stuck, ask for help - never resort to `any`
+
 Functions:
 
 - In Vue components, prefer **arrow functions**.
 - For one-liners, allow implicit returns:
   - `const isReady = () => status.value === 'ready';`
-- If a function doesn’t fit within Prettier line length, use braces:
+- If a function doesn't fit within Prettier line length, use braces:
   - `const fn = () => { ... }`
 
 ## SCSS (Dart Sass)

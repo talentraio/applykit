@@ -10,6 +10,10 @@ Key conventions:
 
 - Shared layers as internal packages: @int/schema, @int/api, @int/ui
 - Type safety end-to-end (avoid client-side generic typing for API)
+- **CRITICAL**: Avoid `any` and type assertions (`as Type`) in TypeScript code
+  - Only use `as const`, `as unknown as Type` (with justification), or in truly critical cases
+  - Always import and use proper types from libraries instead of suppressing errors
+  - Type safety is a core requirement - never compromise it with `any`
 - Zod validation in LLM/parsing services
 - Pinia stores own data flow; components call store actions
 - i18n from the start
