@@ -233,18 +233,18 @@ No custom patterns outside Nuxt UI Pro.
 
 ### Implementation for US4
 
-- [ ] T092 [US4] Create GET `/api/vacancies` endpoint in `packages/nuxt-layer-api/server/api/vacancies/index.get.ts`
-- [ ] T093 [US4] Create POST `/api/vacancies` endpoint in `packages/nuxt-layer-api/server/api/vacancies/index.post.ts`
-- [ ] T094 [US4] Create GET `/api/vacancies/[id]` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id].get.ts`
-- [ ] T095 [US4] Create PUT `/api/vacancies/[id]` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id].put.ts`
-- [ ] T096 [US4] Create DELETE `/api/vacancies/[id]` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id].delete.ts`
-- [ ] T097 [US4] Create useVacancies composable in `packages/nuxt-layer-api/app/composables/useVacancies.ts`
-- [ ] T098 [US4] Add vacancy i18n keys to `packages/nuxt-layer-ui/locales/en.json` (vacancy.list._, vacancy.form._, vacancy.detail.\*)
-- [ ] T099 [US4] Create VacancyForm component in `apps/site/layers/vacancy/app/components/Form.vue`
-- [ ] T100 [US4] Create VacancyCard component in `apps/site/layers/vacancy/app/components/Card.vue` with "Company (Position)" format
-- [ ] T101 [US4] Create vacancies list page in `apps/site/layers/vacancy/app/pages/vacancies/index.vue`
-- [ ] T102 [US4] Create new vacancy page in `apps/site/layers/vacancy/app/pages/vacancies/new.vue`
-- [ ] T103 [US4] Create vacancy detail page in `apps/site/layers/vacancy/app/pages/vacancies/[id].vue`
+- [x] T092 [US4] Create GET `/api/vacancies` endpoint in `packages/nuxt-layer-api/server/api/vacancies/index.get.ts`
+- [x] T093 [US4] Create POST `/api/vacancies` endpoint in `packages/nuxt-layer-api/server/api/vacancies/index.post.ts`
+- [x] T094 [US4] Create GET `/api/vacancies/[id]` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id].get.ts`
+- [x] T095 [US4] Create PUT `/api/vacancies/[id]` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id].put.ts`
+- [x] T096 [US4] Create DELETE `/api/vacancies/[id]` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id].delete.ts`
+- [x] T097 [US4] Create useVacancies composable in `packages/nuxt-layer-api/app/composables/useVacancies.ts`
+- [x] T098 [US4] Add vacancy i18n keys to `packages/nuxt-layer-ui/locales/en.json` (vacancy.list._, vacancy.form._, vacancy.detail.\*)
+- [x] T099 [US4] Create VacancyForm component in `apps/site/layers/vacancy/app/components/Form.vue`
+- [x] T100 [US4] Create VacancyCard component in `apps/site/layers/vacancy/app/components/Card.vue` with "Company (Position)" format
+- [x] T101 [US4] Create vacancies list page in `apps/site/layers/vacancy/app/pages/vacancies/index.vue`
+- [x] T102 [US4] Create new vacancy page in `apps/site/layers/vacancy/app/pages/vacancies/new.vue`
+- [x] T103 [US4] Create vacancy detail page in `apps/site/layers/vacancy/app/pages/vacancies/[id].vue`
 
 **Checkpoint**: User can create, list, edit, delete vacancies
 
