@@ -1,9 +1,15 @@
 # Repository Guidelines
 
+## Project Context
+
+- Nuxt monorepo (pnpm workspaces) for a resume tailoring tool.
+- MVP focus: parse resumes (DOCX/PDF) into strict JSON, tailor per vacancy, export ATS/Human PDFs.
+
 ## Project Structure & Module Organization
 
 - `apps/site` and `apps/admin` are Nuxt 4 applications.
-- `packages/nuxt-layer-api`, `packages/nuxt-layer-ui`, and `packages/schema` are shared layers and contracts published as `@int/*`.
+- `packages/nuxt-layer-api`, `packages/nuxt-layer-ui`, and `packages/schema` are shared layers and
+  contracts published as `@int/*` (`@int/api`, `@int/ui`, `@int/schema`).
 - `tests/` holds `unit`, `e2e`, and `fixtures`; additional package tests live under `packages/*/tests`.
 - `docs/` and `specs/` contain product and technical notes.
 - Root configs live in `eslint.config.js`, `vitest.config.ts`, `playwright.config.ts`, and `pnpm-workspace.yaml`.
@@ -29,9 +35,24 @@
   - Permitted: `as const`, `{} as const`, justified `as unknown as Type`
   - Always find and import proper types from libraries (e.g., `ButtonProps` from `#ui/types`)
   - Never suppress TypeScript errors with `any` - find the root cause and fix it properly
+- Avoid client-side generic typing for API calls; import proper types instead.
 - Formatting: 2-space indent, single quotes, no semicolons, 100-character print width.
 - Prefer workspace package names like `@int/schema`, `@int/api`, and `@int/ui`.
 - Use `*.test.ts` or `*.spec.ts` for unit tests (Vitest includes both).
+- Use Zod validation in LLM/parsing services.
+- Pinia stores own data flow; components call store actions.
+- i18n from the start.
+- Use server-side islands rendering for ATS/Human pages.
+
+## Tooling & Docs Policy
+
+- Use latest Nuxt v4 and NuxtUI v4.
+- For Nuxt questions, rely on the Nuxt docs MCP server.
+  If the Nuxt MCP is needed but not working: stop coding and ask the user to fix MCP.
+- For NuxtUI questions, rely on the NuxtUI docs MCP server.
+  If the NuxtUI MCP is needed but not working: stop coding and ask the user to fix MCP.
+- For other libraries/docs: prefer MCP context7 as the first source.
+- Check VueUse first; prefer existing composables over custom ones.
 
 ## Testing Guidelines
 

@@ -15,6 +15,7 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
+    "present": "Present",
     "search": "Search",
     "filter": "Filter",
     "clear": "Clear",
@@ -97,6 +98,18 @@
       "skills": "Skills",
       "certifications": "Certifications",
       "languages": "Languages"
+    },
+    "section": {
+      "summary": "Summary",
+      "experience": "Experience",
+      "education": "Education",
+      "skills": "Skills",
+      "certifications": "Certifications",
+      "languages": "Languages"
+    },
+    "view": {
+      "atsTitle": "ATS Resume",
+      "humanTitle": "Human Resume"
     },
     "detail": {
       "title": "Resume Details",
@@ -202,6 +215,7 @@
   "generation": {
     "button": "Generate Tailored Resume",
     "inProgress": "Generating...",
+    "success": "Resume generated successfully",
     "matchScore": {
       "title": "Match Score",
       "before": "Before: {score}%",
@@ -288,6 +302,7 @@
       "notes": "Notes",
       "createdAt": "Created",
       "updatedAt": "Last Updated",
+      "generateHint": "Generate a tailored resume optimized for this vacancy. The AI will analyze the job description and emphasize your most relevant skills and experience.",
       "noPosition": "Position not specified",
       "noUrl": "No URL provided",
       "noNotes": "No notes",
@@ -295,6 +310,8 @@
         "edit": "Edit",
         "delete": "Delete",
         "generate": "Generate Resume",
+        "viewAts": "View ATS",
+        "viewHuman": "View Human",
         "viewGenerations": "View Generations"
       }
     },
