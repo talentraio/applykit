@@ -15,7 +15,8 @@ catalog:
   '@commitlint/config-conventional': ^19.0.0
   '@google/genai': ^1.38.0
   '@nuxt/ui': ^4.0.1
-  '@nuxtjs/i18n': ^9.2.4 # Need migration to v 10.2.1
+  '@nuxt/ui-pro': ^3.3.7
+  '@nuxtjs/i18n': ^10.2.1
   '@pinia/nuxt': ^0.11.3
   '@playwright/test': ^1.49.1
   '@types/better-sqlite3': ^7.6.13

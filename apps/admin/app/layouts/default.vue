@@ -1,86 +1,72 @@
 <template>
-  <div class="admin-default-layout min-h-screen bg-background">
-    <!-- Header / Navigation -->
-    <header class="admin-default-layout__header border-b bg-neutral-900 dark:bg-neutral-950">
-      <div class="container mx-auto flex h-16 items-center justify-between px-4">
-        <!-- Logo -->
-        <NuxtLink to="/" class="admin-default-layout__logo flex items-center gap-2">
-          <span class="text-xl font-bold text-white">ApplyKit Admin</span>
-        </NuxtLink>
-
-        <!-- Navigation -->
-        <nav class="admin-default-layout__nav flex items-center gap-6">
-          <NuxtLink
-            to="/"
-            class="text-sm font-medium text-neutral-400 transition-colors hover:text-white"
-            active-class="text-white"
-          >
-            {{ $t('admin.nav.dashboard') }}
-          </NuxtLink>
-          <NuxtLink
-            to="/users"
-            class="text-sm font-medium text-neutral-400 transition-colors hover:text-white"
-            active-class="text-white"
-          >
-            {{ $t('admin.nav.users') }}
-          </NuxtLink>
-          <NuxtLink
-            to="/system"
-            class="text-sm font-medium text-neutral-400 transition-colors hover:text-white"
-            active-class="text-white"
-          >
-            {{ $t('admin.nav.system') }}
-          </NuxtLink>
-        </nav>
-
-        <!-- User Menu -->
-        <div class="admin-default-layout__user flex items-center gap-4">
+  <UiAppShell class="admin-default-layout">
+    <UDashboardNavbar :title="appTitle" :links="navLinks">
+      <template #right>
+        <UDropdown :items="userMenuItems">
           <UButton
+            icon="i-lucide-shield-check"
             color="neutral"
             variant="ghost"
-            size="sm"
-            class="text-white"
-            @click="handleLogout"
-          >
-            {{ $t('auth.logout') }}
-          </UButton>
-        </div>
-      </div>
-    </header>
+            :label="$t('admin.nav.admin')"
+          />
+        </UDropdown>
+      </template>
+    </UDashboardNavbar>
 
-    <!-- Main Content -->
-    <main class="admin-default-layout__main">
+    <UMain>
       <slot />
-    </main>
-  </div>
+    </UMain>
+  </UiAppShell>
 </template>
 
 <script setup lang="ts">
 /**
  * Default Admin Layout
  *
- * Main layout with navigation header for admin pages.
- * Dark header to distinguish from site app.
+ * Admin dashboard layout using Nuxt UI Pro Dashboard components
+ * Per docs/design/mvp.md - Dashboard template patterns
  *
  * TR010 - Created as part of architecture refactoring
  * T153 [Phase 12] Admin default layout with admin navigation
+ * TR014 - Refactored to use Nuxt UI Pro Dashboard components
  */
+
+import type { DropdownMenuItem } from '#ui/types';
 
 defineOptions({ name: 'AdminDefaultLayout' });
 
+const { t } = useI18n();
 const { logout } = useAuth();
 
-const handleLogout = async () => {
-  await logout();
-};
-</script>
+const appTitle = 'ApplyKit Admin';
 
-<style lang="scss">
-.admin-default-layout {
-  &__header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
+const navLinks = computed(() => [
+  {
+    label: t('admin.nav.dashboard'),
+    to: '/',
+    icon: 'i-lucide-layout-dashboard'
+  },
+  {
+    label: t('admin.nav.users'),
+    to: '/users',
+    icon: 'i-lucide-users'
+  },
+  {
+    label: t('admin.nav.system'),
+    to: '/system',
+    icon: 'i-lucide-settings'
   }
-}
-</style>
+]);
+
+const userMenuItems = computed<DropdownMenuItem[][]>(() => [
+  [
+    {
+      label: t('auth.logout'),
+      icon: 'i-lucide-log-out',
+      click: async () => {
+        await logout();
+      }
+    }
+  ]
+]);
+</script>

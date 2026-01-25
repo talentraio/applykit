@@ -54,7 +54,8 @@
     "resumes": "Resumes",
     "vacancies": "Vacancies",
     "profile": "Profile",
-    "settings": "Settings"
+    "settings": "Settings",
+    "account": "Account"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -130,6 +131,7 @@
   },
   "profile": {
     "title": "My Profile",
+    "description": "Complete your profile to enable resume generation",
     "section": {
       "basic": "Basic Information",
       "languages": "Languages",
@@ -201,7 +203,23 @@
     "nav": {
       "dashboard": "Dashboard",
       "users": "Users",
-      "system": "System"
+      "system": "System",
+      "admin": "Admin"
     }
+  },
+  "footer": {
+    "copyright": "© {year} ApplyKit. All rights reserved.",
+    "tagline": "Tailor your resume for every opportunity",
+    "product": "Product",
+    "features": "Features",
+    "pricing": "Pricing",
+    "docs": "Documentation",
+    "company": "Company",
+    "about": "About",
+    "blog": "Blog",
+    "contact": "Contact",
+    "legal": "Legal",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   }
 }

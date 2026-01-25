@@ -24,6 +24,11 @@
 - Before any code changes, read `docs/codestyle/base.md` (always-on). Use other
   docs/codestyle/\* as needed.
 - TypeScript + Vue SFCs; keep code typed end-to-end.
+- **CRITICAL: Type Safety Policy**
+  - Avoid `any` and type assertions (`as Type`) - allowed only in exceptional cases
+  - Permitted: `as const`, `{} as const`, justified `as unknown as Type`
+  - Always find and import proper types from libraries (e.g., `ButtonProps` from `#ui/types`)
+  - Never suppress TypeScript errors with `any` - find the root cause and fix it properly
 - Formatting: 2-space indent, single quotes, no semicolons, 100-character print width.
 - Prefer workspace package names like `@int/schema`, `@int/api`, and `@int/ui`.
 - Use `*.test.ts` or `*.spec.ts` for unit tests (Vitest includes both).
