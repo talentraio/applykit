@@ -258,17 +258,17 @@ No custom patterns outside Nuxt UI Pro.
 
 ### Implementation for US5
 
-- [ ] T104 [US5] Create generate prompt in `packages/nuxt-layer-api/server/services/llm/prompts/generate.ts`
-- [ ] T105 [US5] Create LLM generate service in `packages/nuxt-layer-api/server/services/llm/generate.ts` with Zod validation
-- [ ] T106 [US5] Create POST `/api/vacancies/[id]/generate` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/generate.post.ts`
-- [ ] T107 [US5] Create GET `/api/vacancies/[id]/generations` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/generations/index.get.ts`
-- [ ] T108 [US5] Create GET `/api/vacancies/[id]/generations/latest` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/generations/latest.get.ts`
-- [ ] T109 [US5] Create useGenerations composable in `packages/nuxt-layer-api/app/composables/useGenerations.ts`
-- [ ] T110 [US5] Add generation i18n keys to `packages/nuxt-layer-ui/locales/en.json` (generation.button, generation.inProgress, generation.matchScore._, generation.lifetime._, generation.error.\*)
-- [ ] T111 [US5] Create GenerateButton component in `apps/site/layers/vacancy/app/components/GenerateButton.vue` with loading state
-- [ ] T112 [US5] Create MatchScoreDisplay component in `apps/site/layers/vacancy/app/components/MatchScoreDisplay.vue` (before/after)
-- [ ] T113 [US5] Create LifetimeIndicator component in `apps/site/layers/vacancy/app/components/LifetimeIndicator.vue` (days until expiration)
-- [ ] T114 [US5] Update vacancy detail page `apps/site/layers/vacancy/app/pages/vacancies/[id].vue` with generation controls and display
+- [x] T104 [US5] Create generate prompt in `packages/nuxt-layer-api/server/services/llm/prompts/generate.ts`
+- [x] T105 [US5] Create LLM generate service in `packages/nuxt-layer-api/server/services/llm/generate.ts` with Zod validation
+- [x] T106 [US5] Create POST `/api/vacancies/[id]/generate` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/generate.post.ts`
+- [x] T107 [US5] Create GET `/api/vacancies/[id]/generations` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/generations/index.get.ts`
+- [x] T108 [US5] Create GET `/api/vacancies/[id]/generations/latest` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/generations/latest.get.ts`
+- [x] T109 [US5] Create useGenerations composable in `packages/nuxt-layer-api/app/composables/useGenerations.ts`
+- [x] T110 [US5] Add generation i18n keys to `packages/nuxt-layer-ui/locales/en.json` (generation.button, generation.inProgress, generation.matchScore._, generation.lifetime._, generation.error.\*)
+- [x] T111 [US5] Create GenerateButton component in `apps/site/layers/vacancy/app/components/GenerateButton.vue` with loading state
+- [x] T112 [US5] Create MatchScoreDisplay component in `apps/site/layers/vacancy/app/components/MatchScoreDisplay.vue` (before/after)
+- [x] T113 [US5] Create LifetimeIndicator component in `apps/site/layers/vacancy/app/components/LifetimeIndicator.vue` (days until expiration)
+- [x] T114 [US5] Update vacancy detail page `apps/site/layers/vacancy/app/pages/vacancies/[id].vue` with generation controls and display
 
 **Checkpoint**: User can generate tailored resume, see scores and expiration
 
