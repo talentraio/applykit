@@ -16,6 +16,8 @@
     <UMain>
       <slot />
     </UMain>
+
+    <AppFooter />
   </UiAppShell>
 </template>
 

@@ -8,12 +8,7 @@
     <!-- Content -->
     <div v-else class="space-y-6">
       <!-- Header -->
-      <div>
-        <h1 class="text-3xl font-bold">
-          {{ $t('profile.title') }}
-        </h1>
-        <p class="mt-2 text-muted">Complete your profile to enable resume generation</p>
-      </div>
+      <UiPageHeader :title="$t('profile.title')" :description="$t('profile.description')" />
 
       <!-- Completeness Status -->
       <UAlert
