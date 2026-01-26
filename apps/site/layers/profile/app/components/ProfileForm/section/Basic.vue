@@ -92,8 +92,8 @@
       </label>
       <USelectMenu
         :model-value="modelValue.workFormat"
-        :options="workFormatOptions"
-        value-attribute="value"
+        :items="workFormatOptions"
+        value-key="value"
         size="lg"
         required
         @update:model-value="handleWorkFormatUpdate"
@@ -132,10 +132,12 @@ type BasicData = {
 
 const { t } = useI18n();
 
-const workFormatOptions = computed(() => [
-  { label: t('profile.form.workFormatOptions.remote'), value: 'remote' as const },
-  { label: t('profile.form.workFormatOptions.onsite'), value: 'onsite' as const },
-  { label: t('profile.form.workFormatOptions.hybrid'), value: 'hybrid' as const }
+type WorkFormatOption = { label: string; value: BasicData['workFormat'] };
+
+const workFormatOptions = computed<WorkFormatOption[]>(() => [
+  { label: t('profile.form.workFormatOptions.remote'), value: 'remote' },
+  { label: t('profile.form.workFormatOptions.onsite'), value: 'onsite' },
+  { label: t('profile.form.workFormatOptions.hybrid'), value: 'hybrid' }
 ]);
 
 const update = <K extends keyof BasicData>(key: K, value: BasicData[K] | null) => {
@@ -149,7 +151,7 @@ const isValidWorkFormat = (value: unknown): value is 'remote' | 'hybrid' | 'onsi
 };
 
 const handleWorkFormatUpdate = (value: unknown) => {
-  // USelectMenu with value-attribute returns the value directly
+  // USelectMenu with value-key returns the value directly
   if (isValidWorkFormat(value)) {
     update('workFormat', value);
   }

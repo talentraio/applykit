@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
 
-  modules: ['@nuxt/ui-pro', '@nuxtjs/i18n'],
+  modules: ['@nuxt/ui', '@nuxtjs/i18n'],
 
   // NuxtUI v4 configuration
   ui: {

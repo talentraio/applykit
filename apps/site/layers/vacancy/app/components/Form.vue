@@ -2,7 +2,7 @@
   <div class="vacancy-form">
     <UForm :state="formData" class="space-y-6" @submit="handleSubmit">
       <!-- Company Name -->
-      <UFormGroup
+      <UFormField
         :label="$t('vacancy.form.company')"
         name="company"
         :hint="$t('vacancy.form.companyHint')"
@@ -13,10 +13,10 @@
           :placeholder="$t('vacancy.form.companyPlaceholder')"
           size="lg"
         />
-      </UFormGroup>
+      </UFormField>
 
       <!-- Job Position -->
-      <UFormGroup
+      <UFormField
         :label="$t('vacancy.form.jobPosition')"
         name="jobPosition"
         :hint="$t('vacancy.form.jobPositionHint')"
@@ -26,10 +26,10 @@
           :placeholder="$t('vacancy.form.jobPositionPlaceholder')"
           size="lg"
         />
-      </UFormGroup>
+      </UFormField>
 
       <!-- Description -->
-      <UFormGroup
+      <UFormField
         :label="$t('vacancy.form.description')"
         name="description"
         :hint="$t('vacancy.form.descriptionHint')"
@@ -41,20 +41,20 @@
           :rows="10"
           autoresize
         />
-      </UFormGroup>
+      </UFormField>
 
       <!-- URL -->
-      <UFormGroup :label="$t('vacancy.form.url')" name="url" :hint="$t('vacancy.form.urlHint')">
+      <UFormField :label="$t('vacancy.form.url')" name="url" :hint="$t('vacancy.form.urlHint')">
         <UInput
           v-model="formData.url"
           :placeholder="$t('vacancy.form.urlPlaceholder')"
           type="url"
           size="lg"
         />
-      </UFormGroup>
+      </UFormField>
 
       <!-- Notes -->
-      <UFormGroup
+      <UFormField
         :label="$t('vacancy.form.notes')"
         name="notes"
         :hint="$t('vacancy.form.notesHint')"
@@ -65,7 +65,7 @@
           :rows="4"
           autoresize
         />
-      </UFormGroup>
+      </UFormField>
 
       <!-- Actions -->
       <div class="vacancy-form__actions flex gap-3 justify-end">

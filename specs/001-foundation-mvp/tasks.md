@@ -305,13 +305,13 @@ No custom patterns outside Nuxt UI Pro.
 
 ### Implementation for US7
 
-- [ ] T125 [US7] Create GET `/api/keys` endpoint in `packages/nuxt-layer-api/server/api/keys/index.get.ts`
-- [ ] T126 [US7] Create POST `/api/keys` endpoint in `packages/nuxt-layer-api/server/api/keys/index.post.ts`
-- [ ] T127 [US7] Create DELETE `/api/keys/[id]` endpoint in `packages/nuxt-layer-api/server/api/keys/[id].delete.ts`
-- [ ] T128 [US7] Create useKeys composable in `packages/nuxt-layer-api/app/composables/useKeys.ts`
-- [ ] T129 [US7] Add settings i18n keys to `packages/nuxt-layer-ui/locales/en.json` (settings.title, settings.keys.\*)
-- [ ] T130 [US7] Create KeyManager component in `apps/site/layers/profile/app/components/KeyManager.vue` with localStorage integration
-- [ ] T131 [US7] Create settings page in `apps/site/layers/profile/app/pages/settings.vue` with key management
+- [x] T125 [US7] Create GET `/api/keys` endpoint in `packages/nuxt-layer-api/server/api/keys/index.get.ts`
+- [x] T126 [US7] Create POST `/api/keys` endpoint in `packages/nuxt-layer-api/server/api/keys/index.post.ts`
+- [x] T127 [US7] Create DELETE `/api/keys/[id]` endpoint in `packages/nuxt-layer-api/server/api/keys/[id].delete.ts`
+- [x] T128 [US7] Create useKeys composable in `packages/nuxt-layer-api/app/composables/useKeys.ts`
+- [x] T129 [US7] Add settings i18n keys to `packages/nuxt-layer-ui/locales/en.json` (settings.title, settings.keys.\*)
+- [x] T130 [US7] Create KeyManager component in `apps/site/layers/profile/app/components/KeyManager.vue` with localStorage integration
+- [x] T131 [US7] Create settings page in `apps/site/layers/profile/app/pages/settings.vue` with key management
 
 **Checkpoint**: User can add/remove BYOK key hints, keys stored in browser
 

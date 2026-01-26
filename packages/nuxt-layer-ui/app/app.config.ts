@@ -1,7 +1,7 @@
 /**
  * App Config - UI Theme Tokens
  *
- * Single source of truth for Nuxt UI Pro theme configuration
+ * Single source of truth for Nuxt UI theme configuration
  * Per docs/design/mvp.md requirements
  */
 

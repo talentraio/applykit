@@ -12,3 +12,10 @@ export const LLMKeySchema = z.object({
 });
 
 export type LLMKey = z.infer<typeof LLMKeySchema>;
+
+export const LLMKeyInputSchema = LLMKeySchema.pick({
+  provider: true,
+  keyHint: true
+});
+
+export type LLMKeyInput = z.infer<typeof LLMKeyInputSchema>;

@@ -11,9 +11,9 @@
   },
   "dependencies": {
     "@nuxt/ui": "catalog:",
-    "@nuxt/ui-pro": "catalog:",
     "@nuxtjs/i18n": "catalog:",
-    "nuxt": "catalog:"
+    "nuxt": "catalog:",
+    "tailwindcss": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"
