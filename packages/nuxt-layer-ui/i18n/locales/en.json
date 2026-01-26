@@ -397,6 +397,58 @@
         "friend": "Friend",
         "public": "Public"
       }
+    },
+    "system": {
+      "title": "System",
+      "platformLlm": "Platform LLM",
+      "byok": "BYOK",
+      "platformProvider": "Platform provider",
+      "budget": "Budget",
+      "budgetHelper": "Set the platform LLM budget cap in USD.",
+      "budgetUsage": "Budget usage",
+      "budgetCap": "Monthly cap",
+      "budgetUsed": "Used",
+      "budgetRemaining": "Remaining",
+      "budgetUpdate": "Update budget",
+      "budgetSaving": "Updating...",
+      "controls": {
+        "title": "LLM controls",
+        "description": "Toggle platform access and default provider settings."
+      },
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "providers": {
+        "openai": "OpenAI",
+        "gemini_flash": "Gemini Flash"
+      },
+      "usage": {
+        "title": "Usage",
+        "description": "System-wide usage across parse, generate, and export operations.",
+        "period": "Period",
+        "periods": {
+          "day": "Today",
+          "week": "Last 7 days",
+          "month": "Last 30 days"
+        },
+        "totalOperations": "Total operations",
+        "totalCost": "Total cost",
+        "uniqueUsers": "Unique users",
+        "byOperation": "By operation",
+        "byProvider": "By provider",
+        "operations": {
+          "parse": "Parse",
+          "generate": "Generate",
+          "export": "Export"
+        },
+        "providers": {
+          "platform": "Platform",
+          "byok": "BYOK"
+        }
+      },
+      "currency": "{amount} USD",
+      "percent": "{value}%"
     }
   },
   "footer": {

@@ -2,14 +2,14 @@
   <UiAppShell class="admin-default-layout">
     <UDashboardNavbar :title="appTitle" :links="navLinks">
       <template #right>
-        <UDropdown :items="userMenuItems">
+        <UDropdownMenu :items="userMenuItems">
           <UButton
             icon="i-lucide-shield-check"
             color="neutral"
             variant="ghost"
             :label="$t('admin.nav.admin')"
           />
-        </UDropdown>
+        </UDropdownMenu>
       </template>
     </UDashboardNavbar>
 

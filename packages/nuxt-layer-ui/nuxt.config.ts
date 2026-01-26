@@ -5,6 +5,8 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/ui', '@nuxtjs/i18n'],
 
+  css: [fileURLToPath(new URL('./app/assets/css/main.css', import.meta.url))],
+
   // NuxtUI v4 configuration
   ui: {
     // Use default NuxtUI v4 settings
@@ -31,5 +33,5 @@ export default defineNuxtConfig({
   },
 
   alias: { '@layer/ui': fileURLToPath(new URL('./', import.meta.url)) },
-  components: [{ path: '@layer/ui/components', prefix: 'Ui' }]
+  components: [{ path: '@layer/ui/app/components', prefix: 'Ui' }]
 });

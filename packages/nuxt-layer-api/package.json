@@ -11,7 +11,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:set-role": "tsx ./scripts/set-user-role.ts"
   },
   "dependencies": {
     "@google/genai": "catalog:",
@@ -30,6 +31,7 @@
     "pinia": "catalog:",
     "playwright-core": "catalog:",
     "postgres": "catalog:",
+    "ufo": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

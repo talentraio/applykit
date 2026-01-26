@@ -1,3 +1,5 @@
+import { getQuery } from 'h3';
+import { decode, hasLeadingSlash, hasProtocol } from 'ufo';
 import { userRepository } from '../../data/repositories';
 
 /**
@@ -16,6 +18,10 @@ import { userRepository } from '../../data/repositories';
 
 export default defineOAuthGoogleEventHandler({
   async onSuccess(event, { user }) {
+    const runtimeConfig = useRuntimeConfig(event);
+    const query = getQuery(event);
+    const redirectFromState = getSafeRedirect(query.state);
+    const defaultRedirect = runtimeConfig.redirects?.authDefault || '/';
     const { email, sub: googleId } = user;
 
     if (!email || !googleId) {
@@ -49,8 +55,8 @@ export default defineOAuthGoogleEventHandler({
       }
     });
 
-    // Redirect to dashboard
-    return sendRedirect(event, '/dashboard');
+    const redirectTarget = redirectFromState ?? defaultRedirect;
+    return sendRedirect(event, redirectTarget);
   },
 
   async onError(event, error) {
@@ -58,3 +64,21 @@ export default defineOAuthGoogleEventHandler({
     return sendRedirect(event, '/login?error=oauth_failed');
   }
 });
+
+function getSafeRedirect(value: unknown): string | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (typeof raw !== 'string') {
+    return null;
+  }
+
+  const decoded = decode(raw).trim();
+  if (!decoded || !hasLeadingSlash(decoded)) {
+    return null;
+  }
+
+  if (hasProtocol(decoded, { acceptRelative: true })) {
+    return null;
+  }
+
+  return decoded;
+}

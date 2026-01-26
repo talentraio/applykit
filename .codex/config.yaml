@@ -16,3 +16,10 @@ features:
   warnings: true
   skills: true
   web_search_request: true
+
+commands:
+  dir: .codex/commands
+  invoke: |
+    /<name>
+    <arguments>
+    (alias) Use command: <name>

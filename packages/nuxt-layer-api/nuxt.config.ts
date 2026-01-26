@@ -39,6 +39,9 @@ export default defineNuxtConfig({
         clientSecret: ''
       }
     },
+    redirects: {
+      authDefault: '/'
+    },
     public: {
       apiCallTimeoutMs: 10000
     }

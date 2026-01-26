@@ -349,16 +349,16 @@ No custom patterns outside Nuxt UI Pro.
 
 ### Implementation for US9
 
-- [ ] T143 [US9] Create GET `/api/admin/system` endpoint in `packages/nuxt-layer-api/server/api/admin/system/index.get.ts`
-- [ ] T144 [US9] Create PUT `/api/admin/system` endpoint in `packages/nuxt-layer-api/server/api/admin/system/index.put.ts`
-- [ ] T145 [US9] Create GET `/api/admin/usage` endpoint in `packages/nuxt-layer-api/server/api/admin/usage/index.get.ts`
-- [ ] T146 [US9] Create useAdminSystem composable in `packages/nuxt-layer-api/app/composables/useAdminSystem.ts`
-- [ ] T147 [US9] Add admin system i18n keys to `packages/nuxt-layer-ui/locales/en.json` (admin.system.title, admin.system.platformLlm, admin.system.byok, admin.system.budget)
-- [ ] T148 [US9] Create SystemControls component in `apps/admin/layers/system/app/components/SystemControls.vue`
-- [ ] T149 [US9] Create BudgetDisplay component in `apps/admin/layers/system/app/components/BudgetDisplay.vue`
-- [ ] T150 [US9] Create UsageStats component in `apps/admin/layers/system/app/components/UsageStats.vue`
-- [ ] T151 [US9] Create admin system page in `apps/admin/app/pages/system.vue`
-- [ ] T152 [US9] Create admin home page in `apps/admin/app/pages/index.vue` with dashboard overview
+- [x] T143 [US9] Create GET `/api/admin/system` endpoint in `packages/nuxt-layer-api/server/api/admin/system/index.get.ts`
+- [x] T144 [US9] Create PUT `/api/admin/system` endpoint in `packages/nuxt-layer-api/server/api/admin/system/index.put.ts`
+- [x] T145 [US9] Create GET `/api/admin/usage` endpoint in `packages/nuxt-layer-api/server/api/admin/usage/index.get.ts`
+- [x] T146 [US9] Create useAdminSystem composable in `packages/nuxt-layer-api/app/composables/useAdminSystem.ts`
+- [x] T147 [US9] Add admin system i18n keys to `packages/nuxt-layer-ui/locales/en.json` (admin.system.title, admin.system.platformLlm, admin.system.byok, admin.system.budget)
+- [x] T148 [US9] Create SystemControls component in `apps/admin/layers/system/app/components/SystemControls.vue`
+- [x] T149 [US9] Create BudgetDisplay component in `apps/admin/layers/system/app/components/BudgetDisplay.vue`
+- [x] T150 [US9] Create UsageStats component in `apps/admin/layers/system/app/components/UsageStats.vue`
+- [x] T151 [US9] Create admin system page in `apps/admin/app/pages/system.vue`
+- [x] T152 [US9] Create admin home page in `apps/admin/app/pages/index.vue` with dashboard overview
 
 **Checkpoint**: Admin can control platform settings and view usage
 

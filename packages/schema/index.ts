@@ -1,3 +1,4 @@
+export * from './constants/enums';
 // Enums
 export * from './schemas/enums';
 

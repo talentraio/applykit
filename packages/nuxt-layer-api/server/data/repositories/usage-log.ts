@@ -5,6 +5,14 @@ import { and, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { usageLogs } from '../schema';
 
+export type SystemUsageStats = {
+  totalOperations: number;
+  byOperation: Record<Operation, number>;
+  byProvider: Record<ProviderType, number>;
+  totalCost: number;
+  uniqueUsers: number;
+};
+
 /**
  * Usage Log Repository
  *
@@ -182,6 +190,70 @@ export const usageLogRepository = {
     });
 
     return breakdown;
+  },
+
+  /**
+   * Get system-wide usage stats since a start date
+   */
+  async getSystemStats(startDate: Date): Promise<SystemUsageStats> {
+    const [totalResult, costResult, uniqueResult, operationResult, providerResult] =
+      await Promise.all([
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(usageLogs)
+          .where(gte(usageLogs.createdAt, startDate)),
+        db
+          .select({ total: sql<string>`sum(${usageLogs.cost})` })
+          .from(usageLogs)
+          .where(gte(usageLogs.createdAt, startDate)),
+        db
+          .select({ count: sql<number>`count(distinct ${usageLogs.userId})` })
+          .from(usageLogs)
+          .where(gte(usageLogs.createdAt, startDate)),
+        db
+          .select({
+            operation: usageLogs.operation,
+            count: sql<number>`count(*)`
+          })
+          .from(usageLogs)
+          .where(gte(usageLogs.createdAt, startDate))
+          .groupBy(usageLogs.operation),
+        db
+          .select({
+            providerType: usageLogs.providerType,
+            count: sql<number>`count(*)`
+          })
+          .from(usageLogs)
+          .where(gte(usageLogs.createdAt, startDate))
+          .groupBy(usageLogs.providerType)
+      ]);
+
+    const byOperation: Record<Operation, number> = {
+      parse: 0,
+      generate: 0,
+      export: 0
+    };
+
+    operationResult.forEach(row => {
+      byOperation[row.operation] = Number(row.count);
+    });
+
+    const byProvider: Record<ProviderType, number> = {
+      platform: 0,
+      byok: 0
+    };
+
+    providerResult.forEach(row => {
+      byProvider[row.providerType] = Number(row.count);
+    });
+
+    return {
+      totalOperations: Number(totalResult[0]?.count ?? 0),
+      byOperation,
+      byProvider,
+      totalCost: Number(costResult[0]?.total ?? 0),
+      uniqueUsers: Number(uniqueResult[0]?.count ?? 0)
+    };
   },
 
   /**
