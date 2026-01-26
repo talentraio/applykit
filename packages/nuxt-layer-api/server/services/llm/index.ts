@@ -110,7 +110,14 @@ export async function callLLM(
 
   if (options?.userApiKey && !options?.forcePlatform) {
     // BYOK: User provided their own key
-    provider = options.provider || 'openai';
+    const resolvedProvider = options.provider || 'openai';
+    const byokEnabled = await systemConfigRepository.isBYOKEnabled();
+
+    if (!byokEnabled) {
+      throw new LLMError('BYOK is disabled', resolvedProvider, 'BYOK_DISABLED');
+    }
+
+    provider = resolvedProvider;
     apiKey = options.userApiKey;
     providerType = 'byok';
   } else {
