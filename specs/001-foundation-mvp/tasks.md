@@ -325,15 +325,17 @@ No custom patterns outside Nuxt UI Pro.
 
 ### Implementation for US8
 
-- [ ] T132 [US8] Create GET `/api/admin/users` endpoint in `packages/nuxt-layer-api/server/api/admin/users/index.get.ts` with search
-- [ ] T133 [US8] Create GET `/api/admin/users/[id]` endpoint in `packages/nuxt-layer-api/server/api/admin/users/[id].get.ts`
-- [ ] T134 [US8] Create PUT `/api/admin/users/[id]/role` endpoint in `packages/nuxt-layer-api/server/api/admin/users/[id]/role.put.ts`
-- [ ] T135 [US8] Create useAdminUsers composable in `packages/nuxt-layer-api/app/composables/useAdminUsers.ts`
-- [ ] T136 [US8] Add admin users i18n keys to `packages/nuxt-layer-ui/locales/en.json` (admin.users.title, admin.users.search, admin.users.role)
-- [ ] T137 [US8] Create UserSearch component in `apps/admin/layers/users/app/components/UserSearch.vue`
-- [ ] T138 [US8] Create UserRoleSelector component in `apps/admin/layers/users/app/components/UserRoleSelector.vue`
-- [ ] T139 [US8] Create admin login page in `apps/admin/layers/auth/app/pages/login.vue`
-- [ ] T140 [US8] Create admin users page in `apps/admin/app/pages/users.vue`
+- [x] T132 [US8] Create GET `/api/admin/users` endpoint in `packages/nuxt-layer-api/server/api/admin/users/index.get.ts` with search
+- [x] T133 [US8] Create GET `/api/admin/users/[id]` endpoint in `packages/nuxt-layer-api/server/api/admin/users/[id].get.ts`
+- [x] T134 [US8] Create PUT `/api/admin/users/[id]/role` endpoint in `packages/nuxt-layer-api/server/api/admin/users/[id]/role.put.ts`
+- [x] T135 [US8] Create useAdminUsers composable in `packages/nuxt-layer-api/app/composables/useAdminUsers.ts`
+- [x] T136 [US8] Add admin users i18n keys to `packages/nuxt-layer-ui/locales/en.json` (admin.users.title, admin.users.search, admin.users.role)
+- [x] T137 [US8] Create UserSearch component in `apps/admin/layers/users/app/components/UserSearch.vue`
+- [x] T138 [US8] Create UserRoleSelector component in `apps/admin/layers/users/app/components/UserRoleSelector.vue`
+- [x] T139 [US8] Create admin login page in `apps/admin/layers/auth/app/pages/login.vue`
+- [x] T140 [US8] Create admin users page in `apps/admin/app/pages/users.vue`
+- [x] T141 [US8] Create requireSuperAdmin helper in `packages/nuxt-layer-api/server/utils/session-helpers.ts` and add to admin API endpoints
+- [x] T142 [US8] Create global admin auth middleware in `apps/admin/middleware/auth.global.ts` for page-level protection
 
 **Checkpoint**: Admin can search users and change roles
 
@@ -347,16 +349,16 @@ No custom patterns outside Nuxt UI Pro.
 
 ### Implementation for US9
 
-- [ ] T141 [US9] Create GET `/api/admin/system` endpoint in `packages/nuxt-layer-api/server/api/admin/system/index.get.ts`
-- [ ] T142 [US9] Create PUT `/api/admin/system` endpoint in `packages/nuxt-layer-api/server/api/admin/system/index.put.ts`
-- [ ] T143 [US9] Create GET `/api/admin/usage` endpoint in `packages/nuxt-layer-api/server/api/admin/usage/index.get.ts`
-- [ ] T144 [US9] Create useAdminSystem composable in `packages/nuxt-layer-api/app/composables/useAdminSystem.ts`
-- [ ] T145 [US9] Add admin system i18n keys to `packages/nuxt-layer-ui/locales/en.json` (admin.system.title, admin.system.platformLlm, admin.system.byok, admin.system.budget)
-- [ ] T146 [US9] Create SystemControls component in `apps/admin/layers/system/app/components/SystemControls.vue`
-- [ ] T147 [US9] Create BudgetDisplay component in `apps/admin/layers/system/app/components/BudgetDisplay.vue`
-- [ ] T148 [US9] Create UsageStats component in `apps/admin/layers/system/app/components/UsageStats.vue`
-- [ ] T149 [US9] Create admin system page in `apps/admin/app/pages/system.vue`
-- [ ] T150 [US9] Create admin home page in `apps/admin/app/pages/index.vue` with dashboard overview
+- [ ] T143 [US9] Create GET `/api/admin/system` endpoint in `packages/nuxt-layer-api/server/api/admin/system/index.get.ts`
+- [ ] T144 [US9] Create PUT `/api/admin/system` endpoint in `packages/nuxt-layer-api/server/api/admin/system/index.put.ts`
+- [ ] T145 [US9] Create GET `/api/admin/usage` endpoint in `packages/nuxt-layer-api/server/api/admin/usage/index.get.ts`
+- [ ] T146 [US9] Create useAdminSystem composable in `packages/nuxt-layer-api/app/composables/useAdminSystem.ts`
+- [ ] T147 [US9] Add admin system i18n keys to `packages/nuxt-layer-ui/locales/en.json` (admin.system.title, admin.system.platformLlm, admin.system.byok, admin.system.budget)
+- [ ] T148 [US9] Create SystemControls component in `apps/admin/layers/system/app/components/SystemControls.vue`
+- [ ] T149 [US9] Create BudgetDisplay component in `apps/admin/layers/system/app/components/BudgetDisplay.vue`
+- [ ] T150 [US9] Create UsageStats component in `apps/admin/layers/system/app/components/UsageStats.vue`
+- [ ] T151 [US9] Create admin system page in `apps/admin/app/pages/system.vue`
+- [ ] T152 [US9] Create admin home page in `apps/admin/app/pages/index.vue` with dashboard overview
 
 **Checkpoint**: Admin can control platform settings and view usage
 
@@ -366,16 +368,16 @@ No custom patterns outside Nuxt UI Pro.
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T151 [P] Create landing page in `apps/site/layers/landing/app/pages/index.vue` with marketing content
-- [ ] T152 [P] Create default layout in `apps/site/app/layouts/default.vue` with navigation
-- [ ] T153 [P] Create admin default layout in `apps/admin/app/layouts/default.vue` with admin navigation
-- [ ] T154 Create background cleanup task in `packages/nuxt-layer-api/server/tasks/cleanup.ts` (expired generations, old logs)
-- [ ] T155 Add `vercel.json` with cron job configuration for cleanup task
-- [ ] T156 [P] Add common i18n keys to `packages/nuxt-layer-ui/locales/en.json` (common.save, common.cancel, common.delete, common.loading, common.error.generic)
-- [ ] T157 Create error page in `apps/site/app/pages/error.vue`
-- [ ] T158 [P] Create 404 page in `apps/site/app/pages/[...slug].vue`
-- [ ] T159 Security audit: verify no PII/keys logged in `packages/nuxt-layer-api/server/utils/logger.ts`
-- [ ] T160 Run quickstart.md validation: complete manual test of happy path
+- [ ] T153 [P] Create landing page in `apps/site/layers/landing/app/pages/index.vue` with marketing content
+- [ ] T154 [P] Create default layout in `apps/site/app/layouts/default.vue` with navigation
+- [ ] T155 [P] Create admin default layout in `apps/admin/app/layouts/default.vue` with admin navigation
+- [ ] T156 Create background cleanup task in `packages/nuxt-layer-api/server/tasks/cleanup.ts` (expired generations, old logs)
+- [ ] T157 Add `vercel.json` with cron job configuration for cleanup task
+- [ ] T158 [P] Add common i18n keys to `packages/nuxt-layer-ui/locales/en.json` (common.save, common.cancel, common.delete, common.loading, common.error.generic)
+- [ ] T159 Create error page in `apps/site/app/pages/error.vue`
+- [ ] T160 [P] Create 404 page in `apps/site/app/pages/[...slug].vue`
+- [ ] T161 Security audit: verify no PII/keys logged in `packages/nuxt-layer-api/server/utils/logger.ts`
+- [ ] T162 Run quickstart.md validation: complete manual test of happy path
 
 ---
 
@@ -405,7 +407,7 @@ Phase 12 (Polish)
 | US6 (Export)       | P1       | US5 (needs generation) | T114 complete             |
 | US7 (BYOK)         | P2       | US1 (auth required)    | T069 complete             |
 | US8 (Admin Users)  | P2       | Foundational           | Phase 2 complete          |
-| US9 (Admin System) | P2       | US8 (admin auth)       | T140 complete             |
+| US9 (Admin System) | P2       | US8 (admin auth)       | T142 complete             |
 
 ### Within Each User Story
 

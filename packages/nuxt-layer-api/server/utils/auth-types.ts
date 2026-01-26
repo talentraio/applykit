@@ -1,17 +1,24 @@
 /**
  * Auth Type Extensions
  *
- * Extends nuxt-auth-utils types to include required fields
+ * Type definitions for our extended user session
  */
 
-declare module '#auth-utils' {
-  type User = {
-    id: string;
-  };
+import type { Role } from '@int/schema';
 
-  type UserSession = {
-    user: User;
-  };
-}
+/**
+ * Extended user type with role and email
+ * This extends what we store in the session beyond nuxt-auth-utils defaults
+ */
+export type ExtendedUser = {
+  id: string;
+  email: string;
+  role: Role;
+};
 
-export {};
+/**
+ * Extended user session
+ */
+export type ExtendedUserSession = {
+  user: ExtendedUser;
+};

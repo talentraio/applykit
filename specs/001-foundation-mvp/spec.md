@@ -20,6 +20,7 @@ ApplyKit is a resume tailoring tool that helps job seekers optimize their resume
 - **Role-based access:** `super_admin`, `friend`, `public` with per-role daily limits
 - **i18n from day 1:** No hardcoded UI strings; all user-facing text goes through i18n
 - **SSR-friendly views:** ATS and Human resume pages use server-side islands rendering
+- **Consistent date handling:** Use `date-fns` for formatting/parsing and date arithmetic in app code
 
 ---
 

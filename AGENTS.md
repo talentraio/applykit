@@ -37,6 +37,8 @@
   - Never suppress TypeScript errors with `any` - find the root cause and fix it properly
 - Avoid client-side generic typing for API calls; import proper types instead.
 - Formatting: 2-space indent, single quotes, no semicolons, 100-character print width.
+- Date handling: use `date-fns` for formatting/parsing and date arithmetic; avoid `Intl.DateTimeFormat`
+  and `toLocale*` for user-facing dates.
 - Prefer workspace package names like `@int/schema`, `@int/api`, and `@int/ui`.
 - Use `*.test.ts` or `*.spec.ts` for unit tests (Vitest includes both).
 - Use Zod validation in LLM/parsing services.

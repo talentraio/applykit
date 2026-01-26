@@ -17,6 +17,8 @@ Key conventions:
 - Zod validation in LLM/parsing services
 - Pinia stores own data flow; components call store actions
 - i18n from the start
+- Date handling: use `date-fns` for formatting/parsing and date arithmetic; avoid `Intl.DateTimeFormat`
+  and `toLocale*` for user-facing dates
 
 Before any code changes, always read `docs/codestyle/base.md` and follow it. Then read any
 other docs/\* relevant to the task.

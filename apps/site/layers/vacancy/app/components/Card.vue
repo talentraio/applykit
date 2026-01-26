@@ -72,6 +72,7 @@
 
 import type { Vacancy } from '@int/schema';
 import { getVacancyTitle } from '@int/schema';
+import { format, parseISO } from 'date-fns';
 
 defineOptions({ name: 'VacancyCard' });
 
@@ -85,15 +86,18 @@ const emit = defineEmits<{
   delete: [vacancy: Vacancy];
 }>();
 
-const { t, d } = useI18n();
+const { t } = useI18n();
 
 // Computed title using helper from schema
 const vacancyTitle = computed(() => getVacancyTitle(props.vacancy));
 
 // Format the created/updated date
 const formattedDate = computed(() => {
-  const date = new Date(props.vacancy.updatedAt);
-  return t('vacancy.card.updatedAt', { date: d(date, 'short') });
+  const resolved =
+    typeof props.vacancy.updatedAt === 'string'
+      ? parseISO(props.vacancy.updatedAt)
+      : props.vacancy.updatedAt;
+  return t('vacancy.card.updatedAt', { date: format(resolved, 'MMM d, yyyy') });
 });
 
 const handleClick = () => {

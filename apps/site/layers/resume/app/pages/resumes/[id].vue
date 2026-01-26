@@ -274,6 +274,7 @@
  */
 
 import type { ResumeContent } from '@int/schema';
+import { format, parseISO } from 'date-fns';
 
 defineOptions({ name: 'ResumeDetailPage' });
 
@@ -318,14 +319,8 @@ onMounted(async () => {
  * Format date
  */
 const formatDate = (date: Date | string) => {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(d);
+  const resolved = typeof date === 'string' ? parseISO(date) : date;
+  return format(resolved, 'MMMM d, yyyy, h:mm a');
 };
 
 /**

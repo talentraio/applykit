@@ -27,7 +27,7 @@
  * Per docs/design/mvp.md - Dashboard template patterns
  *
  * TR010 - Created as part of architecture refactoring
- * T153 [Phase 12] Admin default layout with admin navigation
+ * T155 [Phase 12] Admin default layout with admin navigation
  * TR014 - Refactored to use Nuxt UI Pro Dashboard components
  */
 

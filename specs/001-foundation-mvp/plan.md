@@ -17,6 +17,7 @@ Build an end-to-end resume tailoring MVP: users upload DOCX/PDF resumes, LLM par
 - nuxt-auth-utils (authentication)
 - Drizzle ORM (database)
 - Zod (validation)
+- date-fns (date formatting/parsing)
 - Playwright (PDF generation)
 - OpenAI SDK / Google AI SDK (LLM)
 

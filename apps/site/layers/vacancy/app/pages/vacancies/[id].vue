@@ -229,6 +229,7 @@
 
 import type { VacancyInput } from '@int/schema';
 import { getVacancyTitle } from '@int/schema';
+import { format, parseISO } from 'date-fns';
 
 defineOptions({ name: 'VacancyDetailPage' });
 
@@ -237,7 +238,7 @@ defineOptions({ name: 'VacancyDetailPage' });
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
-const { t, d } = useI18n();
+const { t } = useI18n();
 
 // Get vacancy ID from route
 const vacancyId = computed(() => {
@@ -280,8 +281,11 @@ const vacancyTitle = computed(() => (vacancy.value ? getVacancyTitle(vacancy.val
 
 const formattedDate = computed(() => {
   if (!vacancy.value) return '';
-  const date = new Date(vacancy.value.updatedAt);
-  return d(date, 'long');
+  const resolved =
+    typeof vacancy.value.updatedAt === 'string'
+      ? parseISO(vacancy.value.updatedAt)
+      : vacancy.value.updatedAt;
+  return format(resolved, 'MMMM d, yyyy');
 });
 
 const toggleEditMode = () => {

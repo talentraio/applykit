@@ -1,6 +1,6 @@
 import type { Role } from '@int/schema';
 import type { NewUser, User } from '../schema';
-import { eq } from 'drizzle-orm';
+import { desc, eq, like, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { users } from '../schema';
 
@@ -91,5 +91,33 @@ export const userRepository = {
    */
   async findByRole(role: Role): Promise<User[]> {
     return await db.select().from(users).where(eq(users.role, role));
+  },
+
+  /**
+   * Search users by email with pagination
+   * Admin-only for user management
+   */
+  async search(params: {
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ users: User[]; total: number }> {
+    const normalizedSearch = params.search?.trim().toLowerCase();
+    const limit = Math.min(Math.max(params.limit ?? 50, 1), 200);
+    const offset = Math.max(params.offset ?? 0, 0);
+
+    const whereClause = normalizedSearch
+      ? like(sql`lower(${users.email})`, `%${normalizedSearch}%`)
+      : undefined;
+
+    const listQuery = db.select().from(users);
+    const filteredList = whereClause ? listQuery.where(whereClause) : listQuery;
+    const list = await filteredList.orderBy(desc(users.createdAt)).limit(limit).offset(offset);
+
+    const countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
+    const countResult = await (whereClause ? countQuery.where(whereClause) : countQuery);
+    const total = Number(countResult[0]?.count ?? 0);
+
+    return { users: list, total };
   }
 };
