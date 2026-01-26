@@ -253,9 +253,9 @@ const { current: vacancy, fetchVacancy, updateVacancy, deleteVacancy } = useVaca
 const { generate, getLatestGeneration } = useGenerations();
 
 // Fetch vacancy (SSR-compatible)
-const { pending, error } = await useAsyncData(`vacancy-${vacancyId.value}`, () =>
-  fetchVacancy(vacancyId.value)
-);
+const { pending, error } = await useAsyncData(`vacancy-${vacancyId.value}`, () => {
+  return fetchVacancy(vacancyId.value);
+});
 
 // Fetch latest generation
 const {

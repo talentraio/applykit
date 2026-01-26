@@ -38,6 +38,7 @@
     "postcss-html": "catalog:",
     "postcss-scss": "catalog:",
     "prettier": "catalog:",
+    "sass": "catalog:",
     "stylelint": "catalog:",
     "stylelint-config-recommended-vue": "catalog:",
     "stylelint-config-standard-scss": "catalog:",
