@@ -1,5 +1,5 @@
 import type { PlatformProvider, SystemConfigKey } from '@int/schema';
-import { SystemConfigDefaults, SystemConfigValues } from '@int/schema';
+import { SystemConfigDefaults, SystemConfigKeySchema, SystemConfigValues } from '@int/schema';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { systemConfigs } from '../schema';
@@ -24,8 +24,12 @@ export const systemConfigRepository = {
     }
 
     // Parse JSONB value
-    const value = result[0].value;
-    return typeof value === 'string' ? JSON.parse(value) : value;
+    const parsed = parseStoredValue(result[0].value, key);
+    if (parsed.shouldPersist) {
+      await this.set(key, parsed.value);
+    }
+
+    return parsed.value;
   },
 
   /**
@@ -115,10 +119,20 @@ export const systemConfigRepository = {
 
     const config: Record<string, unknown> = { ...SystemConfigDefaults };
 
-    results.forEach(row => {
-      const value = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
-      config[row.key] = value;
-    });
+    for (const row of results) {
+      const parsedKey = SystemConfigKeySchema.safeParse(row.key);
+      if (!parsedKey.success) {
+        console.warn(`Unknown system config key "${row.key}". Skipping.`);
+        continue;
+      }
+
+      const parsed = parseStoredValue(row.value, parsedKey.data);
+      config[parsedKey.data] = parsed.value;
+
+      if (parsed.shouldPersist) {
+        await this.set(parsedKey.data, parsed.value);
+      }
+    }
 
     return config as Record<SystemConfigKey, unknown>;
   },
@@ -175,3 +189,59 @@ export const systemConfigRepository = {
     return await this.getBoolean('byok_enabled');
   }
 };
+
+type ParsedStoredValue = {
+  value: unknown;
+  shouldPersist: boolean;
+};
+
+function parseStoredValue(value: unknown, key: SystemConfigKey): ParsedStoredValue {
+  if (typeof value !== 'string') {
+    return { value, shouldPersist: false };
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return { value, shouldPersist: false };
+  }
+
+  try {
+    return { value: JSON.parse(trimmed), shouldPersist: false };
+  } catch (error) {
+    const coerced = coerceLegacyValue(trimmed, key);
+    if (coerced !== null) {
+      const schema = SystemConfigValues[key];
+      if (schema.safeParse(coerced).success) {
+        return { value: coerced, shouldPersist: true };
+      }
+    }
+
+    console.warn(`Invalid JSON in system_configs for key "${key}". Using raw value.`, error);
+    return { value: trimmed, shouldPersist: false };
+  }
+}
+
+function coerceLegacyValue(value: string, key: SystemConfigKey): unknown | null {
+  switch (key) {
+    case 'platform_provider':
+      return value;
+    case 'platform_llm_enabled':
+    case 'byok_enabled': {
+      const lower = value.toLowerCase();
+      if (lower === 'true' || value === '1') {
+        return true;
+      }
+      if (lower === 'false' || value === '0') {
+        return false;
+      }
+      return null;
+    }
+    case 'global_budget_cap':
+    case 'global_budget_used': {
+      const numberValue = Number(value);
+      return Number.isFinite(numberValue) ? numberValue : null;
+    }
+    default:
+      return null;
+  }
+}

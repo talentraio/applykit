@@ -9,6 +9,7 @@
  */
 
 import type { Profile, UserPublic } from '@int/schema';
+import { decode, hasLeadingSlash, hasProtocol } from 'ufo';
 import { useApiAuthStore } from '../stores/auth';
 
 export type AuthComposable = {
@@ -49,6 +50,7 @@ export type AuthComposable = {
 export function useAuth(): AuthComposable {
   const store = useApiAuthStore();
   const { clear } = useUserSession();
+  const route = useRoute();
 
   /**
    * Logout and redirect to login page
@@ -74,7 +76,9 @@ export function useAuth(): AuthComposable {
    * Note: OAuth routes are in server/routes/, not server/api/
    */
   const loginWithGoogle = (): void => {
-    navigateTo('/auth/google', { external: true });
+    const redirect = getSafeRedirect(route.query.redirect);
+    const target = redirect ? `/auth/google?state=${encodeURIComponent(redirect)}` : '/auth/google';
+    navigateTo(target, { external: true });
   };
 
   /**
@@ -94,4 +98,21 @@ export function useAuth(): AuthComposable {
     logout,
     loginWithGoogle
   };
+}
+
+function getSafeRedirect(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = decode(value).trim();
+  if (!trimmed || !hasLeadingSlash(trimmed)) {
+    return null;
+  }
+
+  if (hasProtocol(trimmed, { acceptRelative: true })) {
+    return null;
+  }
+
+  return trimmed;
 }

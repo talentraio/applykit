@@ -15,6 +15,12 @@ export default defineNuxtConfig({
 
   modules: ['@pinia/nuxt'],
 
+  runtimeConfig: {
+    redirects: {
+      authDefault: '/'
+    }
+  },
+
   devtools: {
     enabled: true
   },

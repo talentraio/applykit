@@ -14,6 +14,7 @@
 defineOptions({ name: 'AuthLoginPage' });
 
 const { t } = useI18n();
+const { loginWithGoogle } = useAuth();
 
 definePageMeta({
   layout: 'auth'
@@ -24,9 +25,8 @@ const providers = [
     label: t('auth.login.google'),
     icon: 'i-simple-icons-google',
     color: 'neutral' as const,
-    onClick: async () => {
-      // Redirect to Google OAuth endpoint
-      await navigateTo('/api/auth/google', { external: true });
+    onClick: () => {
+      loginWithGoogle();
     }
   }
 ];

@@ -9,7 +9,7 @@
  */
 
 export default defineNuxtRouteMiddleware(async to => {
-  const { session, fetch } = useUserSession();
+  const { loggedIn, session, fetch } = useUserSession();
 
   // Public routes that don't require auth
   const publicRoutes = ['/login'];
@@ -19,17 +19,28 @@ export default defineNuxtRouteMiddleware(async to => {
   }
 
   // Fetch session if not loaded
-  if (!session.value) {
-    await fetch();
+  if (!loggedIn.value && !session.value) {
+    try {
+      await fetch();
+    } catch {
+      // Not authenticated - ignore fetch errors
+    }
   }
 
+  const user = session.value?.user;
+
   // Not authenticated - redirect to login
-  if (!session.value) {
-    return navigateTo('/login');
+  if (!session.value || !user) {
+    return navigateTo({
+      path: '/login',
+      query: {
+        redirect: to.fullPath
+      }
+    });
   }
 
   // Authenticated but not super_admin - deny access
-  if (session.value.user.role !== 'super_admin') {
+  if (user.role !== 'super_admin') {
     return abortNavigation({
       statusCode: 403,
       message: 'Access denied. Super admin role required.'

@@ -2,14 +2,14 @@
   <UiAppShell class="site-default-layout">
     <UDashboardNavbar :title="appTitle" :links="navLinks">
       <template #right>
-        <UDropdown :items="userMenuItems">
+        <UDropdownMenu :items="userMenuItems">
           <UButton
             icon="i-lucide-user"
             color="neutral"
             variant="ghost"
             :label="$t('nav.account')"
           />
-        </UDropdown>
+        </UDropdownMenu>
       </template>
     </UDashboardNavbar>
 

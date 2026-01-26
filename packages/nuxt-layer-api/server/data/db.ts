@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import process from 'node:process';
@@ -40,6 +41,8 @@ const db = (() => {
     }
 
     const sqlite = new Database(sqlitePath);
+    sqlite.function('gen_random_uuid', () => randomUUID());
+    sqlite.function('now', () => new Date().toISOString().slice(0, 19).replace('T', ' '));
     sqlite.pragma('journal_mode = WAL'); // Better concurrency
     const instance = drizzleSQLite(sqlite, { schema });
 
