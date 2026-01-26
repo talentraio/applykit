@@ -1,8 +1,9 @@
 import type { ResumeContent } from '@int/schema';
 import type { Generation } from '../schema';
-import { desc, eq, lt } from 'drizzle-orm';
+import { addDays } from 'date-fns';
+import { desc, eq, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { generations } from '../schema';
+import { generations, vacancies } from '../schema';
 
 /**
  * Generation Repository
@@ -63,8 +64,7 @@ export const generationRepository = {
     matchScoreBefore: number;
     matchScoreAfter: number;
   }): Promise<Generation> {
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 90); // 90 days lifetime
+    const expiresAt = addDays(new Date(), 90); // 90 days lifetime
 
     const result = await db
       .insert(generations)
@@ -132,6 +132,19 @@ export const generationRepository = {
       .from(generations)
       .where(eq(generations.vacancyId, vacancyId));
     return result.length;
+  },
+
+  /**
+   * Count generations for a user
+   * Admin-only for user management stats
+   */
+  async countByUserId(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(generations)
+      .innerJoin(vacancies, eq(generations.vacancyId, vacancies.id))
+      .where(eq(vacancies.userId, userId));
+    return Number(result[0]?.count ?? 0);
   },
 
   /**

@@ -29,7 +29,7 @@
  * Per docs/design/mvp.md - SaaS template patterns
  *
  * TR010 - Created as part of architecture refactoring
- * T152 [Phase 12] Default layout with navigation
+ * T154 [Phase 12] Default layout with navigation
  * TR014 - Refactored to use Nuxt UI Pro components
  */
 

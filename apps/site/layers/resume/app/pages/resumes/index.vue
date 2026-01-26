@@ -182,6 +182,8 @@
  * TR007 - Updated to use callOnce instead of immediate option
  */
 
+import { format, parseISO } from 'date-fns';
+
 defineOptions({ name: 'ResumesListPage' });
 
 // Auth is handled by global middleware
@@ -244,12 +246,8 @@ const handleDelete = async (id: string) => {
  * Format date
  */
 const formatDate = (date: Date | string) => {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).format(d);
+  const resolved = typeof date === 'string' ? parseISO(date) : date;
+  return format(resolved, 'MMM d, yyyy');
 };
 
 /**

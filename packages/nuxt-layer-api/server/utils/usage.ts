@@ -1,4 +1,5 @@
 import type { Operation, ProviderType } from '@int/schema';
+import { addDays, startOfDay } from 'date-fns';
 import { usageLogRepository } from '../data/repositories';
 
 /**
@@ -53,10 +54,8 @@ export async function getDailyUsageCount(userId: string, operation: Operation): 
  * @returns Total tokens used today
  */
 export async function getDailyTokensUsed(userId: string): Promise<number> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const today = startOfDay(new Date());
+  const tomorrow = addDays(today, 1);
   return await usageLogRepository.getTotalTokens(userId, today, tomorrow);
 }
 
@@ -67,10 +66,8 @@ export async function getDailyTokensUsed(userId: string): Promise<number> {
  * @returns Total cost in USD
  */
 export async function getDailyCost(userId: string): Promise<number> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const today = startOfDay(new Date());
+  const tomorrow = addDays(today, 1);
   return await usageLogRepository.getTotalCost(userId, today, tomorrow);
 }
 

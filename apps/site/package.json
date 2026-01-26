@@ -15,6 +15,7 @@
     "@int/schema": "workspace:*",
     "@int/ui": "workspace:*",
     "@pinia/nuxt": "catalog:",
+    "date-fns": "catalog:",
     "nuxt": "catalog:",
     "pinia": "catalog:"
   },

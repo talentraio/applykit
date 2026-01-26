@@ -19,6 +19,7 @@
     "@pinia/nuxt": "catalog:",
     "@vercel/blob": "catalog:",
     "better-sqlite3": "catalog:",
+    "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
     "h3-formidable": "catalog:",
     "mammoth": "catalog:",

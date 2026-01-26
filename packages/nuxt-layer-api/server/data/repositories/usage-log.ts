@@ -1,5 +1,6 @@
 import type { Operation, ProviderType } from '@int/schema';
 import type { UsageLog } from '../schema';
+import { startOfDay, subDays } from 'date-fns';
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { usageLogs } from '../schema';
@@ -48,8 +49,7 @@ export const usageLogRepository = {
    * Used for rate limiting (check daily limits)
    */
   async getDailyCount(userId: string, operation: Operation): Promise<number> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfDay(new Date());
 
     const result = await db
       .select({ count: sql<number>`count(*)` })
@@ -132,8 +132,7 @@ export const usageLogRepository = {
    * Analytics: how many parse/generate/export operations
    */
   async getOperationBreakdown(userId: string, days = 30): Promise<Record<Operation, number>> {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    const startDate = subDays(new Date(), days);
 
     const result = await db
       .select({
@@ -165,8 +164,7 @@ export const usageLogRepository = {
     userId: string,
     days = 30
   ): Promise<{ platform: number; byok: number }> {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    const startDate = subDays(new Date(), days);
 
     const result = await db
       .select({
@@ -191,8 +189,7 @@ export const usageLogRepository = {
    * Keep logs for compliance/billing period (e.g., 1 year)
    */
   async deleteOlderThan(days: number): Promise<number> {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffDate = subDays(new Date(), days);
 
     const result = await db
       .delete(usageLogs)

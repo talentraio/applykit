@@ -39,6 +39,7 @@
 
 import type { Generation } from '@int/schema';
 import { getDaysUntilExpiration } from '@int/schema';
+import { format, parseISO } from 'date-fns';
 
 defineOptions({ name: 'VacancyLifetimeIndicator' });
 
@@ -51,8 +52,6 @@ type Props = {
   generation: Generation;
 };
 
-const { d } = useI18n();
-
 // Computed days remaining
 const daysRemaining = computed(() => getDaysUntilExpiration(props.generation));
 
@@ -61,8 +60,11 @@ const isExpired = computed(() => daysRemaining.value === 0);
 
 // Formatted expiration date
 const formattedExpirationDate = computed(() => {
-  const date = new Date(props.generation.expiresAt);
-  return d(date, 'short');
+  const resolved =
+    typeof props.generation.expiresAt === 'string'
+      ? parseISO(props.generation.expiresAt)
+      : props.generation.expiresAt;
+  return format(resolved, 'MMM d, yyyy');
 });
 
 // Icon and color based on days remaining
