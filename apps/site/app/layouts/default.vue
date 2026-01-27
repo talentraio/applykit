@@ -1,6 +1,21 @@
 <template>
   <UiAppShell class="site-default-layout">
-    <UDashboardNavbar :title="appTitle" :links="navLinks">
+    <UDashboardNavbar :title="appTitle">
+      <template #left>
+        <div class="flex items-center gap-2">
+          <UButton
+            v-for="link in navLinks"
+            :key="link.to"
+            :to="link.to"
+            :icon="link.icon"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+          >
+            {{ link.label }}
+          </UButton>
+        </div>
+      </template>
       <template #right>
         <UDropdownMenu :items="userMenuItems">
           <UButton

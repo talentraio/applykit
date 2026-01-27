@@ -226,39 +226,41 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model="showDeleteModal">
-      <UCard>
-        <template #header>
-          <div class="flex items-center gap-3">
-            <div
-              class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20"
-            >
-              <UIcon
-                name="i-lucide-alert-triangle"
-                class="h-5 w-5 text-red-600 dark:text-red-400"
-              />
+    <UModal v-model:open="showDeleteModal">
+      <template #content>
+        <UCard>
+          <template #header>
+            <div class="flex items-center gap-3">
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20"
+              >
+                <UIcon
+                  name="i-lucide-alert-triangle"
+                  class="h-5 w-5 text-red-600 dark:text-red-400"
+                />
+              </div>
+              <h3 class="text-lg font-semibold">
+                {{ $t('resume.delete.confirm') }}
+              </h3>
             </div>
-            <h3 class="text-lg font-semibold">
-              {{ $t('resume.delete.confirm') }}
-            </h3>
-          </div>
-        </template>
+          </template>
 
-        <p class="text-muted">
-          {{ $t('resume.delete.description') }}
-        </p>
+          <p class="text-muted">
+            {{ $t('resume.delete.description') }}
+          </p>
 
-        <template #footer>
-          <div class="flex items-center justify-end gap-2">
-            <UButton color="neutral" variant="soft" @click="showDeleteModal = false">
-              {{ $t('common.cancel') }}
-            </UButton>
-            <UButton color="error" :loading="isDeleting" @click="handleDelete">
-              {{ isDeleting ? $t('resume.delete.deleting') : $t('resume.delete.button') }}
-            </UButton>
-          </div>
-        </template>
-      </UCard>
+          <template #footer>
+            <div class="flex items-center justify-end gap-2">
+              <UButton color="neutral" variant="soft" @click="showDeleteModal = false">
+                {{ $t('common.cancel') }}
+              </UButton>
+              <UButton color="error" :loading="isDeleting" @click="handleDelete">
+                {{ isDeleting ? $t('resume.delete.deleting') : $t('resume.delete.button') }}
+              </UButton>
+            </div>
+          </template>
+        </UCard>
+      </template>
     </UModal>
   </div>
 </template>

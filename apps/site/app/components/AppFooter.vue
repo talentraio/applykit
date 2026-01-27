@@ -1,5 +1,5 @@
 <template>
-  <UFooterColumns :links="footerLinks">
+  <UFooterColumns :columns="footerColumns">
     <template #left>
       <p class="text-sm text-muted">
         {{ $t('footer.copyright', { year: currentYear }) }}
@@ -27,7 +27,7 @@ const { t } = useI18n();
 
 const currentYear = new Date().getFullYear();
 
-const footerLinks = computed(() => [
+const footerColumns = computed(() => [
   {
     label: t('footer.product'),
     children: [
