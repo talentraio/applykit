@@ -1,4 +1,5 @@
-import type { Profile, UserPublic } from '@int/schema';
+import type { Profile, Role, UserPublic } from '@int/schema';
+import { USER_ROLE_MAP } from '@int/schema';
 import { authApi } from '@layer/api/app/infrastructure/auth.api';
 
 /**
@@ -47,8 +48,8 @@ export const useApiAuthStore = defineStore('ApiAuthStore', {
     /**
      * Get user role (defaults to 'public' if not authenticated)
      */
-    userRole: (state): 'super_admin' | 'friend' | 'public' => {
-      return state.user?.role ?? 'public';
+    userRole: (state): Role => {
+      return state.user?.role ?? USER_ROLE_MAP.PUBLIC;
     }
   },
 

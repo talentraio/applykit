@@ -1,4 +1,5 @@
 import type { User } from '@int/schema';
+import { USER_ROLE_MAP } from '@int/schema';
 
 /**
  * Admin Middleware
@@ -14,7 +15,7 @@ import type { User } from '@int/schema';
  * Check if user has super_admin role
  */
 function isSuperAdmin(user: User | undefined): boolean {
-  return user?.role === 'super_admin';
+  return user?.role === USER_ROLE_MAP.SUPER_ADMIN;
 }
 
 export default defineEventHandler(async event => {

@@ -1,5 +1,6 @@
-import type { LLMProvider } from '@int/schema';
+import type { LLMProvider, ProviderType } from '@int/schema';
 import type { ILLMProvider, LLMRequest, LLMResponse } from './types';
+import { LLM_PROVIDER_MAP, PLATFORM_PROVIDER_MAP, PROVIDER_TYPE_MAP } from '@int/schema';
 import { systemConfigRepository } from '../../data/repositories';
 import { createGeminiProvider } from './providers/gemini';
 import { createOpenAIProvider } from './providers/openai';
@@ -29,8 +30,8 @@ const providers: Map<LLMProvider, ILLMProvider> = new Map();
  */
 const initProviders = (): void => {
   if (providers.size === 0) {
-    providers.set('openai', createOpenAIProvider());
-    providers.set('gemini', createGeminiProvider());
+    providers.set(LLM_PROVIDER_MAP.OPENAI, createOpenAIProvider());
+    providers.set(LLM_PROVIDER_MAP.GEMINI, createGeminiProvider());
   }
 };
 
@@ -54,9 +55,9 @@ export function getProvider(provider: LLMProvider): ILLMProvider {
 function getPlatformKey(provider: LLMProvider): string | undefined {
   const runtimeConfig = useRuntimeConfig();
 
-  if (provider === 'openai') {
+  if (provider === LLM_PROVIDER_MAP.OPENAI) {
     return runtimeConfig.llm?.openaiApiKey;
-  } else if (provider === 'gemini') {
+  } else if (provider === LLM_PROVIDER_MAP.GEMINI) {
     return runtimeConfig.llm?.geminiApiKey;
   }
   return undefined;
@@ -106,11 +107,11 @@ export async function callLLM(
   // Determine provider and key
   let provider: LLMProvider;
   let apiKey: string;
-  let providerType: 'platform' | 'byok';
+  let providerType: ProviderType;
 
   if (options?.userApiKey && !options?.forcePlatform) {
     // BYOK: User provided their own key
-    const resolvedProvider = options.provider || 'openai';
+    const resolvedProvider = options.provider || LLM_PROVIDER_MAP.OPENAI;
     const byokEnabled = await systemConfigRepository.isBYOKEnabled();
 
     if (!byokEnabled) {
@@ -119,7 +120,7 @@ export async function callLLM(
 
     provider = resolvedProvider;
     apiKey = options.userApiKey;
-    providerType = 'byok';
+    providerType = PROVIDER_TYPE_MAP.BYOK;
   } else {
     // Platform: Use system configuration
     const config = await systemConfigRepository.canUsePlatformLLM();
@@ -127,7 +128,7 @@ export async function callLLM(
     if (!config.allowed) {
       throw new LLMError(
         config.reason || 'Platform LLM is not available',
-        'openai',
+        LLM_PROVIDER_MAP.OPENAI,
         'PLATFORM_UNAVAILABLE'
       );
     }
@@ -136,7 +137,9 @@ export async function callLLM(
     const preferredProvider = await systemConfigRepository.getPlatformProvider();
     // Map gemini_flash to gemini for LLM provider type
     const mappedProvider: LLMProvider =
-      preferredProvider === 'gemini_flash' ? 'gemini' : preferredProvider;
+      preferredProvider === PLATFORM_PROVIDER_MAP.GEMINI_FLASH
+        ? LLM_PROVIDER_MAP.GEMINI
+        : preferredProvider;
     provider = options?.provider || mappedProvider;
 
     // Get platform key
@@ -150,7 +153,7 @@ export async function callLLM(
     }
 
     apiKey = platformKey;
-    providerType = 'platform';
+    providerType = PROVIDER_TYPE_MAP.PLATFORM;
   }
 
   // Get provider instance and call
@@ -160,7 +163,7 @@ export async function callLLM(
     const response = await providerInstance.call(request, apiKey, providerType);
 
     // If using platform LLM, increment budget
-    if (providerType === 'platform') {
+    if (providerType === PROVIDER_TYPE_MAP.PLATFORM) {
       await systemConfigRepository.incrementBudgetUsed(response.cost);
     }
 

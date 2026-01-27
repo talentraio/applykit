@@ -1,4 +1,5 @@
 import type { Operation, ProviderType } from '@int/schema';
+import { OPERATION_MAP } from '@int/schema';
 import { addDays, startOfDay } from 'date-fns';
 import { usageLogRepository } from '../data/repositories';
 
@@ -96,7 +97,7 @@ export async function logParse(
   tokensUsed?: number,
   cost?: number
 ): Promise<void> {
-  await logUsage(userId, 'parse', providerType, tokensUsed, cost);
+  await logUsage(userId, OPERATION_MAP.PARSE, providerType, tokensUsed, cost);
 }
 
 /**
@@ -108,7 +109,7 @@ export async function logGenerate(
   tokensUsed?: number,
   cost?: number
 ): Promise<void> {
-  await logUsage(userId, 'generate', providerType, tokensUsed, cost);
+  await logUsage(userId, OPERATION_MAP.GENERATE, providerType, tokensUsed, cost);
 }
 
 /**
@@ -120,5 +121,5 @@ export async function logExport(
   tokensUsed?: number,
   cost?: number
 ): Promise<void> {
-  await logUsage(userId, 'export', providerType, tokensUsed, cost);
+  await logUsage(userId, OPERATION_MAP.EXPORT, providerType, tokensUsed, cost);
 }

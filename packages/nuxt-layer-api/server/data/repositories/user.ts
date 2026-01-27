@@ -1,5 +1,6 @@
 import type { Role } from '@int/schema';
 import type { NewUser, User } from '../schema';
+import { USER_ROLE_MAP } from '@int/schema';
 import { desc, eq, like, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { users } from '../schema';
@@ -47,7 +48,7 @@ export const userRepository = {
       .values({
         email: data.email,
         googleId: data.googleId,
-        role: data.role ?? 'public'
+        role: data.role ?? USER_ROLE_MAP.PUBLIC
       })
       .returning();
     return result[0]!;

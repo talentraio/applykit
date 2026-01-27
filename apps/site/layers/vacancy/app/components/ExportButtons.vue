@@ -5,18 +5,18 @@
       icon="i-lucide-file-down"
       :loading="isExportingAts"
       :disabled="isDisabled"
-      @click="handleExport('ats')"
+      @click="handleExport(atsFormat)"
     >
-      {{ getButtonLabel('ats') }}
+      {{ getButtonLabel(atsFormat) }}
     </UButton>
     <UButton
       variant="outline"
       icon="i-lucide-file-down"
       :loading="isExportingHuman"
       :disabled="isDisabled"
-      @click="handleExport('human')"
+      @click="handleExport(humanFormat)"
     >
-      {{ getButtonLabel('human') }}
+      {{ getButtonLabel(humanFormat) }}
     </UButton>
   </div>
 </template>
@@ -32,6 +32,7 @@
  */
 
 import type { ExportFormat } from '@int/schema';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 
 defineOptions({ name: 'VacancyExportButtons' });
 
@@ -52,14 +53,16 @@ const { t } = useI18n();
 const toast = useToast();
 
 const exportingFormat = ref<ExportFormat | null>(null);
+const atsFormat = EXPORT_FORMAT_MAP.ATS;
+const humanFormat = EXPORT_FORMAT_MAP.HUMAN;
 
-const isExportingAts = computed(() => exportingFormat.value === 'ats');
-const isExportingHuman = computed(() => exportingFormat.value === 'human');
+const isExportingAts = computed(() => exportingFormat.value === atsFormat);
+const isExportingHuman = computed(() => exportingFormat.value === humanFormat);
 const isDisabled = computed(() => props.disabled || exportingFormat.value !== null);
 
 const getButtonLabel = (format: ExportFormat) => {
   if (exportingFormat.value === format) return t('export.inProgress');
-  return format === 'ats' ? t('export.button.ats') : t('export.button.human');
+  return format === atsFormat ? t('export.button.ats') : t('export.button.human');
 };
 
 const getErrorStatus = (error: unknown) => {
@@ -108,7 +111,7 @@ const handleExport = async (format: ExportFormat) => {
 
     toast.add({
       title: t('export.success'),
-      description: format === 'ats' ? t('export.format.ats') : t('export.format.human'),
+      description: format === atsFormat ? t('export.format.ats') : t('export.format.human'),
       color: 'success'
     });
   } catch (error) {

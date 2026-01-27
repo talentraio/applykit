@@ -111,6 +111,9 @@
  * TR012 - Created as part of ProfileForm decomposition
  */
 
+import type { WorkFormat } from '@int/schema';
+import { WORK_FORMAT_MAP } from '@int/schema';
+
 defineOptions({ name: 'UserProfileFormSectionBasic' });
 
 const props = defineProps<{
@@ -127,7 +130,7 @@ type BasicData = {
   email: string;
   country: string;
   searchRegion: string;
-  workFormat: 'remote' | 'hybrid' | 'onsite';
+  workFormat: WorkFormat;
 };
 
 const { t } = useI18n();
@@ -135,9 +138,9 @@ const { t } = useI18n();
 type WorkFormatOption = { label: string; value: BasicData['workFormat'] };
 
 const workFormatOptions = computed<WorkFormatOption[]>(() => [
-  { label: t('profile.form.workFormatOptions.remote'), value: 'remote' },
-  { label: t('profile.form.workFormatOptions.onsite'), value: 'onsite' },
-  { label: t('profile.form.workFormatOptions.hybrid'), value: 'hybrid' }
+  { label: t('profile.form.workFormatOptions.remote'), value: WORK_FORMAT_MAP.REMOTE },
+  { label: t('profile.form.workFormatOptions.onsite'), value: WORK_FORMAT_MAP.ONSITE },
+  { label: t('profile.form.workFormatOptions.hybrid'), value: WORK_FORMAT_MAP.HYBRID }
 ]);
 
 const update = <K extends keyof BasicData>(key: K, value: BasicData[K] | null) => {
@@ -146,8 +149,10 @@ const update = <K extends keyof BasicData>(key: K, value: BasicData[K] | null) =
   emit('update:modelValue', { ...props.modelValue, [key]: value });
 };
 
-const isValidWorkFormat = (value: unknown): value is 'remote' | 'hybrid' | 'onsite' => {
-  return typeof value === 'string' && ['remote', 'hybrid', 'onsite'].includes(value);
+const workFormatValues: ReadonlyArray<WorkFormat> = Object.values(WORK_FORMAT_MAP);
+
+const isValidWorkFormat = (value: unknown): value is WorkFormat => {
+  return workFormatValues.includes(value);
 };
 
 const handleWorkFormatUpdate = (value: unknown) => {

@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { RoleSchema } from '@int/schema';
+import { RoleSchema, USER_ROLE_MAP } from '@int/schema';
 import Database from 'better-sqlite3';
 import { z } from 'zod';
 
@@ -144,6 +144,6 @@ function printUsage(): void {
   console.log('   or: pnpm --filter @int/api db:set-role -- <email> <role>');
   console.log('Options:');
   console.log('  --email, -e  User email');
-  console.log('  --role, -r   Role: super_admin | friend | public');
+  console.log(`  --role, -r   Role: ${Object.values(USER_ROLE_MAP).join(' | ')}`);
   console.log('  --db         Path to SQLite database (optional)');
 }

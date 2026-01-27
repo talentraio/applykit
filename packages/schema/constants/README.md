@@ -4,10 +4,10 @@ Shared constant values used across schemas and application layers.
 
 ## Enums
 
-`enums.ts` exports typed constant arrays used by Zod enums and application code.
+`enums.ts` exports typed constant objects maps used by Zod nativeEnum and application code.
 
 Example:
 
 ```
-import { ROLE_VALUES } from '@int/schema';
+import { USER_ROLE_MAP } from '@int/schema';
 ```

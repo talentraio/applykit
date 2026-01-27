@@ -1,6 +1,7 @@
-import type { ResumeContent } from '@int/schema';
+import type { ExportFormat, ResumeContent } from '@int/schema';
 import type { Buffer } from 'node:buffer';
 import type { Page } from 'playwright-core';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 import { chromium } from 'playwright-core';
 
 /**
@@ -11,11 +12,6 @@ import { chromium } from 'playwright-core';
  *
  * Related: T115 (US6)
  */
-
-/**
- * Export format type
- */
-export type ExportFormat = 'ats' | 'human';
 
 /**
  * Export options
@@ -556,7 +552,9 @@ export async function exportResumeToPDF(
 
     // Generate HTML based on format
     const html =
-      format === 'ats' ? generateATSHtml(content, title) : generateHumanHtml(content, title);
+      format === EXPORT_FORMAT_MAP.ATS
+        ? generateATSHtml(content, title)
+        : generateHumanHtml(content, title);
 
     // Set content
     await page.setContent(html, {
@@ -587,7 +585,7 @@ export async function exportResumeToPDF(
 
     // Generate filename
     const sanitizedName = content.personalInfo.fullName.replace(/[^a-z0-9]/gi, '_');
-    const formatSuffix = format === 'ats' ? 'ATS' : 'Human';
+    const formatSuffix = format === EXPORT_FORMAT_MAP.ATS ? 'ATS' : 'Human';
     const filename = `${sanitizedName}_Resume_${formatSuffix}.pdf`;
 
     return {

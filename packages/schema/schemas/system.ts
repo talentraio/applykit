@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PLATFORM_PROVIDER_MAP } from '../constants/enums';
 import { PlatformProviderSchema } from './enums';
 
 export { type PlatformProvider, PlatformProviderSchema } from './enums';
@@ -26,7 +27,7 @@ export const SystemConfigValues = {
 export const SystemConfigDefaults: Record<SystemConfigKey, unknown> = {
   platform_llm_enabled: true,
   byok_enabled: true,
-  platform_provider: 'openai',
+  platform_provider: PLATFORM_PROVIDER_MAP.OPENAI,
   global_budget_cap: 100, // $100/month
   global_budget_used: 0
 };

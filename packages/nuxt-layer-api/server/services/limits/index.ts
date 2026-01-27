@@ -1,4 +1,5 @@
 import type { Operation, Role } from '@int/schema';
+import { OPERATION_VALUES, USER_ROLE_MAP } from '@int/schema';
 import { getDailyUsageCount } from '../../utils/usage';
 
 /**
@@ -19,17 +20,17 @@ import { getDailyUsageCount } from '../../utils/usage';
  * Daily operation limits by role
  */
 const DAILY_LIMITS: Record<Role, Record<Operation, number>> = {
-  public: {
+  [USER_ROLE_MAP.PUBLIC]: {
     parse: 3,
     generate: 2,
     export: 5
   },
-  friend: {
+  [USER_ROLE_MAP.FRIEND]: {
     parse: 10,
     generate: 8,
     export: 20
   },
-  super_admin: {
+  [USER_ROLE_MAP.SUPER_ADMIN]: {
     parse: Number.POSITIVE_INFINITY,
     generate: Number.POSITIVE_INFINITY,
     export: Number.POSITIVE_INFINITY
@@ -50,7 +51,7 @@ export async function checkLimit(
   role: Role
 ): Promise<boolean> {
   // Super admin has no limits
-  if (role === 'super_admin') {
+  if (role === USER_ROLE_MAP.SUPER_ADMIN) {
     return true;
   }
 
@@ -74,7 +75,7 @@ export async function getRemainingLimit(
   role: Role
 ): Promise<number> {
   // Super admin has effectively unlimited
-  if (role === 'super_admin') {
+  if (role === USER_ROLE_MAP.SUPER_ADMIN) {
     return Number.POSITIVE_INFINITY;
   }
 
@@ -167,7 +168,7 @@ export async function getUsageSummary(
   }>;
   resetAt: string;
 }> {
-  const operations: Operation[] = ['parse', 'generate', 'export'];
+  const operations: Operation[] = [...OPERATION_VALUES];
 
   const operationStats = await Promise.all(
     operations.map(async operation => {

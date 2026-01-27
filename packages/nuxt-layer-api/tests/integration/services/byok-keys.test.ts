@@ -1,4 +1,5 @@
 import type { LLMProvider } from '@int/schema';
+import { LLM_PROVIDER_MAP } from '@int/schema';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -79,7 +80,7 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
   describe('key metadata storage (hint only)', () => {
     it('should store only the last 4 characters as hint', async () => {
       const userId = 'test-user-1';
-      const provider: LLMProvider = 'openai';
+      const provider: LLMProvider = LLM_PROVIDER_MAP.OPENAI;
       const _fullKey = 'sk-proj-1234567890abcdefghijklmnopqrstuvwxyz';
       const expectedHint = 'wxyz'; // last 4 chars
 
@@ -100,18 +101,18 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
     it('should allow multiple keys for different providers', async () => {
       const userId = 'test-user-multi';
 
-      await keyService.storeKeyMetadata(userId, 'openai', 'abcd');
-      await keyService.storeKeyMetadata(userId, 'gemini', 'wxyz');
+      await keyService.storeKeyMetadata(userId, LLM_PROVIDER_MAP.OPENAI, 'abcd');
+      await keyService.storeKeyMetadata(userId, LLM_PROVIDER_MAP.GEMINI, 'wxyz');
 
       const keys = await keyService.listUserKeys(userId);
       expect(keys).toHaveLength(2);
-      expect(keys.find(k => k.provider === 'openai')).toBeDefined();
-      expect(keys.find(k => k.provider === 'gemini')).toBeDefined();
+      expect(keys.find(k => k.provider === LLM_PROVIDER_MAP.OPENAI)).toBeDefined();
+      expect(keys.find(k => k.provider === LLM_PROVIDER_MAP.GEMINI)).toBeDefined();
     });
 
     it('should replace existing key for same provider', async () => {
       const userId = 'test-user-replace';
-      const provider: LLMProvider = 'openai';
+      const provider: LLMProvider = LLM_PROVIDER_MAP.OPENAI;
 
       // Store first key
       await keyService.storeKeyMetadata(userId, provider, 'aaaa');
@@ -125,7 +126,7 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
 
       // Should still have only one key for this provider
       const keys = await keyService.listUserKeys(userId);
-      const openaiKeys = keys.filter(k => k.provider === 'openai');
+      const openaiKeys = keys.filter(k => k.provider === LLM_PROVIDER_MAP.OPENAI);
       expect(openaiKeys).toHaveLength(1);
     });
   });
@@ -133,7 +134,7 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
   describe('key deletion', () => {
     it('should delete key metadata', async () => {
       const userId = 'test-user-delete';
-      const provider: LLMProvider = 'openai';
+      const provider: LLMProvider = LLM_PROVIDER_MAP.OPENAI;
 
       const keyId = await keyService.storeKeyMetadata(userId, provider, 'test');
       expect(await keyService.getKeyMetadata(userId, provider)).toBeTruthy();
@@ -146,7 +147,7 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
       const user1 = 'test-user-1';
       const user2 = 'test-user-2';
 
-      const keyId = await keyService.storeKeyMetadata(user1, 'openai', 'test');
+      const keyId = await keyService.storeKeyMetadata(user1, LLM_PROVIDER_MAP.OPENAI, 'test');
 
       // User 2 trying to delete user 1's key should fail
       await expect(keyService.deleteKeyMetadata(user2, keyId)).rejects.toThrow(
@@ -161,7 +162,7 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
       const _fullKey = 'sk-proj-very-secret-key-1234567890';
       const hint = '7890';
 
-      await keyService.storeKeyMetadata(userId, 'openai', hint);
+      await keyService.storeKeyMetadata(userId, LLM_PROVIDER_MAP.OPENAI, hint);
 
       // TODO: When database layer is implemented, verify:
       // 1. Database record does NOT contain full key
@@ -190,7 +191,7 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
       const validKey = 'sk-proj-test-key-1234567890';
 
       // Mock validation (actual would make API call)
-      const isValid = await llmService.validateKey('openai', validKey);
+      const isValid = await llmService.validateKey(LLM_PROVIDER_MAP.OPENAI, validKey);
 
       // Should validate without logging the key
       expect(isValid).toBeDefined();
@@ -200,7 +201,7 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
     it('should validate Gemini keys without logging them', async () => {
       const validKey = 'AIzaSyTest-Key-1234567890abcdefghijklmnop';
 
-      const isValid = await llmService.validateKey('gemini', validKey);
+      const isValid = await llmService.validateKey(LLM_PROVIDER_MAP.GEMINI, validKey);
 
       expect(isValid).toBeDefined();
       expect(mockLogger.info).not.toHaveBeenCalledWith(expect.stringContaining(validKey));
@@ -209,7 +210,7 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
     it('should handle validation errors without exposing keys', async () => {
       const invalidKey = 'invalid-key';
 
-      await expect(llmService.validateKey('openai', invalidKey)).rejects.toThrow();
+      await expect(llmService.validateKey(LLM_PROVIDER_MAP.OPENAI, invalidKey)).rejects.toThrow();
 
       // Error messages should NOT contain the key
       const errorCalls = mockLogger.error.mock.calls;
@@ -224,7 +225,7 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
       const userKey = 'sk-proj-user-key-1234567890';
       const prompt = 'Test prompt';
 
-      const result = await llmService.callLLM('openai', userKey, prompt);
+      const result = await llmService.callLLM(LLM_PROVIDER_MAP.OPENAI, userKey, prompt);
 
       expect(result).toHaveProperty('result');
       expect(result).toHaveProperty('tokensUsed');
@@ -264,9 +265,9 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
 
     it('should not expose keys in API responses', async () => {
       const userId = 'test-user-api';
-      await keyService.storeKeyMetadata(userId, 'openai', 'test');
+      await keyService.storeKeyMetadata(userId, LLM_PROVIDER_MAP.OPENAI, 'test');
 
-      const metadata = await keyService.getKeyMetadata(userId, 'openai');
+      const metadata = await keyService.getKeyMetadata(userId, LLM_PROVIDER_MAP.OPENAI);
 
       // Response should only contain hint, not full key
       expect(metadata).toHaveProperty('keyHint');
@@ -282,11 +283,11 @@ describe.skip('bYOK Key Handling Integration Tests', () => {
       const invalidKey = 'sk-proj-invalid-key-0987654321';
 
       const start1 = Date.now();
-      await llmService.validateKey('openai', validKey).catch(() => {});
+      await llmService.validateKey(LLM_PROVIDER_MAP.OPENAI, validKey).catch(() => {});
       const time1 = Date.now() - start1;
 
       const start2 = Date.now();
-      await llmService.validateKey('openai', invalidKey).catch(() => {});
+      await llmService.validateKey(LLM_PROVIDER_MAP.OPENAI, invalidKey).catch(() => {});
       const time2 = Date.now() - start2;
 
       // Times should be roughly similar (within 20% variance)

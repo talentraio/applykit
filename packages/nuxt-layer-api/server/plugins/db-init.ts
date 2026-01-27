@@ -2,6 +2,15 @@ import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import process from 'node:process';
+import {
+  LLM_PROVIDER_MAP,
+  OPERATION_MAP,
+  PLATFORM_PROVIDER_MAP,
+  PROVIDER_TYPE_MAP,
+  SOURCE_FILE_TYPE_MAP,
+  USER_ROLE_MAP,
+  WORK_FORMAT_MAP
+} from '@int/schema';
 import Database from 'better-sqlite3';
 
 /**
@@ -45,6 +54,24 @@ export default defineNitroPlugin(async () => {
   console.warn(`Initializing SQLite database at ${dbPath}...`);
 
   const db = new Database(dbPath);
+  const roleCheckList = Object.values(USER_ROLE_MAP)
+    .map(role => `'${role}'`)
+    .join(', ');
+  const workFormatCheckList = Object.values(WORK_FORMAT_MAP)
+    .map(format => `'${format}'`)
+    .join(', ');
+  const sourceFileTypeCheckList = Object.values(SOURCE_FILE_TYPE_MAP)
+    .map(type => `'${type}'`)
+    .join(', ');
+  const llmProviderCheckList = Object.values(LLM_PROVIDER_MAP)
+    .map(provider => `'${provider}'`)
+    .join(', ');
+  const operationCheckList = Object.values(OPERATION_MAP)
+    .map(operation => `'${operation}'`)
+    .join(', ');
+  const providerTypeCheckList = Object.values(PROVIDER_TYPE_MAP)
+    .map(type => `'${type}'`)
+    .join(', ');
 
   try {
     db.exec(`
@@ -53,7 +80,7 @@ export default defineNitroPlugin(async () => {
         id TEXT PRIMARY KEY,
         email TEXT NOT NULL UNIQUE,
         google_id TEXT NOT NULL UNIQUE,
-        role TEXT NOT NULL DEFAULT 'public' CHECK(role IN ('super_admin', 'friend', 'public')),
+        role TEXT NOT NULL DEFAULT '${USER_ROLE_MAP.PUBLIC}' CHECK(role IN (${roleCheckList})),
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
@@ -67,7 +94,7 @@ export default defineNitroPlugin(async () => {
         email TEXT NOT NULL,
         country TEXT NOT NULL,
         search_region TEXT NOT NULL,
-        work_format TEXT NOT NULL CHECK(work_format IN ('remote', 'hybrid', 'onsite')),
+        work_format TEXT NOT NULL CHECK(work_format IN (${workFormatCheckList})),
         languages TEXT NOT NULL,
         phones TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -81,7 +108,7 @@ export default defineNitroPlugin(async () => {
         title TEXT NOT NULL,
         content TEXT NOT NULL,
         source_file_name TEXT NOT NULL,
-        source_file_type TEXT NOT NULL CHECK(source_file_type IN ('docx', 'pdf')),
+        source_file_type TEXT NOT NULL CHECK(source_file_type IN (${sourceFileTypeCheckList})),
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
@@ -123,7 +150,7 @@ export default defineNitroPlugin(async () => {
       CREATE TABLE IF NOT EXISTS llm_keys (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        provider TEXT NOT NULL CHECK(provider IN ('openai', 'gemini')),
+        provider TEXT NOT NULL CHECK(provider IN (${llmProviderCheckList})),
         key_hint TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         UNIQUE(user_id, provider)
@@ -134,8 +161,8 @@ export default defineNitroPlugin(async () => {
       CREATE TABLE IF NOT EXISTS usage_logs (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        operation TEXT NOT NULL CHECK(operation IN ('parse', 'generate', 'export')),
-        provider_type TEXT NOT NULL CHECK(provider_type IN ('platform', 'byok')),
+        operation TEXT NOT NULL CHECK(operation IN (${operationCheckList})),
+        provider_type TEXT NOT NULL CHECK(provider_type IN (${providerTypeCheckList})),
         tokens_used INTEGER,
         cost REAL,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -155,7 +182,7 @@ export default defineNitroPlugin(async () => {
       INSERT OR IGNORE INTO system_configs (key, value) VALUES
         ('platform_llm_enabled', 'true'),
         ('byok_enabled', 'true'),
-        ('platform_provider', '"openai"'),
+        ('platform_provider', '${JSON.stringify(PLATFORM_PROVIDER_MAP.OPENAI)}'),
         ('global_budget_cap', '100'),
         ('global_budget_used', '0');
     `);

@@ -1,4 +1,5 @@
 import type { ExportFormat, Role } from '@int/schema';
+import { EXPORT_FORMAT_MAP, OPERATION_MAP, PROVIDER_TYPE_MAP, USER_ROLE_MAP } from '@int/schema';
 import { generationRepository, vacancyRepository } from '../../../data/repositories';
 import { exportResumeToPDF } from '../../../services/export/pdf';
 import { requireLimit } from '../../../services/limits';
@@ -27,8 +28,8 @@ import { logExport } from '../../../utils/usage';
 export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event);
-  const userId = (session.user as { id: string }).id;
-  const userRole = ((session.user as { role?: string }).role || 'public') as Role;
+  const userId = session.user.id;
+  const userRole: Role = session.user.role ?? USER_ROLE_MAP.PUBLIC;
 
   // Get vacancy ID from route params
   const vacancyId = getRouterParam(event, 'id');
@@ -40,7 +41,7 @@ export default defineEventHandler(async event => {
   }
 
   // Check rate limit for export operation
-  await requireLimit(userId, 'export', userRole);
+  await requireLimit(userId, OPERATION_MAP.EXPORT, userRole);
 
   // Verify vacancy belongs to user
   const vacancy = await vacancyRepository.findById(vacancyId);
@@ -63,14 +64,14 @@ export default defineEventHandler(async event => {
   const { format, generationId } = body;
 
   // Validate format
-  if (!format || (format !== 'ats' && format !== 'human')) {
+  if (!isExportFormat(format)) {
     throw createError({
       statusCode: 400,
       message: 'Export format is required and must be "ats" or "human"'
     });
   }
 
-  const exportFormat = format as ExportFormat;
+  const exportFormat = format;
 
   // Get generation
   let generation;
@@ -132,7 +133,7 @@ export default defineEventHandler(async event => {
     });
 
     // Log usage
-    await logExport(userId, 'platform', pdfResult.size);
+    await logExport(userId, PROVIDER_TYPE_MAP.PLATFORM, pdfResult.size);
 
     // Return download URL and metadata
     return {
@@ -161,3 +162,9 @@ export default defineEventHandler(async event => {
     });
   }
 });
+
+const exportFormatValues: ReadonlyArray<ExportFormat> = Object.values(EXPORT_FORMAT_MAP);
+
+function isExportFormat(value: unknown): value is ExportFormat {
+  return exportFormatValues.includes(value);
+}

@@ -1,5 +1,14 @@
 import type { LanguageEntry, PhoneEntry, ResumeContent } from '@int/schema';
 import {
+  LLM_PROVIDER_VALUES,
+  OPERATION_VALUES,
+  PROVIDER_TYPE_VALUES,
+  SOURCE_FILE_TYPE_VALUES,
+  USER_ROLE_MAP,
+  USER_ROLE_VALUES,
+  WORK_FORMAT_VALUES
+} from '@int/schema';
+import {
   decimal,
   index,
   integer,
@@ -24,12 +33,12 @@ import {
 // Enums
 // ============================================================================
 
-export const roleEnum = pgEnum('role', ['super_admin', 'friend', 'public']);
-export const workFormatEnum = pgEnum('work_format', ['remote', 'hybrid', 'onsite']);
-export const sourceFileTypeEnum = pgEnum('source_file_type', ['docx', 'pdf']);
-export const llmProviderEnum = pgEnum('llm_provider', ['openai', 'gemini']);
-export const operationEnum = pgEnum('operation', ['parse', 'generate', 'export']);
-export const providerTypeEnum = pgEnum('provider_type', ['platform', 'byok']);
+export const roleEnum = pgEnum('role', USER_ROLE_VALUES);
+export const workFormatEnum = pgEnum('work_format', WORK_FORMAT_VALUES);
+export const sourceFileTypeEnum = pgEnum('source_file_type', SOURCE_FILE_TYPE_VALUES);
+export const llmProviderEnum = pgEnum('llm_provider', LLM_PROVIDER_VALUES);
+export const operationEnum = pgEnum('operation', OPERATION_VALUES);
+export const providerTypeEnum = pgEnum('provider_type', PROVIDER_TYPE_VALUES);
 
 // ============================================================================
 // Tables
@@ -43,7 +52,7 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   googleId: varchar('google_id', { length: 255 }).notNull().unique(),
-  role: roleEnum('role').notNull().default('public'),
+  role: roleEnum('role').notNull().default(USER_ROLE_MAP.PUBLIC),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
 });

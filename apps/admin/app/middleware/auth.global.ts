@@ -1,3 +1,5 @@
+import { USER_ROLE_MAP } from '@int/schema';
+
 /**
  * Admin Authentication Middleware
  *
@@ -40,7 +42,7 @@ export default defineNuxtRouteMiddleware(async to => {
   }
 
   // Authenticated but not super_admin - deny access
-  if (user.role !== 'super_admin') {
+  if (user.role !== USER_ROLE_MAP.SUPER_ADMIN) {
     return abortNavigation({
       statusCode: 403,
       message: 'Access denied. Super admin role required.'

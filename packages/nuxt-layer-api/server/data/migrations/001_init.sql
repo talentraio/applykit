@@ -7,6 +7,7 @@
 
 -- ============================================================================
 -- Enums
+-- NOTE: Keep enum values in sync with @int/schema constants (packages/schema/constants/enums.ts)
 -- ============================================================================
 
 CREATE TYPE role AS ENUM ('super_admin', 'friend', 'public');
@@ -26,6 +27,7 @@ CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) NOT NULL UNIQUE,
   google_id VARCHAR(255) NOT NULL UNIQUE,
+  -- Keep default role in sync with @int/schema USER_ROLE_MAP.PUBLIC
   role role NOT NULL DEFAULT 'public',
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()

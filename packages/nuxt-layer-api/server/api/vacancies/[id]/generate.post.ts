@@ -1,4 +1,5 @@
 import type { Role } from '@int/schema';
+import { OPERATION_MAP, PROVIDER_TYPE_MAP, USER_ROLE_MAP } from '@int/schema';
 import {
   generationRepository,
   resumeRepository,
@@ -27,8 +28,8 @@ import { logGenerate } from '../../../utils/usage';
 export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event);
-  const userId = (session.user as { id: string }).id;
-  const userRole = ((session.user as { role?: string }).role || 'public') as Role;
+  const userId = session.user.id;
+  const userRole: Role = session.user.role ?? USER_ROLE_MAP.PUBLIC;
 
   // Get vacancy ID from route params
   const vacancyId = getRouterParam(event, 'id');
@@ -40,7 +41,7 @@ export default defineEventHandler(async event => {
   }
 
   // Check rate limit for generate operation
-  await requireLimit(userId, 'generate', userRole);
+  await requireLimit(userId, OPERATION_MAP.GENERATE, userRole);
 
   // Verify vacancy belongs to user
   const vacancy = await vacancyRepository.findById(vacancyId);
@@ -130,7 +131,12 @@ export default defineEventHandler(async event => {
     });
 
     // Log usage
-    await logGenerate(userId, userApiKey ? 'byok' : 'platform', result.tokensUsed, result.cost);
+    await logGenerate(
+      userId,
+      userApiKey ? PROVIDER_TYPE_MAP.BYOK : PROVIDER_TYPE_MAP.PLATFORM,
+      result.tokensUsed,
+      result.cost
+    );
 
     return generation;
   } catch (error) {

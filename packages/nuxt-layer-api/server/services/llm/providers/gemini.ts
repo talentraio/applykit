@@ -1,5 +1,7 @@
+import type { ProviderType } from '@int/schema';
 import type { ILLMProvider, LLMRequest, LLMResponse } from '../types';
 import { GoogleGenAI } from '@google/genai';
+import { LLM_PROVIDER_MAP } from '@int/schema';
 import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '../types';
 
 /**
@@ -34,7 +36,7 @@ const DEFAULT_MODEL = 'gemini-2.0-flash';
  * Gemini LLM Provider Implementation
  */
 export class GeminiProvider implements ILLMProvider {
-  readonly name = 'gemini' as const;
+  readonly name = LLM_PROVIDER_MAP.GEMINI;
 
   /**
    * Validate Gemini API key
@@ -68,7 +70,7 @@ export class GeminiProvider implements ILLMProvider {
   async call(
     request: LLMRequest,
     apiKey: string,
-    providerType: 'platform' | 'byok'
+    providerType: ProviderType
   ): Promise<LLMResponse> {
     const ai = new GoogleGenAI({ apiKey });
     const model = request.model || DEFAULT_MODEL;
@@ -101,7 +103,7 @@ export class GeminiProvider implements ILLMProvider {
         tokensUsed,
         cost,
         model,
-        provider: 'gemini',
+        provider: LLM_PROVIDER_MAP.GEMINI,
         providerType
       };
     } catch (error: any) {
@@ -110,13 +112,17 @@ export class GeminiProvider implements ILLMProvider {
       const message = error?.message || 'Unknown error';
 
       if (status === 401 || status === 403) {
-        throw new LLMAuthError('gemini');
+        throw new LLMAuthError(LLM_PROVIDER_MAP.GEMINI);
       } else if (status === 429) {
-        throw new LLMRateLimitError('gemini');
+        throw new LLMRateLimitError(LLM_PROVIDER_MAP.GEMINI);
       } else if (status === 400 && message.includes('quota')) {
-        throw new LLMQuotaError('gemini');
+        throw new LLMQuotaError(LLM_PROVIDER_MAP.GEMINI);
       } else {
-        throw new LLMError(`Gemini API error: ${message}`, 'gemini', status?.toString());
+        throw new LLMError(
+          `Gemini API error: ${message}`,
+          LLM_PROVIDER_MAP.GEMINI,
+          status?.toString()
+        );
       }
     }
   }

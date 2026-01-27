@@ -1,4 +1,4 @@
-import type { LLMProvider } from '@int/schema';
+import type { LLMProvider, ProviderType } from '@int/schema';
 
 /**
  * LLM Service Types
@@ -72,7 +72,7 @@ export type LLMResponse = {
   /**
    * Whether platform key or BYOK was used
    */
-  providerType: 'platform' | 'byok';
+  providerType: ProviderType;
 };
 
 /**
@@ -103,11 +103,7 @@ export type ILLMProvider = {
    * @param providerType - Whether using platform or BYOK
    * @returns LLM response with content and usage
    */
-  call: (
-    request: LLMRequest,
-    apiKey: string,
-    providerType: 'platform' | 'byok'
-  ) => Promise<LLMResponse>;
+  call: (request: LLMRequest, apiKey: string, providerType: ProviderType) => Promise<LLMResponse>;
 
   /**
    * Get default model for this provider

@@ -1,4 +1,5 @@
 import type { Profile, UserPublic } from '@int/schema';
+import { OPERATION_MAP } from '@int/schema';
 import {
   generationRepository,
   profileRepository,
@@ -72,9 +73,9 @@ export default defineEventHandler(async (event): Promise<AdminUserDetail> => {
       resumeRepository.countByUserId(id),
       vacancyRepository.countByUserId(id),
       generationRepository.countByUserId(id),
-      usageLogRepository.getDailyCount(id, 'parse'),
-      usageLogRepository.getDailyCount(id, 'generate'),
-      usageLogRepository.getDailyCount(id, 'export')
+      usageLogRepository.getDailyCount(id, OPERATION_MAP.PARSE),
+      usageLogRepository.getDailyCount(id, OPERATION_MAP.GENERATE),
+      usageLogRepository.getDailyCount(id, OPERATION_MAP.EXPORT)
     ]);
 
   return {

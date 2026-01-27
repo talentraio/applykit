@@ -1,3 +1,4 @@
+import { USER_ROLE_MAP } from '@int/schema';
 import { getQuery } from 'h3';
 import { decode, hasLeadingSlash, hasProtocol } from 'ufo';
 import { userRepository } from '../../data/repositories';
@@ -39,7 +40,7 @@ export default defineOAuthGoogleEventHandler({
       dbUser = await userRepository.create({
         email,
         googleId,
-        role: 'public'
+        role: USER_ROLE_MAP.PUBLIC
       });
     } else {
       // Existing user - update last login
