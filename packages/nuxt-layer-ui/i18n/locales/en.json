@@ -465,5 +465,85 @@
     "legal": "Legal",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
+  },
+  "landing": {
+    "hero": {
+      "headline": "Tailor your resume to every vacancy — fast.",
+      "subheadline": "Upload a DOCX or PDF, review the structured result, generate ATS + human-friendly versions, and export clean PDFs.",
+      "ctaPrimary": "Continue with Google",
+      "ctaSecondary": "See how it works",
+      "disclaimer": "Free tier available. Bring your own API key if you want higher limits."
+    },
+    "steps": {
+      "title": "How it works",
+      "upload": {
+        "title": "Upload",
+        "description": "Upload your resume in DOCX or PDF format"
+      },
+      "review": {
+        "title": "Review",
+        "description": "Review parsed JSON and fix any missing fields"
+      },
+      "vacancy": {
+        "title": "Add Vacancy",
+        "description": "Add company, position, and job description"
+      },
+      "export": {
+        "title": "Generate & Export",
+        "description": "Generate tailored resumes and export ATS/Human PDFs"
+      }
+    },
+    "comparison": {
+      "title": "ATS vs Human Resume",
+      "subtitle": "ApplyKit keeps the content consistent between both versions — only the presentation changes.",
+      "ats": {
+        "title": "ATS Resume",
+        "point1": "Optimized for parsers (simple structure)",
+        "point2": "No fancy layout, minimal styling",
+        "point3": "Best for mass applications"
+      },
+      "human": {
+        "title": "Human Resume",
+        "point1": "Clean A4 layout, readable typography",
+        "point2": "Optional photo + visual hierarchy",
+        "point3": "Best when recruiter asks for a \"nice PDF\""
+      }
+    },
+    "metrics": {
+      "title": "Your Progress",
+      "vacanciesTracked": "Vacancies tracked",
+      "resumesGenerated": "Resumes generated",
+      "avgMatchScore": "Avg. match score",
+      "bestMatchScore": "Best match score",
+      "timeSaved": "Time saved",
+      "lastGeneration": "Last generation",
+      "placeholder": {
+        "vacanciesTracked": "12",
+        "resumesGenerated": "48",
+        "avgMatchScore": "72%",
+        "bestMatchScore": "89%",
+        "timeSaved": "~3h/week",
+        "lastGeneration": "Today"
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "apiKey": {
+        "question": "Is it safe to paste my API key?",
+        "answer": "You can use the free tier, or bring your own key. Keys are treated as sensitive. Prefer temporary keys."
+      },
+      "atsPlain": {
+        "question": "Why does my ATS resume look plain?",
+        "answer": "That's intentional: ATS parsers prefer predictable structure."
+      },
+      "editing": {
+        "question": "Can I edit the result?",
+        "answer": "Yes — MVP uses a JSON editor. A friendly UI editor comes later."
+      },
+      "formats": {
+        "question": "DOCX or PDF?",
+        "answer": "DOCX is preferred, but PDF parsing is supported too."
+      }
+    }
   }
 }

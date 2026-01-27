@@ -368,11 +368,11 @@ No custom patterns outside Nuxt UI Pro.
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T153 [P] Create landing page in `apps/site/layers/landing/app/pages/index.vue` with marketing content
-- [ ] T154 [P] Create default layout in `apps/site/app/layouts/default.vue` with navigation
-- [ ] T155 [P] Create admin default layout in `apps/admin/app/layouts/default.vue` with admin navigation
-- [ ] T156 Create background cleanup task in `packages/nuxt-layer-api/server/tasks/cleanup.ts` (expired generations, old logs)
-- [ ] T157 Add `vercel.json` with cron job configuration for cleanup task
+- [x] T153 [P] Create landing page in `apps/site/layers/landing/app/pages/index.vue` with marketing content
+- [x] T154 [P] Create default layout in `apps/site/app/layouts/default.vue` with navigation
+- [x] T155 [P] Create admin default layout in `apps/admin/app/layouts/default.vue` with admin navigation
+- [x] T156 Create background cleanup task in `packages/nuxt-layer-api/server/tasks/cleanup.ts` (expired generations, old logs)
+- [x] T157 Add `vercel.json` with cron job configuration for cleanup task
 - [ ] T158 [P] Add common i18n keys to `packages/nuxt-layer-ui/locales/en.json` (common.save, common.cancel, common.delete, common.loading, common.error.generic)
 - [ ] T159 Create error page in `apps/site/app/pages/error.vue`
 - [ ] T160 [P] Create 404 page in `apps/site/app/pages/[...slug].vue`
