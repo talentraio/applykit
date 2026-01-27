@@ -46,11 +46,9 @@ defineOptions({ name: 'SiteErrorPage' });
 
 const props = defineProps<{ error: NuxtError }>();
 
-const statusCode = computed(() => props.error.status || props.error.statusCode || 500);
+const statusCode = computed(() => props.error.statusCode || 500);
 
-const statusText = computed(() => {
-  return props.error.statusText || props.error.statusMessage || '';
-});
+const statusText = computed(() => props.error.statusMessage || '');
 
 const debugMessage = computed(() => {
   if (import.meta.dev && props.error.message) {
