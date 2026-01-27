@@ -166,5 +166,5 @@ export default defineEventHandler(async event => {
 const exportFormatValues: ReadonlyArray<ExportFormat> = Object.values(EXPORT_FORMAT_MAP);
 
 function isExportFormat(value: unknown): value is ExportFormat {
-  return exportFormatValues.includes(value);
+  return typeof value === 'string' && exportFormatValues.includes(value as ExportFormat);
 }

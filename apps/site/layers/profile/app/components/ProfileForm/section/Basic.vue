@@ -152,7 +152,7 @@ const update = <K extends keyof BasicData>(key: K, value: BasicData[K] | null) =
 const workFormatValues: ReadonlyArray<WorkFormat> = Object.values(WORK_FORMAT_MAP);
 
 const isValidWorkFormat = (value: unknown): value is WorkFormat => {
-  return workFormatValues.includes(value);
+  return typeof value === 'string' && workFormatValues.includes(value as WorkFormat);
 };
 
 const handleWorkFormatUpdate = (value: unknown) => {
