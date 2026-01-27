@@ -9,7 +9,7 @@
     <template v-if="$slots.default" #default>
       <slot />
     </template>
-    <template v-if="$slots.actions" #actions>
+    <template v-if="$slots.actions" #links>
       <slot name="actions" />
     </template>
   </UPageHeader>

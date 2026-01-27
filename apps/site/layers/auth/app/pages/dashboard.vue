@@ -19,7 +19,7 @@
           </p>
         </div>
 
-        <UDivider />
+        <USeparator />
 
         <div class="space-y-4">
           <div>

@@ -4,5 +4,5 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
 
   alias: { '@admin/auth': fileURLToPath(new URL('./', import.meta.url)) },
-  components: [{ path: '@admin/auth/components', prefix: 'Auth' }]
+  components: [{ path: '@admin/auth/app/components', prefix: 'Auth' }]
 });

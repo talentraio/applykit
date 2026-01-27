@@ -187,32 +187,34 @@
     </template>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model="isDeleteModalOpen">
-      <UCard>
-        <template #header>
-          <div class="flex items-center gap-3">
-            <UIcon name="i-lucide-alert-triangle" class="h-6 w-6 text-error" />
-            <h3 class="text-lg font-semibold">
-              {{ $t('vacancy.delete.confirm') }}
-            </h3>
-          </div>
-        </template>
+    <UModal v-model:open="isDeleteModalOpen">
+      <template #content>
+        <UCard>
+          <template #header>
+            <div class="flex items-center gap-3">
+              <UIcon name="i-lucide-alert-triangle" class="h-6 w-6 text-error" />
+              <h3 class="text-lg font-semibold">
+                {{ $t('vacancy.delete.confirm') }}
+              </h3>
+            </div>
+          </template>
 
-        <p class="text-muted">
-          {{ $t('vacancy.delete.description') }}
-        </p>
+          <p class="text-muted">
+            {{ $t('vacancy.delete.description') }}
+          </p>
 
-        <template #footer>
-          <div class="flex justify-end gap-3">
-            <UButton variant="ghost" @click="isDeleteModalOpen = false">
-              {{ $t('common.cancel') }}
-            </UButton>
-            <UButton color="error" :loading="isDeleting" @click="handleDelete">
-              {{ isDeleting ? $t('vacancy.delete.deleting') : $t('vacancy.delete.button') }}
-            </UButton>
-          </div>
-        </template>
-      </UCard>
+          <template #footer>
+            <div class="flex justify-end gap-3">
+              <UButton variant="ghost" @click="isDeleteModalOpen = false">
+                {{ $t('common.cancel') }}
+              </UButton>
+              <UButton color="error" :loading="isDeleting" @click="handleDelete">
+                {{ isDeleting ? $t('vacancy.delete.deleting') : $t('vacancy.delete.button') }}
+              </UButton>
+            </div>
+          </template>
+        </UCard>
+      </template>
     </UModal>
   </div>
 </template>
