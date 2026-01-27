@@ -1,4 +1,6 @@
+import type { ProviderType } from '@int/schema';
 import type { ILLMProvider, LLMRequest, LLMResponse } from '../types';
+import { LLM_PROVIDER_MAP } from '@int/schema';
 import OpenAI from 'openai';
 import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '../types';
 
@@ -6,36 +8,47 @@ import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '../typ
  * OpenAI Provider
  *
  * Implements LLM provider interface for OpenAI API
- * Supports GPT-4o, GPT-4-turbo, GPT-3.5-turbo models
+ * Supports GPT-4.1, GPT-4o, GPT-4o mini models
  *
- * Pricing (as of 2024):
- * - gpt-4o: $5/1M input tokens, $15/1M output tokens
- * - gpt-4-turbo: $10/1M input tokens, $30/1M output tokens
- * - gpt-3.5-turbo: $0.50/1M input tokens, $1.50/1M output tokens
+ * Pricing (as of early 2026, standard input/output rates):
+ * - gpt-4.1: $2.00/1M input tokens, $8.00/1M output tokens
+ * - gpt-4.1-mini: $0.40/1M input tokens, $1.60/1M output tokens
+ * - gpt-4.1-nano: $0.10/1M input tokens, $0.40/1M output tokens
+ * - gpt-4o: $2.50/1M input tokens, $10.00/1M output tokens
+ * - gpt-4o-mini: $0.15/1M input tokens, $0.60/1M output tokens
  *
  * Related: T047, TX021
  */
 
 /**
- * OpenAI model pricing (per 1M tokens)
+ * OpenAI model pricing (per 1M tokens, standard rates)
+ * Note: cached input and Batch API discounts are not accounted for here.
  */
 const PRICING: Record<string, { input: number; output: number }> = {
-  'gpt-4o': { input: 5.0, output: 15.0 },
+  'gpt-4.1': { input: 2.0, output: 8.0 },
+  'gpt-4.1-2025-04-14': { input: 2.0, output: 8.0 },
+  'gpt-4.1-mini': { input: 0.4, output: 1.6 },
+  'gpt-4.1-mini-2025-04-14': { input: 0.4, output: 1.6 },
+  'gpt-4.1-nano': { input: 0.1, output: 0.4 },
+  'gpt-4.1-nano-2025-04-14': { input: 0.1, output: 0.4 },
+  'gpt-4o': { input: 2.5, output: 10.0 },
+  'gpt-4o-2024-11-20': { input: 2.5, output: 10.0 },
+  'gpt-4o-2024-08-06': { input: 2.5, output: 10.0 },
+  'gpt-4o-2024-05-13': { input: 2.5, output: 10.0 },
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
-  'gpt-4-turbo': { input: 10.0, output: 30.0 },
-  'gpt-3.5-turbo': { input: 0.5, output: 1.5 }
+  'gpt-4o-mini-2024-07-18': { input: 0.15, output: 0.6 }
 };
 
 /**
  * Default model to use
  */
-const DEFAULT_MODEL = 'gpt-4o-mini';
+const DEFAULT_MODEL = 'gpt-4.1-mini';
 
 /**
  * OpenAI LLM Provider Implementation
  */
 export class OpenAIProvider implements ILLMProvider {
-  readonly name = 'openai' as const;
+  readonly name = LLM_PROVIDER_MAP.OPENAI;
 
   /**
    * Validate OpenAI API key
@@ -70,7 +83,7 @@ export class OpenAIProvider implements ILLMProvider {
   async call(
     request: LLMRequest,
     apiKey: string,
-    providerType: 'platform' | 'byok'
+    providerType: ProviderType
   ): Promise<LLMResponse> {
     const client = new OpenAI({ apiKey });
     const model = request.model || DEFAULT_MODEL;
@@ -97,21 +110,28 @@ export class OpenAIProvider implements ILLMProvider {
         tokensUsed,
         cost,
         model,
-        provider: 'openai',
+        provider: LLM_PROVIDER_MAP.OPENAI,
         providerType
       };
     } catch (error) {
       // Handle specific OpenAI errors
       if (error instanceof OpenAI.AuthenticationError) {
-        throw new LLMAuthError('openai');
+        throw new LLMAuthError(LLM_PROVIDER_MAP.OPENAI);
       } else if (error instanceof OpenAI.RateLimitError) {
-        throw new LLMRateLimitError('openai');
+        throw new LLMRateLimitError(LLM_PROVIDER_MAP.OPENAI);
       } else if (error instanceof OpenAI.PermissionDeniedError) {
-        throw new LLMQuotaError('openai');
+        throw new LLMQuotaError(LLM_PROVIDER_MAP.OPENAI);
       } else if (error instanceof OpenAI.APIError) {
-        throw new LLMError(`OpenAI API error: ${error.message}`, 'openai', error.code || undefined);
+        throw new LLMError(
+          `OpenAI API error: ${error.message}`,
+          LLM_PROVIDER_MAP.OPENAI,
+          error.code || undefined
+        );
       } else {
-        throw new LLMError(error instanceof Error ? error.message : 'Unknown error', 'openai');
+        throw new LLMError(
+          error instanceof Error ? error.message : 'Unknown error',
+          LLM_PROVIDER_MAP.OPENAI
+        );
       }
     }
   }

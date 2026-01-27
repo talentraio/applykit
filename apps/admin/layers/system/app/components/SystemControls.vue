@@ -81,6 +81,7 @@
  */
 
 import type { PlatformProvider } from '@int/schema';
+import { PLATFORM_PROVIDER_MAP } from '@int/schema';
 
 defineOptions({ name: 'SystemControls' });
 
@@ -123,8 +124,8 @@ const toggleOptions = computed<Array<{ label: string; value: 'enabled' | 'disabl
 ]);
 
 const providerOptions = computed<Array<{ label: string; value: PlatformProvider }>>(() => [
-  { label: t('admin.system.providers.openai'), value: 'openai' },
-  { label: t('admin.system.providers.gemini_flash'), value: 'gemini_flash' }
+  { label: t('admin.system.providers.openai'), value: PLATFORM_PROVIDER_MAP.OPENAI },
+  { label: t('admin.system.providers.gemini_flash'), value: PLATFORM_PROVIDER_MAP.GEMINI_FLASH }
 ]);
 
 const platformValue = computed(() => {

@@ -27,7 +27,8 @@
  * TR012 - Decomposed into sub-components
  */
 
-import type { LanguageEntry, PhoneEntry, Profile, ProfileInput } from '@int/schema';
+import type { LanguageEntry, PhoneEntry, Profile, ProfileInput, WorkFormat } from '@int/schema';
+import { WORK_FORMAT_MAP } from '@int/schema';
 
 defineOptions({ name: 'UserProfileForm' });
 
@@ -65,7 +66,7 @@ type ProfileFormData = {
   email: string;
   country: string;
   searchRegion: string;
-  workFormat: 'remote' | 'hybrid' | 'onsite';
+  workFormat: WorkFormat;
   languages: LanguageEntry[];
   phones: PhoneEntry[];
 };
@@ -77,7 +78,7 @@ const formData = reactive<ProfileFormData>({
   email: props.profile?.email || '',
   country: props.profile?.country || '',
   searchRegion: props.profile?.searchRegion || '',
-  workFormat: props.profile?.workFormat || 'remote',
+  workFormat: props.profile?.workFormat || WORK_FORMAT_MAP.REMOTE,
   languages: props.profile?.languages ? [...props.profile.languages] : [],
   phones: props.profile?.phones ? [...props.profile.phones] : []
 });

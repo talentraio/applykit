@@ -6,6 +6,7 @@
 
 import type { H3Event } from 'h3';
 import type { ExtendedUser, ExtendedUserSession } from './auth-types';
+import { USER_ROLE_MAP } from '@int/schema';
 
 export function getUserId(session: { user?: { id?: string } }): string {
   if (!session.user?.id) {
@@ -30,7 +31,7 @@ export async function requireSuperAdmin(event: H3Event): Promise<ExtendedUserSes
   // Type assertion: we store ExtendedUser in session (role + email + id)
   const user = session.user as unknown as ExtendedUser;
 
-  if (user.role !== 'super_admin') {
+  if (user.role !== USER_ROLE_MAP.SUPER_ADMIN) {
     throw createError({
       statusCode: 403,
       message: 'Access denied. Super admin role required.'

@@ -1,5 +1,6 @@
 import type { SourceFileType } from '@int/schema';
 import type { Buffer } from 'node:buffer';
+import { SOURCE_FILE_TYPE_MAP } from '@int/schema';
 import mammoth from 'mammoth';
 import { PDFParse } from 'pdf-parse';
 
@@ -61,7 +62,7 @@ async function parseDocx(buffer: Buffer): Promise<ParseResult> {
     const result = await mammoth.extractRawText({ buffer });
 
     if (!result.value || result.value.trim().length === 0) {
-      throw new ParseError('DOCX file contains no text', 'docx', 'EMPTY_FILE');
+      throw new ParseError('DOCX file contains no text', SOURCE_FILE_TYPE_MAP.DOCX, 'EMPTY_FILE');
     }
 
     const wordCount = result.value.trim().split(/\s+/).length;
@@ -79,7 +80,7 @@ async function parseDocx(buffer: Buffer): Promise<ParseResult> {
 
     throw new ParseError(
       `Failed to parse DOCX: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      'docx',
+      SOURCE_FILE_TYPE_MAP.DOCX,
       'PARSE_FAILED'
     );
   }
@@ -101,7 +102,7 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
     const info = await parser.getInfo();
 
     if (!result.text || result.text.trim().length === 0) {
-      throw new ParseError('PDF file contains no text', 'pdf', 'EMPTY_FILE');
+      throw new ParseError('PDF file contains no text', SOURCE_FILE_TYPE_MAP.PDF, 'EMPTY_FILE');
     }
 
     const wordCount = result.text.trim().split(/\s+/).length;
@@ -120,7 +121,7 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
 
     throw new ParseError(
       `Failed to parse PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      'pdf',
+      SOURCE_FILE_TYPE_MAP.PDF,
       'PARSE_FAILED'
     );
   } finally {
@@ -159,10 +160,10 @@ export async function parseDocument(
 
   // Parse based on file type
   switch (fileType) {
-    case 'docx':
+    case SOURCE_FILE_TYPE_MAP.DOCX:
       return await parseDocx(buffer);
 
-    case 'pdf':
+    case SOURCE_FILE_TYPE_MAP.PDF:
       return await parsePdf(buffer);
 
     default:
@@ -194,7 +195,7 @@ export function validateFile(buffer: Buffer, fileType: SourceFileType): boolean 
   }
 
   // Check supported format
-  if (fileType !== 'docx' && fileType !== 'pdf') {
+  if (fileType !== SOURCE_FILE_TYPE_MAP.DOCX && fileType !== SOURCE_FILE_TYPE_MAP.PDF) {
     throw new ParseError(`Unsupported file type: ${fileType}`, fileType, 'UNSUPPORTED_FORMAT');
   }
 

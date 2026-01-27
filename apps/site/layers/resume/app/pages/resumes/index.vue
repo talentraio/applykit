@@ -182,6 +182,7 @@
  * TR007 - Updated to use callOnce instead of immediate option
  */
 
+import { SOURCE_FILE_TYPE_MAP } from '@int/schema';
 import { format, parseISO } from 'date-fns';
 
 defineOptions({ name: 'ResumesListPage' });
@@ -254,6 +255,6 @@ const formatDate = (date: Date | string) => {
  * Get file type badge color
  */
 const getFileTypeBadge = (type: string) => {
-  return type === 'pdf' ? 'error' : 'primary';
+  return type === SOURCE_FILE_TYPE_MAP.PDF ? 'error' : 'primary';
 };
 </script>

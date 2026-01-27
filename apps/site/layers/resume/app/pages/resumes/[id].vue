@@ -55,7 +55,7 @@
             </p>
             <UBadge
               class="mt-2"
-              :color="resume.sourceFileType === 'pdf' ? 'error' : 'primary'"
+              :color="resume.sourceFileType === SOURCE_FILE_TYPE_MAP.PDF ? 'error' : 'primary'"
               variant="soft"
             >
               {{ resume.sourceFileType.toUpperCase() }}
@@ -274,6 +274,7 @@
  */
 
 import type { ResumeContent } from '@int/schema';
+import { SOURCE_FILE_TYPE_MAP } from '@int/schema';
 import { format, parseISO } from 'date-fns';
 
 defineOptions({ name: 'ResumeDetailPage' });

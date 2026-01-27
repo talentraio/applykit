@@ -151,6 +151,7 @@
  */
 
 import type { PlatformProvider } from '@int/schema';
+import { PLATFORM_PROVIDER_MAP } from '@int/schema';
 
 defineOptions({ name: 'AdminDashboardPage' });
 
@@ -187,7 +188,7 @@ const statusColor = (enabled?: boolean) => (enabled ? 'success' : 'warning');
 const providerLabel = computed(() => {
   const provider: PlatformProvider | undefined = config.value?.platformProvider;
 
-  if (provider === 'gemini_flash') {
+  if (provider === PLATFORM_PROVIDER_MAP.GEMINI_FLASH) {
     return t('admin.system.providers.gemini_flash');
   }
 

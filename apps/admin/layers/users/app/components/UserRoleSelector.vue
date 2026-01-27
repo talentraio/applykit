@@ -22,6 +22,7 @@
  */
 
 import type { Role } from '@int/schema';
+import { USER_ROLE_MAP } from '@int/schema';
 
 defineOptions({ name: 'UsersUserRoleSelector' });
 
@@ -41,9 +42,9 @@ const model = defineModel<Role>({ required: true });
 const { disabled } = toRefs(props);
 
 const roleOptions = computed<Array<{ label: string; value: Role }>>(() => [
-  { label: t('admin.users.roles.super_admin'), value: 'super_admin' },
-  { label: t('admin.users.roles.friend'), value: 'friend' },
-  { label: t('admin.users.roles.public'), value: 'public' }
+  { label: t('admin.users.roles.super_admin'), value: USER_ROLE_MAP.SUPER_ADMIN },
+  { label: t('admin.users.roles.friend'), value: USER_ROLE_MAP.FRIEND },
+  { label: t('admin.users.roles.public'), value: USER_ROLE_MAP.PUBLIC }
 ]);
 
 const updateRole = (value: Role | null) => {

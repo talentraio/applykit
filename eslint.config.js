@@ -43,5 +43,11 @@ export default antfu(
     rules: {
       'ts/explicit-function-return-type': 'off'
     }
+  },
+  {
+    files: ['**/*.d.ts'],
+    rules: {
+      'ts/consistent-type-definitions': 'off'
+    }
   }
 ).append(eslintConfigPrettier);

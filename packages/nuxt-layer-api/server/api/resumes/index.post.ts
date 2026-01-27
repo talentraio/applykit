@@ -1,5 +1,11 @@
+import type { SourceFileType } from '@int/schema';
 import { readFile } from 'node:fs/promises';
-import { SourceFileTypeSchema } from '@int/schema';
+import {
+  OPERATION_MAP,
+  PROVIDER_TYPE_MAP,
+  SOURCE_FILE_TYPE_MAP,
+  SourceFileTypeSchema
+} from '@int/schema';
 import { readFiles } from 'h3-formidable';
 import { resumeRepository } from '../../data/repositories';
 import { parseResumeWithLLM } from '../../services/llm/parse';
@@ -31,7 +37,7 @@ export default defineEventHandler(async event => {
   const userId = (session.user as { id: string }).id;
 
   // Check rate limit
-  await checkRateLimit(userId, 'parse', { maxRequests: 10, windowSeconds: 60 });
+  await checkRateLimit(userId, OPERATION_MAP.PARSE, { maxRequests: 10, windowSeconds: 60 });
 
   // Parse multipart form data
   const { files } = await readFiles(event);
@@ -48,11 +54,11 @@ export default defineEventHandler(async event => {
   const file = fileArray[0];
 
   // Determine file type from mimetype
-  let fileType: 'docx' | 'pdf';
+  let fileType: SourceFileType;
   if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    fileType = 'docx';
+    fileType = SOURCE_FILE_TYPE_MAP.DOCX;
   } else if (file.mimetype === 'application/pdf') {
-    fileType = 'pdf';
+    fileType = SOURCE_FILE_TYPE_MAP.PDF;
   } else {
     throw createError({
       statusCode: 400,
@@ -99,8 +105,8 @@ export default defineEventHandler(async event => {
     // Log usage
     await logUsage(
       userId,
-      'parse',
-      userApiKey ? 'byok' : 'platform',
+      OPERATION_MAP.PARSE,
+      userApiKey ? PROVIDER_TYPE_MAP.BYOK : PROVIDER_TYPE_MAP.PLATFORM,
       llmResult.tokensUsed,
       llmResult.cost
     );

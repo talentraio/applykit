@@ -109,6 +109,7 @@
  */
 
 import type { LLMProvider } from '@int/schema';
+import { LLM_PROVIDER_MAP } from '@int/schema';
 
 defineOptions({ name: 'ProfileKeyManager' });
 
@@ -116,7 +117,7 @@ const { keys, loading, error, saveKey, deleteKey } = useKeys();
 const { t } = useI18n();
 const toast = useToast();
 
-const defaultProvider: LLMProvider = 'openai';
+const defaultProvider: LLMProvider = LLM_PROVIDER_MAP.OPENAI;
 
 type KeyFormState = {
   provider: LLMProvider;
@@ -135,18 +136,18 @@ const localError = ref<{ title: string; description?: string } | null>(null);
 type ProviderOption = { label: string; value: LLMProvider };
 
 const providerItems = computed<ProviderOption[]>(() => [
-  { label: t('settings.keys.providers.openai'), value: 'openai' },
-  { label: t('settings.keys.providers.gemini'), value: 'gemini' }
+  { label: t('settings.keys.providers.openai'), value: LLM_PROVIDER_MAP.OPENAI },
+  { label: t('settings.keys.providers.gemini'), value: LLM_PROVIDER_MAP.GEMINI }
 ]);
 
 const providerLabels = computed<Record<LLMProvider, string>>(() => ({
-  openai: t('settings.keys.providers.openai'),
-  gemini: t('settings.keys.providers.gemini')
+  [LLM_PROVIDER_MAP.OPENAI]: t('settings.keys.providers.openai'),
+  [LLM_PROVIDER_MAP.GEMINI]: t('settings.keys.providers.gemini')
 }));
 
 const localKeys = ref<Record<LLMProvider, string | null>>({
-  openai: null,
-  gemini: null
+  [LLM_PROVIDER_MAP.OPENAI]: null,
+  [LLM_PROVIDER_MAP.GEMINI]: null
 });
 
 const storageKey = (provider: LLMProvider) => `applykit.byok.${provider}`;
@@ -160,8 +161,8 @@ const loadLocalKeys = () => {
   if (!import.meta.client) return;
 
   localKeys.value = {
-    openai: localStorage.getItem(storageKey('openai')),
-    gemini: localStorage.getItem(storageKey('gemini'))
+    [LLM_PROVIDER_MAP.OPENAI]: localStorage.getItem(storageKey(LLM_PROVIDER_MAP.OPENAI)),
+    [LLM_PROVIDER_MAP.GEMINI]: localStorage.getItem(storageKey(LLM_PROVIDER_MAP.GEMINI))
   };
 };
 

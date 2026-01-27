@@ -1,3 +1,5 @@
+import type { ExportFormat } from '@int/schema';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -19,10 +21,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 type ExportService = {
   exportToPDF: (
     generationId: string,
-    version: 'ats' | 'human'
+    version: ExportFormat
   ) => Promise<{ url: string; cached: boolean }>;
   invalidateCache: (userId: string, generationId: string) => Promise<void>;
-  getCacheKey: (userId: string, generationId: string, version: 'ats' | 'human') => string;
+  getCacheKey: (userId: string, generationId: string, version: ExportFormat) => string;
 };
 
 type CacheService = {
@@ -35,6 +37,8 @@ type CacheService = {
 describe.skip('export Cache Integration Tests', () => {
   let exportService: ExportService;
   let cacheService: CacheService;
+  const atsFormat = EXPORT_FORMAT_MAP.ATS;
+  const humanFormat = EXPORT_FORMAT_MAP.HUMAN;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -48,7 +52,7 @@ describe.skip('export Cache Integration Tests', () => {
     it('should include userId and generationId in cache key', () => {
       const userId = 'user-123';
       const generationId = 'gen-456';
-      const version = 'ats';
+      const version = atsFormat;
 
       const cacheKey = exportService.getCacheKey(userId, generationId, version);
 
@@ -61,17 +65,17 @@ describe.skip('export Cache Integration Tests', () => {
       const userId = 'user-123';
       const generationId = 'gen-456';
 
-      const atsKey = exportService.getCacheKey(userId, generationId, 'ats');
-      const humanKey = exportService.getCacheKey(userId, generationId, 'human');
+      const atsKey = exportService.getCacheKey(userId, generationId, atsFormat);
+      const humanKey = exportService.getCacheKey(userId, generationId, humanFormat);
 
       expect(atsKey).not.toBe(humanKey);
-      expect(atsKey).toContain('ats');
-      expect(humanKey).toContain('human');
+      expect(atsKey).toContain(atsFormat);
+      expect(humanKey).toContain(humanFormat);
     });
 
     it('should generate different keys for different users', () => {
       const generationId = 'gen-456';
-      const version = 'ats';
+      const version = atsFormat;
 
       const key1 = exportService.getCacheKey('user-1', generationId, version);
       const key2 = exportService.getCacheKey('user-2', generationId, version);
@@ -81,7 +85,7 @@ describe.skip('export Cache Integration Tests', () => {
 
     it('should generate different keys for different generations', () => {
       const userId = 'user-123';
-      const version = 'ats';
+      const version = atsFormat;
 
       const key1 = exportService.getCacheKey(userId, 'gen-1', version);
       const key2 = exportService.getCacheKey(userId, 'gen-2', version);
@@ -97,10 +101,10 @@ describe.skip('export Cache Integration Tests', () => {
       const cachedUrl = 'https://storage.example.com/cached.pdf';
 
       // Simulate cached PDF
-      const cacheKey = exportService.getCacheKey(userId, generationId, 'ats');
+      const cacheKey = exportService.getCacheKey(userId, generationId, atsFormat);
       await cacheService.set(cacheKey, cachedUrl);
 
-      const result = await exportService.exportToPDF(generationId, 'ats');
+      const result = await exportService.exportToPDF(generationId, atsFormat);
 
       expect(result.url).toBe(cachedUrl);
       expect(result.cached).toBe(true);
@@ -110,7 +114,7 @@ describe.skip('export Cache Integration Tests', () => {
       const generationId = 'gen-456';
 
       // No cached PDF
-      const result = await exportService.exportToPDF(generationId, 'ats');
+      const result = await exportService.exportToPDF(generationId, atsFormat);
 
       expect(result.url).toBeTruthy();
       expect(result.cached).toBe(false);
@@ -120,11 +124,11 @@ describe.skip('export Cache Integration Tests', () => {
       const generationId = 'gen-456';
 
       // First request - cache miss, generates PDF
-      const result1 = await exportService.exportToPDF(generationId, 'ats');
+      const result1 = await exportService.exportToPDF(generationId, atsFormat);
       expect(result1.cached).toBe(false);
 
       // Second request - cache hit
-      const result2 = await exportService.exportToPDF(generationId, 'ats');
+      const result2 = await exportService.exportToPDF(generationId, atsFormat);
       expect(result2.cached).toBe(true);
       expect(result2.url).toBe(result1.url);
     });
@@ -133,20 +137,20 @@ describe.skip('export Cache Integration Tests', () => {
       const generationId = 'gen-456';
 
       // Generate ATS version
-      const atsResult1 = await exportService.exportToPDF(generationId, 'ats');
+      const atsResult1 = await exportService.exportToPDF(generationId, atsFormat);
       expect(atsResult1.cached).toBe(false);
 
       // Generate Human version - should be cache miss (different cache key)
-      const humanResult1 = await exportService.exportToPDF(generationId, 'human');
+      const humanResult1 = await exportService.exportToPDF(generationId, humanFormat);
       expect(humanResult1.cached).toBe(false);
       expect(humanResult1.url).not.toBe(atsResult1.url);
 
       // Second request for ATS - should be cache hit
-      const atsResult2 = await exportService.exportToPDF(generationId, 'ats');
+      const atsResult2 = await exportService.exportToPDF(generationId, atsFormat);
       expect(atsResult2.cached).toBe(true);
 
       // Second request for Human - should be cache hit
-      const humanResult2 = await exportService.exportToPDF(generationId, 'human');
+      const humanResult2 = await exportService.exportToPDF(generationId, humanFormat);
       expect(humanResult2.cached).toBe(true);
     });
   });
@@ -157,18 +161,18 @@ describe.skip('export Cache Integration Tests', () => {
       const generationId = 'gen-456';
 
       // Generate and cache PDF
-      const result1 = await exportService.exportToPDF(generationId, 'ats');
+      const result1 = await exportService.exportToPDF(generationId, atsFormat);
       expect(result1.cached).toBe(false);
 
       // Second request - cached
-      const result2 = await exportService.exportToPDF(generationId, 'ats');
+      const result2 = await exportService.exportToPDF(generationId, atsFormat);
       expect(result2.cached).toBe(true);
 
       // Simulate regeneration - invalidate cache
       await exportService.invalidateCache(userId, generationId);
 
       // Third request - cache miss after invalidation
-      const result3 = await exportService.exportToPDF(generationId, 'ats');
+      const result3 = await exportService.exportToPDF(generationId, atsFormat);
       expect(result3.cached).toBe(false);
     });
 
@@ -177,12 +181,12 @@ describe.skip('export Cache Integration Tests', () => {
       const generationId = 'gen-456';
 
       // Generate both versions
-      await exportService.exportToPDF(generationId, 'ats');
-      await exportService.exportToPDF(generationId, 'human');
+      await exportService.exportToPDF(generationId, atsFormat);
+      await exportService.exportToPDF(generationId, humanFormat);
 
       // Both should be cached
-      const atsResult = await exportService.exportToPDF(generationId, 'ats');
-      const humanResult = await exportService.exportToPDF(generationId, 'human');
+      const atsResult = await exportService.exportToPDF(generationId, atsFormat);
+      const humanResult = await exportService.exportToPDF(generationId, humanFormat);
       expect(atsResult.cached).toBe(true);
       expect(humanResult.cached).toBe(true);
 
@@ -190,8 +194,8 @@ describe.skip('export Cache Integration Tests', () => {
       await exportService.invalidateCache(userId, generationId);
 
       // Both should be cache miss
-      const atsResult2 = await exportService.exportToPDF(generationId, 'ats');
-      const humanResult2 = await exportService.exportToPDF(generationId, 'human');
+      const atsResult2 = await exportService.exportToPDF(generationId, atsFormat);
+      const humanResult2 = await exportService.exportToPDF(generationId, humanFormat);
       expect(atsResult2.cached).toBe(false);
       expect(humanResult2.cached).toBe(false);
     });
@@ -200,12 +204,12 @@ describe.skip('export Cache Integration Tests', () => {
       const userId = 'user-123';
 
       // Generate PDFs for two different generations
-      await exportService.exportToPDF('gen-1', 'ats');
-      await exportService.exportToPDF('gen-2', 'ats');
+      await exportService.exportToPDF('gen-1', atsFormat);
+      await exportService.exportToPDF('gen-2', atsFormat);
 
       // Both cached
-      const result1 = await exportService.exportToPDF('gen-1', 'ats');
-      const result2 = await exportService.exportToPDF('gen-2', 'ats');
+      const result1 = await exportService.exportToPDF('gen-1', atsFormat);
+      const result2 = await exportService.exportToPDF('gen-2', atsFormat);
       expect(result1.cached).toBe(true);
       expect(result2.cached).toBe(true);
 
@@ -213,8 +217,8 @@ describe.skip('export Cache Integration Tests', () => {
       await exportService.invalidateCache(userId, 'gen-1');
 
       // gen-1 should be cache miss, gen-2 should still be cached
-      const result1After = await exportService.exportToPDF('gen-1', 'ats');
-      const result2After = await exportService.exportToPDF('gen-2', 'ats');
+      const result1After = await exportService.exportToPDF('gen-1', atsFormat);
+      const result2After = await exportService.exportToPDF('gen-2', atsFormat);
       expect(result1After.cached).toBe(false);
       expect(result2After.cached).toBe(true);
     });
@@ -226,11 +230,11 @@ describe.skip('export Cache Integration Tests', () => {
       const generationId2 = 'gen-user2';
 
       // User 1 generates PDF
-      const user1Result = await exportService.exportToPDF(generationId1, 'ats');
+      const user1Result = await exportService.exportToPDF(generationId1, atsFormat);
       expect(user1Result.cached).toBe(false);
 
       // User 2 generates PDF for different generation
-      const user2Result = await exportService.exportToPDF(generationId2, 'ats');
+      const user2Result = await exportService.exportToPDF(generationId2, atsFormat);
       expect(user2Result.cached).toBe(false);
 
       // Each user should have their own cache
@@ -243,15 +247,15 @@ describe.skip('export Cache Integration Tests', () => {
       const generationId2 = 'gen-2';
 
       // Both users generate PDFs
-      await exportService.exportToPDF(generationId1, 'ats');
-      await exportService.exportToPDF(generationId2, 'ats');
+      await exportService.exportToPDF(generationId1, atsFormat);
+      await exportService.exportToPDF(generationId2, atsFormat);
 
       // Invalidate user 1's cache
       await exportService.invalidateCache(userId1, generationId1);
 
       // User 1 should have cache miss, user 2 should still have cache hit
-      const user1Result = await exportService.exportToPDF(generationId1, 'ats');
-      const user2Result = await exportService.exportToPDF(generationId2, 'ats');
+      const user1Result = await exportService.exportToPDF(generationId1, atsFormat);
+      const user2Result = await exportService.exportToPDF(generationId2, atsFormat);
       expect(user1Result.cached).toBe(false);
       expect(user2Result.cached).toBe(true);
     });
@@ -263,18 +267,18 @@ describe.skip('export Cache Integration Tests', () => {
       const shortTTL = 1; // 1 second
 
       // Generate PDF with short TTL
-      const result1 = await exportService.exportToPDF(generationId, 'ats');
+      const result1 = await exportService.exportToPDF(generationId, atsFormat);
       expect(result1.cached).toBe(false);
 
       // Immediate second request - should be cached
-      const result2 = await exportService.exportToPDF(generationId, 'ats');
+      const result2 = await exportService.exportToPDF(generationId, atsFormat);
       expect(result2.cached).toBe(true);
 
       // Wait for TTL to expire
       await new Promise(resolve => setTimeout(resolve, shortTTL * 1000 + 100));
 
       // Should be cache miss after expiration
-      const result3 = await exportService.exportToPDF(generationId, 'ats');
+      const result3 = await exportService.exportToPDF(generationId, atsFormat);
       expect(result3.cached).toBe(false);
     });
 
@@ -282,11 +286,11 @@ describe.skip('export Cache Integration Tests', () => {
       const generationId = 'gen-expired';
 
       // Generate PDF for generation that will expire
-      const result1 = await exportService.exportToPDF(generationId, 'ats');
+      const result1 = await exportService.exportToPDF(generationId, atsFormat);
       expect(result1.cached).toBe(false);
 
       // Cache should exist
-      const result2 = await exportService.exportToPDF(generationId, 'ats');
+      const result2 = await exportService.exportToPDF(generationId, atsFormat);
       expect(result2.cached).toBe(true);
 
       // TODO: Mark generation as expired
@@ -300,9 +304,9 @@ describe.skip('export Cache Integration Tests', () => {
       const userId = 'user-123';
       const generationId = 'gen-456';
 
-      await exportService.exportToPDF(generationId, 'ats');
+      await exportService.exportToPDF(generationId, atsFormat);
 
-      const cacheKey = exportService.getCacheKey(userId, generationId, 'ats');
+      const cacheKey = exportService.getCacheKey(userId, generationId, atsFormat);
       const cached = await cacheService.get(cacheKey);
 
       // Cached value should be PDF URL or storage reference
@@ -313,13 +317,13 @@ describe.skip('export Cache Integration Tests', () => {
     it('should handle cache corruption gracefully', async () => {
       const userId = 'user-123';
       const generationId = 'gen-456';
-      const cacheKey = exportService.getCacheKey(userId, generationId, 'ats');
+      const cacheKey = exportService.getCacheKey(userId, generationId, atsFormat);
 
       // Set invalid cache value
       await cacheService.set(cacheKey, 'invalid-data');
 
       // Should handle gracefully and regenerate
-      const result = await exportService.exportToPDF(generationId, 'ats');
+      const result = await exportService.exportToPDF(generationId, atsFormat);
       expect(result.url).toBeTruthy();
     });
   });
@@ -330,9 +334,9 @@ describe.skip('export Cache Integration Tests', () => {
 
       // Simulate concurrent requests
       const results = await Promise.all([
-        exportService.exportToPDF(generationId, 'ats'),
-        exportService.exportToPDF(generationId, 'ats'),
-        exportService.exportToPDF(generationId, 'ats')
+        exportService.exportToPDF(generationId, atsFormat),
+        exportService.exportToPDF(generationId, atsFormat),
+        exportService.exportToPDF(generationId, atsFormat)
       ]);
 
       // First should be cache miss, rest should be cache hit
@@ -347,16 +351,16 @@ describe.skip('export Cache Integration Tests', () => {
       const generationId = 'gen-456';
 
       // Generate initial cache
-      await exportService.exportToPDF(generationId, 'ats');
+      await exportService.exportToPDF(generationId, atsFormat);
 
       // Concurrent invalidation and export
       await Promise.all([
         exportService.invalidateCache(userId, generationId),
-        exportService.exportToPDF(generationId, 'ats')
+        exportService.exportToPDF(generationId, atsFormat)
       ]);
 
       // Should handle gracefully without errors
-      const result = await exportService.exportToPDF(generationId, 'ats');
+      const result = await exportService.exportToPDF(generationId, atsFormat);
       expect(result.url).toBeTruthy();
     });
   });
@@ -369,7 +373,7 @@ describe.skip('export Cache Integration Tests', () => {
       vi.spyOn(cacheService, 'get').mockRejectedValue(new Error('Cache unavailable'));
 
       // Should fall back to generating PDF
-      const result = await exportService.exportToPDF(generationId, 'ats');
+      const result = await exportService.exportToPDF(generationId, atsFormat);
       expect(result.url).toBeTruthy();
       expect(result.cached).toBe(false);
     });
@@ -378,7 +382,7 @@ describe.skip('export Cache Integration Tests', () => {
       const generationId = 'gen-invalid';
 
       // Simulate PDF generation error
-      await expect(exportService.exportToPDF(generationId, 'ats')).rejects.toThrow();
+      await expect(exportService.exportToPDF(generationId, atsFormat)).rejects.toThrow();
     });
 
     it('should handle invalidation errors gracefully', async () => {
