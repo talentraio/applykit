@@ -31,6 +31,22 @@
       "validation": "Please check your input and try again."
     }
   },
+  "errors": {
+    "generic": {
+      "title": "Something went wrong",
+      "description": "We hit an unexpected error. Please try again."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "We could not find the page you were looking for.",
+      "pathLabel": "Requested path: {path}"
+    },
+    "actions": {
+      "home": "Go to home",
+      "back": "Go back",
+      "retry": "Try again"
+    }
+  },
   "auth": {
     "login": {
       "title": "Sign in to your account",
