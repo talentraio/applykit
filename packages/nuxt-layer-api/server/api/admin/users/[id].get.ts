@@ -1,5 +1,6 @@
 import type { Profile, UserPublic } from '@int/schema';
 import { OPERATION_MAP } from '@int/schema';
+import { startOfMonth, subDays } from 'date-fns';
 import {
   generationRepository,
   profileRepository,
@@ -19,7 +20,10 @@ import { requireSuperAdmin } from '../../../utils/session-helpers';
  * Related: T133 (US8)
  */
 
-type AdminUser = Pick<UserPublic, 'id' | 'email' | 'role' | 'createdAt'>;
+type AdminUser = Pick<
+  UserPublic,
+  'id' | 'email' | 'role' | 'status' | 'createdAt' | 'updatedAt' | 'lastLoginAt' | 'deletedAt'
+>;
 
 type AdminUserStats = {
   resumeCount: number;
@@ -30,6 +34,12 @@ type AdminUserStats = {
     generate: number;
     export: number;
   };
+  totalGenerations: number;
+  averageGenerationsPerDay30d: number;
+  averageGenerationsPerDay7d: number;
+  averageGenerationsPerWeek30d: number;
+  costLast30Days: number;
+  costMonthToDate: number;
 };
 
 type AdminUserDetail = {
@@ -68,22 +78,47 @@ export default defineEventHandler(async (event): Promise<AdminUserDetail> => {
       }
     : null;
 
-  const [resumeCount, vacancyCount, generationCount, parseCount, generateCount, exportCount] =
-    await Promise.all([
-      resumeRepository.countByUserId(id),
-      vacancyRepository.countByUserId(id),
-      generationRepository.countByUserId(id),
-      usageLogRepository.getDailyCount(id, OPERATION_MAP.PARSE),
-      usageLogRepository.getDailyCount(id, OPERATION_MAP.GENERATE),
-      usageLogRepository.getDailyCount(id, OPERATION_MAP.EXPORT)
-    ]);
+  const today = new Date();
+  const last30Days = subDays(today, 30);
+  const last7Days = subDays(today, 7);
+  const monthStart = startOfMonth(today);
+
+  const [
+    resumeCount,
+    vacancyCount,
+    generationCount,
+    parseCount,
+    generateCount,
+    exportCount,
+    totalGenerations,
+    totalGenerations30d,
+    totalGenerations7d,
+    costLast30Days,
+    costMonthToDate
+  ] = await Promise.all([
+    resumeRepository.countByUserId(id),
+    vacancyRepository.countByUserId(id),
+    generationRepository.countByUserId(id),
+    usageLogRepository.getDailyCount(id, OPERATION_MAP.PARSE),
+    usageLogRepository.getDailyCount(id, OPERATION_MAP.GENERATE),
+    usageLogRepository.getDailyCount(id, OPERATION_MAP.EXPORT),
+    usageLogRepository.getOperationCount(id, OPERATION_MAP.GENERATE),
+    usageLogRepository.getOperationCount(id, OPERATION_MAP.GENERATE, last30Days, today),
+    usageLogRepository.getOperationCount(id, OPERATION_MAP.GENERATE, last7Days, today),
+    usageLogRepository.getTotalCost(id, last30Days, today),
+    usageLogRepository.getTotalCost(id, monthStart, today)
+  ]);
 
   return {
     user: {
       id: user.id,
       email: user.email,
       role: user.role,
-      createdAt: user.createdAt
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      lastLoginAt: user.lastLoginAt,
+      deletedAt: user.deletedAt
     },
     profile: transformedProfile,
     stats: {
@@ -94,7 +129,13 @@ export default defineEventHandler(async (event): Promise<AdminUserDetail> => {
         parse: parseCount,
         generate: generateCount,
         export: exportCount
-      }
+      },
+      totalGenerations,
+      averageGenerationsPerDay30d: Number((totalGenerations30d / 30).toFixed(2)),
+      averageGenerationsPerDay7d: Number((totalGenerations7d / 7).toFixed(2)),
+      averageGenerationsPerWeek30d: Number((totalGenerations30d / 4).toFixed(2)),
+      costLast30Days,
+      costMonthToDate
     }
   };
 });

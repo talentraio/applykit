@@ -19,6 +19,8 @@
     "search": "Search",
     "filter": "Filter",
     "clear": "Clear",
+    "notAvailable": "Not available",
+    "unlimited": "Unlimited",
     "yes": "Yes",
     "no": "No",
     "format": "Format",
@@ -52,7 +54,8 @@
       "title": "Sign in to your account",
       "google": "Sign in with Google",
       "welcome": "Welcome back",
-      "description": "Sign in to access your resume tailoring workspace"
+      "description": "Sign in to access your resume tailoring workspace",
+      "forbidden": "You do not have access. Please choose a different account or contact support."
     },
     "logout": "Sign out",
     "user": {
@@ -394,6 +397,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "users": "Users",
+      "roles": "Roles",
       "system": "System",
       "admin": "Admin"
     },
@@ -406,9 +410,100 @@
       "columns": {
         "email": "Email",
         "role": "Role",
-        "createdAt": "Created"
+        "status": "Status",
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "lastLoginAt": "Last login"
+      },
+      "filters": {
+        "role": "Role filter",
+        "roleAll": "All roles",
+        "pageSize": "Page size",
+        "perPage": "{count} / page"
+      },
+      "pagination": {
+        "summary": "Total {count} user(s) - Page {page} - {pageSize} / page"
+      },
+      "fields": {
+        "role": "Role",
+        "status": "Status",
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "lastLoginAt": "Last login",
+        "deletedAt": "Deleted",
+        "profileCreatedAt": "Profile created",
+        "profileUpdatedAt": "Profile updated"
+      },
+      "detail": {
+        "title": "User details",
+        "titleWithEmail": "User: {email}",
+        "account": "Account",
+        "profile": "Profile",
+        "stats": "Usage stats"
+      },
+      "profile": {
+        "empty": "This user has not created a profile yet."
+      },
+      "invite": {
+        "button": "Add user",
+        "title": "Invite user",
+        "description": "Add a user by email and assign a role for their first login.",
+        "email": "Email",
+        "emailPlaceholder": "user at example.com",
+        "role": "Role",
+        "submit": "Invite user",
+        "success": "Invitation created"
+      },
+      "delete": {
+        "button": "Delete user",
+        "title": "Delete user",
+        "description": "This will mark the user as deleted. You can’t undo this action.",
+        "confirm": "Delete user"
+      },
+      "status": {
+        "invited": "Invited",
+        "active": "Active",
+        "blocked": "Blocked",
+        "deleted": "Deleted"
+      },
+      "stats": {
+        "resumeCount": "Resumes",
+        "vacancyCount": "Vacancies",
+        "generationCount": "Generations",
+        "todayUsage": "Today usage",
+        "totalGenerations": "Total generations",
+        "avgGenerationsPerDay30d": "Avg generations/day (30d)",
+        "avgGenerationsPerDay7d": "Avg generations/day (7d)",
+        "avgGenerationsPerWeek30d": "Avg generations/week (30d)",
+        "costLast30Days": "Cost (last 30 days)",
+        "costMonthToDate": "Cost (month to date)",
+        "operations": {
+          "parse": "Parse",
+          "generate": "Generate",
+          "export": "Export"
+        }
       },
       "roles": {
+        "super_admin": "Super Admin",
+        "friend": "Friend",
+        "public": "Public"
+      }
+    },
+    "roles": {
+      "title": "Roles",
+      "empty": "No roles found",
+      "manage": "Manage",
+      "settingsTitle": "Role settings",
+      "settingsDescription": "Configure LLM access and budgets for this role.",
+      "detailTitle": "Role: {role}",
+      "superAdminHint": "Super Admin can only change platform provider.",
+      "fields": {
+        "platformLlm": "Platform LLM",
+        "byok": "BYOK",
+        "provider": "Platform provider",
+        "dailyBudget": "Daily budget per user"
+      },
+      "names": {
         "super_admin": "Super Admin",
         "friend": "Friend",
         "public": "Public"

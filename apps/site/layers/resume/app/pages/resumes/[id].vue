@@ -323,7 +323,7 @@ onMounted(async () => {
  */
 const formatDate = (date: Date | string) => {
   const resolved = typeof date === 'string' ? parseISO(date) : date;
-  return format(resolved, 'MMMM d, yyyy, h:mm a');
+  return format(resolved, 'dd.MM.yyyy');
 };
 
 /**

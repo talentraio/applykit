@@ -13,49 +13,7 @@
       </template>
     </UiPageHeader>
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-3">
-      <UPageCard class="admin-dashboard-page__card">
-        <template #header>
-          <h2 class="text-lg font-semibold">
-            {{ $t('admin.system.title') }}
-          </h2>
-        </template>
-
-        <div v-if="configLoading && !config" class="flex items-center justify-center py-8">
-          <UIcon name="i-lucide-loader-2" class="h-6 w-6 animate-spin text-primary" />
-        </div>
-
-        <UAlert
-          v-else-if="configError && !config"
-          color="error"
-          variant="soft"
-          icon="i-lucide-alert-circle"
-          :title="$t('common.error.generic')"
-          :description="configError.message"
-        />
-
-        <div v-else class="space-y-3 text-sm">
-          <div class="flex items-center justify-between">
-            <span class="text-muted">{{ $t('admin.system.platformLlm') }}</span>
-            <UBadge :color="statusColor(config?.platformLlmEnabled)">
-              {{ statusLabel(config?.platformLlmEnabled) }}
-            </UBadge>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-muted">{{ $t('admin.system.byok') }}</span>
-            <UBadge :color="statusColor(config?.byokEnabled)">
-              {{ statusLabel(config?.byokEnabled) }}
-            </UBadge>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-muted">{{ $t('admin.system.platformProvider') }}</span>
-            <span class="font-medium">
-              {{ providerLabel }}
-            </span>
-          </div>
-        </div>
-      </UPageCard>
-
+    <div class="mt-6 grid gap-6 lg:grid-cols-2">
       <UPageCard class="admin-dashboard-page__card">
         <template #header>
           <h2 class="text-lg font-semibold">
@@ -150,9 +108,6 @@
  * Related: T152 (US9)
  */
 
-import type { PlatformProvider } from '@int/schema';
-import { PLATFORM_PROVIDER_MAP } from '@int/schema';
-
 defineOptions({ name: 'AdminDashboardPage' });
 
 const {
@@ -179,21 +134,6 @@ await callOnce('admin-dashboard', async () => {
 const goTo = (path: string) => {
   navigateTo(path);
 };
-
-const statusLabel = (enabled?: boolean) =>
-  enabled ? t('admin.system.status.enabled') : t('admin.system.status.disabled');
-
-const statusColor = (enabled?: boolean) => (enabled ? 'success' : 'warning');
-
-const providerLabel = computed(() => {
-  const provider: PlatformProvider | undefined = config.value?.platformProvider;
-
-  if (provider === PLATFORM_PROVIDER_MAP.GEMINI_FLASH) {
-    return t('admin.system.providers.gemini_flash');
-  }
-
-  return t('admin.system.providers.openai');
-});
 
 const budgetCap = computed(() => config.value?.globalBudgetCap ?? 0);
 const budgetUsed = computed(() => config.value?.globalBudgetUsed ?? 0);

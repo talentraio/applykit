@@ -14,6 +14,9 @@ export * from './schemas/profile';
 // Resume
 export * from './schemas/resume';
 
+// Role Settings
+export * from './schemas/role-settings';
+
 // System Config
 export * from './schemas/system';
 

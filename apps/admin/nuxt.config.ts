@@ -10,7 +10,8 @@ export default defineNuxtConfig({
     './layers/_base',
     './layers/auth',
     './layers/users',
-    './layers/system'
+    './layers/system',
+    './layers/roles'
   ],
 
   modules: ['@pinia/nuxt'],

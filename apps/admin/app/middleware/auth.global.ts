@@ -43,9 +43,12 @@ export default defineNuxtRouteMiddleware(async to => {
 
   // Authenticated but not super_admin - deny access
   if (user.role !== USER_ROLE_MAP.SUPER_ADMIN) {
-    return abortNavigation({
-      statusCode: 403,
-      message: 'Access denied. Super admin role required.'
+    return navigateTo({
+      path: '/login',
+      query: {
+        error: 'forbidden',
+        redirect: to.fullPath
+      }
     });
   }
 

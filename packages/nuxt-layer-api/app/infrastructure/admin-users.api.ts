@@ -1,8 +1,11 @@
-import type { Profile, Role, UserPublic } from '@int/schema';
+import type { Profile, Role, UserPublic, UserStatus } from '@int/schema';
 
 const adminUsersUrl = '/api/admin/users';
 
-export type AdminUser = Pick<UserPublic, 'id' | 'email' | 'role' | 'createdAt'>;
+export type AdminUser = Pick<
+  UserPublic,
+  'id' | 'email' | 'role' | 'status' | 'createdAt' | 'updatedAt' | 'lastLoginAt' | 'deletedAt'
+>;
 
 export type AdminUserUsage = {
   parse: number;
@@ -15,6 +18,12 @@ export type AdminUserStats = {
   vacancyCount: number;
   generationCount: number;
   todayUsage: AdminUserUsage;
+  totalGenerations: number;
+  averageGenerationsPerDay30d: number;
+  averageGenerationsPerDay7d: number;
+  averageGenerationsPerWeek30d: number;
+  costLast30Days: number;
+  costMonthToDate: number;
 };
 
 export type AdminUserDetail = {
@@ -28,8 +37,19 @@ export type AdminUsersResponse = {
   total: number;
 };
 
+export type AdminUserInviteInput = {
+  email: string;
+  role: Role;
+};
+
+export type AdminUserStatusInput = {
+  blocked: boolean;
+};
+
 export type AdminUsersQuery = {
   search?: string;
+  role?: Role;
+  status?: UserStatus;
   limit?: number;
   offset?: number;
 };
@@ -48,6 +68,14 @@ export const adminUsersApi = {
 
     if (params.search) {
       query.search = params.search;
+    }
+
+    if (params.role) {
+      query.role = params.role;
+    }
+
+    if (params.status) {
+      query.status = params.status;
     }
 
     if (typeof params.limit === 'number') {
@@ -80,6 +108,34 @@ export const adminUsersApi = {
     return await useApi(`${adminUsersUrl}/${id}/role`, {
       method: 'PUT',
       body: { role }
+    });
+  },
+
+  /**
+   * Update user status
+   */
+  async updateStatus(id: string, input: AdminUserStatusInput): Promise<AdminUser> {
+    return await useApi(`${adminUsersUrl}/${id}/status`, {
+      method: 'PUT',
+      body: input
+    });
+  },
+
+  /**
+   * Invite user by email
+   */
+  async inviteUser(input: AdminUserInviteInput): Promise<AdminUser> {
+    return await useApi(adminUsersUrl, {
+      method: 'POST',
+      body: input
+    });
+  },
+  /**
+   * Delete user (mark as deleted)
+   */
+  async deleteUser(id: string): Promise<AdminUser> {
+    return await useApi(`${adminUsersUrl}/${id}`, {
+      method: 'DELETE'
     });
   }
 };

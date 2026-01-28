@@ -5,8 +5,10 @@
       :items="roleOptions"
       value-key="value"
       size="sm"
+      class="w-full"
       :disabled="disabled"
       :aria-label="$t('admin.users.role')"
+      :search-input="false"
       @update:model-value="updateRole"
     />
   </div>
@@ -22,7 +24,7 @@
  */
 
 import type { Role } from '@int/schema';
-import { USER_ROLE_MAP } from '@int/schema';
+import { USER_ROLE_VALUES } from '@int/schema';
 
 defineOptions({ name: 'UsersUserRoleSelector' });
 
@@ -35,17 +37,21 @@ const props = withDefaults(
   }
 );
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 const model = defineModel<Role>({ required: true });
 
 const { disabled } = toRefs(props);
 
-const roleOptions = computed<Array<{ label: string; value: Role }>>(() => [
-  { label: t('admin.users.roles.super_admin'), value: USER_ROLE_MAP.SUPER_ADMIN },
-  { label: t('admin.users.roles.friend'), value: USER_ROLE_MAP.FRIEND },
-  { label: t('admin.users.roles.public'), value: USER_ROLE_MAP.PUBLIC }
-]);
+const roleOptions = computed<Array<{ label: string; value: Role }>>(() =>
+  USER_ROLE_VALUES.map(role => {
+    const key = `admin.users.roles.${role}`;
+    return {
+      label: te(key) ? t(key) : role,
+      value: role
+    };
+  })
+);
 
 const updateRole = (value: Role | null) => {
   if (!value) return;

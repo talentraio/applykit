@@ -3,6 +3,7 @@ export default defineNuxtPlugin({
   enforce: 'pre',
   async setup(_nuxtApp) {
     const { apiCallTimeoutMs } = _nuxtApp.$config.public;
+    let isRedirecting = false;
 
     const api = $fetch.create({
       credentials: 'include',
@@ -25,6 +26,37 @@ export default defineNuxtPlugin({
 
       async onResponse() {
         // For future features
+      },
+
+      async onResponseError({ response }) {
+        if (!import.meta.client || isRedirecting) return;
+        if (response?.status !== 403) return;
+
+        isRedirecting = true;
+
+        try {
+          const router = useRouter();
+          const route = router.currentRoute.value;
+          const { clear } = useUserSession();
+
+          try {
+            await clear();
+          } catch {
+            // Ignore session clear errors
+          }
+
+          if (route.path !== '/login') {
+            await navigateTo({
+              path: '/login',
+              query: {
+                error: 'forbidden',
+                redirect: route.fullPath
+              }
+            });
+          }
+        } finally {
+          isRedirecting = false;
+        }
       }
     });
 

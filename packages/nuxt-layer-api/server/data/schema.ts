@@ -2,13 +2,17 @@ import type { LanguageEntry, PhoneEntry, ResumeContent } from '@int/schema';
 import {
   LLM_PROVIDER_VALUES,
   OPERATION_VALUES,
+  PLATFORM_PROVIDER_VALUES,
   PROVIDER_TYPE_VALUES,
   SOURCE_FILE_TYPE_VALUES,
+  USAGE_CONTEXT_VALUES,
   USER_ROLE_MAP,
   USER_ROLE_VALUES,
+  USER_STATUS_VALUES,
   WORK_FORMAT_VALUES
 } from '@int/schema';
 import {
+  boolean,
   decimal,
   index,
   integer,
@@ -39,6 +43,9 @@ export const sourceFileTypeEnum = pgEnum('source_file_type', SOURCE_FILE_TYPE_VA
 export const llmProviderEnum = pgEnum('llm_provider', LLM_PROVIDER_VALUES);
 export const operationEnum = pgEnum('operation', OPERATION_VALUES);
 export const providerTypeEnum = pgEnum('provider_type', PROVIDER_TYPE_VALUES);
+export const platformProviderEnum = pgEnum('platform_provider', PLATFORM_PROVIDER_VALUES);
+export const userStatusEnum = pgEnum('user_status', USER_STATUS_VALUES);
+export const usageContextEnum = pgEnum('usage_context', USAGE_CONTEXT_VALUES);
 
 // ============================================================================
 // Tables
@@ -53,7 +60,23 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   googleId: varchar('google_id', { length: 255 }).notNull().unique(),
   role: roleEnum('role').notNull().default(USER_ROLE_MAP.PUBLIC),
+  status: userStatusEnum('status').notNull().default('active'),
+  lastLoginAt: timestamp('last_login_at'),
+  deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow()
+});
+
+/**
+ * Role Settings table
+ * LLM settings per role
+ */
+export const roleSettings = pgTable('role_settings', {
+  role: roleEnum('role').primaryKey(),
+  platformLlmEnabled: boolean('platform_llm_enabled').notNull().default(false),
+  byokEnabled: boolean('byok_enabled').notNull().default(false),
+  platformProvider: platformProviderEnum('platform_provider').notNull(),
+  dailyBudgetCap: decimal('daily_budget_cap', { precision: 10, scale: 2 }).notNull().default('0'),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
 
@@ -194,6 +217,7 @@ export const usageLogs = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     operation: operationEnum('operation').notNull(),
     providerType: providerTypeEnum('provider_type').notNull(),
+    usageContext: usageContextEnum('usage_context'),
     tokensUsed: integer('tokens_used'),
     cost: decimal('cost', { precision: 10, scale: 6 }),
     createdAt: timestamp('created_at').notNull().defaultNow()
@@ -226,6 +250,9 @@ export const systemConfigs = pgTable('system_configs', {
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+export type RoleSettings = typeof roleSettings.$inferSelect;
+export type NewRoleSettings = typeof roleSettings.$inferInsert;
 
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;

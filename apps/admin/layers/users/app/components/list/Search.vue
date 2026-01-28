@@ -1,5 +1,5 @@
 <template>
-  <div class="users-user-search">
+  <div class="users-list-search">
     <UFormField :label="$t('admin.users.search')">
       <UInput
         v-model="model"
@@ -20,13 +20,13 @@
  * Related: T137 (US8)
  */
 
-defineOptions({ name: 'UsersUserSearch' });
+defineOptions({ name: 'UsersListSearch' });
 
 const model = defineModel<string>({ default: '' });
 </script>
 
 <style lang="scss">
-.users-user-search {
+.users-list-search {
   // Reserved for component-specific styling
 }
 </style>

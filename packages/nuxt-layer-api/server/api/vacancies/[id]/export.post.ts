@@ -1,5 +1,11 @@
 import type { ExportFormat, Role } from '@int/schema';
-import { EXPORT_FORMAT_MAP, OPERATION_MAP, PROVIDER_TYPE_MAP, USER_ROLE_MAP } from '@int/schema';
+import {
+  EXPORT_FORMAT_MAP,
+  OPERATION_MAP,
+  PROVIDER_TYPE_MAP,
+  USAGE_CONTEXT_MAP,
+  USER_ROLE_MAP
+} from '@int/schema';
 import { generationRepository, vacancyRepository } from '../../../data/repositories';
 import { exportResumeToPDF } from '../../../services/export/pdf';
 import { requireLimit } from '../../../services/limits';
@@ -133,7 +139,7 @@ export default defineEventHandler(async event => {
     });
 
     // Log usage
-    await logExport(userId, PROVIDER_TYPE_MAP.PLATFORM, pdfResult.size);
+    await logExport(userId, PROVIDER_TYPE_MAP.PLATFORM, USAGE_CONTEXT_MAP.EXPORT, pdfResult.size);
 
     // Return download URL and metadata
     return {

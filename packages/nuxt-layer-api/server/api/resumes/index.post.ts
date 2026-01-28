@@ -1,10 +1,13 @@
-import type { SourceFileType } from '@int/schema';
+import type { Role, SourceFileType } from '@int/schema';
 import { readFile } from 'node:fs/promises';
 import {
   OPERATION_MAP,
   PROVIDER_TYPE_MAP,
+  RoleSchema,
   SOURCE_FILE_TYPE_MAP,
-  SourceFileTypeSchema
+  SourceFileTypeSchema,
+  USAGE_CONTEXT_MAP,
+  USER_ROLE_MAP
 } from '@int/schema';
 import { readFiles } from 'h3-formidable';
 import { resumeRepository } from '../../data/repositories';
@@ -34,7 +37,9 @@ import { logUsage } from '../../utils/usage';
 export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event);
-  const userId = (session.user as { id: string }).id;
+  const userId = getUserId(session);
+  const roleValidation = RoleSchema.safeParse(session.user?.role);
+  const userRole: Role = roleValidation.success ? roleValidation.data : USER_ROLE_MAP.PUBLIC;
 
   // Check rate limit
   await checkRateLimit(userId, OPERATION_MAP.PARSE, { maxRequests: 10, windowSeconds: 60 });
@@ -87,6 +92,8 @@ export default defineEventHandler(async event => {
 
     // Parse with LLM
     const llmResult = await parseResumeWithLLM(parseResult.text, {
+      userId,
+      role: userRole,
       userApiKey: userApiKey || undefined
     });
 
@@ -107,6 +114,7 @@ export default defineEventHandler(async event => {
       userId,
       OPERATION_MAP.PARSE,
       userApiKey ? PROVIDER_TYPE_MAP.BYOK : PROVIDER_TYPE_MAP.PLATFORM,
+      USAGE_CONTEXT_MAP.RESUME_BASE,
       llmResult.tokensUsed,
       llmResult.cost
     );

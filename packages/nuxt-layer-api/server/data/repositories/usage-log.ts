@@ -1,9 +1,43 @@
-import type { Operation, ProviderType } from '@int/schema';
+import type { Operation, ProviderType, UsageContext } from '@int/schema';
 import type { UsageLog } from '../schema';
-import { startOfDay, subDays } from 'date-fns';
-import { and, eq, gte, sql } from 'drizzle-orm';
+import process from 'node:process';
+import { format, startOfDay, subDays } from 'date-fns';
+import { and, eq, gte, lt, lte, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { usageLogs } from '../schema';
+
+const formatSqliteDate = (value: Date): string => {
+  return format(value, 'yyyy-MM-dd HH:mm:ss');
+};
+
+const isSqliteRuntime = (): boolean => {
+  const runtimeConfig = useRuntimeConfig();
+  return process.env.NODE_ENV !== 'production' && !runtimeConfig.databaseUrl;
+};
+
+const buildDateGte = (value: Date): ReturnType<typeof sql> => {
+  if (isSqliteRuntime()) {
+    return sql`${usageLogs.createdAt} >= ${formatSqliteDate(value)}`;
+  }
+
+  return gte(usageLogs.createdAt, value);
+};
+
+const buildDateLte = (value: Date): ReturnType<typeof sql> => {
+  if (isSqliteRuntime()) {
+    return sql`${usageLogs.createdAt} <= ${formatSqliteDate(value)}`;
+  }
+
+  return lte(usageLogs.createdAt, value);
+};
+
+const buildDateLt = (value: Date): ReturnType<typeof sql> => {
+  if (isSqliteRuntime()) {
+    return sql`${usageLogs.createdAt} < ${formatSqliteDate(value)}`;
+  }
+
+  return lt(usageLogs.createdAt, value);
+};
 
 export type SystemUsageStats = {
   totalOperations: number;
@@ -36,6 +70,7 @@ export const usageLogRepository = {
     userId: string;
     operation: Operation;
     providerType: ProviderType;
+    usageContext?: UsageContext | null;
     tokensUsed?: number;
     cost?: number;
   }): Promise<UsageLog> {
@@ -45,6 +80,7 @@ export const usageLogRepository = {
         userId: data.userId,
         operation: data.operation,
         providerType: data.providerType,
+        usageContext: data.usageContext ?? null,
         tokensUsed: data.tokensUsed ?? null,
         cost: data.cost?.toString() ?? null
       })
@@ -63,11 +99,7 @@ export const usageLogRepository = {
       .select({ count: sql<number>`count(*)` })
       .from(usageLogs)
       .where(
-        and(
-          eq(usageLogs.userId, userId),
-          eq(usageLogs.operation, operation),
-          gte(usageLogs.createdAt, today)
-        )
+        and(eq(usageLogs.userId, userId), eq(usageLogs.operation, operation), buildDateGte(today))
       );
 
     return Number(result[0]?.count ?? 0);
@@ -89,13 +121,7 @@ export const usageLogRepository = {
     return await db
       .select()
       .from(usageLogs)
-      .where(
-        and(
-          eq(usageLogs.userId, userId),
-          gte(usageLogs.createdAt, startDate),
-          sql`${usageLogs.createdAt} <= ${endDate}`
-        )
-      );
+      .where(and(eq(usageLogs.userId, userId), buildDateGte(startDate), buildDateLte(endDate)));
   },
 
   /**
@@ -106,11 +132,25 @@ export const usageLogRepository = {
     const result = await db
       .select({ total: sql<string>`sum(${usageLogs.cost})` })
       .from(usageLogs)
+      .where(and(eq(usageLogs.userId, userId), buildDateGte(startDate), buildDateLte(endDate)));
+
+    return Number(result[0]?.total ?? 0);
+  },
+
+  /**
+   * Get total cost for user today by provider type
+   */
+  async getDailyCostByProvider(userId: string, providerType: ProviderType): Promise<number> {
+    const today = startOfDay(new Date());
+
+    const result = await db
+      .select({ total: sql<string>`sum(${usageLogs.cost})` })
+      .from(usageLogs)
       .where(
         and(
           eq(usageLogs.userId, userId),
-          gte(usageLogs.createdAt, startDate),
-          sql`${usageLogs.createdAt} <= ${endDate}`
+          eq(usageLogs.providerType, providerType),
+          buildDateGte(today)
         )
       );
 
@@ -124,13 +164,7 @@ export const usageLogRepository = {
     const result = await db
       .select({ total: sql<number>`sum(${usageLogs.tokensUsed})` })
       .from(usageLogs)
-      .where(
-        and(
-          eq(usageLogs.userId, userId),
-          gte(usageLogs.createdAt, startDate),
-          sql`${usageLogs.createdAt} <= ${endDate}`
-        )
-      );
+      .where(and(eq(usageLogs.userId, userId), buildDateGte(startDate), buildDateLte(endDate)));
 
     return Number(result[0]?.total ?? 0);
   },
@@ -148,7 +182,7 @@ export const usageLogRepository = {
         count: sql<number>`count(*)`
       })
       .from(usageLogs)
-      .where(and(eq(usageLogs.userId, userId), gte(usageLogs.createdAt, startDate)))
+      .where(and(eq(usageLogs.userId, userId), buildDateGte(startDate)))
       .groupBy(usageLogs.operation);
 
     const breakdown: Record<Operation, number> = {
@@ -162,6 +196,33 @@ export const usageLogRepository = {
     });
 
     return breakdown;
+  },
+
+  /**
+   * Get operation count for a user in an optional date range
+   */
+  async getOperationCount(
+    userId: string,
+    operation: Operation,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<number> {
+    const conditions = [eq(usageLogs.userId, userId), eq(usageLogs.operation, operation)];
+
+    if (startDate) {
+      conditions.push(buildDateGte(startDate));
+    }
+
+    if (endDate) {
+      conditions.push(buildDateLte(endDate));
+    }
+
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(usageLogs)
+      .where(and(...conditions));
+
+    return Number(result[0]?.count ?? 0);
   },
 
   /**
@@ -180,7 +241,7 @@ export const usageLogRepository = {
         count: sql<number>`count(*)`
       })
       .from(usageLogs)
-      .where(and(eq(usageLogs.userId, userId), gte(usageLogs.createdAt, startDate)))
+      .where(and(eq(usageLogs.userId, userId), buildDateGte(startDate)))
       .groupBy(usageLogs.providerType);
 
     const breakdown = { platform: 0, byok: 0 };
@@ -201,22 +262,22 @@ export const usageLogRepository = {
         db
           .select({ count: sql<number>`count(*)` })
           .from(usageLogs)
-          .where(gte(usageLogs.createdAt, startDate)),
+          .where(buildDateGte(startDate)),
         db
           .select({ total: sql<string>`sum(${usageLogs.cost})` })
           .from(usageLogs)
-          .where(gte(usageLogs.createdAt, startDate)),
+          .where(buildDateGte(startDate)),
         db
           .select({ count: sql<number>`count(distinct ${usageLogs.userId})` })
           .from(usageLogs)
-          .where(gte(usageLogs.createdAt, startDate)),
+          .where(buildDateGte(startDate)),
         db
           .select({
             operation: usageLogs.operation,
             count: sql<number>`count(*)`
           })
           .from(usageLogs)
-          .where(gte(usageLogs.createdAt, startDate))
+          .where(buildDateGte(startDate))
           .groupBy(usageLogs.operation),
         db
           .select({
@@ -224,7 +285,7 @@ export const usageLogRepository = {
             count: sql<number>`count(*)`
           })
           .from(usageLogs)
-          .where(gte(usageLogs.createdAt, startDate))
+          .where(buildDateGte(startDate))
           .groupBy(usageLogs.providerType)
       ]);
 
@@ -265,7 +326,7 @@ export const usageLogRepository = {
 
     const result = await db
       .delete(usageLogs)
-      .where(sql`${usageLogs.createdAt} < ${cutoffDate}`)
+      .where(buildDateLt(cutoffDate))
       .returning({ id: usageLogs.id });
 
     return result.length;

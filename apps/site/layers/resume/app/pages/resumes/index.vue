@@ -258,7 +258,7 @@ const handleDelete = async (id: string) => {
  */
 const formatDate = (date: Date | string) => {
   const resolved = typeof date === 'string' ? parseISO(date) : date;
-  return format(resolved, 'MMM d, yyyy');
+  return format(resolved, 'dd.MM.yyyy');
 };
 
 /**

@@ -64,7 +64,7 @@ const formattedExpirationDate = computed(() => {
     typeof props.generation.expiresAt === 'string'
       ? parseISO(props.generation.expiresAt)
       : props.generation.expiresAt;
-  return format(resolved, 'MMM d, yyyy');
+  return format(resolved, 'dd.MM.yyyy');
 });
 
 // Icon and color based on days remaining

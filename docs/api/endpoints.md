@@ -35,9 +35,20 @@
 
 ## Admin (MVP)
 
-- `GET /api/admin/users`
+- `GET /api/admin/users` (search, role filter, pagination)
+- `POST /api/admin/users` (invite user by email + role)
+- `GET /api/admin/users/:id` (detail + profile + usage stats)
 - `PUT /api/admin/users/:id/role`
-- `GET /api/admin/limits`
-- `PUT /api/admin/limits`
+- `PUT /api/admin/users/:id/status` (block/unblock)
+- `DELETE /api/admin/users/:id` (soft delete)
+- `GET /api/admin/roles`
+- `GET /api/admin/roles/:role`
+- `PUT /api/admin/roles/:role`
+- `GET /api/admin/system` (budget + usage)
+- `PUT /api/admin/system`
+- `GET /api/admin/usage`
 
-Backlog: dynamic roles settings UI (add/remove roles, configure per-role limits).
+Notes:
+
+- All admin endpoints require `super_admin`
+- Blocked users receive `403` on protected endpoints

@@ -1,4 +1,4 @@
-import { USER_ROLE_MAP } from '@int/schema';
+import { USER_ROLE_MAP, USER_STATUS_MAP } from '@int/schema';
 import { getQuery } from 'h3';
 import { decode, hasLeadingSlash, hasProtocol } from 'ufo';
 import { userRepository } from '../../data/repositories';
@@ -36,15 +36,49 @@ export default defineOAuthGoogleEventHandler({
     let dbUser = await userRepository.findByGoogleId(googleId);
 
     if (!dbUser) {
+      const invitedUser = await userRepository.findByEmail(email);
+
+      if (invitedUser) {
+        if (
+          invitedUser.status === USER_STATUS_MAP.BLOCKED ||
+          invitedUser.status === USER_STATUS_MAP.DELETED
+        ) {
+          throw createError({
+            statusCode: 403,
+            message: 'Account is not allowed to sign in'
+          });
+        }
+
+        if (invitedUser.status === USER_STATUS_MAP.INVITED) {
+          const activated = await userRepository.activateInvitedUser({
+            id: invitedUser.id,
+            googleId
+          });
+          dbUser = activated ?? invitedUser;
+        } else {
+          dbUser = invitedUser;
+          await userRepository.updateLastLogin(invitedUser.id);
+        }
+      }
+    } else {
+      if (dbUser.status === USER_STATUS_MAP.BLOCKED || dbUser.status === USER_STATUS_MAP.DELETED) {
+        throw createError({
+          statusCode: 403,
+          message: 'Account is not allowed to sign in'
+        });
+      }
+
+      // Existing user - update last login
+      await userRepository.updateLastLogin(dbUser.id);
+    }
+
+    if (!dbUser) {
       // New user - create with default public role
       dbUser = await userRepository.create({
         email,
         googleId,
         role: USER_ROLE_MAP.PUBLIC
       });
-    } else {
-      // Existing user - update last login
-      await userRepository.updateLastLogin(dbUser.id);
     }
 
     // Set session

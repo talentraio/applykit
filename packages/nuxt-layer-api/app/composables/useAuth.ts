@@ -9,6 +9,7 @@
  */
 
 import type { Profile, UserPublic } from '@int/schema';
+import { FetchError } from 'ofetch';
 import { decode, hasLeadingSlash, hasProtocol } from 'ufo';
 import { useApiAuthStore } from '../stores/auth';
 
@@ -56,19 +57,24 @@ export function useAuth(): AuthComposable {
    * Logout and redirect to login page
    */
   const logout = async (): Promise<void> => {
+    // Call store logout action (handles API call)
     try {
-      // Call store logout action (handles API call)
       await store.logout();
-
-      // Clear client-side session (nuxt-auth-utils)
-      await clear();
-
-      // Redirect to login
-      await navigateTo('/login');
     } catch (error) {
-      console.error('Logout failed:', error);
-      throw error;
+      console.warn('Logout request failed, clearing local session anyway:', error);
     }
+
+    // Clear client-side session (nuxt-auth-utils)
+    try {
+      await clear();
+    } catch (error) {
+      if (!(error instanceof FetchError && error.status === 401)) {
+        console.warn('Session clear failed:', error);
+      }
+    }
+
+    // Redirect to login regardless of server response
+    await navigateTo('/login');
   };
 
   /**

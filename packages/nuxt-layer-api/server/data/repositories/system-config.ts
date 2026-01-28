@@ -1,4 +1,4 @@
-import type { PlatformProvider, SystemConfigKey } from '@int/schema';
+import type { SystemConfigKey } from '@int/schema';
 import { SystemConfigDefaults, SystemConfigKeySchema, SystemConfigValues } from '@int/schema';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
@@ -33,16 +33,6 @@ export const systemConfigRepository = {
   },
 
   /**
-   * Get boolean config value
-   */
-  async getBoolean(
-    key: Extract<SystemConfigKey, 'platform_llm_enabled' | 'byok_enabled'>
-  ): Promise<boolean> {
-    const value = await this.get(key);
-    return Boolean(value);
-  },
-
-  /**
    * Get number config value
    */
   async getNumber(
@@ -50,14 +40,6 @@ export const systemConfigRepository = {
   ): Promise<number> {
     const value = await this.get(key);
     return Number(value);
-  },
-
-  /**
-   * Get platform provider
-   */
-  async getPlatformProvider(): Promise<PlatformProvider> {
-    const value = await this.get('platform_provider');
-    return value as PlatformProvider;
   },
 
   /**
@@ -84,16 +66,6 @@ export const systemConfigRepository = {
   },
 
   /**
-   * Set boolean config value
-   */
-  async setBoolean(
-    key: Extract<SystemConfigKey, 'platform_llm_enabled' | 'byok_enabled'>,
-    value: boolean
-  ): Promise<void> {
-    await this.set(key, value);
-  },
-
-  /**
    * Set number config value
    */
   async setNumber(
@@ -101,13 +73,6 @@ export const systemConfigRepository = {
     value: number
   ): Promise<void> {
     await this.set(key, value);
-  },
-
-  /**
-   * Set platform provider
-   */
-  async setPlatformProvider(provider: PlatformProvider): Promise<void> {
-    await this.set('platform_provider', provider);
   },
 
   /**
@@ -163,15 +128,9 @@ export const systemConfigRepository = {
   },
 
   /**
-   * Check if platform LLM is enabled and under budget
-   * Used before allowing platform LLM operations
+   * Check if global budget cap allows platform usage
    */
-  async canUsePlatformLLM(): Promise<{ allowed: boolean; reason?: string }> {
-    const enabled = await this.getBoolean('platform_llm_enabled');
-    if (!enabled) {
-      return { allowed: false, reason: 'Platform LLM is disabled' };
-    }
-
+  async canUseGlobalBudget(): Promise<{ allowed: boolean; reason?: string }> {
     const budgetCap = await this.getNumber('global_budget_cap');
     const budgetUsed = await this.getNumber('global_budget_used');
 
@@ -180,13 +139,6 @@ export const systemConfigRepository = {
     }
 
     return { allowed: true };
-  },
-
-  /**
-   * Check if BYOK is enabled
-   */
-  async isBYOKEnabled(): Promise<boolean> {
-    return await this.getBoolean('byok_enabled');
   }
 };
 
@@ -223,19 +175,6 @@ function parseStoredValue(value: unknown, key: SystemConfigKey): ParsedStoredVal
 
 function coerceLegacyValue(value: string, key: SystemConfigKey): unknown | null {
   switch (key) {
-    case 'platform_provider':
-      return value;
-    case 'platform_llm_enabled':
-    case 'byok_enabled': {
-      const lower = value.toLowerCase();
-      if (lower === 'true' || value === '1') {
-        return true;
-      }
-      if (lower === 'false' || value === '0') {
-        return false;
-      }
-      return null;
-    }
     case 'global_budget_cap':
     case 'global_budget_used': {
       const numberValue = Number(value);

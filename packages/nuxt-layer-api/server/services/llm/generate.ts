@@ -1,4 +1,4 @@
-import type { LLMProvider, ResumeContent } from '@int/schema';
+import type { LLMProvider, ResumeContent, Role } from '@int/schema';
 import { ResumeContentSchema } from '@int/schema';
 import { z } from 'zod';
 import { callLLM, LLMError } from './index';
@@ -26,6 +26,16 @@ const GenerateLLMResponseSchema = z.object({
  * Generate options
  */
 export type GenerateOptions = {
+  /**
+   * User ID (required for role-based checks)
+   */
+  userId?: string;
+
+  /**
+   * User role (required for role-based checks)
+   */
+  role?: Role;
+
   /**
    * User-provided API key (BYOK)
    */
@@ -133,7 +143,7 @@ export async function generateResumeWithLLM(
   },
   options: GenerateOptions = {}
 ): Promise<GenerateLLMResult> {
-  const { userApiKey, provider, maxRetries = 2, temperature = 0.3 } = options;
+  const { userId, role, userApiKey, provider, maxRetries = 2, temperature = 0.3 } = options;
 
   let attempts = 0;
   let totalCost = 0;
@@ -154,6 +164,8 @@ export async function generateResumeWithLLM(
           maxTokens: 6000 // Larger than parse since we're generating more content
         },
         {
+          userId,
+          role,
           userApiKey,
           provider
         }
