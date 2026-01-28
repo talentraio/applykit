@@ -8,7 +8,9 @@ import {
   PLATFORM_PROVIDER_MAP,
   PROVIDER_TYPE_MAP,
   SOURCE_FILE_TYPE_MAP,
+  USAGE_CONTEXT_MAP,
   USER_ROLE_MAP,
+  USER_STATUS_MAP,
   WORK_FORMAT_MAP
 } from '@int/schema';
 import Database from 'better-sqlite3';
@@ -47,11 +49,9 @@ export default defineNitroPlugin(async () => {
   // Check if database needs initialization
   const needsInit = !existsSync(dbPath) || isEmptyDatabase(dbPath);
 
-  if (!needsInit) {
-    return;
+  if (needsInit) {
+    console.warn(`Initializing SQLite database at ${dbPath}...`);
   }
-
-  console.warn(`Initializing SQLite database at ${dbPath}...`);
 
   const db = new Database(dbPath);
   const roleCheckList = Object.values(USER_ROLE_MAP)
@@ -72,15 +72,28 @@ export default defineNitroPlugin(async () => {
   const providerTypeCheckList = Object.values(PROVIDER_TYPE_MAP)
     .map(type => `'${type}'`)
     .join(', ');
+  const userStatusCheckList = Object.values(USER_STATUS_MAP)
+    .map(status => `'${status}'`)
+    .join(', ');
+  const usageContextCheckList = Object.values(USAGE_CONTEXT_MAP)
+    .map(context => `'${context}'`)
+    .join(', ');
+  const platformProviderCheckList = Object.values(PLATFORM_PROVIDER_MAP)
+    .map(provider => `'${provider}'`)
+    .join(', ');
 
   try {
-    db.exec(`
+    if (needsInit) {
+      db.exec(`
       -- Users
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         email TEXT NOT NULL UNIQUE,
         google_id TEXT NOT NULL UNIQUE,
         role TEXT NOT NULL DEFAULT '${USER_ROLE_MAP.PUBLIC}' CHECK(role IN (${roleCheckList})),
+        status TEXT NOT NULL DEFAULT '${USER_STATUS_MAP.ACTIVE}' CHECK(status IN (${userStatusCheckList})),
+        last_login_at TEXT,
+        deleted_at TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
@@ -157,12 +170,23 @@ export default defineNitroPlugin(async () => {
       );
       CREATE INDEX IF NOT EXISTS idx_llm_keys_user_id ON llm_keys(user_id);
 
+      -- Role Settings
+      CREATE TABLE IF NOT EXISTS role_settings (
+        role TEXT PRIMARY KEY CHECK(role IN (${roleCheckList})),
+        platform_llm_enabled INTEGER NOT NULL DEFAULT 0,
+        byok_enabled INTEGER NOT NULL DEFAULT 0,
+        platform_provider TEXT NOT NULL CHECK(platform_provider IN (${platformProviderCheckList})),
+        daily_budget_cap REAL NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
       -- Usage Logs
       CREATE TABLE IF NOT EXISTS usage_logs (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         operation TEXT NOT NULL CHECK(operation IN (${operationCheckList})),
         provider_type TEXT NOT NULL CHECK(provider_type IN (${providerTypeCheckList})),
+        usage_context TEXT CHECK(usage_context IN (${usageContextCheckList})),
         tokens_used INTEGER,
         cost REAL,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -180,14 +204,21 @@ export default defineNitroPlugin(async () => {
 
       -- Initial data
       INSERT OR IGNORE INTO system_configs (key, value) VALUES
-        ('platform_llm_enabled', 'true'),
-        ('byok_enabled', 'true'),
-        ('platform_provider', '${JSON.stringify(PLATFORM_PROVIDER_MAP.OPENAI)}'),
         ('global_budget_cap', '100'),
         ('global_budget_used', '0');
     `);
+    }
 
-    console.warn('SQLite database initialized successfully');
+    applySqliteMigrations(db, {
+      roleCheckList,
+      userStatusCheckList,
+      usageContextCheckList,
+      platformProviderCheckList
+    });
+
+    if (needsInit) {
+      console.warn('SQLite database initialized successfully');
+    }
   } finally {
     db.close();
   }
@@ -206,5 +237,82 @@ function isEmptyDatabase(dbPath: string): boolean {
     return result.length === 0;
   } catch {
     return true;
+  }
+}
+
+type MigrationOptions = {
+  roleCheckList: string;
+  userStatusCheckList: string;
+  usageContextCheckList: string;
+  platformProviderCheckList: string;
+};
+
+function applySqliteMigrations(db: Database, options: MigrationOptions): void {
+  const { roleCheckList, userStatusCheckList, usageContextCheckList, platformProviderCheckList } =
+    options;
+
+  ensureColumn(
+    db,
+    'users',
+    'status',
+    `TEXT NOT NULL DEFAULT '${USER_STATUS_MAP.ACTIVE}' CHECK(status IN (${userStatusCheckList}))`,
+    () => {
+      db.exec(`UPDATE users SET status = '${USER_STATUS_MAP.ACTIVE}' WHERE status IS NULL`);
+    }
+  );
+
+  db.exec(`UPDATE users SET updated_at = created_at WHERE updated_at IS NULL OR updated_at = ''`);
+
+  ensureColumn(db, 'users', 'last_login_at', 'TEXT', () => {
+    db.exec(`UPDATE users SET last_login_at = updated_at WHERE last_login_at IS NULL`);
+  });
+
+  ensureColumn(db, 'users', 'deleted_at', 'TEXT');
+
+  ensureColumn(
+    db,
+    'usage_logs',
+    'usage_context',
+    `TEXT CHECK(usage_context IN (${usageContextCheckList}))`
+  );
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS role_settings (
+      role TEXT PRIMARY KEY CHECK(role IN (${roleCheckList})),
+      platform_llm_enabled INTEGER NOT NULL DEFAULT 0,
+      byok_enabled INTEGER NOT NULL DEFAULT 0,
+      platform_provider TEXT NOT NULL CHECK(platform_provider IN (${platformProviderCheckList})),
+      daily_budget_cap REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    INSERT OR IGNORE INTO role_settings (role, platform_llm_enabled, byok_enabled, platform_provider, daily_budget_cap)
+    VALUES
+      ('super_admin', 1, 1, 'openai', 0),
+      ('friend', 0, 0, 'openai', 0),
+      ('public', 0, 0, 'openai', 0);
+
+    DELETE FROM system_configs
+    WHERE key IN ('platform_llm_enabled', 'byok_enabled', 'platform_provider');
+  `);
+}
+
+function ensureColumn(
+  db: Database,
+  table: string,
+  column: string,
+  definition: string,
+  onAdd?: () => void
+): void {
+  const exists = db
+    .prepare(`PRAGMA table_info(${table})`)
+    .all()
+    .some(row => row.name === column);
+
+  if (!exists) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    if (onAdd) {
+      onAdd();
+    }
   }
 }

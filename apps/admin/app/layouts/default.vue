@@ -1,36 +1,49 @@
 <template>
   <UiAppShell class="admin-default-layout">
-    <UDashboardNavbar :title="appTitle">
-      <template #left>
-        <div class="flex items-center gap-2">
-          <UButton
-            v-for="link in navLinks"
-            :key="link.to"
-            :to="link.to"
-            :icon="link.icon"
-            color="neutral"
-            variant="ghost"
-            size="sm"
+    <UDashboardGroup>
+      <UDashboardSidebar v-model:open="sidebarOpen">
+        <template #header>
+          <NuxtLink
+            to="/"
+            class="admin-default-layout__sidebar-header flex items-center gap-2 px-3 py-2"
           >
-            {{ link.label }}
-          </UButton>
-        </div>
-      </template>
-      <template #right>
-        <UDropdownMenu :items="userMenuItems">
-          <UButton
-            icon="i-lucide-shield-check"
-            color="neutral"
-            variant="ghost"
-            :label="$t('admin.nav.admin')"
-          />
-        </UDropdownMenu>
-      </template>
-    </UDashboardNavbar>
+            <UIcon name="i-lucide-shield-check" class="text-primary" />
+            <span class="text-sm font-semibold">{{ appTitle }}</span>
+          </NuxtLink>
+        </template>
 
-    <UMain>
-      <slot />
-    </UMain>
+        <template #default>
+          <UNavigationMenu
+            :items="navLinks"
+            orientation="vertical"
+            class="admin-default-layout__sidebar-nav px-2"
+          />
+        </template>
+      </UDashboardSidebar>
+
+      <UDashboardPanel>
+        <template #header>
+          <UDashboardNavbar :title="appTitle" toggle-side="left">
+            <template #right>
+              <UDropdownMenu :items="userMenuItems">
+                <UButton
+                  icon="i-lucide-shield-check"
+                  color="neutral"
+                  variant="ghost"
+                  :label="$t('admin.nav.admin')"
+                />
+              </UDropdownMenu>
+            </template>
+          </UDashboardNavbar>
+        </template>
+
+        <template #body>
+          <UMain class="admin-default-layout__main">
+            <slot />
+          </UMain>
+        </template>
+      </UDashboardPanel>
+    </UDashboardGroup>
   </UiAppShell>
 </template>
 
@@ -46,7 +59,7 @@
  * TR014 - Refactored to use Nuxt UI Pro Dashboard components
  */
 
-import type { DropdownMenuItem } from '#ui/types';
+import type { DropdownMenuItem, NavigationMenuItem } from '#ui/types';
 
 defineOptions({ name: 'AdminDefaultLayout' });
 
@@ -55,7 +68,24 @@ const { logout } = useAuth();
 
 const appTitle = 'ApplyKit Admin';
 
-const navLinks = computed(() => [
+const sidebarOpen = ref(false);
+let mediaQuery: MediaQueryList | null = null;
+
+const handleMediaChange = (event: MediaQueryListEvent) => {
+  sidebarOpen.value = event.matches;
+};
+
+onMounted(() => {
+  mediaQuery = window.matchMedia('(min-width: 1024px)');
+  sidebarOpen.value = mediaQuery.matches;
+  mediaQuery.addEventListener?.('change', handleMediaChange);
+});
+
+onBeforeUnmount(() => {
+  mediaQuery?.removeEventListener?.('change', handleMediaChange);
+});
+
+const navLinks = computed<NavigationMenuItem[]>(() => [
   {
     label: t('admin.nav.dashboard'),
     to: '/',
@@ -65,6 +95,11 @@ const navLinks = computed(() => [
     label: t('admin.nav.users'),
     to: '/users',
     icon: 'i-lucide-users'
+  },
+  {
+    label: t('admin.nav.roles'),
+    to: '/roles',
+    icon: 'i-lucide-shield'
   },
   {
     label: t('admin.nav.system'),
@@ -78,7 +113,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
     {
       label: t('auth.logout'),
       icon: 'i-lucide-log-out',
-      click: async () => {
+      onSelect: async () => {
         await logout();
       }
     }

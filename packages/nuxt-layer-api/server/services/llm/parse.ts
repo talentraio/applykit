@@ -1,4 +1,4 @@
-import type { LLMProvider, ResumeContent } from '@int/schema';
+import type { LLMProvider, ResumeContent, Role } from '@int/schema';
 import { ResumeContentSchema } from '@int/schema';
 import { callLLM, LLMError } from './index';
 import { createParseUserPrompt, PARSE_SYSTEM_PROMPT } from './prompts/parse';
@@ -16,6 +16,16 @@ import { createParseUserPrompt, PARSE_SYSTEM_PROMPT } from './prompts/parse';
  * Parse options
  */
 export type ParseOptions = {
+  /**
+   * User ID (required for role-based checks)
+   */
+  userId?: string;
+
+  /**
+   * User role (required for role-based checks)
+   */
+  role?: Role;
+
   /**
    * User-provided API key (BYOK)
    */
@@ -102,7 +112,7 @@ export async function parseResumeWithLLM(
   text: string,
   options: ParseOptions = {}
 ): Promise<ParseLLMResult> {
-  const { userApiKey, provider, maxRetries = 2, temperature = 0.1 } = options;
+  const { userId, role, userApiKey, provider, maxRetries = 2, temperature = 0.1 } = options;
 
   let attempts = 0;
   let totalCost = 0;
@@ -123,6 +133,8 @@ export async function parseResumeWithLLM(
           maxTokens: 4000
         },
         {
+          userId,
+          role,
           userApiKey,
           provider
         }

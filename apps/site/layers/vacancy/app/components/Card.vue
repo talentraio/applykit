@@ -97,7 +97,7 @@ const formattedDate = computed(() => {
     typeof props.vacancy.updatedAt === 'string'
       ? parseISO(props.vacancy.updatedAt)
       : props.vacancy.updatedAt;
-  return t('vacancy.card.updatedAt', { date: format(resolved, 'MMM d, yyyy') });
+  return t('vacancy.card.updatedAt', { date: format(resolved, 'dd.MM.yyyy') });
 });
 
 const handleClick = () => {

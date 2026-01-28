@@ -1,4 +1,5 @@
 import type { Profile, UserPublic } from '@int/schema';
+import { USER_STATUS_MAP } from '@int/schema';
 /**
  * Current User Endpoint
  *
@@ -41,6 +42,21 @@ export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
     });
   }
 
+  if (user.status === USER_STATUS_MAP.DELETED) {
+    await clearUserSession(event);
+    throw createError({
+      statusCode: 403,
+      message: 'User is deleted'
+    });
+  }
+
+  if (user.status === USER_STATUS_MAP.BLOCKED) {
+    throw createError({
+      statusCode: 403,
+      message: 'User is blocked'
+    });
+  }
+
   // Fetch profile (may be null if not created yet)
   const profile = await profileRepository.findByUserId(userId);
 
@@ -58,8 +74,11 @@ export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
       id: user.id,
       email: user.email,
       role: user.role,
+      status: user.status,
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      updatedAt: user.updatedAt,
+      lastLoginAt: user.lastLoginAt,
+      deletedAt: user.deletedAt
     },
     profile: transformedProfile
   };

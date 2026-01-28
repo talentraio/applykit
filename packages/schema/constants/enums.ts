@@ -10,6 +10,20 @@ export const USER_ROLE_VALUES = [
   USER_ROLE_MAP.PUBLIC
 ] as const;
 
+export const USER_STATUS_MAP = {
+  INVITED: 'invited',
+  ACTIVE: 'active',
+  BLOCKED: 'blocked',
+  DELETED: 'deleted'
+} as const;
+
+export const USER_STATUS_VALUES = [
+  USER_STATUS_MAP.INVITED,
+  USER_STATUS_MAP.ACTIVE,
+  USER_STATUS_MAP.BLOCKED,
+  USER_STATUS_MAP.DELETED
+] as const;
+
 export const WORK_FORMAT_MAP = {
   REMOTE: 'remote',
   HYBRID: 'hybrid',
@@ -49,6 +63,18 @@ export const OPERATION_VALUES = [
   OPERATION_MAP.PARSE,
   OPERATION_MAP.GENERATE,
   OPERATION_MAP.EXPORT
+] as const;
+
+export const USAGE_CONTEXT_MAP = {
+  RESUME_BASE: 'resume_base',
+  RESUME_ADAPTATION: 'resume_adaptation',
+  EXPORT: 'export'
+} as const;
+
+export const USAGE_CONTEXT_VALUES = [
+  USAGE_CONTEXT_MAP.RESUME_BASE,
+  USAGE_CONTEXT_MAP.RESUME_ADAPTATION,
+  USAGE_CONTEXT_MAP.EXPORT
 ] as const;
 
 export const PROVIDER_TYPE_MAP = {

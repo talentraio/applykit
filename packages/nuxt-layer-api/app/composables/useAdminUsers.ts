@@ -10,8 +10,10 @@
 import type {
   AdminUser,
   AdminUserDetail,
+  AdminUserInviteInput,
   AdminUsersQuery,
-  AdminUsersResponse
+  AdminUsersResponse,
+  AdminUserStatusInput
 } from '../infrastructure/admin-users.api';
 import { useAdminUsersStore } from '../stores/admin-users';
 
@@ -60,6 +62,21 @@ export type UseAdminUsersReturn = {
    * Update user role
    */
   updateRole: (id: string, role: AdminUser['role']) => Promise<AdminUser>;
+
+  /**
+   * Invite user by email
+   */
+  inviteUser: (input: AdminUserInviteInput) => Promise<AdminUser>;
+
+  /**
+   * Update user status
+   */
+  updateStatus: (id: string, input: AdminUserStatusInput) => Promise<AdminUser>;
+
+  /**
+   * Delete user (mark as deleted)
+   */
+  deleteUser: (id: string) => Promise<AdminUser>;
 };
 
 export function useAdminUsers(): UseAdminUsersReturn {
@@ -74,6 +91,9 @@ export function useAdminUsers(): UseAdminUsersReturn {
     hasUsers: computed(() => store.hasUsers),
     fetchUsers: (params?: AdminUsersQuery) => store.fetchUsers(params),
     fetchUserDetail: (id: string) => store.fetchUserDetail(id),
-    updateRole: (id: string, role: AdminUser['role']) => store.updateRole(id, role)
+    updateRole: (id: string, role: AdminUser['role']) => store.updateRole(id, role),
+    inviteUser: (input: AdminUserInviteInput) => store.inviteUser(input),
+    updateStatus: (id: string, input: AdminUserStatusInput) => store.updateStatus(id, input),
+    deleteUser: (id: string) => store.deleteUser(id)
   };
 }

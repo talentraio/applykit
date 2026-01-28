@@ -1,7 +1,16 @@
-import type { LLMProvider, ProviderType } from '@int/schema';
+import type { LLMProvider, ProviderType, Role } from '@int/schema';
 import type { ILLMProvider, LLMRequest, LLMResponse } from './types';
-import { LLM_PROVIDER_MAP, PLATFORM_PROVIDER_MAP, PROVIDER_TYPE_MAP } from '@int/schema';
-import { systemConfigRepository } from '../../data/repositories';
+import {
+  LLM_PROVIDER_MAP,
+  PLATFORM_PROVIDER_MAP,
+  PROVIDER_TYPE_MAP,
+  USER_ROLE_MAP
+} from '@int/schema';
+import {
+  roleSettingsRepository,
+  systemConfigRepository,
+  usageLogRepository
+} from '../../data/repositories';
 import { createGeminiProvider } from './providers/gemini';
 import { createOpenAIProvider } from './providers/openai';
 import { getKeyHint, LLMError, sanitizeApiKey } from './types';
@@ -80,6 +89,8 @@ export async function validateKey(provider: LLMProvider, apiKey: string): Promis
  *
  * @param request - LLM request configuration
  * @param options - Service options
+ * @param options.userId - User ID (required for role-based checks)
+ * @param options.role - User role (required for role-based checks)
  * @param options.userApiKey - User-provided API key (BYOK)
  * @param options.provider - Preferred provider
  * @param options.forcePlatform - Force platform key usage (for testing)
@@ -88,6 +99,16 @@ export async function validateKey(provider: LLMProvider, apiKey: string): Promis
 export async function callLLM(
   request: LLMRequest,
   options?: {
+    /**
+     * User ID (required for role-based checks)
+     */
+    userId?: string;
+
+    /**
+     * User role (required for role-based checks)
+     */
+    role?: Role;
+
     /**
      * User-provided API key (BYOK)
      */
@@ -109,10 +130,15 @@ export async function callLLM(
   let apiKey: string;
   let providerType: ProviderType;
 
+  const userRole = options?.role;
+  const userId = options?.userId;
+  const isSuperAdmin = userRole === USER_ROLE_MAP.SUPER_ADMIN;
+  const roleSettings = userRole ? await roleSettingsRepository.getByRole(userRole) : null;
+
   if (options?.userApiKey && !options?.forcePlatform) {
     // BYOK: User provided their own key
     const resolvedProvider = options.provider || LLM_PROVIDER_MAP.OPENAI;
-    const byokEnabled = await systemConfigRepository.isBYOKEnabled();
+    const byokEnabled = isSuperAdmin || roleSettings?.byokEnabled;
 
     if (!byokEnabled) {
       throw new LLMError('BYOK is disabled', resolvedProvider, 'BYOK_DISABLED');
@@ -123,18 +149,52 @@ export async function callLLM(
     providerType = PROVIDER_TYPE_MAP.BYOK;
   } else {
     // Platform: Use system configuration
-    const config = await systemConfigRepository.canUsePlatformLLM();
+    const platformEnabled = isSuperAdmin || roleSettings?.platformLlmEnabled;
 
-    if (!config.allowed) {
+    if (!platformEnabled) {
       throw new LLMError(
-        config.reason || 'Platform LLM is not available',
+        'Platform LLM is disabled for this role',
         LLM_PROVIDER_MAP.OPENAI,
-        'PLATFORM_UNAVAILABLE'
+        'PLATFORM_DISABLED'
       );
     }
 
-    // Get platform provider preference
-    const preferredProvider = await systemConfigRepository.getPlatformProvider();
+    if (!isSuperAdmin && userId) {
+      const budgetCap = roleSettings?.dailyBudgetCap ?? 0;
+      if (budgetCap <= 0) {
+        throw new LLMError(
+          'Daily budget cap is not configured',
+          LLM_PROVIDER_MAP.OPENAI,
+          'DAILY_BUDGET_DISABLED'
+        );
+      }
+
+      const usedToday = await usageLogRepository.getDailyCostByProvider(
+        userId,
+        PROVIDER_TYPE_MAP.PLATFORM
+      );
+
+      if (usedToday >= budgetCap) {
+        throw new LLMError(
+          'Daily budget cap reached',
+          LLM_PROVIDER_MAP.OPENAI,
+          'DAILY_BUDGET_EXCEEDED'
+        );
+      }
+    }
+
+    const globalBudget = await systemConfigRepository.canUseGlobalBudget();
+
+    if (!globalBudget.allowed) {
+      throw new LLMError(
+        globalBudget.reason || 'Global budget cap reached',
+        LLM_PROVIDER_MAP.OPENAI,
+        'GLOBAL_BUDGET_EXCEEDED'
+      );
+    }
+
+    // Get platform provider preference (role-based)
+    const preferredProvider = roleSettings?.platformProvider ?? PLATFORM_PROVIDER_MAP.OPENAI;
     // Map gemini_flash to gemini for LLM provider type
     const mappedProvider: LLMProvider =
       preferredProvider === PLATFORM_PROVIDER_MAP.GEMINI_FLASH

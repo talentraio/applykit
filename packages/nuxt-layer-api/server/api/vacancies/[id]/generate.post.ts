@@ -1,5 +1,5 @@
 import type { Role } from '@int/schema';
-import { OPERATION_MAP, PROVIDER_TYPE_MAP, USER_ROLE_MAP } from '@int/schema';
+import { OPERATION_MAP, PROVIDER_TYPE_MAP, USAGE_CONTEXT_MAP, USER_ROLE_MAP } from '@int/schema';
 import {
   generationRepository,
   resumeRepository,
@@ -116,6 +116,8 @@ export default defineEventHandler(async event => {
       },
       undefined, // Profile context not used in MVP
       {
+        userId,
+        role: userRole,
         userApiKey,
         provider
       }
@@ -134,6 +136,7 @@ export default defineEventHandler(async event => {
     await logGenerate(
       userId,
       userApiKey ? PROVIDER_TYPE_MAP.BYOK : PROVIDER_TYPE_MAP.PLATFORM,
+      USAGE_CONTEXT_MAP.RESUME_ADAPTATION,
       result.tokensUsed,
       result.cost
     );

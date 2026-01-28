@@ -1,20 +1,12 @@
-import type { PlatformProvider } from '@int/schema';
-
 const adminSystemUrl = '/api/admin/system';
 const adminUsageUrl = '/api/admin/usage';
 
 export type AdminSystemConfig = {
-  platformLlmEnabled: boolean;
-  byokEnabled: boolean;
-  platformProvider: PlatformProvider;
   globalBudgetCap: number;
   globalBudgetUsed: number;
 };
 
 export type AdminSystemConfigInput = {
-  platformLlmEnabled?: boolean;
-  byokEnabled?: boolean;
-  platformProvider?: PlatformProvider;
   globalBudgetCap?: number;
 };
 

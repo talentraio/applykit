@@ -1,4 +1,4 @@
-import type { Operation, ProviderType } from '@int/schema';
+import type { Operation, ProviderType, UsageContext } from '@int/schema';
 import { OPERATION_MAP } from '@int/schema';
 import { addDays, startOfDay } from 'date-fns';
 import { usageLogRepository } from '../data/repositories';
@@ -18,6 +18,7 @@ import { usageLogRepository } from '../data/repositories';
  * @param userId - User performing the operation
  * @param operation - Type of operation (parse, generate, export)
  * @param providerType - Platform or BYOK
+ * @param usageContext - Optional usage context
  * @param tokensUsed - Optional token count
  * @param cost - Optional cost in USD
  */
@@ -25,6 +26,7 @@ export async function logUsage(
   userId: string,
   operation: Operation,
   providerType: ProviderType,
+  usageContext?: UsageContext | null,
   tokensUsed?: number,
   cost?: number
 ): Promise<void> {
@@ -32,6 +34,7 @@ export async function logUsage(
     userId,
     operation,
     providerType,
+    usageContext: usageContext ?? null,
     tokensUsed,
     cost
   });
@@ -94,10 +97,11 @@ export async function getUsageHistory(
 export async function logParse(
   userId: string,
   providerType: ProviderType,
+  usageContext?: UsageContext | null,
   tokensUsed?: number,
   cost?: number
 ): Promise<void> {
-  await logUsage(userId, OPERATION_MAP.PARSE, providerType, tokensUsed, cost);
+  await logUsage(userId, OPERATION_MAP.PARSE, providerType, usageContext, tokensUsed, cost);
 }
 
 /**
@@ -106,10 +110,11 @@ export async function logParse(
 export async function logGenerate(
   userId: string,
   providerType: ProviderType,
+  usageContext?: UsageContext | null,
   tokensUsed?: number,
   cost?: number
 ): Promise<void> {
-  await logUsage(userId, OPERATION_MAP.GENERATE, providerType, tokensUsed, cost);
+  await logUsage(userId, OPERATION_MAP.GENERATE, providerType, usageContext, tokensUsed, cost);
 }
 
 /**
@@ -118,8 +123,9 @@ export async function logGenerate(
 export async function logExport(
   userId: string,
   providerType: ProviderType,
+  usageContext?: UsageContext | null,
   tokensUsed?: number,
   cost?: number
 ): Promise<void> {
-  await logUsage(userId, OPERATION_MAP.EXPORT, providerType, tokensUsed, cost);
+  await logUsage(userId, OPERATION_MAP.EXPORT, providerType, usageContext, tokensUsed, cost);
 }

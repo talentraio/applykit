@@ -8,6 +8,9 @@
  * To skip auth for specific routes, add them to publicRoutes array
  */
 
+import { USER_STATUS_MAP } from '@int/schema';
+import { userRepository } from '../data/repositories';
+
 /**
  * Public routes that don't require authentication
  */
@@ -47,6 +50,24 @@ export default defineEventHandler(async event => {
   // Require authenticated session
   // This will automatically throw 401 if not authenticated
   const session = await requireUserSession(event);
+
+  const userId = (session.user as { id?: string } | undefined)?.id;
+  if (userId) {
+    const user = await userRepository.findById(userId);
+    if (user?.status === USER_STATUS_MAP.DELETED) {
+      await clearUserSession(event);
+      throw createError({
+        statusCode: 403,
+        message: 'User is deleted'
+      });
+    }
+    if (user?.status === USER_STATUS_MAP.BLOCKED) {
+      throw createError({
+        statusCode: 403,
+        message: 'User is blocked'
+      });
+    }
+  }
 
   // Store user in event context for easy access in route handlers
   event.context.user = session.user;

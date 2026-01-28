@@ -287,7 +287,7 @@ const formattedDate = computed(() => {
     typeof vacancy.value.updatedAt === 'string'
       ? parseISO(vacancy.value.updatedAt)
       : vacancy.value.updatedAt;
-  return format(resolved, 'MMMM d, yyyy');
+  return format(resolved, 'dd.MM.yyyy');
 });
 
 const toggleEditMode = () => {

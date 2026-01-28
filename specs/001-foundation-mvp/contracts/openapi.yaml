@@ -543,6 +543,16 @@ paths:
           schema:
             type: string
           description: Search by email
+        - name: role
+          in: query
+          schema:
+            $ref: '#/components/schemas/Role'
+          description: Filter by role
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/UserStatus'
+          description: Filter by status
         - name: limit
           in: query
           schema:
@@ -570,6 +580,38 @@ paths:
         '403':
           description: Not admin
 
+    post:
+      tags: [Admin]
+      summary: Invite user by email
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  $ref: '#/components/schemas/Role'
+              required: [email, role]
+      responses:
+        '200':
+          description: Invited user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '400':
+          description: Invalid request body
+        '403':
+          description: Not admin
+        '409':
+          description: User already exists
+
   /admin/users/{id}:
     parameters:
       - name: id
@@ -593,6 +635,25 @@ paths:
                 $ref: '#/components/schemas/AdminUserDetail'
         '403':
           description: Not admin
+        '404':
+          description: User not found
+
+    delete:
+      tags: [Admin]
+      summary: Soft delete user
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Deleted user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '403':
+          description: Not admin
+        '404':
+          description: User not found
 
   /admin/users/{id}/role:
     parameters:
@@ -616,8 +677,7 @@ paths:
               type: object
               properties:
                 role:
-                  type: string
-                  enum: [super_admin, friend, public]
+                  $ref: '#/components/schemas/Role'
               required: [role]
       responses:
         '200':
@@ -626,6 +686,113 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminUser'
+        '403':
+          description: Not admin
+
+  /admin/users/{id}/status:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    put:
+      tags: [Admin]
+      summary: Update user status (block/unblock)
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                blocked:
+                  type: boolean
+              required: [blocked]
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '400':
+          description: Invalid request body
+        '403':
+          description: Not admin
+        '404':
+          description: User not found
+
+  /admin/roles:
+    get:
+      tags: [Admin]
+      summary: List role settings
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Role settings list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoleSettings'
+        '403':
+          description: Not admin
+
+  /admin/roles/{role}:
+    parameters:
+      - name: role
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Role'
+
+    get:
+      tags: [Admin]
+      summary: Get role settings
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Role settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleSettings'
+        '400':
+          description: Invalid role
+        '403':
+          description: Not admin
+
+    put:
+      tags: [Admin]
+      summary: Update role settings
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleSettingsInput'
+      responses:
+        '200':
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleSettings'
+        '400':
+          description: Invalid request body
         '403':
           description: Not admin
 
@@ -702,6 +869,10 @@ components:
       type: string
       enum: [super_admin, friend, public]
 
+    UserStatus:
+      type: string
+      enum: [invited, active, blocked, deleted]
+
     WorkFormat:
       type: string
       enum: [remote, hybrid, onsite]
@@ -735,9 +906,22 @@ components:
           format: email
         role:
           $ref: '#/components/schemas/Role'
+        status:
+          $ref: '#/components/schemas/UserStatus'
         createdAt:
           type: string
           format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
 
     # ---- Profile ----
     LanguageEntry:
@@ -1120,9 +1304,51 @@ components:
           format: email
         role:
           $ref: '#/components/schemas/Role'
+        status:
+          $ref: '#/components/schemas/UserStatus'
         createdAt:
           type: string
           format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    RoleSettings:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+        platformLlmEnabled:
+          type: boolean
+        byokEnabled:
+          type: boolean
+        platformProvider:
+          $ref: '#/components/schemas/PlatformProvider'
+        dailyBudgetCap:
+          type: number
+        updatedAt:
+          type: string
+          format: date-time
+
+    RoleSettingsInput:
+      type: object
+      properties:
+        platformLlmEnabled:
+          type: boolean
+        byokEnabled:
+          type: boolean
+        platformProvider:
+          $ref: '#/components/schemas/PlatformProvider'
+        dailyBudgetCap:
+          type: number
 
     AdminUserDetail:
       type: object
@@ -1133,33 +1359,42 @@ components:
           $ref: '#/components/schemas/Profile'
           nullable: true
         stats:
+          $ref: '#/components/schemas/AdminUserStats'
+
+    AdminUserStats:
+      type: object
+      properties:
+        resumeCount:
+          type: integer
+        vacancyCount:
+          type: integer
+        generationCount:
+          type: integer
+        todayUsage:
           type: object
           properties:
-            resumeCount:
+            parse:
               type: integer
-            vacancyCount:
+            generate:
               type: integer
-            generationCount:
+            export:
               type: integer
-            todayUsage:
-              type: object
-              properties:
-                parse:
-                  type: integer
-                generate:
-                  type: integer
-                export:
-                  type: integer
+        totalGenerations:
+          type: integer
+        averageGenerationsPerDay30d:
+          type: number
+        averageGenerationsPerDay7d:
+          type: number
+        averageGenerationsPerWeek30d:
+          type: number
+        costLast30Days:
+          type: number
+        costMonthToDate:
+          type: number
 
     SystemConfig:
       type: object
       properties:
-        platformLlmEnabled:
-          type: boolean
-        byokEnabled:
-          type: boolean
-        platformProvider:
-          $ref: '#/components/schemas/PlatformProvider'
         globalBudgetCap:
           type: number
         globalBudgetUsed:
@@ -1168,12 +1403,6 @@ components:
     SystemConfigInput:
       type: object
       properties:
-        platformLlmEnabled:
-          type: boolean
-        byokEnabled:
-          type: boolean
-        platformProvider:
-          $ref: '#/components/schemas/PlatformProvider'
         globalBudgetCap:
           type: number
 

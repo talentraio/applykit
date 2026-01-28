@@ -1,4 +1,5 @@
 import type { UserPublic } from '@int/schema';
+import { RoleSchema, UserStatusSchema } from '@int/schema';
 import { userRepository } from '../../../data/repositories';
 import { requireSuperAdmin } from '../../../utils/session-helpers';
 
@@ -12,7 +13,10 @@ import { requireSuperAdmin } from '../../../utils/session-helpers';
  * Related: T132 (US8)
  */
 
-type AdminUser = Pick<UserPublic, 'id' | 'email' | 'role' | 'createdAt'>;
+type AdminUser = Pick<
+  UserPublic,
+  'id' | 'email' | 'role' | 'status' | 'createdAt' | 'updatedAt' | 'lastLoginAt' | 'deletedAt'
+>;
 
 type AdminUsersResponse = {
   users: AdminUser[];
@@ -34,9 +38,29 @@ export default defineEventHandler(async (event): Promise<AdminUsersResponse> => 
   const search = typeof query.search === 'string' ? query.search.trim() : '';
   const limit = parseNumber(query.limit);
   const offset = parseNumber(query.offset);
+  const role = typeof query.role === 'string' ? query.role : undefined;
+  const status = typeof query.status === 'string' ? query.status : undefined;
+
+  const roleValidation = role ? RoleSchema.safeParse(role) : null;
+  if (roleValidation && !roleValidation.success) {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid role filter'
+    });
+  }
+
+  const statusValidation = status ? UserStatusSchema.safeParse(status) : null;
+  if (statusValidation && !statusValidation.success) {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid status filter'
+    });
+  }
 
   const { users, total } = await userRepository.search({
     search: search.length > 0 ? search : undefined,
+    role: roleValidation?.success ? roleValidation.data : undefined,
+    status: statusValidation?.success ? statusValidation.data : undefined,
     limit,
     offset
   });
@@ -46,7 +70,11 @@ export default defineEventHandler(async (event): Promise<AdminUsersResponse> => 
       id: user.id,
       email: user.email,
       role: user.role,
-      createdAt: user.createdAt
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      lastLoginAt: user.lastLoginAt,
+      deletedAt: user.deletedAt
     })),
     total
   };

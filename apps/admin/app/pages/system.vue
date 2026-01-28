@@ -2,15 +2,7 @@
   <div class="admin-system-page p-4 md:p-6">
     <UiPageHeader :title="$t('admin.system.title')" />
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-2">
-      <SystemControls
-        :config="config"
-        :loading="configLoading"
-        :saving="saving"
-        :error="configError"
-        @update="handleConfigUpdate"
-      />
-
+    <div class="mt-6 grid gap-6">
       <SystemBudgetDisplay
         :config="config"
         :loading="configLoading"
@@ -40,9 +32,7 @@
  * Related: T151 (US9)
  */
 
-import type { PlatformProvider } from '@int/schema';
 import SystemBudgetDisplay from '../../layers/system/app/components/BudgetDisplay.vue';
-import SystemControls from '../../layers/system/app/components/SystemControls.vue';
 import SystemUsageStats from '../../layers/system/app/components/UsageStats.vue';
 
 defineOptions({ name: 'AdminSystemPage' });
@@ -81,24 +71,15 @@ watch(usagePeriod, async period => {
   }
 });
 
-const handleConfigUpdate = async (payload: {
-  platformLlmEnabled?: boolean;
-  byokEnabled?: boolean;
-  platformProvider?: PlatformProvider;
-  globalBudgetCap?: number;
-}) => {
+const handleBudgetUpdate = async (cap: number) => {
   try {
-    await updateConfig(payload);
+    await updateConfig({ globalBudgetCap: cap });
   } catch {
     toast.add({
       title: t('common.error.generic'),
       color: 'error'
     });
   }
-};
-
-const handleBudgetUpdate = async (cap: number) => {
-  await handleConfigUpdate({ globalBudgetCap: cap });
 };
 </script>
 
