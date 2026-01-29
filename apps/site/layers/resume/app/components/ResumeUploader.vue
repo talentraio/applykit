@@ -4,12 +4,14 @@
     <div
       class="relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors"
       :class="{
-        'border-primary bg-primary/5': isDragging,
+        'border-primary bg-primary/5': isDragging && !disabled,
         'border-neutral-300 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-600':
-          !isDragging && !isUploading,
-        'pointer-events-none opacity-50': isUploading
+          !isDragging && !isUploading && !disabled,
+        'pointer-events-none opacity-50': isUploading,
+        'cursor-not-allowed border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900':
+          disabled && !isUploading
       }"
-      @click="triggerFileInput"
+      @click="handleClick"
       @dragover="handleDragOver"
       @dragleave="handleDragLeave"
       @drop="handleDrop"
@@ -52,7 +54,12 @@
 
         <!-- Button -->
         <div v-if="!isUploading">
-          <UButton color="primary" icon="i-lucide-file-plus" @click.stop="triggerFileInput">
+          <UButton
+            color="primary"
+            icon="i-lucide-file-plus"
+            :disabled="disabled"
+            @click.stop="triggerFileInput"
+          >
             {{ $t('resume.upload.button') }}
           </UButton>
         </div>
@@ -100,6 +107,10 @@ const props = defineProps<{
    * Show upload progress
    */
   loading?: boolean;
+  /**
+   * Disable the uploader (e.g., when profile is incomplete)
+   */
+  disabled?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -115,6 +126,10 @@ const emit = defineEmits<{
    * Emitted when upload fails
    */
   error: [error: Error];
+  /**
+   * Emitted when interaction is blocked due to disabled state
+   */
+  blocked: [];
 }>();
 
 const { t } = useI18n();
@@ -196,7 +211,9 @@ const handleFileSelect = (event: Event) => {
  */
 const handleDragOver = (event: DragEvent) => {
   event.preventDefault();
-  isDragging.value = true;
+  if (!props.disabled) {
+    isDragging.value = true;
+  }
 };
 
 /**
@@ -213,6 +230,11 @@ const handleDrop = (event: DragEvent) => {
   event.preventDefault();
   isDragging.value = false;
 
+  if (props.disabled) {
+    emit('blocked');
+    return;
+  }
+
   const file = event.dataTransfer?.files[0];
   if (file) {
     processFile(file);
@@ -223,6 +245,22 @@ const handleDrop = (event: DragEvent) => {
  * Trigger file input click
  */
 const triggerFileInput = () => {
+  if (props.disabled) {
+    emit('blocked');
+    return;
+  }
   fileInput.value?.click();
+};
+
+/**
+ * Handle click on dropzone
+ * Emits blocked event if disabled, otherwise triggers file input
+ */
+const handleClick = () => {
+  if (props.disabled) {
+    emit('blocked');
+    return;
+  }
+  triggerFileInput();
 };
 </script>

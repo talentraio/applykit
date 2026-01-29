@@ -60,11 +60,12 @@ export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
   // Fetch profile (may be null if not created yet)
   const profile = await profileRepository.findByUserId(userId);
 
-  // Transform profile: convert null phones to undefined for type compatibility
+  // Transform profile: convert null to undefined for type compatibility
   const transformedProfile = profile
     ? {
         ...profile,
-        phones: profile.phones ?? undefined
+        phones: profile.phones ?? undefined,
+        photoUrl: profile.photoUrl ?? undefined
       }
     : null;
 

@@ -38,33 +38,42 @@
  */
 
 import type { Generation } from '@int/schema';
-import { getDaysUntilExpiration } from '@int/schema';
-import { format, parseISO } from 'date-fns';
+import { differenceInDays, format, parseISO } from 'date-fns';
 
-defineOptions({ name: 'VacancyLifetimeIndicator' });
+defineOptions({ name: 'VacancyItemContentViewGenerationExistsLifetimeIndicator' });
 
-const props = defineProps<Props>();
-
-type Props = {
+const props = defineProps<{
   /**
    * Generation object with expiration date
    */
   generation: Generation;
-};
+}>();
 
-// Computed days remaining
-const daysRemaining = computed(() => getDaysUntilExpiration(props.generation));
+const expirationDate = computed(() => {
+  const raw = props.generation.expiresAt;
+  if (!raw) return null;
+  return typeof raw === 'string' ? parseISO(raw) : raw;
+});
 
-// Check if expired
-const isExpired = computed(() => daysRemaining.value === 0);
+// Check if expired (direct date comparison using parsed dates)
+const isExpired = computed(() => {
+  if (!expirationDate.value) return true;
+  const now = new Date();
+  return expirationDate.value.getTime() < now.getTime();
+});
+
+// Computed days remaining (using parsed expiration date)
+const daysRemaining = computed(() => {
+  if (!expirationDate.value) return 0;
+  const now = new Date();
+  const days = differenceInDays(expirationDate.value, now);
+  return Math.max(0, days);
+});
 
 // Formatted expiration date
 const formattedExpirationDate = computed(() => {
-  const resolved =
-    typeof props.generation.expiresAt === 'string'
-      ? parseISO(props.generation.expiresAt)
-      : props.generation.expiresAt;
-  return format(resolved, 'dd.MM.yyyy');
+  if (!expirationDate.value) return '';
+  return format(expirationDate.value, 'dd.MM.yyyy');
 });
 
 // Icon and color based on days remaining

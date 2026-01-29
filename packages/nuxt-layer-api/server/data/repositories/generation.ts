@@ -1,9 +1,68 @@
 import type { ResumeContent } from '@int/schema';
 import type { Generation } from '../schema';
-import { addDays } from 'date-fns';
+import { addDays, endOfDay, parseISO } from 'date-fns';
 import { desc, eq, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { generations, vacancies } from '../schema';
+
+/**
+ * Parse date from database value
+ * Handles both SQLite (ISO strings) and PostgreSQL (Date objects)
+ */
+function parseDbDate(value: Date | string | null | undefined): Date {
+  if (!value) return new Date();
+  if (typeof value === 'string') return parseISO(value);
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  // Fallback for Invalid Date
+  return new Date();
+}
+
+/**
+ * Raw generation row type from SQL query
+ * Dates are selected as raw strings to bypass Drizzle's broken timestamp parsing with SQLite
+ */
+type GenerationRaw = {
+  id: string;
+  vacancyId: string;
+  resumeId: string;
+  content: ResumeContent;
+  matchScoreBefore: number;
+  matchScoreAfter: number;
+  generatedAtRaw: string | null;
+  expiresAtRaw: string | null;
+};
+
+/**
+ * Select fields for generation queries
+ * Uses raw SQL for date fields to get strings instead of Invalid Date objects
+ */
+const generationSelectFields = {
+  id: generations.id,
+  vacancyId: generations.vacancyId,
+  resumeId: generations.resumeId,
+  content: generations.content,
+  matchScoreBefore: generations.matchScoreBefore,
+  matchScoreAfter: generations.matchScoreAfter,
+  // Select dates as raw text to bypass Drizzle's timestamp parsing
+  generatedAtRaw: sql<string>`generated_at`,
+  expiresAtRaw: sql<string>`expires_at`
+};
+
+/**
+ * Convert raw DB row to Generation with proper Date objects
+ */
+function rawToGeneration(raw: GenerationRaw): Generation {
+  return {
+    id: raw.id,
+    vacancyId: raw.vacancyId,
+    resumeId: raw.resumeId,
+    content: raw.content,
+    matchScoreBefore: raw.matchScoreBefore,
+    matchScoreAfter: raw.matchScoreAfter,
+    generatedAt: parseDbDate(raw.generatedAtRaw),
+    expiresAt: parseDbDate(raw.expiresAtRaw)
+  };
+}
 
 /**
  * Generation Repository
@@ -16,8 +75,12 @@ export const generationRepository = {
    * Find generation by ID
    */
   async findById(id: string): Promise<Generation | null> {
-    const result = await db.select().from(generations).where(eq(generations.id, id)).limit(1);
-    return result[0] ?? null;
+    const result = await db
+      .select(generationSelectFields)
+      .from(generations)
+      .where(eq(generations.id, id))
+      .limit(1);
+    return result[0] ? rawToGeneration(result[0] as GenerationRaw) : null;
   },
 
   /**
@@ -25,11 +88,12 @@ export const generationRepository = {
    * Ordered by most recent first
    */
   async findByVacancyId(vacancyId: string): Promise<Generation[]> {
-    return await db
-      .select()
+    const results = await db
+      .select(generationSelectFields)
       .from(generations)
       .where(eq(generations.vacancyId, vacancyId))
       .orderBy(desc(generations.generatedAt));
+    return results.map(row => rawToGeneration(row as GenerationRaw));
   },
 
   /**
@@ -39,15 +103,18 @@ export const generationRepository = {
   async findLatestByVacancyId(vacancyId: string): Promise<Generation | null> {
     const now = new Date();
     const result = await db
-      .select()
+      .select(generationSelectFields)
       .from(generations)
       .where(eq(generations.vacancyId, vacancyId))
       .orderBy(desc(generations.generatedAt))
       .limit(1);
 
-    const generation = result[0] ?? null;
+    if (!result[0]) return null;
+
+    const generation = rawToGeneration(result[0] as GenerationRaw);
+
     // Check if expired
-    if (generation && generation.expiresAt < now) {
+    if (generation.expiresAt < now) {
       return null;
     }
     return generation;
@@ -64,7 +131,9 @@ export const generationRepository = {
     matchScoreBefore: number;
     matchScoreAfter: number;
   }): Promise<Generation> {
-    const expiresAt = addDays(new Date(), 90); // 90 days lifetime
+    // Set expiration to end of day (23:59:59.999) 90 days from now
+    // This makes expiration more predictable and user-friendly
+    const expiresAt = endOfDay(addDays(new Date(), 90));
 
     const result = await db
       .insert(generations)
@@ -76,8 +145,14 @@ export const generationRepository = {
         matchScoreAfter: data.matchScoreAfter,
         expiresAt
       })
-      .returning();
-    return result[0]!;
+      .returning({ id: generations.id });
+
+    // Re-query with raw SQL to get proper date strings
+    const created = await this.findById(result[0]!.id);
+    if (!created) {
+      throw new Error('Failed to retrieve created generation');
+    }
+    return created;
   },
 
   /**
@@ -107,7 +182,11 @@ export const generationRepository = {
    */
   async findExpired(): Promise<Generation[]> {
     const now = new Date();
-    return await db.select().from(generations).where(lt(generations.expiresAt, now));
+    const results = await db
+      .select(generationSelectFields)
+      .from(generations)
+      .where(lt(generations.expiresAt, now));
+    return results.map(row => rawToGeneration(row as GenerationRaw));
   },
 
   /**

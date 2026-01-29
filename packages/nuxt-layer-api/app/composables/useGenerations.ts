@@ -100,18 +100,9 @@ export function useGenerations(): UseGenerationsReturn {
    * Get latest generation for a vacancy
    */
   const getLatestGeneration = async (vacancyId: string): Promise<Generation | null> => {
-    try {
-      return await useApi(`/api/vacancies/${vacancyId}/generations/latest`, {
-        method: 'GET'
-      });
-    } catch (error) {
-      // If 404, no generation exists - return null
-      if (error && typeof error === 'object' && 'statusCode' in error && error.statusCode === 404) {
-        return null;
-      }
-      // Re-throw other errors
-      throw error;
-    }
+    return await useApi(`/api/vacancies/${vacancyId}/generations/latest`, {
+      method: 'GET'
+    });
   };
 
   return {

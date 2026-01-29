@@ -74,7 +74,8 @@ export default defineEventHandler(async (event): Promise<AdminUserDetail> => {
   const transformedProfile = profile
     ? {
         ...profile,
-        phones: profile.phones ?? undefined
+        phones: profile.phones ?? undefined,
+        photoUrl: profile.photoUrl ?? undefined
       }
     : null;
 

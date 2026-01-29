@@ -9,12 +9,21 @@ import { resumeApi } from '@site/resume/app/infrastructure/resume.api';
  *
  * TR005 - Refactored from useUserStore (split from profile logic)
  */
+/**
+ * Serializable error type for SSR hydration compatibility.
+ * Raw Error/FetchError objects can't be serialized by devalue.
+ */
+type SerializableError = {
+  message: string;
+  statusCode?: number;
+} | null;
+
 export const useResumeStore = defineStore('ResumeStore', {
   state: (): {
     resumes: Resume[];
     currentResume: Resume | null;
     loading: boolean;
-    error: Error | null;
+    error: SerializableError;
   } => ({
     resumes: [],
     currentResume: null,
@@ -54,8 +63,10 @@ export const useResumeStore = defineStore('ResumeStore', {
         this.resumes = data;
         return data;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch resumes');
-        throw this.error;
+        const message = err instanceof Error ? err.message : 'Failed to fetch resumes';
+        const statusCode = (err as { statusCode?: number }).statusCode;
+        this.error = { message, statusCode };
+        throw err;
       } finally {
         this.loading = false;
       }
@@ -74,9 +85,11 @@ export const useResumeStore = defineStore('ResumeStore', {
         this.currentResume = resume;
         return resume;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch resume');
+        const message = err instanceof Error ? err.message : 'Failed to fetch resume';
+        const statusCode = (err as { statusCode?: number }).statusCode;
+        this.error = { message, statusCode };
         this.currentResume = null;
-        throw this.error;
+        throw err;
       } finally {
         this.loading = false;
       }
@@ -99,8 +112,10 @@ export const useResumeStore = defineStore('ResumeStore', {
 
         return resume;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to upload resume');
-        throw this.error;
+        const message = err instanceof Error ? err.message : 'Failed to upload resume';
+        const statusCode = (err as { statusCode?: number }).statusCode;
+        this.error = { message, statusCode };
+        throw err;
       } finally {
         this.loading = false;
       }
@@ -133,8 +148,10 @@ export const useResumeStore = defineStore('ResumeStore', {
 
         return resume;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to update resume');
-        throw this.error;
+        const message = err instanceof Error ? err.message : 'Failed to update resume';
+        const statusCode = (err as { statusCode?: number }).statusCode;
+        this.error = { message, statusCode };
+        throw err;
       } finally {
         this.loading = false;
       }
@@ -158,8 +175,10 @@ export const useResumeStore = defineStore('ResumeStore', {
           this.currentResume = null;
         }
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to delete resume');
-        throw this.error;
+        const message = err instanceof Error ? err.message : 'Failed to delete resume';
+        const statusCode = (err as { statusCode?: number }).statusCode;
+        this.error = { message, statusCode };
+        throw err;
       } finally {
         this.loading = false;
       }

@@ -4,6 +4,7 @@
       <h3 class="text-lg font-semibold">
         {{ $t('generation.matchScore.title') }}
       </h3>
+
       <p class="text-sm text-muted">
         {{ $t('generation.matchScore.description') }}
       </p>
@@ -15,7 +16,7 @@
         <span class="text-sm font-medium">
           {{ $t('generation.matchScore.before', { score: scoreBefore }) }}
         </span>
-        <UProgress :value="scoreBefore" color="neutral" size="md" class="w-32" />
+        <UProgress :model-value="scoreBefore" color="neutral" size="md" class="w-32" />
       </div>
 
       <!-- After Score -->
@@ -23,7 +24,7 @@
         <span class="text-sm font-medium">
           {{ $t('generation.matchScore.after', { score: scoreAfter }) }}
         </span>
-        <UProgress :value="scoreAfter" :color="scoreColor" size="md" class="w-32" />
+        <UProgress :model-value="scoreAfter" :color="scoreColor" size="md" class="w-32" />
       </div>
 
       <!-- Improvement -->
@@ -49,11 +50,9 @@
  * Related: T112 (US5)
  */
 
-defineOptions({ name: 'VacancyMatchScoreDisplay' });
+defineOptions({ name: 'VacancyItemContentViewGenerationExistsMatchScoreDisplay' });
 
-const props = defineProps<Props>();
-
-type Props = {
+const props = defineProps<{
   /**
    * Match score before tailoring (0-100)
    */
@@ -63,7 +62,7 @@ type Props = {
    * Match score after tailoring (0-100)
    */
   scoreAfter: number;
-};
+}>();
 
 // Computed improvement
 const improvement = computed(() => props.scoreAfter - props.scoreBefore);

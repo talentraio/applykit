@@ -15,11 +15,13 @@
     "@int/schema": "workspace:*",
     "@int/ui": "workspace:*",
     "@pinia/nuxt": "catalog:",
+    "@vueuse/core": "catalog:",
     "date-fns": "catalog:",
     "nuxt": "catalog:",
     "pinia": "catalog:"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "catalog:",
     "typescript": "catalog:"
   }
 }

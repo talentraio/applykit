@@ -2,7 +2,7 @@
   <div class="vacancy-human-page container mx-auto max-w-5xl p-4 py-8">
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <UButton variant="ghost" icon="i-lucide-arrow-left" @click="goBack">
+        <UButton variant="ghost" icon="i-lucide-arrow-left" :to="`/vacancies/${vacancyId}`">
           {{ $t('common.back') }}
         </UButton>
         <div>
@@ -16,7 +16,7 @@
       </div>
 
       <div v-if="generation" class="flex flex-wrap items-center gap-3">
-        <UButton variant="outline" icon="i-lucide-file-text" @click="viewAts">
+        <UButton variant="outline" icon="i-lucide-file-text" :to="`/vacancies/${vacancyId}/ats`">
           {{ $t('vacancy.detail.actions.viewAts') }}
         </UButton>
         <VacancyExportButtons :vacancy-id="vacancyId" :generation-id="generation.id" />
@@ -45,7 +45,7 @@
     />
 
     <UPageCard v-else>
-      <VacancyResumeHumanView :content="generation.content" />
+      <VacancyResumeHumanView :content="generation.content" :photo-url="profilePhotoUrl" />
     </UPageCard>
   </div>
 </template>
@@ -64,8 +64,6 @@ import { getVacancyTitle } from '@int/schema';
 defineOptions({ name: 'VacancyHumanViewPage' });
 
 const route = useRoute();
-const router = useRouter();
-
 const vacancyId = computed(() => {
   const id = route.params.id;
   if (Array.isArray(id)) return id[0] ?? '';
@@ -74,6 +72,10 @@ const vacancyId = computed(() => {
 
 const { current: vacancy, fetchVacancy } = useVacancies();
 const { getLatestGeneration } = useGenerations();
+const { profile } = useProfile();
+
+// Get profile photo URL for human resume view
+const profilePhotoUrl = computed(() => profile.value?.photoUrl);
 
 const { pending: vacancyPending, error: vacancyError } = await useAsyncData(
   `vacancy-${vacancyId.value}`,
@@ -94,14 +96,6 @@ const pageError = computed(() => {
 });
 
 const vacancyTitle = computed(() => (vacancy.value ? getVacancyTitle(vacancy.value) : ''));
-
-const goBack = () => {
-  router.push(`/vacancies/${vacancyId.value}`);
-};
-
-const viewAts = () => {
-  router.push(`/vacancies/${vacancyId.value}/ats`);
-};
 </script>
 
 <style lang="scss">

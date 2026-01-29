@@ -94,6 +94,14 @@ defineOptions({ name: 'AuthFormRegistration' });
   - or an explicit import improves readability,
   - or it prevents name collisions.
 
+## Navigation (Nuxt)
+
+- Prefer **native HTML navigation** whenever possible:
+  - Use `to` on `UButton` / `NuxtLink` for simple navigation.
+  - Avoid programmatic navigation for normal links/buttons.
+- If programmatic navigation is required, use `navigateTo(...)`.
+- Do not use `router.push(...)` for app navigation.
+
 ## Styling: Tailwind-first + BEM encapsulation (no `scoped`)
 
 We use a hybrid approach:

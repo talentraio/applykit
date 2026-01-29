@@ -2,7 +2,7 @@
   <div class="vacancy-ats-page container mx-auto max-w-4xl p-4 py-8">
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <UButton variant="ghost" icon="i-lucide-arrow-left" @click="goBack">
+        <UButton variant="ghost" icon="i-lucide-arrow-left" :to="`/vacancies/${vacancyId}`">
           {{ $t('common.back') }}
         </UButton>
         <div>
@@ -16,7 +16,7 @@
       </div>
 
       <div v-if="generation" class="flex flex-wrap items-center gap-3">
-        <UButton variant="outline" icon="i-lucide-user" @click="viewHuman">
+        <UButton variant="outline" icon="i-lucide-user" :to="`/vacancies/${vacancyId}/human`">
           {{ $t('vacancy.detail.actions.viewHuman') }}
         </UButton>
         <VacancyExportButtons :vacancy-id="vacancyId" :generation-id="generation.id" />
@@ -64,8 +64,6 @@ import { getVacancyTitle } from '@int/schema';
 defineOptions({ name: 'VacancyAtsViewPage' });
 
 const route = useRoute();
-const router = useRouter();
-
 const vacancyId = computed(() => {
   const id = route.params.id;
   if (Array.isArray(id)) return id[0] ?? '';
@@ -94,14 +92,6 @@ const pageError = computed(() => {
 });
 
 const vacancyTitle = computed(() => (vacancy.value ? getVacancyTitle(vacancy.value) : ''));
-
-const goBack = () => {
-  router.push(`/vacancies/${vacancyId.value}`);
-};
-
-const viewHuman = () => {
-  router.push(`/vacancies/${vacancyId.value}/human`);
-};
 </script>
 
 <style lang="scss">

@@ -15,38 +15,20 @@
       :description="error.message"
     >
       <template #actions>
-        <UButton variant="ghost" @click="goToList">
-          {{ $t('common.back') }}
-        </UButton>
+        <UButton variant="ghost" @click="goToList"> {{ $t('common.back') }}</UButton>
       </template>
     </UAlert>
 
     <!-- Content -->
     <template v-else-if="vacancy">
       <!-- Header -->
-      <div class="mb-8">
-        <div class="mb-4">
-          <UButton variant="ghost" icon="i-lucide-arrow-left" @click="goToList">
-            {{ $t('common.back') }}
-          </UButton>
-        </div>
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex-1">
-            <h1 class="text-3xl font-bold">
-              {{ vacancyTitle }}
-            </h1>
-            <p class="mt-2 text-muted">{{ $t('vacancy.detail.updatedAt') }}: {{ formattedDate }}</p>
-          </div>
-          <div class="flex gap-2">
-            <UButton variant="outline" icon="i-lucide-edit" @click="toggleEditMode">
-              {{ isEditMode ? $t('common.cancel') : $t('vacancy.detail.actions.edit') }}
-            </UButton>
-            <UButton variant="outline" color="error" icon="i-lucide-trash-2" @click="confirmDelete">
-              {{ $t('vacancy.detail.actions.delete') }}
-            </UButton>
-          </div>
-        </div>
-      </div>
+      <VacancyItemContentHeader
+        :vacancy="vacancy"
+        :is-edit-mode="isEditMode"
+        @back="goToList"
+        @toggle-edit="toggleEditMode"
+        @delete="confirmDelete"
+      />
 
       <!-- Edit Mode: Form -->
       <UPageCard v-if="isEditMode">
@@ -62,72 +44,15 @@
       <!-- View Mode: Details -->
       <div v-else class="space-y-6">
         <!-- Generation Section -->
-        <UPageCard>
-          <template #header>
-            <h2 class="text-lg font-semibold">
-              {{ $t('vacancy.detail.actions.generate') }}
-            </h2>
-          </template>
-
-          <!-- Loading state -->
-          <div v-if="generationPending" class="flex items-center justify-center py-8">
-            <UIcon name="i-lucide-loader-2" class="h-8 w-8 animate-spin text-primary" />
-          </div>
-
-          <!-- Latest generation exists -->
-          <div v-else-if="latestGeneration" class="space-y-6">
-            <!-- Match Score Display -->
-            <VacancyMatchScoreDisplay
-              :score-before="latestGeneration.matchScoreBefore"
-              :score-after="latestGeneration.matchScoreAfter"
-            />
-
-            <!-- Lifetime Indicator -->
-            <VacancyLifetimeIndicator :generation="latestGeneration" />
-
-            <!-- Actions -->
-            <div class="flex flex-wrap gap-3">
-              <VacancyGenerateButton :loading="isGenerating" @generate="handleGenerate" />
-              <UButton variant="outline" icon="i-lucide-file-text" @click="viewAtsResume">
-                {{ $t('vacancy.detail.actions.viewAts') }}
-              </UButton>
-              <UButton variant="outline" icon="i-lucide-layout-template" @click="viewHumanResume">
-                {{ $t('vacancy.detail.actions.viewHuman') }}
-              </UButton>
-            </div>
-            <VacancyExportButtons
-              :vacancy-id="vacancyId"
-              :generation-id="latestGeneration.id"
-              :disabled="isGenerating"
-            />
-          </div>
-
-          <!-- No generation yet -->
-          <div v-else class="space-y-4">
-            <p class="text-sm text-muted">
-              {{ $t('vacancy.detail.generateHint') }}
-            </p>
-            <VacancyGenerateButton
-              :loading="isGenerating"
-              :disabled="!hasResume"
-              @generate="handleGenerate"
-            />
-            <p v-if="!hasResume" class="text-xs text-error">
-              {{ $t('generation.error.noResume') }}
-            </p>
-          </div>
-
-          <!-- Generation Error -->
-          <UAlert
-            v-if="generationError"
-            color="error"
-            variant="soft"
-            icon="i-lucide-alert-circle"
-            :title="$t('generation.error.generationFailed')"
-            :description="generationError"
-            class="mt-4"
-          />
-        </UPageCard>
+        <VacancyItemContentViewGeneration
+          :vacancy-id="vacancyId"
+          :latest-generation="latestGeneration ?? null"
+          :generation-pending="generationPending"
+          :is-generating="isGenerating"
+          :has-resume="hasResume"
+          :generation-error="generationError"
+          @generate="handleGenerate"
+        />
 
         <!-- Company & Position -->
         <UPageCard>
@@ -187,35 +112,11 @@
     </template>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="isDeleteModalOpen">
-      <template #content>
-        <UCard>
-          <template #header>
-            <div class="flex items-center gap-3">
-              <UIcon name="i-lucide-alert-triangle" class="h-6 w-6 text-error" />
-              <h3 class="text-lg font-semibold">
-                {{ $t('vacancy.delete.confirm') }}
-              </h3>
-            </div>
-          </template>
-
-          <p class="text-muted">
-            {{ $t('vacancy.delete.description') }}
-          </p>
-
-          <template #footer>
-            <div class="flex justify-end gap-3">
-              <UButton variant="ghost" @click="isDeleteModalOpen = false">
-                {{ $t('common.cancel') }}
-              </UButton>
-              <UButton color="error" :loading="isDeleting" @click="handleDelete">
-                {{ isDeleting ? $t('vacancy.delete.deleting') : $t('vacancy.delete.button') }}
-              </UButton>
-            </div>
-          </template>
-        </UCard>
-      </template>
-    </UModal>
+    <VacancyModalDeleteConfirmation
+      v-model:open="isDeleteModalOpen"
+      :loading="isDeleting"
+      @confirm="handleDelete"
+    />
   </div>
 </template>
 
@@ -230,8 +131,6 @@
  */
 
 import type { VacancyInput } from '@int/schema';
-import { getVacancyTitle } from '@int/schema';
-import { format, parseISO } from 'date-fns';
 
 defineOptions({ name: 'VacancyDetailPage' });
 
@@ -277,18 +176,6 @@ const isDeleteModalOpen = ref(false);
 const isGenerating = ref(false);
 const generationError = ref<string | null>(null);
 const hasResume = ref(true); // TODO: Check if user has at least one resume
-
-// Computed values
-const vacancyTitle = computed(() => (vacancy.value ? getVacancyTitle(vacancy.value) : ''));
-
-const formattedDate = computed(() => {
-  if (!vacancy.value) return '';
-  const resolved =
-    typeof vacancy.value.updatedAt === 'string'
-      ? parseISO(vacancy.value.updatedAt)
-      : vacancy.value.updatedAt;
-  return format(resolved, 'dd.MM.yyyy');
-});
 
 const toggleEditMode = () => {
   isEditMode.value = !isEditMode.value;
@@ -344,7 +231,7 @@ const handleDelete = async () => {
     });
 
     // Navigate back to list
-    router.push('/vacancies');
+    await navigateTo('/vacancies');
   } catch (err) {
     toast.add({
       title: t('vacancy.error.deleteFailed'),
@@ -358,7 +245,7 @@ const handleDelete = async () => {
 };
 
 const goToList = () => {
-  router.push('/vacancies');
+  navigateTo('/vacancies');
 };
 
 // Generation handlers
@@ -388,16 +275,6 @@ const handleGenerate = async () => {
   } finally {
     isGenerating.value = false;
   }
-};
-
-const viewAtsResume = () => {
-  if (!latestGeneration.value) return;
-  router.push(`/vacancies/${vacancyId.value}/ats`);
-};
-
-const viewHumanResume = () => {
-  if (!latestGeneration.value) return;
-  router.push(`/vacancies/${vacancyId.value}/human`);
 };
 </script>
 

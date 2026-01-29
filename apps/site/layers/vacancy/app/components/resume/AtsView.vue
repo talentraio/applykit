@@ -4,6 +4,9 @@
       <h1 class="text-2xl font-semibold">
         {{ content.personalInfo.fullName }}
       </h1>
+      <p v-if="content.personalInfo.title" class="text-sm font-medium text-muted">
+        {{ content.personalInfo.title }}
+      </p>
       <div
         v-if="contactItems.length"
         class="resume-ats-view__contacts space-y-1 text-sm text-muted"
@@ -44,11 +47,14 @@
           <p class="text-sm leading-relaxed">
             {{ experience.description }}
           </p>
-          <ul v-if="experience.projects?.length" class="list-disc space-y-1 pl-4 text-sm">
-            <li v-for="project in experience.projects" :key="project">
-              {{ project }}
+          <ul v-if="experience.bullets?.length" class="list-disc space-y-1 pl-4 text-sm">
+            <li v-for="(bullet, idx) in experience.bullets" :key="idx">
+              {{ bullet }}
             </li>
           </ul>
+          <p v-if="experience.technologies?.length" class="text-xs text-muted">
+            Tech: {{ experience.technologies.join(', ') }}
+          </p>
           <ul v-if="experience.links?.length" class="space-y-1 text-sm">
             <li v-for="link in experience.links" :key="link.link">
               <ULink :to="link.link" target="_blank" class="text-primary">
@@ -84,11 +90,16 @@
         <h2 class="text-lg font-semibold">
           {{ $t('resume.section.skills') }}
         </h2>
-        <ul class="list-disc space-y-1 pl-4 text-sm">
-          <li v-for="skill in content.skills" :key="skill">
-            {{ skill }}
-          </li>
-        </ul>
+        <!-- Single skill group - show as simple list -->
+        <template v-if="content.skills.length === 1">
+          <p class="text-sm">{{ content.skills[0]!.skills.join(', ') }}</p>
+        </template>
+        <!-- Multiple skill groups - show with labels -->
+        <template v-else>
+          <div v-for="group in content.skills" :key="group.type" class="text-sm">
+            <strong>{{ group.type }}:</strong> {{ group.skills.join(', ') }}
+          </div>
+        </template>
       </section>
 
       <section v-if="content.certifications?.length" class="resume-ats-view__section space-y-2">
@@ -114,6 +125,25 @@
             <span v-if="language.level"> - {{ language.level }}</span>
           </li>
         </ul>
+      </section>
+
+      <!-- Custom Sections -->
+      <section
+        v-for="customSection in content.customSections"
+        :key="customSection.sectionTitle"
+        class="resume-ats-view__section space-y-2"
+      >
+        <h2 class="text-lg font-semibold">
+          {{ customSection.sectionTitle }}
+        </h2>
+        <div v-for="(item, idx) in customSection.items" :key="idx" class="text-sm">
+          <template v-if="item.title">
+            <strong>{{ item.title }}</strong> - {{ item.description }}
+          </template>
+          <template v-else>
+            {{ item.description }}
+          </template>
+        </div>
       </section>
     </div>
   </section>
@@ -145,6 +175,7 @@ const contactItems = computed(() =>
     props.content.personalInfo.phone,
     props.content.personalInfo.location,
     props.content.personalInfo.linkedin,
+    props.content.personalInfo.github,
     props.content.personalInfo.website
   ].filter((item): item is string => Boolean(item))
 );

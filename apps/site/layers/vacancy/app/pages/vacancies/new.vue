@@ -55,7 +55,7 @@ const handleSave = async (data: VacancyInput) => {
     });
 
     // Navigate to vacancy detail page
-    router.push(`/vacancies/${vacancy.id}`);
+    await navigateTo(`/vacancies/${vacancy.id}`);
   } catch (err) {
     toast.add({
       title: t('vacancy.error.createFailed'),

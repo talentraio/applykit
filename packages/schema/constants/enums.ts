@@ -100,3 +100,47 @@ export const EXPORT_FORMAT_MAP = {
 } as const;
 
 export const EXPORT_FORMAT_VALUES = [EXPORT_FORMAT_MAP.ATS, EXPORT_FORMAT_MAP.HUMAN] as const;
+
+export const LANGUAGE_LEVEL_MAP = {
+  NATIVE: 'Native',
+  FLUENT: 'Fluent',
+  ADVANCED: 'Advanced',
+  INTERMEDIATE: 'Intermediate',
+  BEGINNER: 'Beginner'
+} as const;
+
+export const LANGUAGE_LEVEL_VALUES = [
+  LANGUAGE_LEVEL_MAP.NATIVE,
+  LANGUAGE_LEVEL_MAP.FLUENT,
+  LANGUAGE_LEVEL_MAP.ADVANCED,
+  LANGUAGE_LEVEL_MAP.INTERMEDIATE,
+  LANGUAGE_LEVEL_MAP.BEGINNER
+] as const;
+
+export const DEGREE_TYPE_MAP = {
+  HIGH_SCHOOL: 'High School',
+  ASSOCIATE: "Associate's Degree",
+  BACHELOR: "Bachelor's Degree",
+  MASTER: "Master's Degree",
+  PHD: 'Ph.D.',
+  MBA: 'MBA',
+  MD: 'M.D.',
+  JD: 'J.D.',
+  CERTIFICATE: 'Certificate',
+  DIPLOMA: 'Diploma',
+  OTHER: 'Other'
+} as const;
+
+export const DEGREE_TYPE_VALUES = [
+  DEGREE_TYPE_MAP.HIGH_SCHOOL,
+  DEGREE_TYPE_MAP.ASSOCIATE,
+  DEGREE_TYPE_MAP.BACHELOR,
+  DEGREE_TYPE_MAP.MASTER,
+  DEGREE_TYPE_MAP.PHD,
+  DEGREE_TYPE_MAP.MBA,
+  DEGREE_TYPE_MAP.MD,
+  DEGREE_TYPE_MAP.JD,
+  DEGREE_TYPE_MAP.CERTIFICATE,
+  DEGREE_TYPE_MAP.DIPLOMA,
+  DEGREE_TYPE_MAP.OTHER
+] as const;

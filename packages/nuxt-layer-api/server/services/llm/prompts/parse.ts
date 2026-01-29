@@ -9,6 +9,11 @@
  * Related: T071 (US2)
  */
 
+import { DEGREE_TYPE_VALUES, LANGUAGE_LEVEL_VALUES } from '@int/schema';
+
+const DEGREE_TYPES = DEGREE_TYPE_VALUES.join(', ');
+const LANGUAGE_LEVELS = LANGUAGE_LEVEL_VALUES.join(', ');
+
 export const PARSE_SYSTEM_PROMPT = `You are a resume parsing assistant. Your task is to extract structured information from resume text and return it as valid JSON.
 
 **Output Schema:**
@@ -93,11 +98,20 @@ export const PARSE_SYSTEM_PROMPT = `You are a resume parsing assistant. Your tas
    - Keep skill names concise and standard (e.g., "JavaScript", not "JavaScript programming")
    - Remove duplicates
 
-7. **Projects and Links:**
+7. **Education degree:**
+   - For degree names, prefer standard formats: ${DEGREE_TYPES}
+   - Map variations to standard names (e.g., "BS" -> "Bachelor's Degree", "MSc" -> "Master's Degree")
+   - Use "Other" only if no standard format applies
+
+8. **Language proficiency:**
+   - For language proficiency levels, use standard levels: ${LANGUAGE_LEVELS}
+   - Map variations: "Native speaker" -> "Native", "Bilingual" -> "Native", "Advanced" -> "Advanced", etc.
+
+9. **Projects and Links:**
    - If projects are mentioned in experience, extract them to the projects array
    - Extract any GitHub, portfolio, or project URLs to the links array
 
-8. **Missing information:**
+10. **Missing information:**
    - If a required field cannot be found, use a sensible default:
      - fullName: Extract from document or use "Unknown"
      - email: Extract from document or use "unknown@example.com"

@@ -30,8 +30,6 @@ All routes under `/api/` require authentication by default.
 
 The following routes are public (no authentication required):
 
-- `/api/auth/google` - OAuth login initiation
-- `/api/auth/google/callback` - OAuth callback
 - `/api/health` - Health check endpoint
 - All routes matching `/^\/api\/auth\//` pattern
 
@@ -42,8 +40,6 @@ To add a new public route, update the `publicRoutes` or `publicPatterns` arrays:
 ```typescript
 // auth.ts
 const publicRoutes = [
-  '/api/auth/google',
-  '/api/auth/google/callback',
   '/api/health',
   '/api/your-new-public-route' // Add here
 ];

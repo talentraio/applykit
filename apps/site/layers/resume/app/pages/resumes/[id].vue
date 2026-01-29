@@ -15,7 +15,7 @@
       :description="error?.message || 'Resume not found'"
     >
       <template #actions>
-        <UButton color="neutral" @click="goBack">
+        <UButton color="neutral" to="/resumes">
           {{ $t('common.back') }}
         </UButton>
       </template>
@@ -27,7 +27,7 @@
       <div class="flex items-start justify-between">
         <div class="flex-1">
           <div class="mb-4">
-            <UButton color="neutral" variant="ghost" icon="i-lucide-arrow-left" @click="goBack">
+            <UButton color="neutral" variant="ghost" icon="i-lucide-arrow-left" to="/resumes">
               {{ $t('common.back') }}
             </UButton>
           </div>
@@ -45,12 +45,13 @@
 
       <!-- Metadata Card -->
       <UPageCard>
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
+        <div class="flex items-start gap-6">
+          <!-- Source File (flexible width) -->
+          <div class="min-w-0 flex-1">
             <p class="text-sm font-medium text-muted">
               {{ $t('resume.detail.sourceFile') }}
             </p>
-            <p class="mt-1 text-base">
+            <p class="mt-1 truncate text-base" :title="resume.sourceFileName">
               {{ resume.sourceFileName }}
             </p>
             <UBadge
@@ -62,44 +63,48 @@
             </UBadge>
           </div>
 
-          <div>
-            <p class="text-sm font-medium text-muted">
-              {{ $t('resume.detail.uploadedAt') }}
-            </p>
-            <p class="mt-1 text-base">
-              {{ formatDate(resume.createdAt) }}
-            </p>
+          <!-- Dates (stacked) -->
+          <div class="shrink-0">
+            <div class="mb-3">
+              <p class="text-sm font-medium text-muted">
+                {{ $t('resume.detail.uploadedAt') }}
+              </p>
+              <p class="mt-1 text-base">
+                {{ formatDate(resume.createdAt) }}
+              </p>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-muted">
+                {{ $t('resume.detail.lastModified') }}
+              </p>
+              <p class="mt-1 text-base">
+                {{ formatDate(resume.updatedAt, resume.createdAt) }}
+              </p>
+            </div>
           </div>
 
-          <div>
-            <p class="text-sm font-medium text-muted">
-              {{ $t('resume.detail.lastModified') }}
-            </p>
-            <p class="mt-1 text-base">
-              {{ formatDate(resume.updatedAt) }}
-            </p>
-          </div>
-
-          <div>
+          <!-- Content Stats (right-aligned) -->
+          <div class="shrink-0 text-right">
             <p class="text-sm font-medium text-muted">Content Stats</p>
             <div class="mt-1 space-y-1 text-sm">
               <p>{{ resume.content.experience.length }} experiences</p>
               <p>{{ resume.content.education.length }} education</p>
-              <p>{{ resume.content.skills.length }} skills</p>
+              <p>{{ resume.content.skills.length }} skill groups</p>
             </div>
           </div>
         </div>
       </UPageCard>
 
       <!-- Tabs -->
-      <UTabs v-model="activeTab" :items="tabItems">
-        <template #editor>
+      <UTabs default-value="form" :items="tabItems" class="resume-detail-tabs">
+        <template #form>
           <UPageCard>
-            <ResumeJsonEditor
+            <ResumeForm
               v-if="resume"
               :model-value="resume.content"
               :resume-id="resume.id"
-              @save="handleSave"
+              :saving="isSaving"
+              @save="handleFormSave"
               @error="handleSaveError"
             />
           </UPageCard>
@@ -113,6 +118,12 @@
                 <h2 class="mb-2 text-2xl font-bold">
                   {{ resume.content.personalInfo.fullName }}
                 </h2>
+                <p
+                  v-if="resume.content.personalInfo.title"
+                  class="mb-2 text-sm font-medium text-muted"
+                >
+                  {{ resume.content.personalInfo.title }}
+                </p>
                 <div class="space-y-1 text-sm text-muted">
                   <p>{{ resume.content.personalInfo.email }}</p>
                   <p v-if="resume.content.personalInfo.phone">
@@ -123,7 +134,9 @@
                   </p>
                   <div
                     v-if="
-                      resume.content.personalInfo.linkedin || resume.content.personalInfo.website
+                      resume.content.personalInfo.linkedin ||
+                      resume.content.personalInfo.website ||
+                      resume.content.personalInfo.github
                     "
                     class="flex gap-4"
                   >
@@ -142,6 +155,14 @@
                       class="text-primary hover:underline"
                     >
                       Website
+                    </a>
+                    <a
+                      v-if="resume.content.personalInfo.github"
+                      :href="resume.content.personalInfo.github"
+                      target="_blank"
+                      class="text-primary hover:underline"
+                    >
+                      GitHub
                     </a>
                   </div>
                 </div>
@@ -177,6 +198,25 @@
                 </div>
               </div>
 
+              <!-- Custom Sections (after Experience) -->
+              <div v-if="resume.content.customSections?.length" class="mb-8">
+                <div
+                  v-for="section in resume.content.customSections"
+                  :key="section.sectionTitle"
+                  class="mb-6 last:mb-0"
+                >
+                  <h3 class="mb-4 text-lg font-semibold">{{ section.sectionTitle }}</h3>
+                  <div class="space-y-3">
+                    <div v-for="(item, idx) in section.items" :key="idx">
+                      <h4 v-if="item.title" class="font-medium">{{ item.title }}</h4>
+                      <p v-if="item.description" class="text-sm text-muted">
+                        {{ item.description }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Education -->
               <div class="mb-8">
                 <h3 class="mb-4 text-lg font-semibold">Education</h3>
@@ -198,15 +238,20 @@
               <!-- Skills -->
               <div class="mb-8">
                 <h3 class="mb-4 text-lg font-semibold">Skills</h3>
-                <div class="flex flex-wrap gap-2">
-                  <UBadge
-                    v-for="skill in resume.content.skills"
-                    :key="skill"
-                    color="neutral"
-                    variant="soft"
-                  >
-                    {{ skill }}
-                  </UBadge>
+                <div class="space-y-4">
+                  <div v-for="group in resume.content.skills" :key="group.type">
+                    <p class="mb-2 text-sm font-medium text-muted">{{ group.type }}</p>
+                    <div class="flex flex-wrap gap-2">
+                      <UBadge
+                        v-for="skill in group.skills"
+                        :key="skill"
+                        color="neutral"
+                        variant="soft"
+                      >
+                        {{ skill }}
+                      </UBadge>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -269,10 +314,10 @@
 /**
  * Resume Detail Page
  *
- * View and edit resume details with JSON editor
+ * View and edit resume details with form editor and preview
  * Shows resume metadata and allows content editing
  *
- * T084 [US2] Resume detail page with JSON editor
+ * T084 [US2] Resume detail page
  */
 
 import type { ResumeContent } from '@int/schema';
@@ -284,19 +329,27 @@ defineOptions({ name: 'ResumeDetailPage' });
 // Auth is handled by global middleware
 
 const route = useRoute();
-const router = useRouter();
 const { t } = useI18n();
 
-const resumeId = computed(() => route.params.id as string);
+const resumeId = computed(() => {
+  const id = route.params.id;
+  if (Array.isArray(id)) return id[0] ?? '';
+  return id ?? '';
+});
 
-const { current: resume, loading, error, fetchResume, deleteResume } = useResumes();
+const { current: resume, fetchResume, updateResume, deleteResume } = useResumes();
+
+// Fetch resume (SSR-compatible)
+const { pending: loading, error } = await useAsyncData(`resume-${resumeId.value}`, () => {
+  return fetchResume(resumeId.value);
+});
 
 const tabItems = computed(() => [
   {
-    label: t('resume.editor.jsonTab'),
-    icon: 'i-lucide-code',
-    value: 'editor',
-    slot: 'editor'
+    label: t('resume.editor.formTab'),
+    icon: 'i-lucide-file-edit',
+    value: 'form',
+    slot: 'form'
   },
   {
     label: t('resume.editor.previewTab'),
@@ -308,30 +361,41 @@ const tabItems = computed(() => [
 
 const showDeleteModal = ref(false);
 const isDeleting = ref(false);
+const isSaving = ref(false);
 const saveError = ref<Error | null>(null);
-const activeTab = ref<'editor' | 'preview'>('editor');
-
-/**
- * Fetch resume on mount
- */
-onMounted(async () => {
-  await fetchResume(resumeId.value);
-});
 
 /**
  * Format date
+ * Handles null/undefined by returning a fallback
  */
-const formatDate = (date: Date | string) => {
+const formatDate = (date: Date | string | null | undefined, fallback?: Date | string) => {
+  if (!date) {
+    if (fallback) {
+      const resolvedFallback = typeof fallback === 'string' ? parseISO(fallback) : fallback;
+      return format(resolvedFallback, 'dd.MM.yyyy');
+    }
+    return '—';
+  }
   const resolved = typeof date === 'string' ? parseISO(date) : date;
   return format(resolved, 'dd.MM.yyyy');
 };
 
 /**
- * Handle save
+ * Handle save from form editor
  */
-const handleSave = (_content: ResumeContent) => {
+const handleFormSave = async (content: ResumeContent) => {
   saveError.value = null;
-  // Success feedback is handled in the editor component
+  isSaving.value = true;
+
+  try {
+    await updateResume(resumeId.value, { content });
+    // Success feedback is handled in the form component
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(t('resume.error.updateFailed'));
+    saveError.value = error;
+  } finally {
+    isSaving.value = false;
+  }
 };
 
 /**
@@ -355,7 +419,7 @@ const handleDelete = async () => {
   isDeleting.value = true;
   try {
     await deleteResume(resumeId.value);
-    router.push('/resumes');
+    await navigateTo('/resumes');
   } catch (err) {
     console.error('Failed to delete resume:', err);
     saveError.value = err instanceof Error ? err : new Error(t('resume.error.deleteFailed'));
@@ -368,7 +432,37 @@ const handleDelete = async () => {
 /**
  * Go back to list
  */
-const goBack = () => {
-  router.push('/resumes');
-};
 </script>
+
+<style lang="scss">
+/**
+ * SSR fallback for UTabs indicator
+ * The indicator element is only rendered after hydration (client-side).
+ * This provides a CSS pseudo-element fallback that shows the active tab
+ * background before JS loads, then hides when the real indicator appears.
+ */
+.resume-detail-tabs {
+  /* Active tab button - add pseudo-element as fallback indicator */
+  [data-slot='trigger'][data-state='active'] {
+    position: relative;
+    isolation: isolate;
+
+    /* Fallback background behind the active tab content */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 6px;
+      background-color: var(--ui-primary);
+      z-index: -1;
+    }
+  }
+
+  /* When indicator exists (after hydration), hide the pseudo-element */
+  &:has([data-slot='indicator']) {
+    [data-slot='trigger'][data-state='active']::before {
+      display: none;
+    }
+  }
+}
+</style>

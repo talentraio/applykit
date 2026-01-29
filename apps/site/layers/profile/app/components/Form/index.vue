@@ -1,17 +1,27 @@
 <template>
   <div class="user-profile-form">
     <form class="space-y-6" @submit.prevent="handleSubmit">
+      <!-- Photo Section -->
+      <ProfileFormSectionPhoto v-model="formData.photoUrl" />
+
       <!-- Basic Information Section -->
-      <UserProfileFormSectionBasic v-model="basicData" />
+      <ProfileFormSectionBasic v-model="basicData" />
 
       <!-- Languages Section -->
-      <UserProfileFormSectionLanguages v-model="formData.languages" />
+      <ProfileFormSectionLanguages v-model="formData.languages" />
 
       <!-- Phone Numbers Section -->
-      <UserProfileFormSectionPhone v-model="formData.phones" />
+      <ProfileFormSectionPhone v-model="formData.phones" />
+
+      <!-- Terms Section (only for new profiles) -->
+      <ProfileFormSectionTerms
+        v-if="!hasExistingProfile"
+        v-model="termsAccepted"
+        :show-error="showTermsError"
+      />
 
       <!-- Actions -->
-      <UserProfileFormActions :show-cancel="showCancel" :saving="saving" @cancel="handleCancel" />
+      <ProfileFormActions :show-cancel="showCancel" :saving="saving" @cancel="handleCancel" />
     </form>
   </div>
 </template>
@@ -69,7 +79,15 @@ type ProfileFormData = {
   workFormat: WorkFormat;
   languages: LanguageEntry[];
   phones: PhoneEntry[];
+  photoUrl?: string;
 };
+
+// Check if this is an existing profile (for terms checkbox display)
+const hasExistingProfile = computed(() => !!props.profile?.id);
+
+// Terms acceptance state (only required for new profiles)
+const termsAccepted = ref(false);
+const showTermsError = ref(false);
 
 // Main form data
 const formData = reactive<ProfileFormData>({
@@ -80,7 +98,8 @@ const formData = reactive<ProfileFormData>({
   searchRegion: props.profile?.searchRegion || '',
   workFormat: props.profile?.workFormat || WORK_FORMAT_MAP.REMOTE,
   languages: props.profile?.languages ? [...props.profile.languages] : [],
-  phones: props.profile?.phones ? [...props.profile.phones] : []
+  phones: props.profile?.phones ? [...props.profile.phones] : [],
+  photoUrl: props.profile?.photoUrl
 });
 
 // Computed for basic section (two-way binding)
@@ -112,6 +131,13 @@ const handleSubmit = () => {
     return;
   }
 
+  // Validate terms acceptance for new profiles
+  if (!hasExistingProfile.value && !termsAccepted.value) {
+    showTermsError.value = true;
+    return;
+  }
+  showTermsError.value = false;
+
   // Build ProfileInput
   const data: ProfileInput = {
     firstName: formData.firstName.trim(),
@@ -124,7 +150,8 @@ const handleSubmit = () => {
     phones:
       formData.phones.filter(p => p.number).length > 0
         ? formData.phones.filter(p => p.number)
-        : undefined
+        : undefined,
+    photoUrl: formData.photoUrl
   };
 
   emit('save', data);
@@ -150,6 +177,7 @@ watch(
       formData.workFormat = newProfile.workFormat;
       formData.languages = [...newProfile.languages];
       formData.phones = newProfile.phones ? [...newProfile.phones] : [];
+      formData.photoUrl = newProfile.photoUrl;
     }
   },
   { immediate: true }

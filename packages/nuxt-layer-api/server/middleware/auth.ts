@@ -14,7 +14,7 @@ import { userRepository } from '../data/repositories';
 /**
  * Public routes that don't require authentication
  */
-const publicRoutes = ['/api/auth/google', '/api/auth/google/callback', '/api/health'];
+const publicRoutes = ['/api/health'];
 
 /**
  * Route patterns that don't require authentication (regex)

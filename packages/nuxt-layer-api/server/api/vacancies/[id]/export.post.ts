@@ -6,7 +6,11 @@ import {
   USAGE_CONTEXT_MAP,
   USER_ROLE_MAP
 } from '@int/schema';
-import { generationRepository, vacancyRepository } from '../../../data/repositories';
+import {
+  generationRepository,
+  profileRepository,
+  vacancyRepository
+} from '../../../data/repositories';
 import { exportResumeToPDF } from '../../../services/export/pdf';
 import { requireLimit } from '../../../services/limits';
 import { getStorage } from '../../../storage';
@@ -117,10 +121,40 @@ export default defineEventHandler(async event => {
   }
 
   try {
+    // For Human format, fetch profile photo if available
+    let photoDataUrl: string | undefined;
+
+    if (exportFormat === EXPORT_FORMAT_MAP.HUMAN) {
+      const profile = await profileRepository.findByUserId(userId);
+
+      if (profile?.photoUrl) {
+        try {
+          const storage = getStorage();
+          // Extract storage path from the URL (remove /api/storage/ prefix)
+          const storagePath = profile.photoUrl.replace(/^\/api\/storage\//, '');
+          const photoBuffer = await storage.get(storagePath);
+
+          if (photoBuffer) {
+            // Determine content type from file extension
+            const ext = storagePath.split('.').pop()?.toLowerCase();
+            const mimeType =
+              ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+
+            // Convert to base64 data URL
+            photoDataUrl = `data:${mimeType};base64,${photoBuffer.toString('base64')}`;
+          }
+        } catch (photoError) {
+          // Log but don't fail export if photo can't be loaded
+          console.warn('Failed to load profile photo for export:', photoError);
+        }
+      }
+    }
+
     // Generate PDF
     const pdfResult = await exportResumeToPDF(generation.content, {
       format: exportFormat,
-      title: `${generation.content.personalInfo.fullName} - ${vacancy.company}${vacancy.jobPosition ? ` - ${vacancy.jobPosition}` : ''}`
+      title: `${generation.content.personalInfo.fullName} - ${vacancy.company}${vacancy.jobPosition ? ` - ${vacancy.jobPosition}` : ''}`,
+      photoDataUrl
     });
 
     // Upload to storage
