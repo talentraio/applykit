@@ -15,6 +15,14 @@ pnpm-debug.log*
 *.log
 
 # =========================
+# IDE
+# =========================
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# =========================
 # Nuxt / Nitro build outputs
 # =========================
 .nuxt/
@@ -31,6 +39,7 @@ build/
 coverage/
 .nyc_output/
 playwright-report/
+.playwright-mcp/
 test-results/
 .blobs/
 

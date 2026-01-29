@@ -86,7 +86,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const { login, loginWithGoogle, loginWithLinkedIn } = useAuth();
-const { close } = useAuthModal();
+const { closeAndRedirect, redirectUrl } = useAuthModal();
+const route = useRoute();
 
 const loading = ref(false);
 const loadingGoogle = ref(false);
@@ -105,11 +106,22 @@ const formState = reactive({
 
 const handleGoogleLogin = () => {
   loadingGoogle.value = true;
+  // Pass redirect URL via route query so OAuth can pick it up
+  const redirect = redirectUrl.value;
+  if (redirect && !route.query.redirect) {
+    // Ensure redirect is in URL for OAuth state
+    navigateTo({ query: { ...route.query, redirect } }, { replace: true });
+  }
   loginWithGoogle();
 };
 
 const handleLinkedInLogin = () => {
   loadingLinkedIn.value = true;
+  // Pass redirect URL via route query so OAuth can pick it up
+  const redirect = redirectUrl.value;
+  if (redirect && !route.query.redirect) {
+    navigateTo({ query: { ...route.query, redirect } }, { replace: true });
+  }
   loginWithLinkedIn();
 };
 
@@ -122,7 +134,7 @@ const handleSubmit = async () => {
       email: formState.email,
       password: formState.password
     });
-    close();
+    closeAndRedirect();
   } catch (error: unknown) {
     const fetchError = error as { data?: { message?: string }; statusCode?: number };
     if (fetchError.statusCode === 401) {
