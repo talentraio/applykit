@@ -69,11 +69,13 @@ export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
       }
     : null;
 
-  // Return public user data (without googleId) and profile
+  // Return public user data (without sensitive auth fields) and profile
   return {
     user: {
       id: user.id,
       email: user.email,
+      emailVerified: user.emailVerified,
+      emailVerificationExpires: user.emailVerificationExpires,
       role: user.role,
       status: user.status,
       createdAt: user.createdAt,

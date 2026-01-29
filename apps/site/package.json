@@ -18,7 +18,8 @@
     "@vueuse/core": "catalog:",
     "date-fns": "catalog:",
     "nuxt": "catalog:",
-    "pinia": "catalog:"
+    "pinia": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@iconify-json/lucide": "catalog:",

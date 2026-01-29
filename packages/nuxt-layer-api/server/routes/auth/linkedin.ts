@@ -4,36 +4,38 @@ import { decode, hasLeadingSlash, hasProtocol } from 'ufo';
 import { userRepository } from '../../data/repositories';
 
 /**
- * Google OAuth Handler
+ * LinkedIn OAuth Handler
  *
- * Handles complete Google OAuth flow:
- * - Initial request: Redirects to Google consent screen
+ * Handles complete LinkedIn OAuth flow:
+ * - Initial request: Redirects to LinkedIn consent screen
  * - Callback: Handles OAuth response and creates/updates user session
  *
  * Located in server/routes/ as recommended by nuxt-auth-utils.
  * The handler manages both redirect and callback on the same endpoint.
  *
- * T059, T060 [US1] Google OAuth flow
- * TR001 - Moved from server/api/ to server/routes/ per nuxt-auth-utils best practices
+ * Feature: 003-auth-expansion
  */
 
-export default defineOAuthGoogleEventHandler({
+export default defineOAuthLinkedInEventHandler({
   async onSuccess(event, { user }) {
     const runtimeConfig = useRuntimeConfig(event);
     const query = getQuery(event);
     const redirectFromState = getSafeRedirect(query.state);
     const defaultRedirect = runtimeConfig.redirects?.authDefault || '/';
-    const { email, sub: googleId } = user;
 
-    if (!email || !googleId) {
+    // LinkedIn user object structure
+    const email = user.email;
+    const linkedInId = user.sub || user.id;
+
+    if (!email || !linkedInId) {
       throw createError({
         statusCode: 400,
-        message: 'Missing required user information from Google'
+        message: 'Missing required user information from LinkedIn'
       });
     }
 
     // Find or create user
-    let dbUser = await userRepository.findByGoogleId(googleId);
+    let dbUser = await userRepository.findByLinkedInId(linkedInId);
 
     if (!dbUser) {
       // Check if user exists by email (for account linking)
@@ -51,22 +53,22 @@ export default defineOAuthGoogleEventHandler({
         }
 
         if (existingUser.status === USER_STATUS_MAP.INVITED) {
-          // Activate invited user with Google OAuth
+          // Activate invited user with LinkedIn OAuth
           const activated = await userRepository.activateInvitedUser({
             id: existingUser.id,
-            googleId
+            linkedInId
           });
           dbUser = activated ?? existingUser;
-        } else if (!existingUser.googleId) {
-          // Link Google account to existing user (account merging)
+        } else if (!existingUser.linkedInId) {
+          // Link LinkedIn account to existing user (account merging)
           const linked = await userRepository.linkOAuthProvider(
             existingUser.id,
-            'google',
-            googleId
+            'linkedin',
+            linkedInId
           );
           dbUser = linked ?? existingUser;
         } else {
-          // User already has a different googleId - should not happen but handle gracefully
+          // User already has a different linkedInId - should not happen but handle gracefully
           dbUser = existingUser;
         }
 
@@ -88,7 +90,7 @@ export default defineOAuthGoogleEventHandler({
       // New user - create with default public role
       dbUser = await userRepository.create({
         email,
-        googleId,
+        linkedInId,
         role: USER_ROLE_MAP.PUBLIC
       });
     }
@@ -107,7 +109,7 @@ export default defineOAuthGoogleEventHandler({
   },
 
   async onError(event, error) {
-    console.error('OAuth error:', error);
+    console.error('LinkedIn OAuth error:', error);
     return sendRedirect(event, '/?auth=login&error=oauth_failed');
   }
 });

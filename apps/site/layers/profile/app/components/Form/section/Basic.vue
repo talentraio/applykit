@@ -36,21 +36,47 @@
       </div>
     </div>
 
-    <!-- Email -->
+    <!-- Email with Verification Status -->
     <div>
       <label class="mb-2 block text-sm font-medium">
         {{ $t('profile.form.email') }}
         <span class="text-error">*</span>
       </label>
-      <UInput
-        :model-value="modelValue.email"
-        type="email"
-        :placeholder="$t('profile.form.email')"
-        required
-        size="lg"
-        class="w-full"
-        @update:model-value="update('email', $event)"
-      />
+      <div class="flex items-center gap-3">
+        <UInput
+          :model-value="modelValue.email"
+          type="email"
+          :placeholder="$t('profile.form.email')"
+          required
+          size="lg"
+          class="flex-1"
+          @update:model-value="update('email', $event)"
+        />
+        <!-- Email Verification Status -->
+        <template v-if="emailVerified">
+          <span class="flex items-center gap-1 text-sm text-success">
+            <UIcon name="i-lucide-check-circle" class="h-4 w-4" />
+            {{ $t('profile.form.emailVerified') }}
+          </span>
+        </template>
+        <template v-else>
+          <span class="flex items-center gap-1 text-sm text-warning">
+            <UIcon name="i-lucide-alert-triangle" class="h-4 w-4" />
+            {{ $t('profile.form.emailNotVerified') }}
+          </span>
+          <UButton
+            size="xs"
+            variant="outline"
+            :loading="verificationLoading"
+            @click="handleSendVerification"
+          >
+            {{ $t('profile.form.verifyEmail') }}
+          </UButton>
+        </template>
+      </div>
+      <p v-if="verificationSent" class="mt-1 text-sm text-success">
+        {{ $t('profile.form.verificationSent') }}
+      </p>
     </div>
 
     <div class="grid gap-4 sm:grid-cols-3">
@@ -128,11 +154,33 @@ defineOptions({ name: 'ProfileFormSectionBasic' });
 
 const props = defineProps<{
   modelValue: BasicData;
+  emailVerified: boolean;
 }>();
 
 const emit = defineEmits<{
   'update:modelValue': [value: BasicData];
 }>();
+
+const { sendVerification } = useAuth();
+const verificationLoading = ref(false);
+const verificationSent = ref(false);
+
+const emailVerified = computed(() => props.emailVerified);
+
+const handleSendVerification = async () => {
+  verificationLoading.value = true;
+  try {
+    await sendVerification();
+    verificationSent.value = true;
+    setTimeout(() => {
+      verificationSent.value = false;
+    }, 5000);
+  } catch (error) {
+    console.error('Failed to send verification email:', error);
+  } finally {
+    verificationLoading.value = false;
+  }
+};
 
 // Register English locale for country names
 countries.registerLocale(enLocale);

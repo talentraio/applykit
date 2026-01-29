@@ -5,7 +5,7 @@
       <ProfileFormSectionPhoto v-model="formData.photoUrl" />
 
       <!-- Basic Information Section -->
-      <ProfileFormSectionBasic v-model="basicData" />
+      <ProfileFormSectionBasic v-model="basicData" :email-verified="emailVerified" />
 
       <!-- Languages Section -->
       <ProfileFormSectionLanguages v-model="formData.languages" />
@@ -82,8 +82,14 @@ type ProfileFormData = {
   photoUrl?: string;
 };
 
+// Get current user for email verification status
+const { user } = useAuth();
+
 // Check if this is an existing profile (for terms checkbox display)
 const hasExistingProfile = computed(() => !!props.profile?.id);
+
+// Email verification status from user
+const emailVerified = computed(() => user.value?.emailVerified ?? true);
 
 // Terms acceptance state (only required for new profiles)
 const termsAccepted = ref(false);

@@ -53,14 +53,32 @@ export const usageContextEnum = pgEnum('usage_context', USAGE_CONTEXT_VALUES);
 
 /**
  * Users table
- * Primary identity for authenticated users via Google OAuth
+ * Primary identity for authenticated users
+ * Supports multiple auth methods: Google OAuth, LinkedIn OAuth, Email/Password
  */
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
-  googleId: varchar('google_id', { length: 255 }).notNull().unique(),
+
+  // OAuth providers (nullable - user may use email/password instead)
+  googleId: varchar('google_id', { length: 255 }).unique(),
+  linkedInId: varchar('linkedin_id', { length: 255 }).unique(),
+
+  // Email/password auth
+  passwordHash: varchar('password_hash', { length: 255 }),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  emailVerificationToken: varchar('email_verification_token', { length: 64 }),
+  emailVerificationExpires: timestamp('email_verification_expires', { mode: 'date' }),
+
+  // Password reset
+  passwordResetToken: varchar('password_reset_token', { length: 64 }),
+  passwordResetExpires: timestamp('password_reset_expires', { mode: 'date' }),
+
+  // User settings
   role: roleEnum('role').notNull().default(USER_ROLE_MAP.PUBLIC),
   status: userStatusEnum('status').notNull().default('active'),
+
+  // Timestamps
   lastLoginAt: timestamp('last_login_at', { mode: 'date' }),
   deletedAt: timestamp('deleted_at', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
