@@ -89,7 +89,14 @@ export default defineNitroPlugin(async () => {
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         email TEXT NOT NULL UNIQUE,
-        google_id TEXT NOT NULL UNIQUE,
+        google_id TEXT UNIQUE,
+        linkedin_id TEXT UNIQUE,
+        password_hash TEXT,
+        email_verified INTEGER NOT NULL DEFAULT 0,
+        email_verification_token TEXT,
+        email_verification_expires TEXT,
+        password_reset_token TEXT,
+        password_reset_expires TEXT,
         role TEXT NOT NULL DEFAULT '${USER_ROLE_MAP.PUBLIC}' CHECK(role IN (${roleCheckList})),
         status TEXT NOT NULL DEFAULT '${USER_STATUS_MAP.ACTIVE}' CHECK(status IN (${userStatusCheckList})),
         last_login_at TEXT,
@@ -110,6 +117,7 @@ export default defineNitroPlugin(async () => {
         work_format TEXT NOT NULL CHECK(work_format IN (${workFormatCheckList})),
         languages TEXT NOT NULL,
         phones TEXT,
+        photo_url TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
@@ -268,6 +276,32 @@ function applySqliteMigrations(db: Database, options: MigrationOptions): void {
   });
 
   ensureColumn(db, 'users', 'deleted_at', 'TEXT');
+
+  // Auth expansion: add new auth columns
+  // Note: UNIQUE constraint cannot be added via ALTER TABLE in SQLite,
+  // but it's enforced in new DB schema and at application level
+  ensureColumn(db, 'users', 'linkedin_id', 'TEXT');
+  ensureColumn(db, 'users', 'password_hash', 'TEXT');
+  ensureColumn(db, 'users', 'email_verified', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn(db, 'users', 'email_verification_token', 'TEXT');
+  ensureColumn(db, 'users', 'email_verification_expires', 'TEXT');
+  ensureColumn(db, 'users', 'password_reset_token', 'TEXT');
+  ensureColumn(db, 'users', 'password_reset_expires', 'TEXT');
+
+  // Create unique index for linkedin_id if not exists (workaround for ALTER TABLE limitation)
+  try {
+    db.exec(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_linkedin_id ON users(linkedin_id) WHERE linkedin_id IS NOT NULL`
+    );
+  } catch {
+    // Index may already exist or partial index not supported in older SQLite
+  }
+
+  // Mark existing Google users as email verified (trusted from Google)
+  db.exec(`UPDATE users SET email_verified = 1 WHERE google_id IS NOT NULL AND email_verified = 0`);
+
+  // Profile photo support
+  ensureColumn(db, 'profiles', 'photo_url', 'TEXT');
 
   ensureColumn(
     db,
