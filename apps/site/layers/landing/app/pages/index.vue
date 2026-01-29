@@ -8,7 +8,7 @@
     <AppFooter />
 
     <!-- Auth Modal for "Try it" button -->
-    <AuthModalAuthModal />
+    <AuthModal />
   </div>
 </template>
 

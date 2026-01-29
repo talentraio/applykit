@@ -1,5 +1,6 @@
+import { WORK_FORMAT_MAP } from '@int/schema';
 import { z } from 'zod';
-import { userRepository } from '../../data/repositories';
+import { profileRepository, userRepository } from '../../data/repositories';
 import { sendVerificationEmail } from '../../services/email';
 import {
   generateToken,
@@ -38,7 +39,7 @@ export default defineEventHandler(async event => {
     });
   }
 
-  const { email, password, firstName, lastName: _lastName } = parsed.data;
+  const { email, password, firstName, lastName } = parsed.data;
 
   // Validate password strength
   const passwordValidation = validatePasswordStrength(password);
@@ -71,6 +72,18 @@ export default defineEventHandler(async event => {
     passwordHash,
     emailVerificationToken,
     emailVerificationExpires
+  });
+
+  // Create basic profile with registration data
+  // This ensures firstName, lastName, and email are pre-filled in profile form
+  await profileRepository.create(user.id, {
+    firstName,
+    lastName,
+    email,
+    country: '', // Will be filled by user in profile form
+    searchRegion: '', // Will be filled by user in profile form
+    workFormat: WORK_FORMAT_MAP.REMOTE, // Default value
+    languages: [] // Will be filled by user in profile form
   });
 
   // Send verification email

@@ -38,7 +38,25 @@
       </UFormField>
 
       <UFormField :label="$t('auth.modal.login.password')" name="password">
-        <UInput v-model="formState.password" type="password" class="w-full" />
+        <UInput
+          v-model="formState.password"
+          :type="showPassword ? 'text' : 'password'"
+          class="w-full"
+          :ui="{ trailing: 'pe-1' }"
+        >
+          <template #trailing>
+            <UButton
+              color="neutral"
+              variant="link"
+              size="sm"
+              :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              :aria-pressed="showPassword"
+              aria-controls="password"
+              @click="showPassword = !showPassword"
+            />
+          </template>
+        </UInput>
       </UFormField>
 
       <!-- Error Message -->
@@ -93,6 +111,7 @@ const loading = ref(false);
 const loadingGoogle = ref(false);
 const loadingLinkedIn = ref(false);
 const errorMessage = ref<string | null>(null);
+const showPassword = ref(false);
 
 const loginSchema = z.object({
   email: z.string().email(t('auth.modal.validation.emailInvalid')),

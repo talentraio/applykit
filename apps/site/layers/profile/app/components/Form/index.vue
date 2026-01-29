@@ -99,7 +99,8 @@ const showTermsError = ref(false);
 const formData = reactive<ProfileFormData>({
   firstName: props.profile?.firstName || '',
   lastName: props.profile?.lastName || '',
-  email: props.profile?.email || '',
+  // If profile doesn't have email, use user email as fallback (for new profiles after OAuth)
+  email: props.profile?.email || user.value?.email || '',
   country: props.profile?.country || '',
   searchRegion: props.profile?.searchRegion || '',
   workFormat: props.profile?.workFormat || WORK_FORMAT_MAP.REMOTE,
@@ -184,6 +185,11 @@ watch(
       formData.languages = [...newProfile.languages];
       formData.phones = newProfile.phones ? [...newProfile.phones] : [];
       formData.photoUrl = newProfile.photoUrl;
+    } else {
+      // New profile - prefill email from user (e.g., after OAuth login)
+      if (user.value?.email && !formData.email) {
+        formData.email = user.value.email;
+      }
     }
   },
   { immediate: true }
