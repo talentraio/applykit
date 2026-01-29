@@ -37,13 +37,24 @@ export default defineNuxtConfig({
       google: {
         clientId: '',
         clientSecret: ''
+      },
+      // LinkedIn OAuth configuration
+      linkedin: {
+        clientId: '',
+        clientSecret: ''
       }
+    },
+    email: {
+      // Resend API key for sending emails
+      resendApiKey: '',
+      from: 'ApplyKit <noreply@applykit.com>'
     },
     redirects: {
       authDefault: '/'
     },
     public: {
-      apiCallTimeoutMs: 60000
+      apiCallTimeoutMs: 60000,
+      appUrl: 'http://localhost:3000'
     }
   },
 

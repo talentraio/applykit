@@ -1,6 +1,5 @@
 import type { Role, UserStatus } from '@int/schema';
 import type { NewUser, User } from '../schema';
-import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '@int/schema';
 import { isValid, parseISO } from 'date-fns';
@@ -11,7 +10,14 @@ import { users } from '../schema';
 type UserRow = {
   id: string;
   email: string;
-  googleId: string;
+  googleId: string | null;
+  linkedInId: string | null;
+  passwordHash: string | null;
+  emailVerified: boolean;
+  emailVerificationToken: string | null;
+  emailVerificationExpires: Date | string | null;
+  passwordResetToken: string | null;
+  passwordResetExpires: Date | string | null;
   role: Role;
   status: UserStatus;
   createdAt: Date | string | null;
@@ -29,6 +35,13 @@ const baseSelectFields = {
   id: users.id,
   email: users.email,
   googleId: users.googleId,
+  linkedInId: users.linkedInId,
+  passwordHash: users.passwordHash,
+  emailVerified: users.emailVerified,
+  emailVerificationToken: users.emailVerificationToken,
+  emailVerificationExpires: users.emailVerificationExpires,
+  passwordResetToken: users.passwordResetToken,
+  passwordResetExpires: users.passwordResetExpires,
   role: users.role,
   status: users.status,
   createdAt: users.createdAt,
@@ -41,6 +54,13 @@ const sqliteSelectFields = {
   id: users.id,
   email: users.email,
   googleId: users.googleId,
+  linkedInId: users.linkedInId,
+  passwordHash: users.passwordHash,
+  emailVerified: users.emailVerified,
+  emailVerificationToken: users.emailVerificationToken,
+  emailVerificationExpires: sql<string>`strftime('%Y-%m-%d %H:%M:%S', ${users.emailVerificationExpires})`,
+  passwordResetToken: users.passwordResetToken,
+  passwordResetExpires: sql<string>`strftime('%Y-%m-%d %H:%M:%S', ${users.passwordResetExpires})`,
   role: users.role,
   status: users.status,
   createdAt: sql<string>`strftime('%Y-%m-%d %H:%M:%S', ${users.createdAt})`,
@@ -73,6 +93,8 @@ const normalizeOptionalDate = (value: Date | string | null): Date | null => {
 const normalizeUserRow = (row: UserRow): User => {
   return {
     ...row,
+    emailVerificationExpires: normalizeOptionalDate(row.emailVerificationExpires),
+    passwordResetExpires: normalizeOptionalDate(row.passwordResetExpires),
     createdAt: normalizeRequiredDate(row.createdAt),
     updatedAt: normalizeRequiredDate(row.updatedAt),
     lastLoginAt: normalizeOptionalDate(row.lastLoginAt ?? null),
@@ -126,15 +148,36 @@ export const userRepository = {
   },
 
   /**
-   * Create new user
-   * Called during first-time Google OAuth login
+   * Find user by LinkedIn ID
+   * Used during OAuth callback to find or create user
    */
-  async create(data: Pick<NewUser, 'email' | 'googleId'> & { role?: Role }): Promise<User> {
+  async findByLinkedInId(linkedInId: string): Promise<User | null> {
+    const query = isSqliteRuntime()
+      ? db.select(sqliteSelectFields).from(users)
+      : db.select(baseSelectFields).from(users);
+    const result = await query.where(eq(users.linkedInId, linkedInId)).limit(1);
+    const user = result[0];
+    return user ? normalizeUserRow(user) : null;
+  },
+
+  /**
+   * Create new user via OAuth
+   * Called during first-time Google/LinkedIn OAuth login
+   */
+  async create(
+    data: Pick<NewUser, 'email'> & {
+      googleId?: string;
+      linkedInId?: string;
+      role?: Role;
+    }
+  ): Promise<User> {
     const result = await db
       .insert(users)
       .values({
         email: data.email,
         googleId: data.googleId,
+        linkedInId: data.linkedInId,
+        emailVerified: true, // OAuth-verified emails are trusted
         role: data.role ?? USER_ROLE_MAP.PUBLIC,
         status: USER_STATUS_MAP.ACTIVE,
         lastLoginAt: new Date()
@@ -150,15 +193,16 @@ export const userRepository = {
 
   /**
    * Create invited user (admin-only)
+   * User has no auth method until they complete first login
    */
   async createInvited(data: { email: string; role: Role }): Promise<User> {
     const result = await db
       .insert(users)
       .values({
         email: data.email,
-        googleId: `invited_${randomUUID()}`,
         role: data.role,
-        status: USER_STATUS_MAP.INVITED
+        status: USER_STATUS_MAP.INVITED,
+        emailVerified: false
       })
       .returning();
     const created = result[0]!;
@@ -170,13 +214,20 @@ export const userRepository = {
   },
 
   /**
-   * Activate invited user (first login)
+   * Activate invited user (first login via OAuth)
+   * Supports both Google and LinkedIn OAuth activation
    */
-  async activateInvitedUser(params: { id: string; googleId: string }): Promise<User | null> {
+  async activateInvitedUser(params: {
+    id: string;
+    googleId?: string;
+    linkedInId?: string;
+  }): Promise<User | null> {
     const result = await db
       .update(users)
       .set({
         googleId: params.googleId,
+        linkedInId: params.linkedInId,
+        emailVerified: true, // OAuth emails are trusted
         status: USER_STATUS_MAP.ACTIVE,
         lastLoginAt: new Date(),
         updatedAt: new Date()
@@ -320,5 +371,195 @@ export const userRepository = {
     const total = Number(countResult[0]?.count ?? 0);
 
     return { users: list.map(normalizeUserRow), total };
+  },
+
+  // ============================================================================
+  // Email/Password Authentication Methods
+  // ============================================================================
+
+  /**
+   * Create new user with email/password
+   * Called during registration
+   */
+  async createWithPassword(data: {
+    email: string;
+    passwordHash: string;
+    emailVerificationToken: string;
+    emailVerificationExpires: Date;
+  }): Promise<User> {
+    const result = await db
+      .insert(users)
+      .values({
+        email: data.email,
+        passwordHash: data.passwordHash,
+        emailVerified: false,
+        emailVerificationToken: data.emailVerificationToken,
+        emailVerificationExpires: data.emailVerificationExpires,
+        role: USER_ROLE_MAP.PUBLIC,
+        status: USER_STATUS_MAP.ACTIVE,
+        lastLoginAt: new Date()
+      })
+      .returning();
+    const created = result[0]!;
+    if (isSqliteRuntime()) {
+      const fresh = await this.findById(created.id);
+      return fresh ?? normalizeUserRow(created);
+    }
+    return normalizeUserRow(created);
+  },
+
+  /**
+   * Find user by email verification token
+   */
+  async findByEmailVerificationToken(token: string): Promise<User | null> {
+    const query = isSqliteRuntime()
+      ? db.select(sqliteSelectFields).from(users)
+      : db.select(baseSelectFields).from(users);
+    const result = await query.where(eq(users.emailVerificationToken, token)).limit(1);
+    const user = result[0];
+    return user ? normalizeUserRow(user) : null;
+  },
+
+  /**
+   * Set email verification token
+   * Used when user requests email verification resend
+   */
+  async setEmailVerificationToken(id: string, token: string, expires: Date): Promise<User | null> {
+    const result = await db
+      .update(users)
+      .set({
+        emailVerificationToken: token,
+        emailVerificationExpires: expires,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    const updated = result[0];
+    if (!updated) return null;
+    if (isSqliteRuntime()) {
+      const fresh = await this.findById(updated.id);
+      return fresh ?? normalizeUserRow(updated);
+    }
+    return normalizeUserRow(updated);
+  },
+
+  /**
+   * Verify user's email
+   * Clears verification token after successful verification
+   */
+  async verifyEmail(id: string): Promise<User | null> {
+    const result = await db
+      .update(users)
+      .set({
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    const updated = result[0];
+    if (!updated) return null;
+    if (isSqliteRuntime()) {
+      const fresh = await this.findById(updated.id);
+      return fresh ?? normalizeUserRow(updated);
+    }
+    return normalizeUserRow(updated);
+  },
+
+  /**
+   * Find user by password reset token
+   */
+  async findByPasswordResetToken(token: string): Promise<User | null> {
+    const query = isSqliteRuntime()
+      ? db.select(sqliteSelectFields).from(users)
+      : db.select(baseSelectFields).from(users);
+    const result = await query.where(eq(users.passwordResetToken, token)).limit(1);
+    const user = result[0];
+    return user ? normalizeUserRow(user) : null;
+  },
+
+  /**
+   * Set password reset token
+   * Used when user requests password reset
+   */
+  async setPasswordResetToken(id: string, token: string, expires: Date): Promise<User | null> {
+    const result = await db
+      .update(users)
+      .set({
+        passwordResetToken: token,
+        passwordResetExpires: expires,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    const updated = result[0];
+    if (!updated) return null;
+    if (isSqliteRuntime()) {
+      const fresh = await this.findById(updated.id);
+      return fresh ?? normalizeUserRow(updated);
+    }
+    return normalizeUserRow(updated);
+  },
+
+  /**
+   * Reset user's password
+   * Clears reset token after successful reset
+   */
+  async resetPassword(id: string, passwordHash: string): Promise<User | null> {
+    const result = await db
+      .update(users)
+      .set({
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    const updated = result[0];
+    if (!updated) return null;
+    if (isSqliteRuntime()) {
+      const fresh = await this.findById(updated.id);
+      return fresh ?? normalizeUserRow(updated);
+    }
+    return normalizeUserRow(updated);
+  },
+
+  /**
+   * Link OAuth provider to existing account
+   * Used when user logs in with OAuth and email already exists
+   */
+  async linkOAuthProvider(
+    id: string,
+    provider: 'google' | 'linkedin',
+    providerId: string
+  ): Promise<User | null> {
+    const updateData =
+      provider === 'google'
+        ? { googleId: providerId, emailVerified: true, updatedAt: new Date() }
+        : { linkedInId: providerId, emailVerified: true, updatedAt: new Date() };
+
+    const result = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
+    const updated = result[0];
+    if (!updated) return null;
+    if (isSqliteRuntime()) {
+      const fresh = await this.findById(updated.id);
+      return fresh ?? normalizeUserRow(updated);
+    }
+    return normalizeUserRow(updated);
+  },
+
+  /**
+   * Get user with password hash for login
+   * Returns full user with passwordHash field
+   */
+  async findByEmailWithPassword(email: string): Promise<User | null> {
+    const query = isSqliteRuntime()
+      ? db.select(sqliteSelectFields).from(users)
+      : db.select(baseSelectFields).from(users);
+    const result = await query.where(eq(users.email, email)).limit(1);
+    const user = result[0];
+    return user ? normalizeUserRow(user) : null;
   }
 };

@@ -1,6 +1,37 @@
 # Security & privacy notes (MVP guardrails)
 
-This is not legal advice. It’s a practical checklist to avoid obvious mistakes.
+This is not legal advice. It's a practical checklist to avoid obvious mistakes.
+
+## Authentication
+
+Supported auth methods:
+
+- **Google OAuth** - Primary OAuth provider
+- **LinkedIn OAuth** - Secondary OAuth provider
+- **Email/Password** - Traditional registration with email verification
+
+### Password requirements
+
+- Minimum 8 characters
+- At least 1 uppercase letter
+- At least 1 number
+- Hashed with bcrypt (12 rounds)
+
+### Token security
+
+- Email verification tokens: 32 bytes hex, 24h expiry, single-use
+- Password reset tokens: 32 bytes hex, 1h expiry, single-use
+
+### Account linking
+
+- When OAuth login matches existing email, accounts are merged
+- OAuth-verified emails are automatically marked as verified
+- Email change in profile requires re-verification
+
+### Session management
+
+- Cookie-based sessions (7-day expiry)
+- HttpOnly, Secure (in production), SameSite=Lax
 
 ## API keys (BYOK)
 

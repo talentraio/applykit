@@ -13,6 +13,18 @@ import { FetchError } from 'ofetch';
 import { decode, hasLeadingSlash, hasProtocol } from 'ufo';
 import { useApiAuthStore } from '../stores/auth';
 
+export type RegisterInput = {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+};
+
+export type LoginInput = {
+  email: string;
+  password: string;
+};
+
 export type AuthComposable = {
   /**
    * Computed indicating if the user is logged in
@@ -46,6 +58,30 @@ export type AuthComposable = {
    * Navigate to Google OAuth login
    */
   loginWithGoogle: () => void;
+  /**
+   * Navigate to LinkedIn OAuth login
+   */
+  loginWithLinkedIn: () => void;
+  /**
+   * Register with email/password
+   */
+  register: (input: RegisterInput) => Promise<void>;
+  /**
+   * Login with email/password
+   */
+  login: (input: LoginInput) => Promise<void>;
+  /**
+   * Request password reset
+   */
+  forgotPassword: (email: string) => Promise<void>;
+  /**
+   * Reset password with token
+   */
+  resetPassword: (token: string, password: string) => Promise<void>;
+  /**
+   * Send email verification
+   */
+  sendVerification: () => Promise<void>;
 };
 
 export function useAuth(): AuthComposable {
@@ -88,6 +124,70 @@ export function useAuth(): AuthComposable {
   };
 
   /**
+   * Navigate to LinkedIn OAuth login
+   */
+  const loginWithLinkedIn = (): void => {
+    const redirect = getSafeRedirect(route.query.redirect);
+    const target = redirect
+      ? `/auth/linkedin?state=${encodeURIComponent(redirect)}`
+      : '/auth/linkedin';
+    navigateTo(target, { external: true });
+  };
+
+  /**
+   * Register with email/password
+   */
+  const register = async (input: RegisterInput): Promise<void> => {
+    await $fetch('/api/auth/register', {
+      method: 'POST',
+      body: input
+    });
+    // Refresh to get new user data
+    await store.fetchMe();
+  };
+
+  /**
+   * Login with email/password
+   */
+  const login = async (input: LoginInput): Promise<void> => {
+    await $fetch('/api/auth/login', {
+      method: 'POST',
+      body: input
+    });
+    // Refresh to get user data
+    await store.fetchMe();
+  };
+
+  /**
+   * Request password reset
+   */
+  const forgotPassword = async (email: string): Promise<void> => {
+    await $fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      body: { email }
+    });
+  };
+
+  /**
+   * Reset password with token
+   */
+  const resetPassword = async (token: string, password: string): Promise<void> => {
+    await $fetch('/api/auth/reset-password', {
+      method: 'POST',
+      body: { token, password }
+    });
+  };
+
+  /**
+   * Send email verification
+   */
+  const sendVerification = async (): Promise<void> => {
+    await $fetch('/api/auth/send-verification', {
+      method: 'POST'
+    });
+  };
+
+  /**
    * Refresh user session from server
    */
   const refresh = async (): Promise<void> => {
@@ -102,7 +202,13 @@ export function useAuth(): AuthComposable {
     isProfileComplete: computed(() => store.isProfileComplete),
     refresh,
     logout,
-    loginWithGoogle
+    loginWithGoogle,
+    loginWithLinkedIn,
+    register,
+    login,
+    forgotPassword,
+    resetPassword,
+    sendVerification
   };
 }
 

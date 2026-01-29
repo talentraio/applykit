@@ -67,6 +67,75 @@
       "sessionExpired": "Your session has expired. Please sign in again.",
       "unauthorized": "You must be signed in to access this page.",
       "generic": "An authentication error occurred. Please try again."
+    },
+    "modal": {
+      "login": {
+        "title": "Sign In to ApplyKit",
+        "google": "Continue with Google",
+        "linkedin": "Continue with LinkedIn",
+        "or": "or",
+        "email": "Email",
+        "password": "Password",
+        "forgotPassword": "Forgot password?",
+        "submit": "Sign In",
+        "noAccount": "Don't have an account?",
+        "register": "Register",
+        "invalidCredentials": "Invalid email or password",
+        "accountBlocked": "Your account has been suspended",
+        "error": "Sign in failed. Please try again."
+      },
+      "register": {
+        "title": "Create Your Account",
+        "google": "Continue with Google",
+        "linkedin": "Continue with LinkedIn",
+        "or": "or",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "passwordHint": "At least 8 characters, 1 uppercase letter, and 1 number",
+        "submit": "Create Account",
+        "hasAccount": "Already have an account?",
+        "login": "Sign In",
+        "emailExists": "An account with this email already exists",
+        "error": "Registration failed. Please try again."
+      },
+      "forgot": {
+        "title": "Reset Password",
+        "description": "Enter your email address and we'll send you a link to reset your password.",
+        "email": "Email",
+        "submit": "Send Reset Link",
+        "emailSent": "Check your email",
+        "emailSentDescription": "If an account exists with that email, we've sent password reset instructions.",
+        "backToLogin": "Back to Sign In",
+        "remembered": "Remembered your password?",
+        "error": "Failed to send reset email. Please try again."
+      },
+      "validation": {
+        "emailInvalid": "Please enter a valid email address",
+        "passwordRequired": "Password is required",
+        "passwordMin": "Password must be at least 8 characters",
+        "passwordUppercase": "Password must contain at least one uppercase letter",
+        "passwordNumber": "Password must contain at least one number",
+        "passwordMismatch": "Passwords do not match",
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required"
+      }
+    },
+    "resetPassword": {
+      "title": "Reset Your Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "passwordHint": "At least 8 characters, 1 uppercase letter, and 1 number",
+      "submit": "Reset Password",
+      "success": "Password Reset Successfully",
+      "successDescription": "Your password has been reset. You can now sign in with your new password.",
+      "signIn": "Sign In",
+      "invalidToken": "Invalid or Expired Link",
+      "invalidTokenDescription": "This password reset link is invalid or has expired. Please request a new one.",
+      "requestNew": "Request New Link",
+      "error": "Failed to reset password. Please try again."
     }
   },
   "nav": {
@@ -378,7 +447,11 @@
         "and": "and",
         "privacyLink": "Privacy Policy",
         "required": "You must accept the terms to continue"
-      }
+      },
+      "emailVerified": "Verified",
+      "emailNotVerified": "Not verified",
+      "verifyEmail": "Verify",
+      "verificationSent": "Verification email sent! Check your inbox."
     },
     "completeness": {
       "complete": "Your profile is complete",

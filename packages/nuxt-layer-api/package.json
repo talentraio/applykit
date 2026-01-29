@@ -19,6 +19,7 @@
     "@int/schema": "workspace:*",
     "@pinia/nuxt": "catalog:",
     "@vercel/blob": "catalog:",
+    "bcryptjs": "catalog:",
     "better-sqlite3": "catalog:",
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
@@ -31,10 +32,12 @@
     "pinia": "catalog:",
     "playwright-core": "catalog:",
     "postgres": "catalog:",
+    "resend": "catalog:",
     "ufo": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/bcryptjs": "catalog:",
     "@types/better-sqlite3": "catalog:",
     "drizzle-kit": "catalog:",
     "tsx": "catalog:",

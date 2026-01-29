@@ -1,5 +1,33 @@
 # Endpoints (MVP)
 
+## Authentication
+
+### OAuth Routes (server/routes/)
+
+- `GET /auth/google` - Google OAuth flow (redirect + callback)
+- `GET /auth/linkedin` - LinkedIn OAuth flow (redirect + callback)
+
+### Auth API Endpoints
+
+- `GET /api/auth/me` - Get current user and profile
+- `POST /api/auth/logout` - Logout current session
+- `POST /api/auth/register` - Register with email/password
+  - body: `{ email, password, firstName, lastName }`
+  - returns: `{ success: true }` + auto-login
+- `POST /api/auth/login` - Login with email/password
+  - body: `{ email, password }`
+  - returns: `{ success: true }` + session cookie
+- `POST /api/auth/forgot-password` - Request password reset
+  - body: `{ email }`
+  - returns: `{ success: true }` (always, to prevent enumeration)
+- `POST /api/auth/reset-password` - Reset password with token
+  - body: `{ token, password }`
+  - returns: `{ success: true }`
+- `POST /api/auth/send-verification` - Resend verification email (requires auth)
+  - returns: `{ success: true }`
+- `GET /api/auth/verify-email?token=xxx` - Verify email
+  - redirects to `/profile?verified=true|false`
+
 ## Resume
 
 - `POST /api/resume/parse`

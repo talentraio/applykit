@@ -1,46 +1,40 @@
 <template>
   <div class="auth-login-page flex min-h-screen flex-col items-center justify-center p-4">
-    <UPageCard class="w-full max-w-md">
-      <UAlert
-        v-if="accessDeniedMessage"
-        color="error"
-        variant="soft"
-        icon="i-lucide-shield-alert"
-        :title="accessDeniedMessage"
-        class="mb-4"
-      />
-      <UAuthForm :providers="providers" :title="$t('auth.login.welcome')" icon="i-lucide-log-in">
-        <template #description>
-          {{ $t('auth.login.description') }}
-        </template>
-      </UAuthForm>
-    </UPageCard>
+    <p class="text-muted">Redirecting...</p>
   </div>
 </template>
 
 <script setup lang="ts">
+/**
+ * Login Page - Redirect to Modal
+ *
+ * This page now redirects to the home page with the auth modal open.
+ * The actual login UI is in the AuthModal component.
+ *
+ * Feature: 003-auth-expansion
+ */
 defineOptions({ name: 'AuthLoginPage' });
 
-const { t } = useI18n();
-const { loginWithGoogle } = useAuth();
 const route = useRoute();
-
-const accessDeniedMessage = computed(() => {
-  return route.query.error === 'forbidden' ? t('auth.login.forbidden') : null;
-});
 
 definePageMeta({
   layout: 'auth'
 });
 
-const providers = [
-  {
-    label: t('auth.login.google'),
-    icon: 'i-simple-icons-google',
-    color: 'neutral' as const,
-    onClick: () => {
-      loginWithGoogle();
-    }
+// Redirect to home with auth modal
+onMounted(() => {
+  const error = route.query.error;
+  const redirect = route.query.redirect;
+
+  // Build redirect URL with auth modal
+  let url = '/?auth=login';
+  if (error) {
+    url += `&error=${error}`;
   }
-];
+  if (redirect && typeof redirect === 'string') {
+    url += `&redirect=${encodeURIComponent(redirect)}`;
+  }
+
+  navigateTo(url, { replace: true });
+});
 </script>
