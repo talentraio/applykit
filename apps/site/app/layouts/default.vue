@@ -112,7 +112,7 @@
     </UDrawer>
 
     <!-- Auth Modal -->
-    <AuthModalAuthModal />
+    <AuthModal />
   </div>
 </template>
 

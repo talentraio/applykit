@@ -19,7 +19,7 @@
  */
 import type { AuthModalView } from '../../composables/useAuthModal';
 
-defineOptions({ name: 'AuthModalContainer' });
+defineOptions({ name: 'AuthModal' });
 
 const { t } = useI18n();
 const { isOpen, view, close, switchView } = useAuthModal();

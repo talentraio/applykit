@@ -38,7 +38,25 @@
       </UFormField>
 
       <UFormField :label="$t('auth.modal.login.password')" name="password">
-        <UInput v-model="formState.password" type="password" class="w-full" />
+        <UInput
+          v-model="formState.password"
+          :type="showPassword ? 'text' : 'password'"
+          class="w-full"
+          :ui="{ trailing: 'pe-1' }"
+        >
+          <template #trailing>
+            <UButton
+              color="neutral"
+              variant="link"
+              size="sm"
+              :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              :aria-pressed="showPassword"
+              aria-controls="password"
+              @click="showPassword = !showPassword"
+            />
+          </template>
+        </UInput>
       </UFormField>
 
       <!-- Error Message -->
@@ -86,12 +104,14 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const { login, loginWithGoogle, loginWithLinkedIn } = useAuth();
-const { close } = useAuthModal();
+const { closeAndRedirect, redirectUrl } = useAuthModal();
+const route = useRoute();
 
 const loading = ref(false);
 const loadingGoogle = ref(false);
 const loadingLinkedIn = ref(false);
 const errorMessage = ref<string | null>(null);
+const showPassword = ref(false);
 
 const loginSchema = z.object({
   email: z.string().email(t('auth.modal.validation.emailInvalid')),
@@ -105,11 +125,22 @@ const formState = reactive({
 
 const handleGoogleLogin = () => {
   loadingGoogle.value = true;
+  // Pass redirect URL via route query so OAuth can pick it up
+  const redirect = redirectUrl.value;
+  if (redirect && !route.query.redirect) {
+    // Ensure redirect is in URL for OAuth state
+    navigateTo({ query: { ...route.query, redirect } }, { replace: true });
+  }
   loginWithGoogle();
 };
 
 const handleLinkedInLogin = () => {
   loadingLinkedIn.value = true;
+  // Pass redirect URL via route query so OAuth can pick it up
+  const redirect = redirectUrl.value;
+  if (redirect && !route.query.redirect) {
+    navigateTo({ query: { ...route.query, redirect } }, { replace: true });
+  }
   loginWithLinkedIn();
 };
 
@@ -122,7 +153,7 @@ const handleSubmit = async () => {
       email: formState.email,
       password: formState.password
     });
-    close();
+    closeAndRedirect();
   } catch (error: unknown) {
     const fetchError = error as { data?: { message?: string }; statusCode?: number };
     if (fetchError.statusCode === 401) {

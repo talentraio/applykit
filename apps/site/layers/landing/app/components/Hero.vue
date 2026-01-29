@@ -15,11 +15,11 @@
 
           <div class="landing-hero__actions flex flex-col sm:flex-row gap-4 mb-4">
             <UButton
-              :to="authUrl"
               size="xl"
               color="primary"
-              icon="i-lucide-log-in"
+              icon="i-lucide-rocket"
               :label="$t('landing.hero.ctaPrimary')"
+              @click="handleTryIt"
             />
             <UButton
               size="xl"
@@ -83,7 +83,21 @@
 
 defineOptions({ name: 'LandingHero' });
 
-const authUrl = '/auth/google';
+const { loggedIn } = useAuth();
+const { open: openAuthModal } = useAuthModal();
+
+/**
+ * Handle "Try it" button click
+ * - If logged in: navigate to /resumes
+ * - If not logged in: open auth modal with redirect to /resumes
+ */
+const handleTryIt = () => {
+  if (loggedIn.value) {
+    navigateTo('/resumes');
+  } else {
+    openAuthModal('login', '/resumes');
+  }
+};
 
 const scrollToSteps = () => {
   const stepsSection = document.querySelector('.landing-steps');

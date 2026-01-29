@@ -3,6 +3,7 @@
  *
  * Manages auth modal state with URL synchronization.
  * Supports login, register, and forgot password views.
+ * Supports redirect parameter for post-login navigation.
  *
  * Feature: 003-auth-expansion
  */
@@ -19,13 +20,21 @@ export type AuthModalComposable = {
    */
   view: ComputedRef<AuthModalView | null>;
   /**
-   * Open the modal with specified view
+   * Redirect URL after successful login (from query param)
    */
-  open: (view?: AuthModalView) => void;
+  redirectUrl: ComputedRef<string | null>;
   /**
-   * Close the modal
+   * Open the modal with specified view and optional redirect
+   */
+  open: (view?: AuthModalView, redirect?: string) => void;
+  /**
+   * Close the modal (clears auth query params)
    */
   close: () => void;
+  /**
+   * Close modal and navigate to redirect URL if present
+   */
+  closeAndRedirect: () => void;
   /**
    * Switch to a different view
    */
@@ -53,20 +62,45 @@ export function useAuthModal(): AuthModalComposable {
   const isOpen = computed(() => view.value !== null);
 
   /**
-   * Open modal with specified view
+   * Redirect URL from query (used after successful login)
    */
-  const open = (newView: AuthModalView = 'login'): void => {
-    router.push({
-      query: { ...route.query, auth: newView }
-    });
+  const redirectUrl = computed((): string | null => {
+    const redirect = route.query.redirect;
+    if (typeof redirect === 'string' && redirect.startsWith('/')) {
+      return redirect;
+    }
+    return null;
+  });
+
+  /**
+   * Open modal with specified view and optional redirect
+   */
+  const open = (newView: AuthModalView = 'login', redirect?: string): void => {
+    const query: Record<string, string> = { ...route.query, auth: newView };
+    if (redirect) {
+      query.redirect = redirect;
+    }
+    router.push({ query });
   };
 
   /**
-   * Close modal
+   * Close modal (clears auth query params but keeps redirect for OAuth)
    */
   const close = (): void => {
-    const { auth: _auth, ...rest } = route.query;
+    const { auth: _auth, redirect: _redirect, ...rest } = route.query;
     router.push({ query: rest });
+  };
+
+  /**
+   * Close modal and navigate to redirect URL if present
+   */
+  const closeAndRedirect = (): void => {
+    const redirect = redirectUrl.value;
+    if (redirect) {
+      navigateTo(redirect);
+    } else {
+      close();
+    }
   };
 
   /**
@@ -81,8 +115,10 @@ export function useAuthModal(): AuthModalComposable {
   return {
     isOpen,
     view,
+    redirectUrl,
     open,
     close,
+    closeAndRedirect,
     switchView
   };
 }

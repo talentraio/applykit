@@ -857,7 +857,7 @@
     "hero": {
       "headline": "Tailor your resume to every vacancy — fast.",
       "subheadline": "Upload a DOCX or PDF, review the structured result, generate ATS + human-friendly versions, and export clean PDFs.",
-      "ctaPrimary": "Continue with Google",
+      "ctaPrimary": "Try it",
       "ctaSecondary": "See how it works",
       "disclaimer": "Free tier available. Bring your own API key if you want higher limits."
     },
