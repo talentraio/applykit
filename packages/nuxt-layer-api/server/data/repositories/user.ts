@@ -31,6 +31,20 @@ const isSqliteRuntime = (): boolean => {
   return process.env.NODE_ENV !== 'production' && !runtimeConfig.databaseUrl;
 };
 
+/**
+ * Convert boolean to SQLite-compatible value
+ * SQLite doesn't support boolean type natively, uses INTEGER (0/1)
+ * Returns type as boolean for Drizzle schema compatibility
+ */
+const toSqliteBool = (value: boolean): boolean => {
+  if (isSqliteRuntime()) {
+    // SQLite needs integer, but Drizzle expects boolean type
+    // The actual value will be 0/1 at runtime
+    return (value ? 1 : 0) as unknown as boolean;
+  }
+  return value;
+};
+
 const baseSelectFields = {
   id: users.id,
   email: users.email,
@@ -93,6 +107,8 @@ const normalizeOptionalDate = (value: Date | string | null): Date | null => {
 const normalizeUserRow = (row: UserRow): User => {
   return {
     ...row,
+    // Convert SQLite integer (0/1) to boolean
+    emailVerified: Boolean(row.emailVerified),
     emailVerificationExpires: normalizeOptionalDate(row.emailVerificationExpires),
     passwordResetExpires: normalizeOptionalDate(row.passwordResetExpires),
     createdAt: normalizeRequiredDate(row.createdAt),
@@ -177,7 +193,7 @@ export const userRepository = {
         email: data.email,
         googleId: data.googleId,
         linkedInId: data.linkedInId,
-        emailVerified: true, // OAuth-verified emails are trusted
+        emailVerified: toSqliteBool(true), // OAuth-verified emails are trusted
         role: data.role ?? USER_ROLE_MAP.PUBLIC,
         status: USER_STATUS_MAP.ACTIVE,
         lastLoginAt: new Date()
@@ -202,7 +218,7 @@ export const userRepository = {
         email: data.email,
         role: data.role,
         status: USER_STATUS_MAP.INVITED,
-        emailVerified: false
+        emailVerified: toSqliteBool(false)
       })
       .returning();
     const created = result[0]!;
@@ -227,7 +243,7 @@ export const userRepository = {
       .set({
         googleId: params.googleId,
         linkedInId: params.linkedInId,
-        emailVerified: true, // OAuth emails are trusted
+        emailVerified: toSqliteBool(true), // OAuth emails are trusted
         status: USER_STATUS_MAP.ACTIVE,
         lastLoginAt: new Date(),
         updatedAt: new Date()
@@ -392,7 +408,7 @@ export const userRepository = {
       .values({
         email: data.email,
         passwordHash: data.passwordHash,
-        emailVerified: false,
+        emailVerified: toSqliteBool(false),
         emailVerificationToken: data.emailVerificationToken,
         emailVerificationExpires: data.emailVerificationExpires,
         role: USER_ROLE_MAP.PUBLIC,
@@ -451,7 +467,7 @@ export const userRepository = {
     const result = await db
       .update(users)
       .set({
-        emailVerified: true,
+        emailVerified: toSqliteBool(true),
         emailVerificationToken: null,
         emailVerificationExpires: null,
         updatedAt: new Date()
@@ -537,8 +553,8 @@ export const userRepository = {
   ): Promise<User | null> {
     const updateData =
       provider === 'google'
-        ? { googleId: providerId, emailVerified: true, updatedAt: new Date() }
-        : { linkedInId: providerId, emailVerified: true, updatedAt: new Date() };
+        ? { googleId: providerId, emailVerified: toSqliteBool(true), updatedAt: new Date() }
+        : { linkedInId: providerId, emailVerified: toSqliteBool(true), updatedAt: new Date() };
 
     const result = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
     const updated = result[0];
