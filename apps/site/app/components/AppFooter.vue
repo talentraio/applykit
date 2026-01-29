@@ -1,55 +1,46 @@
 <template>
-  <UFooterColumns :columns="footerColumns">
-    <template #left>
-      <p class="text-sm text-muted">
-        {{ $t('footer.copyright', { year: currentYear }) }}
-      </p>
-    </template>
-    <template #right>
-      <p class="text-sm text-muted">
-        {{ $t('footer.tagline') }}
-      </p>
-    </template>
-  </UFooterColumns>
+  <footer class="border-t border-default bg-default">
+    <UContainer class="py-6">
+      <!-- Links row - centered -->
+      <nav class="mb-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+        <ULink to="/#features" class="text-muted hover:text-default">
+          {{ $t('footer.features') }}
+        </ULink>
+        <ULink to="/pricing" class="text-muted hover:text-default">
+          {{ $t('footer.pricing') }}
+        </ULink>
+        <ULink to="/docs" class="text-muted hover:text-default">
+          {{ $t('footer.docs') }}
+        </ULink>
+        <ULink to="/privacy" class="text-muted hover:text-default">
+          {{ $t('footer.privacy') }}
+        </ULink>
+        <ULink to="/terms" class="text-muted hover:text-default">
+          {{ $t('footer.terms') }}
+        </ULink>
+      </nav>
+
+      <!-- Copyright row - centered -->
+      <div
+        class="flex flex-col items-center gap-2 text-center text-sm text-muted sm:flex-row sm:justify-between"
+      >
+        <p>{{ $t('footer.copyright', { year: currentYear }) }}</p>
+        <p>{{ $t('footer.tagline') }}</p>
+      </div>
+    </UContainer>
+  </footer>
 </template>
 
 <script setup lang="ts">
 /**
  * AppFooter Component
  *
- * Site footer using Nuxt UI Pro FooterColumns
- * Per docs/design/mvp.md - SaaS template footer patterns
+ * Simple centered footer for dashboard pages
+ * - Links in a centered row
+ * - Copyright and tagline below
  */
 
 defineOptions({ name: 'AppFooter' });
 
-const { t } = useI18n();
-
 const currentYear = new Date().getFullYear();
-
-const footerColumns = computed(() => [
-  {
-    label: t('footer.product'),
-    children: [
-      { label: t('footer.features'), to: '/#features' },
-      { label: t('footer.pricing'), to: '/pricing' },
-      { label: t('footer.docs'), to: '/docs' }
-    ]
-  },
-  {
-    label: t('footer.company'),
-    children: [
-      { label: t('footer.about'), to: '/about' },
-      { label: t('footer.blog'), to: '/blog' },
-      { label: t('footer.contact'), to: '/contact' }
-    ]
-  },
-  {
-    label: t('footer.legal'),
-    children: [
-      { label: t('footer.privacy'), to: '/privacy' },
-      { label: t('footer.terms'), to: '/terms' }
-    ]
-  }
-]);
 </script>

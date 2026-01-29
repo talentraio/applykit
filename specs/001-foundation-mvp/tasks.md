@@ -152,9 +152,9 @@ No custom patterns outside Nuxt UI Pro.
 
 ### Implementation for US1
 
-- [x] T059 [US1] Create GET `/api/auth/google` endpoint in `packages/nuxt-layer-api/server/api/auth/google.get.ts`
-- [x] T060 [US1] **[FIXED]** Create Google OAuth route in `packages/nuxt-layer-api/server/routes/auth/google.get.ts`
-  - _Fixed: Moved to `server/routes/auth/google.get.ts` per nuxt-auth-utils best practices. Handler manages both redirect and callback on same endpoint. Spec updated._
+- [x] T059 [US1] Create GET `/auth/google` endpoint in `packages/nuxt-layer-api/server/routes/auth/google.ts`
+- [x] T060 [US1] **[FIXED]** Create Google OAuth route in `packages/nuxt-layer-api/server/routes/auth/google.ts`
+  - _Fixed: Moved to `server/routes/auth/google.ts` per nuxt-auth-utils best practices. Handler manages both redirect and callback on same endpoint. Spec updated._
 - [x] T061 [US1] Create POST `/api/auth/logout` endpoint in `packages/nuxt-layer-api/server/api/auth/logout.post.ts`
 - [x] T062 [US1] **[NEEDS FIX]** Create GET `/api/auth/me` endpoint in `packages/nuxt-layer-api/server/api/auth/me.get.ts`
   - _Issue: Returns only `UserPublic`, spec requires `{ user: UserPublic, profile: Profile | null }`_
@@ -379,6 +379,25 @@ No custom patterns outside Nuxt UI Pro.
 - [ ] T161 Security audit: verify no PII/keys logged in `packages/nuxt-layer-api/server/utils/logger.ts`
 - [ ] T162 Run quickstart.md validation: complete manual test of happy path
 
+### 12.1 Static Pages Layer
+
+- [x] T163 [P] Create `apps/site/layers/static/nuxt.config.ts` with alias `@site/static`
+- [x] T164 [P] Create Privacy Policy page in `apps/site/layers/static/app/pages/privacy.vue`
+- [x] T165 [P] Create Terms of Service page in `apps/site/layers/static/app/pages/terms.vue`
+- [x] T166 Register static layer in `apps/site/nuxt.config.ts`
+- [x] T167 Add static page i18n keys to `packages/nuxt-layer-ui/i18n/locales/en.json` (static.privacy._, static.terms._)
+
+### 12.2 Profile Validation & Terms Acceptance
+
+- [x] T168 [US3] Create Terms checkbox section in `apps/site/layers/profile/app/components/Form/section/Terms.vue`
+- [x] T169 [US3] Update ProfileForm to include Terms checkbox for new profiles
+- [x] T170 [US3] Add Terms acceptance i18n keys to `packages/nuxt-layer-ui/i18n/locales/en.json` (profile.form.terms.\*)
+- [x] T171 [US2] Create ProfileIncompleteModal in `apps/site/layers/resume/app/components/ProfileIncompleteModal.vue`
+- [x] T172 [US2] Update ResumeUploader with disabled state and blocked event
+- [x] T173 [US2] Update resume upload page to check profile completeness and show modal
+- [x] T174 [US3] Update profile page with enhanced incomplete alerts and query param handling
+- [x] T175 [US2/US3] Add profile completeness i18n keys (profile.completeness._, resume.profileIncomplete._)
+
 ---
 
 ## Dependencies & Execution Order
@@ -500,8 +519,8 @@ The following tasks were marked **[NEEDS FIX]** due to deviations from the agree
 ### Refactoring Tasks
 
 - [x] TR001 **Fix OAuth callback route location** (T060)
-  - Created `packages/nuxt-layer-api/server/routes/auth/google.get.ts` (single endpoint per nuxt-auth-utils best practices)
-  - Removed old `server/api/auth/google.get.ts`
+  - Created `packages/nuxt-layer-api/server/routes/auth/google.ts` (single endpoint per nuxt-auth-utils best practices)
+  - Removed legacy server/api auth google handler
   - Updated spec to reflect single /auth/google endpoint
 
 - [x] TR002 **Fix /api/auth/me response** (T062)

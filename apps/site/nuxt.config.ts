@@ -12,7 +12,8 @@ export default defineNuxtConfig({
     './layers/profile',
     './layers/resume',
     './layers/landing',
-    './layers/vacancy'
+    './layers/vacancy',
+    './layers/static'
   ],
 
   modules: ['@pinia/nuxt'],

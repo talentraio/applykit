@@ -31,6 +31,27 @@ Each layer package is a Nuxt layer with:
   - Base components
   - Minimal design system that both apps reuse
 
+### Site-specific internal layers
+
+Located in `apps/site/layers/`:
+
+- `_base` – shared utilities, composables, middleware for the site
+- `auth` – login/logout pages, auth guards
+- `profile` – user profile management
+- `resume` – resume upload, parsing, editing
+- `landing` – marketing landing page
+- `vacancy` – vacancy CRUD, generation, export
+- `static` – static content pages (Privacy Policy, Terms of Service)
+
+### Admin-specific internal layers
+
+Located in `apps/admin/layers/`:
+
+- `_base` – shared utilities for admin
+- `auth` – admin login
+- `users` – user search and role management
+- `system` – system controls, budget display
+
 ## How apps consume layers
 
 In `apps/site/nuxt.config.ts`:

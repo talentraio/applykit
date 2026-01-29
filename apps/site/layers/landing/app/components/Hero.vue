@@ -83,7 +83,7 @@
 
 defineOptions({ name: 'LandingHero' });
 
-const authUrl = '/api/auth/google';
+const authUrl = '/auth/google';
 
 const scrollToSteps = () => {
   const stepsSection = document.querySelector('.landing-steps');

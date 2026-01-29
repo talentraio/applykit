@@ -330,5 +330,13 @@ export const usageLogRepository = {
       .returning({ id: usageLogs.id });
 
     return result.length;
+  },
+
+  /**
+   * Delete all usage logs for a user
+   * Called during user account deletion
+   */
+  async deleteByUserId(userId: string): Promise<void> {
+    await db.delete(usageLogs).where(eq(usageLogs.userId, userId));
   }
 };

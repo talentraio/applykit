@@ -61,10 +61,10 @@ export const users = pgTable('users', {
   googleId: varchar('google_id', { length: 255 }).notNull().unique(),
   role: roleEnum('role').notNull().default(USER_ROLE_MAP.PUBLIC),
   status: userStatusEnum('status').notNull().default('active'),
-  lastLoginAt: timestamp('last_login_at'),
-  deletedAt: timestamp('deleted_at'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
+  lastLoginAt: timestamp('last_login_at', { mode: 'date' }),
+  deletedAt: timestamp('deleted_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
 });
 
 /**
@@ -77,7 +77,7 @@ export const roleSettings = pgTable('role_settings', {
   byokEnabled: boolean('byok_enabled').notNull().default(false),
   platformProvider: platformProviderEnum('platform_provider').notNull(),
   dailyBudgetCap: decimal('daily_budget_cap', { precision: 10, scale: 2 }).notNull().default('0'),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
 });
 
 /**
@@ -99,8 +99,9 @@ export const profiles = pgTable('profiles', {
   workFormat: workFormatEnum('work_format').notNull(),
   languages: jsonb('languages').$type<LanguageEntry[]>().notNull(),
   phones: jsonb('phones').$type<PhoneEntry[]>(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
+  photoUrl: varchar('photo_url', { length: 2048 }), // Profile photo for human resume
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
 });
 
 /**
@@ -118,8 +119,8 @@ export const resumes = pgTable(
     content: jsonb('content').$type<ResumeContent>().notNull(),
     sourceFileName: varchar('source_file_name', { length: 255 }).notNull(),
     sourceFileType: sourceFileTypeEnum('source_file_type').notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow()
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
   },
   table => ({
     userIdIdx: index('idx_resumes_user_id').on(table.userId),
@@ -143,8 +144,8 @@ export const vacancies = pgTable(
     description: text('description').notNull(),
     url: varchar('url', { length: 2048 }),
     notes: text('notes'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow()
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
   },
   table => ({
     userIdIdx: index('idx_vacancies_user_id').on(table.userId),
@@ -170,8 +171,8 @@ export const generations = pgTable(
     content: jsonb('content').$type<ResumeContent>().notNull(),
     matchScoreBefore: integer('match_score_before').notNull(),
     matchScoreAfter: integer('match_score_after').notNull(),
-    generatedAt: timestamp('generated_at').notNull().defaultNow(),
-    expiresAt: timestamp('expires_at').notNull()
+    generatedAt: timestamp('generated_at', { mode: 'date' }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { mode: 'date' }).notNull()
   },
   table => ({
     vacancyIdIdx: index('idx_generations_vacancy_id').on(table.vacancyId),
@@ -196,7 +197,7 @@ export const llmKeys = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     provider: llmProviderEnum('provider').notNull(),
     keyHint: varchar('key_hint', { length: 4 }).notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow()
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow()
   },
   table => ({
     userIdIdx: index('idx_llm_keys_user_id').on(table.userId),
@@ -220,7 +221,7 @@ export const usageLogs = pgTable(
     usageContext: usageContextEnum('usage_context'),
     tokensUsed: integer('tokens_used'),
     cost: decimal('cost', { precision: 10, scale: 6 }),
-    createdAt: timestamp('created_at').notNull().defaultNow()
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow()
   },
   table => ({
     userIdIdx: index('idx_usage_logs_user_id').on(table.userId),
@@ -241,7 +242,7 @@ export const usageLogs = pgTable(
 export const systemConfigs = pgTable('system_configs', {
   key: varchar('key', { length: 100 }).primaryKey(),
   value: jsonb('value').notNull(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
 });
 
 // ============================================================================

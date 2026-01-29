@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="mb-8">
       <div class="mb-4">
-        <UButton color="neutral" variant="ghost" icon="i-lucide-arrow-left" @click="goBack">
+        <UButton color="neutral" variant="ghost" icon="i-lucide-arrow-left" to="/resumes">
           {{ $t('common.back') }}
         </UButton>
       </div>
@@ -19,9 +19,11 @@
     <UPageCard>
       <ResumeUploader
         :loading="isUploading"
+        :disabled="!isProfileComplete"
         @upload="handleUpload"
         @success="handleSuccess"
         @error="handleError"
+        @blocked="showProfileModal = true"
       />
 
       <!-- Additional Info -->
@@ -50,6 +52,9 @@
         their own API keys.
       </template>
     </UAlert>
+
+    <!-- Profile Incomplete Modal -->
+    <ResumeProfileIncompleteModal v-model:open="showProfileModal" />
   </div>
 </template>
 
@@ -69,7 +74,9 @@ defineOptions({ name: 'ResumeUploadPage' });
 
 // Auth is handled by global middleware
 
-const router = useRouter();
+// Profile completeness check
+const { isComplete: isProfileComplete } = useProfile();
+const showProfileModal = ref(false);
 
 const uploadError = ref<Error | null>(null);
 const isUploading = ref(false);
@@ -88,7 +95,7 @@ const handleUpload = (_file: File) => {
 const handleSuccess = (resume: Resume) => {
   isUploading.value = false;
   // Navigate to the detail page
-  router.push(`/resumes/${resume.id}`);
+  navigateTo(`/resumes/${resume.id}`);
 };
 
 /**
@@ -102,7 +109,4 @@ const handleError = (error: Error) => {
 /**
  * Go back to list
  */
-const goBack = () => {
-  router.push('/resumes');
-};
 </script>

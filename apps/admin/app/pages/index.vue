@@ -40,7 +40,7 @@
               <span>{{ $t('admin.system.budgetUsage') }}</span>
               <span>{{ $t('admin.system.percent', { value: budgetPercent }) }}</span>
             </div>
-            <UProgress :value="budgetPercent" color="primary" size="md" />
+            <UProgress :model-value="budgetPercent" color="primary" size="md" />
           </div>
 
           <div class="grid gap-3 text-sm">

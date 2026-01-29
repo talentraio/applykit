@@ -16,6 +16,7 @@
     "tailwindcss": "catalog:"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "catalog:",
     "typescript": "catalog:"
   }
 }

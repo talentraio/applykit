@@ -14,7 +14,17 @@ export const GenerationSchema = z.object({
 
 export type Generation = z.infer<typeof GenerationSchema>;
 
-// Days until expiration helper
+/**
+ * Check if generation is expired
+ */
+export function isGenerationExpired(generation: Generation): boolean {
+  const now = new Date();
+  return generation.expiresAt.getTime() < now.getTime();
+}
+
+/**
+ * Get days until expiration (0 if expired)
+ */
 export function getDaysUntilExpiration(generation: Generation): number {
   const now = new Date();
   const diff = generation.expiresAt.getTime() - now.getTime();

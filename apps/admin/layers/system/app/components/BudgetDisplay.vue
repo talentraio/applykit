@@ -65,7 +65,7 @@
           <span>{{ $t('admin.system.budgetUsage') }}</span>
           <span>{{ $t('admin.system.percent', { value: usagePercent }) }}</span>
         </div>
-        <UProgress :value="usagePercent" color="primary" size="md" />
+        <UProgress :model-value="usagePercent" color="primary" size="md" />
       </div>
 
       <UAlert

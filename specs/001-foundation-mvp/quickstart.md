@@ -132,8 +132,8 @@ pnpm db:migrate
 4. Go to **Credentials** → **Create Credentials** → **OAuth Client ID**
 5. Application type: **Web application**
 6. Add authorized redirect URIs:
-   - `http://localhost:3000/api/auth/google/callback` (site)
-   - `http://localhost:3001/api/auth/google/callback` (admin)
+   - `http://localhost:3000/auth/google/callback` (site)
+   - `http://localhost:3001/auth/google/callback` (admin)
 7. Copy **Client ID** and **Client Secret** to `.env`
 
 ---

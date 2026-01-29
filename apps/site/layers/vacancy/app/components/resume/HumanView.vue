@@ -1,26 +1,40 @@
 <template>
   <section class="resume-human-view">
-    <header class="resume-human-view__header space-y-4">
-      <div class="space-y-2">
-        <h1 class="text-3xl font-semibold tracking-tight">
-          {{ content.personalInfo.fullName }}
-        </h1>
-        <p v-if="content.summary" class="text-sm text-muted">
-          {{ content.summary }}
-        </p>
+    <header class="resume-human-view__header" :class="{ 'flex gap-6': photoUrl }">
+      <!-- Profile Photo -->
+      <div v-if="photoUrl" class="flex-shrink-0">
+        <img
+          :src="photoUrl"
+          :alt="content.personalInfo.fullName"
+          class="h-24 w-24 rounded-full border-2 border-primary/20 object-cover"
+        />
       </div>
-      <div v-if="contactItems.length" class="resume-human-view__contacts flex flex-wrap gap-3">
-        <template v-for="item in contactItems" :key="item.value">
-          <ULink
-            v-if="item.href"
-            :to="item.href"
-            :target="item.external ? '_blank' : undefined"
-            class="text-sm text-primary"
-          >
-            {{ item.value }}
-          </ULink>
-          <span v-else class="text-sm text-muted">{{ item.value }}</span>
-        </template>
+
+      <div class="flex-1 space-y-4">
+        <div class="space-y-2">
+          <h1 class="text-3xl font-semibold tracking-tight">
+            {{ content.personalInfo.fullName }}
+          </h1>
+          <p v-if="content.personalInfo.title" class="text-sm font-medium text-muted">
+            {{ content.personalInfo.title }}
+          </p>
+          <p v-if="content.summary" class="text-sm text-muted">
+            {{ content.summary }}
+          </p>
+        </div>
+        <div v-if="contactItems.length" class="resume-human-view__contacts flex flex-wrap gap-3">
+          <template v-for="item in contactItems" :key="item.value">
+            <ULink
+              v-if="item.href"
+              :to="item.href"
+              :target="item.external ? '_blank' : undefined"
+              class="text-sm text-primary"
+            >
+              {{ item.value }}
+            </ULink>
+            <span v-else class="text-sm text-muted">{{ item.value }}</span>
+          </template>
+        </div>
       </div>
     </header>
 
@@ -51,11 +65,14 @@
             <p class="text-sm leading-relaxed">
               {{ experience.description }}
             </p>
-            <ul v-if="experience.projects?.length" class="list-disc space-y-1 pl-4 text-sm">
-              <li v-for="project in experience.projects" :key="project">
-                {{ project }}
+            <ul v-if="experience.bullets?.length" class="list-disc space-y-1 pl-4 text-sm">
+              <li v-for="(bullet, idx) in experience.bullets" :key="idx">
+                {{ bullet }}
               </li>
             </ul>
+            <p v-if="experience.technologies?.length" class="text-xs text-muted">
+              {{ experience.technologies.join(', ') }}
+            </p>
             <div v-if="experience.links?.length" class="flex flex-wrap gap-2">
               <ULink
                 v-for="link in experience.links"
@@ -90,6 +107,24 @@
             </p>
           </div>
         </section>
+
+        <!-- Custom Sections -->
+        <section
+          v-for="customSection in content.customSections"
+          :key="customSection.sectionTitle"
+          class="resume-human-view__section space-y-4"
+        >
+          <h2 class="text-lg font-semibold">
+            {{ customSection.sectionTitle }}
+          </h2>
+          <div v-for="(item, idx) in customSection.items" :key="idx" class="space-y-1">
+            <template v-if="item.title">
+              <h3 class="text-base font-medium">{{ item.title }}</h3>
+              <p class="text-sm text-muted">{{ item.description }}</p>
+            </template>
+            <p v-else class="text-sm">{{ item.description }}</p>
+          </div>
+        </section>
       </div>
 
       <aside class="space-y-8">
@@ -97,17 +132,37 @@
           <h2 class="text-lg font-semibold">
             {{ $t('resume.section.skills') }}
           </h2>
-          <div class="flex flex-wrap gap-2">
-            <UBadge
-              v-for="skill in content.skills"
-              :key="skill"
-              color="primary"
-              variant="soft"
-              size="sm"
-            >
-              {{ skill }}
-            </UBadge>
-          </div>
+          <!-- Single skill group - show as badges -->
+          <template v-if="content.skills.length === 1">
+            <div class="flex flex-wrap gap-2">
+              <UBadge
+                v-for="skill in content.skills[0]!.skills"
+                :key="skill"
+                color="primary"
+                variant="soft"
+                size="sm"
+              >
+                {{ skill }}
+              </UBadge>
+            </div>
+          </template>
+          <!-- Multiple skill groups - show with labels -->
+          <template v-else>
+            <div v-for="group in content.skills" :key="group.type" class="space-y-2">
+              <h3 class="text-sm font-medium text-muted">{{ group.type }}</h3>
+              <div class="flex flex-wrap gap-2">
+                <UBadge
+                  v-for="skill in group.skills"
+                  :key="skill"
+                  color="primary"
+                  variant="soft"
+                  size="sm"
+                >
+                  {{ skill }}
+                </UBadge>
+              </div>
+            </div>
+          </template>
         </section>
 
         <section v-if="content.certifications?.length" class="resume-human-view__section space-y-3">
@@ -155,6 +210,10 @@ defineOptions({ name: 'VacancyResumeHumanView' });
 
 const props = defineProps<{
   content: ResumeContent;
+  /**
+   * Profile photo URL (optional)
+   */
+  photoUrl?: string;
 }>();
 
 type ContactItem = {
@@ -202,6 +261,14 @@ const contactItems = computed<ContactItem[]>(() => {
     items.push({
       value: props.content.personalInfo.website,
       href: props.content.personalInfo.website,
+      external: true
+    });
+  }
+
+  if (props.content.personalInfo.github) {
+    items.push({
+      value: props.content.personalInfo.github,
+      href: props.content.personalInfo.github,
       external: true
     });
   }

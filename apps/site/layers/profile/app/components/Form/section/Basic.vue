@@ -14,6 +14,7 @@
           :placeholder="$t('profile.form.firstName')"
           required
           size="lg"
+          class="w-full"
           @update:model-value="update('firstName', $event)"
         />
       </div>
@@ -29,6 +30,7 @@
           :placeholder="$t('profile.form.lastName')"
           required
           size="lg"
+          class="w-full"
           @update:model-value="update('lastName', $event)"
         />
       </div>
@@ -46,26 +48,28 @@
         :placeholder="$t('profile.form.email')"
         required
         size="lg"
+        class="w-full"
         @update:model-value="update('email', $event)"
       />
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 sm:grid-cols-3">
       <!-- Country (ISO 3166-1 alpha-2) -->
       <div>
         <label class="mb-2 block text-sm font-medium">
           {{ $t('profile.form.country') }}
           <span class="text-error">*</span>
         </label>
-        <UInput
+        <USelectMenu
           :model-value="modelValue.country"
-          :placeholder="$t('profile.form.country')"
-          maxlength="2"
-          required
+          :items="countryOptions"
+          value-key="value"
+          :placeholder="$t('profile.form.countryPlaceholder')"
           size="lg"
-          @update:model-value="update('country', $event)"
+          required
+          class="w-full"
+          @update:model-value="handleCountryUpdate"
         />
-        <p class="mt-1 text-xs text-muted">{{ $t('profile.form.countryHint') }}</p>
       </div>
 
       <!-- Search Region -->
@@ -74,30 +78,34 @@
           {{ $t('profile.form.searchRegion') }}
           <span class="text-error">*</span>
         </label>
-        <UInput
+        <USelectMenu
           :model-value="modelValue.searchRegion"
-          :placeholder="$t('profile.form.searchRegion')"
-          required
+          :items="searchRegionOptions"
+          value-key="value"
+          :placeholder="$t('profile.form.searchRegionPlaceholder')"
           size="lg"
-          @update:model-value="update('searchRegion', $event)"
+          required
+          class="w-full"
+          @update:model-value="handleSearchRegionUpdate"
         />
       </div>
-    </div>
 
-    <!-- Work Format -->
-    <div>
-      <label class="mb-2 block text-sm font-medium">
-        {{ $t('profile.form.workFormat') }}
-        <span class="text-error">*</span>
-      </label>
-      <USelectMenu
-        :model-value="modelValue.workFormat"
-        :items="workFormatOptions"
-        value-key="value"
-        size="lg"
-        required
-        @update:model-value="handleWorkFormatUpdate"
-      />
+      <!-- Work Format -->
+      <div>
+        <label class="mb-2 block text-sm font-medium">
+          {{ $t('profile.form.workFormat') }}
+          <span class="text-error">*</span>
+        </label>
+        <USelectMenu
+          :model-value="modelValue.workFormat"
+          :items="workFormatOptions"
+          value-key="value"
+          size="lg"
+          required
+          class="w-full"
+          @update:model-value="handleWorkFormatUpdate"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -113,8 +121,10 @@
 
 import type { WorkFormat } from '@int/schema';
 import { WORK_FORMAT_MAP } from '@int/schema';
+import countries from 'i18n-iso-countries';
+import enLocale from 'i18n-iso-countries/langs/en.json';
 
-defineOptions({ name: 'UserProfileFormSectionBasic' });
+defineOptions({ name: 'ProfileFormSectionBasic' });
 
 const props = defineProps<{
   modelValue: BasicData;
@@ -123,6 +133,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: BasicData];
 }>();
+
+// Register English locale for country names
+countries.registerLocale(enLocale);
 
 type BasicData = {
   firstName: string;
@@ -135,6 +148,17 @@ type BasicData = {
 
 const { t } = useI18n();
 
+// Country options for searchable select
+type CountryOption = { label: string; value: string };
+
+const countryOptions = computed<CountryOption[]>(() => {
+  const names = countries.getNames('en', { select: 'official' });
+  return Object.entries(names)
+    .map(([code, name]) => ({ label: name, value: code }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+});
+
+// Work format options
 type WorkFormatOption = { label: string; value: BasicData['workFormat'] };
 
 const workFormatOptions = computed<WorkFormatOption[]>(() => [
@@ -143,10 +167,40 @@ const workFormatOptions = computed<WorkFormatOption[]>(() => [
   { label: t('profile.form.workFormatOptions.hybrid'), value: WORK_FORMAT_MAP.HYBRID }
 ]);
 
+// Search region options (popular job search regions)
+type SearchRegionOption = { label: string; value: string };
+
+const searchRegionOptions = computed<SearchRegionOption[]>(() => [
+  { label: t('profile.form.searchRegionOptions.worldwide'), value: 'Worldwide' },
+  { label: t('profile.form.searchRegionOptions.europe'), value: 'Europe' },
+  { label: t('profile.form.searchRegionOptions.eu'), value: 'European Union' },
+  { label: t('profile.form.searchRegionOptions.northAmerica'), value: 'North America' },
+  { label: t('profile.form.searchRegionOptions.usa'), value: 'United States' },
+  { label: t('profile.form.searchRegionOptions.uk'), value: 'United Kingdom' },
+  { label: t('profile.form.searchRegionOptions.emea'), value: 'EMEA' },
+  { label: t('profile.form.searchRegionOptions.apac'), value: 'Asia-Pacific' },
+  { label: t('profile.form.searchRegionOptions.latam'), value: 'Latin America' },
+  { label: t('profile.form.searchRegionOptions.middleEast'), value: 'Middle East' },
+  { label: t('profile.form.searchRegionOptions.africa'), value: 'Africa' },
+  { label: t('profile.form.searchRegionOptions.oceania'), value: 'Oceania' }
+]);
+
 const update = <K extends keyof BasicData>(key: K, value: BasicData[K] | null) => {
   // Skip update if value is null (from dropdown deselection)
   if (value === null) return;
   emit('update:modelValue', { ...props.modelValue, [key]: value });
+};
+
+const handleCountryUpdate = (value: unknown) => {
+  if (typeof value === 'string' && value.length === 2) {
+    update('country', value);
+  }
+};
+
+const handleSearchRegionUpdate = (value: unknown) => {
+  if (typeof value === 'string') {
+    update('searchRegion', value);
+  }
 };
 
 const workFormatValues: ReadonlyArray<WorkFormat> = Object.values(WORK_FORMAT_MAP);

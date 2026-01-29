@@ -128,5 +128,13 @@ export const resumeRepository = {
       .orderBy(desc(resumes.createdAt))
       .limit(1);
     return result[0] ?? null;
+  },
+
+  /**
+   * Delete all resumes for a user
+   * Called during user account deletion
+   */
+  async deleteByUserId(userId: string): Promise<void> {
+    await db.delete(resumes).where(eq(resumes.userId, userId));
   }
 };

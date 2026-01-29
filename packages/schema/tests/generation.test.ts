@@ -1,6 +1,6 @@
 import type { Generation } from '../schemas/generation';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getDaysUntilExpiration } from '../schemas/generation';
+import { getDaysUntilExpiration, isGenerationExpired } from '../schemas/generation';
 
 describe('getDaysUntilExpiration', () => {
   beforeEach(() => {
@@ -92,5 +92,120 @@ describe('getDaysUntilExpiration', () => {
     const days = getDaysUntilExpiration(generation);
 
     expect(days).toBe(90);
+  });
+});
+
+describe('isGenerationExpired', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it('should return false for future dates', () => {
+    const now = new Date('2026-01-22T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const futureDate = new Date('2026-01-25T12:00:00Z');
+    const generation: Generation = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      vacancyId: '123e4567-e89b-12d3-a456-426614174001',
+      resumeId: '123e4567-e89b-12d3-a456-426614174002',
+      content: {
+        personalInfo: {
+          fullName: 'John Doe',
+          email: 'john@example.com'
+        },
+        experience: [],
+        education: [],
+        skills: []
+      },
+      matchScoreBefore: 70,
+      matchScoreAfter: 90,
+      generatedAt: now,
+      expiresAt: futureDate
+    };
+
+    expect(isGenerationExpired(generation)).toBe(false);
+  });
+
+  it('should return true for past dates', () => {
+    const now = new Date('2026-01-22T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const pastDate = new Date('2026-01-20T12:00:00Z');
+    const generation: Generation = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      vacancyId: '123e4567-e89b-12d3-a456-426614174001',
+      resumeId: '123e4567-e89b-12d3-a456-426614174002',
+      content: {
+        personalInfo: {
+          fullName: 'John Doe',
+          email: 'john@example.com'
+        },
+        experience: [],
+        education: [],
+        skills: []
+      },
+      matchScoreBefore: 70,
+      matchScoreAfter: 90,
+      generatedAt: new Date('2025-12-20T12:00:00Z'),
+      expiresAt: pastDate
+    };
+
+    expect(isGenerationExpired(generation)).toBe(true);
+  });
+
+  it('should return true for exact current time (edge case)', () => {
+    const now = new Date('2026-01-22T12:00:00.000Z');
+    vi.setSystemTime(now);
+
+    const sameTime = new Date('2026-01-22T12:00:00.000Z');
+    const generation: Generation = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      vacancyId: '123e4567-e89b-12d3-a456-426614174001',
+      resumeId: '123e4567-e89b-12d3-a456-426614174002',
+      content: {
+        personalInfo: {
+          fullName: 'John Doe',
+          email: 'john@example.com'
+        },
+        experience: [],
+        education: [],
+        skills: []
+      },
+      matchScoreBefore: 70,
+      matchScoreAfter: 90,
+      generatedAt: new Date('2025-12-20T12:00:00Z'),
+      expiresAt: sameTime
+    };
+
+    // expiresAt < now (false), so not expired
+    expect(isGenerationExpired(generation)).toBe(false);
+  });
+
+  it('should return false for 1 millisecond in the future', () => {
+    const now = new Date('2026-01-22T12:00:00.000Z');
+    vi.setSystemTime(now);
+
+    const futureByOneMilli = new Date('2026-01-22T12:00:00.001Z');
+    const generation: Generation = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      vacancyId: '123e4567-e89b-12d3-a456-426614174001',
+      resumeId: '123e4567-e89b-12d3-a456-426614174002',
+      content: {
+        personalInfo: {
+          fullName: 'John Doe',
+          email: 'john@example.com'
+        },
+        experience: [],
+        education: [],
+        skills: []
+      },
+      matchScoreBefore: 70,
+      matchScoreAfter: 90,
+      generatedAt: now,
+      expiresAt: futureByOneMilli
+    };
+
+    expect(isGenerationExpired(generation)).toBe(false);
   });
 });

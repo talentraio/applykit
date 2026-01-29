@@ -22,8 +22,8 @@ export class LocalAdapter implements StorageAdapter {
     this.baseDir = baseDir || configuredBaseDir || join(process.cwd(), '.data', 'storage');
 
     // Generate local URL (for dev server)
-    // In a real app, you'd serve these files via a Nuxt API route
-    this.baseUrl = runtimeConfig.storage?.baseUrl || 'http://localhost:3000/api/storage';
+    // Use relative URL to avoid port mismatch issues
+    this.baseUrl = runtimeConfig.storage?.baseUrl || '/api/storage';
   }
 
   async put(path: string, data: Buffer | Blob, _options?: PutOptions): Promise<string> {

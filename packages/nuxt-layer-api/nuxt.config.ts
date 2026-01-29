@@ -17,7 +17,7 @@ export default defineNuxtConfig({
     },
     storage: {
       blobReadWriteToken: '',
-      baseUrl: 'http://localhost:3000/api/storage',
+      baseUrl: '/api/storage',
       baseDir: ''
     },
     session: {
@@ -43,7 +43,7 @@ export default defineNuxtConfig({
       authDefault: '/'
     },
     public: {
-      apiCallTimeoutMs: 10000
+      apiCallTimeoutMs: 60000
     }
   },
 

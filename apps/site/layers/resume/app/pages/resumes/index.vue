@@ -10,7 +10,7 @@
           {{ $t('resume.list.count', { count: resumes.length }) }}
         </p>
       </div>
-      <UButton color="primary" icon="i-lucide-upload" size="lg" @click="goToUpload">
+      <UButton color="primary" icon="i-lucide-upload" size="lg" to="/resumes/new">
         {{ $t('resume.list.uploadButton') }}
       </UButton>
     </div>
@@ -47,7 +47,7 @@
           {{ $t('resume.list.emptyDescription') }}
         </p>
         <div class="mt-6">
-          <UButton color="primary" icon="i-lucide-upload" size="lg" @click="goToUpload">
+          <UButton color="primary" icon="i-lucide-upload" size="lg" to="/resumes/new">
             {{ $t('resume.list.uploadButton') }}
           </UButton>
         </div>
@@ -115,7 +115,8 @@
               variant="ghost"
               icon="i-lucide-eye"
               size="sm"
-              @click.stop="viewResume(resume.id)"
+              :to="`/resumes/${resume.id}`"
+              @click.stop
             >
               {{ $t('common.view') }}
             </UButton>
@@ -191,7 +192,6 @@ defineOptions({ name: 'ResumesListPage' });
 
 // Auth is handled by global middleware
 
-const router = useRouter();
 const { resumes, loading, error, fetchResumes, deleteResume } = useResumes();
 
 // SSR-compatible data fetching
@@ -214,14 +214,7 @@ const isDeleting = ref(false);
  * Navigate to resume detail
  */
 const viewResume = (id: string) => {
-  router.push(`/resumes/${id}`);
-};
-
-/**
- * Navigate to upload page
- */
-const goToUpload = () => {
-  router.push('/resumes/new');
+  navigateTo(`/resumes/${id}`);
 };
 
 /**

@@ -190,21 +190,23 @@ Admin on "System" page
 
 ### apps/site
 
-| Route                  | Page           | Description                                           |
-| ---------------------- | -------------- | ----------------------------------------------------- |
-| `/`                    | Home           | Marketing landing page                                |
-| `/login`               | Login          | Google sign-in button                                 |
-| `/dashboard`           | Dashboard      | Overview, quick actions                               |
-| `/profile`             | Profile        | Edit user profile                                     |
-| `/resumes`             | Resume List    | List of user's base resumes                           |
-| `/resumes/new`         | Upload Resume  | File upload form                                      |
-| `/resumes/:id`         | Resume Detail  | JSON editor for base resume                           |
-| `/vacancies`           | Vacancy List   | List of vacancies                                     |
-| `/vacancies/new`       | New Vacancy    | Vacancy creation form                                 |
-| `/vacancies/:id`       | Vacancy Detail | View vacancy, generation controls, lifetime indicator |
-| `/vacancies/:id/ats`   | ATS View       | SSR island: ATS-friendly resume                       |
-| `/vacancies/:id/human` | Human View     | SSR island: Human-friendly resume                     |
-| `/settings`            | Settings       | BYOK key management                                   |
+| Route                  | Page             | Description                                           |
+| ---------------------- | ---------------- | ----------------------------------------------------- |
+| `/`                    | Home             | Marketing landing page                                |
+| `/login`               | Login            | Google sign-in button                                 |
+| `/dashboard`           | Dashboard        | Overview, quick actions                               |
+| `/profile`             | Profile          | Edit user profile                                     |
+| `/resumes`             | Resume List      | List of user's base resumes                           |
+| `/resumes/new`         | Upload Resume    | File upload form (requires complete profile)          |
+| `/resumes/:id`         | Resume Detail    | JSON editor for base resume                           |
+| `/vacancies`           | Vacancy List     | List of vacancies                                     |
+| `/vacancies/new`       | New Vacancy      | Vacancy creation form                                 |
+| `/vacancies/:id`       | Vacancy Detail   | View vacancy, generation controls, lifetime indicator |
+| `/vacancies/:id/ats`   | ATS View         | SSR island: ATS-friendly resume                       |
+| `/vacancies/:id/human` | Human View       | SSR island: Human-friendly resume                     |
+| `/settings`            | Settings         | BYOK key management                                   |
+| `/privacy`             | Privacy Policy   | Static privacy policy page                            |
+| `/terms`               | Terms of Service | Static terms of service page                          |
 
 ### apps/admin
 

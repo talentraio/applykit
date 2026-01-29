@@ -42,13 +42,6 @@ export default defineEventHandler(async event => {
   // Get latest generation (returns null if expired or not found)
   const generation = await generationRepository.findLatestByVacancyId(vacancyId);
 
-  if (!generation) {
-    // Return 404 if no valid generation exists
-    throw createError({
-      statusCode: 404,
-      message: 'No valid generation found'
-    });
-  }
-
+  // Return null if no valid generation exists (valid state for new vacancies)
   return generation;
 });

@@ -56,6 +56,12 @@ export type ExportOptions = {
    * Additional wait time in ms after page load (default: 500)
    */
   waitTime?: number;
+
+  /**
+   * Profile photo as base64 data URL (for Human format)
+   * Example: "data:image/jpeg;base64,/9j/4AAQ..."
+   */
+  photoDataUrl?: string;
 };
 
 /**
@@ -98,82 +104,206 @@ export class ExportError extends Error {
 }
 
 /**
+ * Format date from YYYY-MM to human-readable format
+ */
+function formatDate(date: string | null | undefined): string {
+  if (!date) return 'Present';
+  const [year, month] = date.split('-');
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ];
+  const monthIndex = Number.parseInt(month ?? '1', 10) - 1;
+  return `${monthNames[monthIndex]} ${year}`;
+}
+
+/**
  * Generate ATS-formatted HTML
  *
- * Plain, semantic HTML optimized for ATS parsing
- * No styles, just clean structure
+ * Clean, professional HTML optimized for ATS parsing
+ * Matches the reference CV format with proper styling
  */
 function generateATSHtml(content: ResumeContent, title: string): string {
   const sections: string[] = [];
 
-  // Personal info
-  sections.push(`<h1>${content.personalInfo.fullName}</h1>`);
-  if (content.personalInfo.email) sections.push(`<p>Email: ${content.personalInfo.email}</p>`);
-  if (content.personalInfo.phone) sections.push(`<p>Phone: ${content.personalInfo.phone}</p>`);
-  if (content.personalInfo.location)
-    sections.push(`<p>Location: ${content.personalInfo.location}</p>`);
+  // Header: Name + Title + Contact info
+  const contactParts: string[] = [];
+  if (content.personalInfo.location) contactParts.push(content.personalInfo.location);
+  if (content.personalInfo.phone) contactParts.push(content.personalInfo.phone);
+  if (content.personalInfo.email) contactParts.push(content.personalInfo.email);
+  if (content.personalInfo.linkedin) {
+    // Extract display name from LinkedIn URL
+    const linkedinDisplay = content.personalInfo.linkedin.replace(/^https?:\/\/(www\.)?/, '');
+    contactParts.push(linkedinDisplay);
+  }
+  if (content.personalInfo.github) {
+    const githubDisplay = content.personalInfo.github.replace(/^https?:\/\/(www\.)?/, '');
+    contactParts.push(githubDisplay);
+  }
+  if (content.personalInfo.website) {
+    const websiteDisplay = content.personalInfo.website.replace(/^https?:\/\/(www\.)?/, '');
+    contactParts.push(websiteDisplay);
+  }
+
+  sections.push(`
+    <header class="resume-header">
+      <h1 class="name">${content.personalInfo.fullName}</h1>
+      ${content.personalInfo.title ? `<p class="title">${content.personalInfo.title}</p>` : ''}
+      ${contactParts.length > 0 ? `<p class="contact">${contactParts.join(' | ')}</p>` : ''}
+    </header>
+  `);
 
   // Summary
   if (content.summary) {
-    sections.push(`<h2>Summary</h2>`);
-    sections.push(`<p>${content.summary}</p>`);
+    // Split summary into paragraphs for better readability
+    const summaryParagraphs = content.summary
+      .split(/\n{2,}/)
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
+    sections.push(`
+      <section class="section">
+        <h2 class="section-title">SUMMARY</h2>
+        ${summaryParagraphs.map(p => `<p>${p}</p>`).join('\n')}
+      </section>
+    `);
+  }
+
+  // Core Skills (grouped)
+  if (content.skills && content.skills.length > 0) {
+    const skillsHtml =
+      content.skills.length === 1
+        ? // Single group - no type label needed
+          `<p>${content.skills[0]!.skills.join(', ')}</p>`
+        : // Multiple groups - show type labels
+          content.skills
+            .map(group => `<p><strong>${group.type}:</strong> ${group.skills.join(', ')}</p>`)
+            .join('\n');
+
+    sections.push(`
+      <section class="section">
+        <h2 class="section-title">CORE SKILLS</h2>
+        ${skillsHtml}
+      </section>
+    `);
   }
 
   // Experience
   if (content.experience && content.experience.length > 0) {
-    sections.push(`<h2>Experience</h2>`);
-    for (const exp of content.experience) {
-      sections.push(`<h3>${exp.position} at ${exp.company}</h3>`);
-      sections.push(`<p>${exp.startDate} - ${exp.endDate || 'Present'}</p>`);
-      if (exp.description) sections.push(`<p>${exp.description}</p>`);
-      if (exp.projects && exp.projects.length > 0) {
-        sections.push(`<ul>`);
-        for (const project of exp.projects) {
-          sections.push(`<li>${project}</li>`);
-        }
-        sections.push(`</ul>`);
-      }
+    const experienceHtml = content.experience
+      .map(exp => {
+        const dateParts: string[] = [];
+        dateParts.push(`${formatDate(exp.startDate)} - ${formatDate(exp.endDate)}`);
+        if (exp.location) dateParts.push(exp.location);
+        if (exp.description && !exp.bullets?.length) dateParts.push(exp.description);
+
+        const bulletsList =
+          exp.bullets && exp.bullets.length > 0
+            ? `<ul class="bullets">${exp.bullets.map(b => `<li>${b}</li>`).join('\n')}</ul>`
+            : '';
+
+        const techLine =
+          exp.technologies && exp.technologies.length > 0
+            ? `<p class="tech-stack">Tech: ${exp.technologies.join(', ')}.</p>`
+            : '';
+
+        return `
+        <div class="experience-item">
+          <p class="exp-header"><strong>${exp.company}</strong> | <strong>${exp.position}</strong></p>
+          <p class="exp-meta">${dateParts.join(' | ')}</p>
+          ${bulletsList}
+          ${techLine}
+        </div>
+      `;
+      })
+      .join('\n');
+
+    sections.push(`
+      <section class="section">
+        <h2 class="section-title">EXPERIENCE</h2>
+        ${experienceHtml}
+      </section>
+    `);
+  }
+
+  // Custom Sections (e.g., Open Source)
+  if (content.customSections && content.customSections.length > 0) {
+    for (const customSection of content.customSections) {
+      const itemsHtml = customSection.items
+        .map(item =>
+          item.title
+            ? `<p><strong>${item.title}</strong> - ${item.description}</p>`
+            : `<p>${item.description}</p>`
+        )
+        .join('\n');
+
+      sections.push(`
+        <section class="section">
+          <h2 class="section-title">${customSection.sectionTitle.toUpperCase()}</h2>
+          ${itemsHtml}
+        </section>
+      `);
     }
   }
 
   // Education
   if (content.education && content.education.length > 0) {
-    sections.push(`<h2>Education</h2>`);
-    for (const edu of content.education) {
-      sections.push(`<h3>${edu.degree}${edu.field ? ` in ${edu.field}` : ''}</h3>`);
-      sections.push(`<p>${edu.institution}</p>`);
-      sections.push(`<p>${edu.startDate} - ${edu.endDate || 'Present'}</p>`);
-    }
-  }
+    const educationHtml = content.education
+      .map(edu => {
+        const degree = edu.field ? `${edu.degree}, ${edu.field}` : edu.degree;
+        const dates =
+          edu.startDate || edu.endDate
+            ? ` (${formatDate(edu.startDate)} - ${formatDate(edu.endDate)})`
+            : '';
+        return `<p>${edu.institution} - ${degree}${dates}.</p>`;
+      })
+      .join('\n');
 
-  // Skills
-  if (content.skills && content.skills.length > 0) {
-    sections.push(`<h2>Skills</h2>`);
-    sections.push(`<ul>`);
-    for (const skill of content.skills) {
-      sections.push(`<li>${skill}</li>`);
-    }
-    sections.push(`</ul>`);
+    sections.push(`
+      <section class="section">
+        <h2 class="section-title">EDUCATION</h2>
+        ${educationHtml}
+      </section>
+    `);
   }
 
   // Certifications
   if (content.certifications && content.certifications.length > 0) {
-    sections.push(`<h2>Certifications</h2>`);
-    sections.push(`<ul>`);
-    for (const cert of content.certifications) {
-      sections.push(`<li>${cert.name} - ${cert.issuer}${cert.date ? ` (${cert.date})` : ''}</li>`);
-    }
-    sections.push(`</ul>`);
+    const certsHtml = content.certifications
+      .map(cert => {
+        const issuerPart = cert.issuer ? ` - ${cert.issuer}` : '';
+        const datePart = cert.date ? ` (${formatDate(cert.date)})` : '';
+        return `<p>${cert.name}${issuerPart}${datePart}.</p>`;
+      })
+      .join('\n');
+
+    sections.push(`
+      <section class="section">
+        <h2 class="section-title">CERTIFICATIONS</h2>
+        ${certsHtml}
+      </section>
+    `);
   }
 
-  // Languages
+  // Languages (single line)
   if (content.languages && content.languages.length > 0) {
-    sections.push(`<h2>Languages</h2>`);
-    sections.push(`<ul>`);
-    for (const lang of content.languages) {
-      sections.push(`<li>${lang.language}${lang.level ? ` - ${lang.level}` : ''}</li>`);
-    }
-    sections.push(`</ul>`);
+    const langsLine = content.languages.map(l => `${l.language}: ${l.level}`).join(' | ');
+
+    sections.push(`
+      <section class="section">
+        <h2 class="section-title">LANGUAGES</h2>
+        <p>${langsLine}</p>
+      </section>
+    `);
   }
 
   return `
@@ -184,18 +314,99 @@ function generateATSHtml(content: ResumeContent, title: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      margin: 20px;
-      color: #000;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    h1 { font-size: 24px; margin-bottom: 10px; }
-    h2 { font-size: 18px; margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #000; }
-    h3 { font-size: 16px; margin-top: 15px; margin-bottom: 5px; }
-    p { margin: 5px 0; }
-    ul { margin: 10px 0; padding-left: 20px; }
-    li { margin: 5px 0; }
+
+    body {
+      font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.4;
+      color: #000;
+      padding: 0;
+      max-width: 100%;
+    }
+
+    .resume-header {
+      margin-bottom: 20px;
+    }
+
+    .name {
+      font-size: 26pt;
+      font-weight: bold;
+      color: #000;
+      margin-bottom: 4px;
+    }
+
+    .title {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .contact {
+      font-size: 10pt;
+      color: #333;
+    }
+
+    .section {
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 12pt;
+      font-weight: bold;
+      color: #000;
+      border-bottom: 1px solid #000;
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .section p {
+      margin-bottom: 6px;
+    }
+
+    .experience-item {
+      margin-bottom: 14px;
+    }
+
+    .exp-header {
+      margin-bottom: 2px;
+    }
+
+    .exp-meta {
+      font-size: 10pt;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .bullets {
+      margin: 6px 0 6px 20px;
+      padding: 0;
+    }
+
+    .bullets li {
+      margin-bottom: 4px;
+    }
+
+    .tech-stack {
+      font-size: 10pt;
+      color: #333;
+      margin-top: 6px;
+    }
+
+    strong {
+      font-weight: bold;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -210,18 +421,30 @@ function generateATSHtml(content: ResumeContent, title: string): string {
  *
  * Styled, visually appealing HTML for human readers
  * Uses professional design with hierarchy and spacing
+ *
+ * @param content - Resume content
+ * @param title - Page title
+ * @param photoDataUrl - Optional profile photo as base64 data URL
  */
-function generateHumanHtml(content: ResumeContent, title: string): string {
+function generateHumanHtml(content: ResumeContent, title: string, photoDataUrl?: string): string {
   const sections: string[] = [];
 
-  // Header section
+  // Header section with optional photo
+  const photoHtml = photoDataUrl
+    ? `<img src="${photoDataUrl}" alt="${content.personalInfo.fullName}" class="resume-photo" />`
+    : '';
+
   sections.push(`
-    <header class="resume-header">
-      <h1 class="resume-name">${content.personalInfo.fullName}</h1>
-      <div class="resume-contact">
-        ${content.personalInfo.email ? `<span class="contact-item">${content.personalInfo.email}</span>` : ''}
-        ${content.personalInfo.phone ? `<span class="contact-item">${content.personalInfo.phone}</span>` : ''}
-        ${content.personalInfo.location ? `<span class="contact-item">${content.personalInfo.location}</span>` : ''}
+    <header class="resume-header${photoDataUrl ? ' with-photo' : ''}">
+      ${photoDataUrl ? `<div class="header-photo">${photoHtml}</div>` : ''}
+      <div class="header-content">
+        <h1 class="resume-name">${content.personalInfo.fullName}</h1>
+        ${content.personalInfo.title ? `<p class="resume-title">${content.personalInfo.title}</p>` : ''}
+        <div class="resume-contact">
+          ${content.personalInfo.email ? `<span class="contact-item">${content.personalInfo.email}</span>` : ''}
+          ${content.personalInfo.phone ? `<span class="contact-item">${content.personalInfo.phone}</span>` : ''}
+          ${content.personalInfo.location ? `<span class="contact-item">${content.personalInfo.location}</span>` : ''}
+        </div>
       </div>
     </header>
   `);
@@ -236,30 +459,58 @@ function generateHumanHtml(content: ResumeContent, title: string): string {
     `);
   }
 
+  // Skills (grouped)
+  if (content.skills && content.skills.length > 0) {
+    const skillsHtml =
+      content.skills.length === 1
+        ? // Single group - display as tags
+          `<div class="skills-container">${content.skills[0]!.skills.map(s => `<span class="skill-tag">${s}</span>`).join('\n')}</div>`
+        : // Multiple groups - show categories
+          content.skills
+            .map(
+              group => `
+          <div class="skill-group">
+            <strong class="skill-type">${group.type}:</strong>
+            <span class="skill-list">${group.skills.join(', ')}</span>
+          </div>
+        `
+            )
+            .join('\n');
+
+    sections.push(`
+      <section class="resume-section">
+        <h2 class="section-title">Skills</h2>
+        ${skillsHtml}
+      </section>
+    `);
+  }
+
   // Experience
   if (content.experience && content.experience.length > 0) {
     const experienceItems = content.experience
-      .map(
-        exp => `
+      .map(exp => {
+        const bulletsHtml =
+          exp.bullets && exp.bullets.length > 0
+            ? `<ul class="achievements-list">${exp.bullets.map(b => `<li>${b}</li>`).join('\n')}</ul>`
+            : '';
+        const techHtml =
+          exp.technologies && exp.technologies.length > 0
+            ? `<p class="tech-stack">Tech: ${exp.technologies.join(', ')}</p>`
+            : '';
+
+        return `
       <div class="experience-item">
         <div class="experience-header">
           <h3 class="position-title">${exp.position}</h3>
-          <span class="date-range">${exp.startDate} - ${exp.endDate || 'Present'}</span>
+          <span class="date-range">${formatDate(exp.startDate)} - ${formatDate(exp.endDate)}</span>
         </div>
-        <div class="company-name">${exp.company}</div>
+        <div class="company-name">${exp.company}${exp.location ? ` | ${exp.location}` : ''}</div>
         ${exp.description ? `<p class="experience-description">${exp.description}</p>` : ''}
-        ${
-          exp.projects && exp.projects.length > 0
-            ? `
-        <ul class="achievements-list">
-          ${exp.projects.map((project: string) => `<li>${project}</li>`).join('\n')}
-        </ul>
-        `
-            : ''
-        }
+        ${bulletsHtml}
+        ${techHtml}
       </div>
-    `
-      )
+    `;
+      })
       .join('\n');
 
     sections.push(`
@@ -270,6 +521,26 @@ function generateHumanHtml(content: ResumeContent, title: string): string {
     `);
   }
 
+  // Custom Sections
+  if (content.customSections && content.customSections.length > 0) {
+    for (const customSection of content.customSections) {
+      const itemsHtml = customSection.items
+        .map(item =>
+          item.title
+            ? `<div class="custom-item"><strong>${item.title}</strong> - ${item.description}</div>`
+            : `<div class="custom-item">${item.description}</div>`
+        )
+        .join('\n');
+
+      sections.push(`
+        <section class="resume-section">
+          <h2 class="section-title">${customSection.sectionTitle}</h2>
+          ${itemsHtml}
+        </section>
+      `);
+    }
+  }
+
   // Education
   if (content.education && content.education.length > 0) {
     const educationItems = content.education
@@ -278,7 +549,7 @@ function generateHumanHtml(content: ResumeContent, title: string): string {
       <div class="education-item">
         <div class="education-header">
           <h3 class="degree-title">${edu.degree}${edu.field ? ` in ${edu.field}` : ''}</h3>
-          <span class="date-range">${edu.startDate} - ${edu.endDate || 'Present'}</span>
+          <span class="date-range">${formatDate(edu.startDate)} - ${formatDate(edu.endDate)}</span>
         </div>
         <div class="institution-name">${edu.institution}</div>
       </div>
@@ -294,29 +565,13 @@ function generateHumanHtml(content: ResumeContent, title: string): string {
     `);
   }
 
-  // Skills
-  if (content.skills && content.skills.length > 0) {
-    const skillsHtml = content.skills
-      .map(skill => `<span class="skill-tag">${skill}</span>`)
-      .join('\n');
-
-    sections.push(`
-      <section class="resume-section">
-        <h2 class="section-title">Skills</h2>
-        <div class="skills-container">
-          ${skillsHtml}
-        </div>
-      </section>
-    `);
-  }
-
   // Certifications
   if (content.certifications && content.certifications.length > 0) {
     const certificationsHtml = content.certifications
       .map(
         cert => `
       <div class="certification-item">
-        <strong>${cert.name}</strong> - ${cert.issuer}${cert.date ? ` (${cert.date})` : ''}
+        <strong>${cert.name}</strong>${cert.issuer ? ` - ${cert.issuer}` : ''}${cert.date ? ` (${formatDate(cert.date)})` : ''}
       </div>
     `
       )
@@ -379,10 +634,39 @@ function generateHumanHtml(content: ResumeContent, title: string): string {
       border-bottom: 2px solid #4f46e5;
     }
 
+    .resume-header.with-photo {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .header-photo {
+      flex-shrink: 0;
+    }
+
+    .resume-photo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #e0e7ff;
+    }
+
+    .header-content {
+      flex: 1;
+    }
+
     .resume-name {
       font-size: 32px;
       font-weight: 700;
       color: #1f2937;
+      margin-bottom: 6px;
+    }
+
+    .resume-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #4b5563;
       margin-bottom: 10px;
     }
 
@@ -472,6 +756,25 @@ function generateHumanHtml(content: ResumeContent, title: string): string {
       margin-bottom: 5px;
     }
 
+    .tech-stack {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 8px;
+    }
+
+    .skill-group {
+      margin-bottom: 8px;
+      color: #4b5563;
+    }
+
+    .skill-type {
+      color: #1f2937;
+    }
+
+    .skill-list {
+      color: #4b5563;
+    }
+
     .skills-container,
     .languages-container {
       display: flex;
@@ -497,6 +800,16 @@ function generateHumanHtml(content: ResumeContent, title: string): string {
     }
 
     .certification-item strong {
+      color: #1f2937;
+    }
+
+    .custom-item {
+      margin-bottom: 10px;
+      color: #4b5563;
+      line-height: 1.6;
+    }
+
+    .custom-item strong {
       color: #1f2937;
     }
 
@@ -532,7 +845,8 @@ export async function exportResumeToPDF(
     margins = {},
     viewportWidth = 1280,
     viewportHeight = 1024,
-    waitTime = 500
+    waitTime = 500,
+    photoDataUrl
   } = options;
 
   let browser;
@@ -554,7 +868,7 @@ export async function exportResumeToPDF(
     const html =
       format === EXPORT_FORMAT_MAP.ATS
         ? generateATSHtml(content, title)
-        : generateHumanHtml(content, title);
+        : generateHumanHtml(content, title, photoDataUrl);
 
     // Set content
     await page.setContent(html, {

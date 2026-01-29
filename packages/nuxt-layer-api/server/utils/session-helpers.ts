@@ -23,7 +23,7 @@ export function getUserId(session: { user?: { id?: string } }): string {
  * Throws 401 if not authenticated, 403 if not super_admin
  *
  * Note: Uses type assertion because nuxt-auth-utils session type is generic,
- * but we know we store ExtendedUser in setUserSession (see auth/google.get.ts:44-50)
+ * but we know we store ExtendedUser in setUserSession (see auth/google.ts:44-50)
  */
 export async function requireSuperAdmin(event: H3Event): Promise<ExtendedUserSession> {
   const session = await requireUserSession(event);

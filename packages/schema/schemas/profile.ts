@@ -26,6 +26,11 @@ export const ProfileSchema = z.object({
   workFormat: WorkFormatSchema,
   languages: z.array(LanguageEntrySchema).min(1),
   phones: z.array(PhoneEntrySchema).optional(),
+  photoUrl: z
+    .string()
+    .min(1)
+    .optional()
+    .or(z.literal('').transform(() => undefined)), // Profile photo for human resume (URL or relative path)
   createdAt: z.date(),
   updatedAt: z.date()
 });

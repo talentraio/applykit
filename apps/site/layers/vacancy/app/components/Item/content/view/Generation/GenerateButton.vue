@@ -21,13 +21,9 @@
  * Related: T111 (US5)
  */
 
-defineOptions({ name: 'VacancyGenerateButton' });
+defineOptions({ name: 'VacancyItemContentViewGenerationGenerateButton' });
 
-defineProps<Props>();
-
-const emit = defineEmits<Emits>();
-
-type Props = {
+defineProps<{
   /**
    * Loading state (generation in progress)
    */
@@ -37,11 +33,11 @@ type Props = {
    * Disabled state (e.g., no resume available)
    */
   disabled?: boolean;
-};
+}>();
 
-type Emits = {
-  (e: 'generate'): void;
-};
+const emit = defineEmits<{
+  generate: [];
+}>();
 
 const handleGenerate = () => {
   emit('generate');

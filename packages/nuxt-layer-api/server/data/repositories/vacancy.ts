@@ -106,5 +106,13 @@ export const vacancyRepository = {
       .orderBy(desc(vacancies.createdAt))
       .limit(1);
     return result[0] ?? null;
+  },
+
+  /**
+   * Delete all vacancies for a user
+   * Called during user account deletion
+   */
+  async deleteByUserId(userId: string): Promise<void> {
+    await db.delete(vacancies).where(eq(vacancies.userId, userId));
   }
 };

@@ -44,7 +44,8 @@ export const profileRepository = {
         searchRegion: data.searchRegion,
         workFormat: data.workFormat,
         languages: data.languages,
-        phones: data.phones
+        phones: data.phones,
+        photoUrl: data.photoUrl
       })
       .returning();
     return result[0]!;

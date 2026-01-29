@@ -75,7 +75,8 @@
     "vacancies": "Vacancies",
     "profile": "Profile",
     "settings": "Settings",
-    "account": "Account"
+    "account": "Account",
+    "menu": "Menu"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -104,6 +105,7 @@
     },
     "editor": {
       "title": "Edit Resume",
+      "formTab": "Form Editor",
       "jsonTab": "JSON Editor",
       "previewTab": "Preview",
       "save": "Save Changes",
@@ -159,12 +161,143 @@
       "emptyFile": "File is empty or contains no text",
       "corruptedFile": "File appears to be corrupted",
       "rateLimitExceeded": "Daily parse limit exceeded. Please try again tomorrow or use your own API key."
+    },
+    "profileIncomplete": {
+      "title": "Complete Your Profile First",
+      "description": "For accurate resume parsing and better vacancy matching, please complete your profile with your basic information and language preferences.",
+      "cancel": "Cancel",
+      "goToProfile": "Go to Profile"
+    },
+    "form": {
+      "validationError": "Please fix the errors below",
+      "personalInfo": {
+        "title": "Personal Information",
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "John Doe",
+        "email": "Email",
+        "emailPlaceholder": "john{'@'}example.com",
+        "phone": "Phone",
+        "phonePlaceholder": "+1 234 567 8900",
+        "location": "Location",
+        "locationPlaceholder": "New York, NY",
+        "linkedin": "LinkedIn",
+        "linkedinPlaceholder": "https://linkedin.com/in/johndoe",
+        "website": "Website",
+        "websitePlaceholder": "https://johndoe.com",
+        "github": "GitHub",
+        "githubPlaceholder": "https://github.com/johndoe",
+        "titlePlaceholder": "Senior Software Engineer"
+      },
+      "summary": {
+        "title": "Summary",
+        "placeholder": "A brief professional summary highlighting your key qualifications and career objectives...",
+        "hint": "Optional. A 2-3 sentence overview of your professional background."
+      },
+      "experience": {
+        "title": "Experience",
+        "add": "Add Experience",
+        "empty": "No experience entries. Add your work history.",
+        "company": "Company",
+        "companyPlaceholder": "Acme Corporation",
+        "position": "Position",
+        "positionPlaceholder": "Senior Software Engineer",
+        "location": "Location",
+        "locationPlaceholder": "Remote / San Francisco, CA",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "currentlyHere": "I currently work here",
+        "description": "Description",
+        "descriptionPlaceholder": "Brief overview of your role and responsibilities...",
+        "bullets": "Key Achievements",
+        "bulletPlaceholder": "Achieved X by doing Y, resulting in Z...",
+        "addBullet": "Add Achievement",
+        "technologies": "Technologies Used",
+        "technologyPlaceholder": "React, TypeScript, Node.js...",
+        "links": "Project Links",
+        "linkName": "Name",
+        "linkUrl": "URL",
+        "addLink": "Add Link"
+      },
+      "education": {
+        "title": "Education",
+        "add": "Add Education",
+        "empty": "No education entries. Add your educational background.",
+        "institution": "Institution",
+        "institutionPlaceholder": "University of California",
+        "degree": "Degree",
+        "degreePlaceholder": "Bachelor of Science",
+        "field": "Field of Study",
+        "fieldPlaceholder": "Computer Science",
+        "startDate": "Start Date",
+        "endDate": "End Date"
+      },
+      "skills": {
+        "title": "Skills",
+        "addGroup": "Add Skill Group",
+        "hint": "At least one skill group is required. Group skills by category (e.g., Languages, Frameworks, Tools).",
+        "type": "Category",
+        "typePlaceholder": "e.g., Programming Languages, Frameworks",
+        "skills": "Skills",
+        "skillPlaceholder": "Type a skill and press Enter"
+      },
+      "certifications": {
+        "title": "Certifications",
+        "add": "Add Certification",
+        "empty": "No certifications. Add your professional certifications.",
+        "name": "Certification Name",
+        "namePlaceholder": "AWS Solutions Architect",
+        "issuer": "Issuer",
+        "issuerPlaceholder": "Amazon Web Services",
+        "date": "Date Obtained"
+      },
+      "languages": {
+        "title": "Languages",
+        "add": "Add Language",
+        "empty": "No languages added.",
+        "language": "Language",
+        "languagePlaceholder": "English",
+        "level": "Proficiency Level",
+        "levelPlaceholder": "Native or bilingual"
+      },
+      "customSections": {
+        "title": "Additional Sections",
+        "add": "Add Section",
+        "empty": "No additional sections. Add custom sections like Open Source, Publications, Awards.",
+        "hint": "Add custom sections for Open Source contributions, Publications, Awards, etc.",
+        "sectionTitle": "Section Title",
+        "sectionTitlePlaceholder": "e.g., Open Source, Publications",
+        "items": "Items",
+        "addItem": "Add Item",
+        "itemTitle": "Title",
+        "itemTitlePlaceholder": "Project or publication name",
+        "itemDescription": "Description",
+        "itemDescriptionPlaceholder": "Brief description..."
+      },
+      "date": {
+        "year": "Year",
+        "month": "Month",
+        "months": {
+          "01": "Jan",
+          "02": "Feb",
+          "03": "Mar",
+          "04": "Apr",
+          "05": "May",
+          "06": "Jun",
+          "07": "Jul",
+          "08": "Aug",
+          "09": "Sep",
+          "10": "Oct",
+          "11": "Nov",
+          "12": "Dec"
+        }
+      }
     }
   },
   "profile": {
     "title": "My Profile",
     "description": "Complete your profile to enable resume generation",
     "section": {
+      "photo": "Profile Photo",
       "basic": "Basic Information",
       "languages": "Languages",
       "phones": "Phone Numbers"
@@ -203,21 +336,61 @@
         "hybrid": "Hybrid"
       },
       "languageLevelOptions": {
-        "native": "Native",
-        "fluent": "Fluent",
-        "intermediate": "Intermediate",
-        "basic": "Basic"
+        "native": "Native or bilingual proficiency",
+        "fullProfessional": "Full professional proficiency",
+        "professional": "Professional working proficiency",
+        "limited": "Limited working proficiency",
+        "elementary": "Elementary proficiency"
+      },
+      "countryPlaceholder": "Search country...",
+      "searchRegionPlaceholder": "Select region...",
+      "searchRegionOptions": {
+        "worldwide": "Worldwide",
+        "europe": "Europe",
+        "eu": "European Union",
+        "northAmerica": "North America",
+        "usa": "United States",
+        "uk": "United Kingdom",
+        "emea": "EMEA (Europe, Middle East, Africa)",
+        "apac": "Asia-Pacific",
+        "latam": "Latin America",
+        "middleEast": "Middle East",
+        "africa": "Africa",
+        "oceania": "Oceania"
       },
       "phoneLabelOptions": {
         "mobile": "Mobile",
         "work": "Work",
         "home": "Home"
+      },
+      "photoDescription": "Add a professional photo for human-readable resumes (optional)",
+      "photoUpload": "Upload Photo",
+      "photoChange": "Change Photo",
+      "photoFormats": "JPEG, PNG or WebP, max 5MB",
+      "photoInvalidType": "Invalid file type. Please upload a JPEG, PNG, or WebP image.",
+      "photoTooLarge": "File too large. Maximum size is 5MB.",
+      "photoUploadFailed": "Failed to upload photo. Please try again.",
+      "photoDeleteFailed": "Failed to delete photo. Please try again.",
+      "terms": {
+        "title": "Terms & Privacy",
+        "agreement": "I agree to the",
+        "termsLink": "Terms of Service",
+        "and": "and",
+        "privacyLink": "Privacy Policy",
+        "required": "You must accept the terms to continue"
       }
     },
     "completeness": {
       "complete": "Your profile is complete",
-      "incomplete": "Please complete your profile to generate tailored resumes",
-      "missing": "Missing required fields"
+      "incomplete": "Profile Incomplete",
+      "incompleteDescription": "Complete your profile to enable accurate resume parsing and better vacancy matching.",
+      "fromResumeUpload": "You were redirected here because your profile needs to be completed before uploading resumes.",
+      "missing": "Missing required fields",
+      "benefits": {
+        "parsing": "Better resume parsing accuracy",
+        "matching": "More relevant vacancy matching",
+        "tailoring": "Improved resume tailoring suggestions"
+      }
     },
     "save": {
       "button": "Save Profile",
@@ -229,6 +402,24 @@
       "saveFailed": "Failed to save profile",
       "invalidData": "Please check your input and try again",
       "completenessCheckFailed": "Failed to check profile completeness"
+    },
+    "delete": {
+      "title": "Delete Account",
+      "description": "Permanently delete your account and all associated data. This action cannot be undone.",
+      "button": "Delete Account",
+      "confirmTitle": "Delete Account?",
+      "confirmDescription": "Are you sure you want to delete your account? This will permanently delete:",
+      "willDelete": {
+        "profile": "Your profile information",
+        "resumes": "All uploaded resumes",
+        "vacancies": "All job vacancies",
+        "generations": "All generated tailored resumes",
+        "apiKeys": "All saved API keys"
+      },
+      "irreversible": "This action is irreversible and cannot be undone.",
+      "confirmButton": "Yes, Delete My Account",
+      "deleting": "Deleting...",
+      "error": "Failed to delete account. Please try again."
     }
   },
   "settings": {
@@ -319,7 +510,9 @@
       "empty": "No vacancies yet",
       "emptyDescription": "Add your first job vacancy to start tailoring resumes",
       "createButton": "Add Vacancy",
-      "count": "{count} vacancy(ies)"
+      "count": "{count} vacancy(ies)",
+      "perPage": "Per page:",
+      "allLoaded": "All vacancies loaded"
     },
     "form": {
       "title": "Vacancy Details",
@@ -560,6 +753,16 @@
       },
       "currency": "{amount} USD",
       "percent": "{value}%"
+    }
+  },
+  "static": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated: {date}"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last updated: {date}"
     }
   },
   "footer": {

@@ -11,6 +11,14 @@
 
 import type { Resume, ResumeContent } from '@int/schema';
 
+/**
+ * Serializable error type for SSR hydration compatibility.
+ */
+type SerializableError = {
+  message: string;
+  statusCode?: number;
+} | null;
+
 export type UseResumesReturn = {
   /**
    * List of resumes (from store)
@@ -30,7 +38,7 @@ export type UseResumesReturn = {
   /**
    * Error state (from store)
    */
-  error: ComputedRef<Error | null>;
+  error: ComputedRef<SerializableError>;
 
   /**
    * Check if user has any resumes
