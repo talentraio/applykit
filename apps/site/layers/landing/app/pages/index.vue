@@ -6,6 +6,9 @@
     <LandingMetrics />
     <LandingFaq />
     <AppFooter />
+
+    <!-- Auth Modal for "Try it" button -->
+    <AuthModalAuthModal />
   </div>
 </template>
 
