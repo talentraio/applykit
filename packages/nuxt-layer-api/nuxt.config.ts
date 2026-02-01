@@ -15,6 +15,10 @@ export default defineNuxtConfig({
       openaiApiKey: '',
       geminiApiKey: ''
     },
+    resume: {
+      // Maximum number of versions to keep per resume
+      maxVersions: 10
+    },
     storage: {
       blobReadWriteToken: '',
       baseUrl: '/api/storage',
