@@ -156,6 +156,20 @@ export const generationRepository = {
   },
 
   /**
+   * Update generation content
+   * Allows editing generated resume (for vacancy flow)
+   */
+  async updateContent(id: string, content: ResumeContent): Promise<Generation | null> {
+    const result = await db
+      .update(generations)
+      .set({ content })
+      .where(eq(generations.id, id))
+      .returning(generationSelectFields);
+
+    return result[0] ? rawToGeneration(result[0] as GenerationRaw) : null;
+  },
+
+  /**
    * Delete generation
    */
   async delete(id: string): Promise<void> {

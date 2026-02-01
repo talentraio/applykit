@@ -229,7 +229,18 @@
       "deleteFailed": "Failed to delete resume",
       "emptyFile": "File is empty or contains no text",
       "corruptedFile": "File appears to be corrupted",
-      "rateLimitExceeded": "Daily parse limit exceeded. Please try again tomorrow or use your own API key."
+      "rateLimitExceeded": "Daily parse limit exceeded. Please try again tomorrow or use your own API key.",
+      "alreadyExists": "You already have a resume. Update it or delete it first.",
+      "notFound": "Resume not found",
+      "invalidContent": "Invalid resume content. Please check the data and try again.",
+      "invalidSettings": "Invalid formatting settings. Please check the values and try again.",
+      "settingsUpdateFailed": "Failed to update resume settings"
+    },
+    "success": {
+      "created": "Resume created successfully",
+      "updated": "Resume updated successfully",
+      "settingsUpdated": "Formatting settings updated successfully",
+      "versionCreated": "Resume saved. A new version has been created."
     },
     "profileIncomplete": {
       "title": "Complete Your Profile First",
