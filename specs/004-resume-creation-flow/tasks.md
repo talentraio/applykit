@@ -35,15 +35,15 @@
 
 **Purpose**: Schema, database, and API changes that block all user stories
 
-- [ ] T001 Add `ResumeFormatSettingsSchema` to `packages/schema/schemas/resume.ts` with margins, fontSize, lineHeight, blockSpacing fields
-- [ ] T002 Update `ResumeSchema` in `packages/schema/schemas/resume.ts` to include optional atsSettings and humanSettings
-- [ ] T003 [P] Export new types from `packages/schema/index.ts`
-- [ ] T004 Add `resume_versions` table to Drizzle schema in `packages/nuxt-layer-api/server/data/schema.ts`
-- [ ] T005 Update `resumes` table in `packages/nuxt-layer-api/server/data/schema.ts` with ats_settings and human_settings columns
-- [ ] T006 Create migration SQL in `packages/nuxt-layer-api/server/data/migrations/002_resume_versions.sql`
-- [ ] T007 Create `resumeVersionRepository` in `packages/nuxt-layer-api/server/data/repositories/resume-version.ts` with createVersion, getVersions, pruneOldVersions
-- [ ] T008 Update `resumeRepository` in `packages/nuxt-layer-api/server/data/repositories/resume.ts` to handle settings and single-resume-per-user constraint
-- [ ] T009 Add `runtimeConfig.resume.maxVersions` to `packages/nuxt-layer-api/nuxt.config.ts`
+- [x] T001 Add `ResumeFormatSettingsSchema` to `packages/schema/schemas/resume.ts` with margins, fontSize, lineHeight, blockSpacing fields
+- [x] T002 Update `ResumeSchema` in `packages/schema/schemas/resume.ts` to include optional atsSettings and humanSettings
+- [x] T003 [P] Export new types from `packages/schema/index.ts`
+- [x] T004 Add `resume_versions` table to Drizzle schema in `packages/nuxt-layer-api/server/data/schema.ts`
+- [x] T005 Update `resumes` table in `packages/nuxt-layer-api/server/data/schema.ts` with ats_settings and human_settings columns
+- [x] T006 Create migration SQL in `packages/nuxt-layer-api/server/data/migrations/003_resume_versions.sql`
+- [x] T007 Create `resumeVersionRepository` in `packages/nuxt-layer-api/server/data/repositories/resume-version.ts` with createVersion, getVersions, pruneOldVersions
+- [x] T008 Update `resumeRepository` in `packages/nuxt-layer-api/server/data/repositories/resume.ts` to handle settings and single-resume-per-user constraint
+- [x] T009 Add `runtimeConfig.resume.maxVersions` to `packages/nuxt-layer-api/nuxt.config.ts`
 
 **Checkpoint**: Schema and database ready for new API endpoints
 
