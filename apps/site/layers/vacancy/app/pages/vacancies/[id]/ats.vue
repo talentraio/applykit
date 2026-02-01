@@ -44,9 +44,9 @@
       :title="$t('export.error.noGeneration')"
     />
 
-    <UPageCard v-else>
+    <VacancyResumePaperSheet v-else>
       <VacancyResumeAtsView :content="generation.content" />
-    </UPageCard>
+    </VacancyResumePaperSheet>
   </div>
 </template>
 

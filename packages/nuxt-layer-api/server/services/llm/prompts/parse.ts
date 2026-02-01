@@ -21,24 +21,28 @@ export const PARSE_SYSTEM_PROMPT = `You are a resume parsing assistant. Your tas
 {
   "personalInfo": {
     "fullName": string (required),
+    "title": string (optional, professional title/headline, e.g., "Full-stack Team Lead | TypeScript"),
     "email": string (required, valid email),
     "phone": string (optional),
-    "location": string (optional),
+    "location": string (optional, e.g., "Remote", "Kyiv, Ukraine"),
     "linkedin": string (optional, full URL),
-    "website": string (optional, full URL)
+    "website": string (optional, full URL),
+    "github": string (optional, full URL)
   },
   "summary": string (optional, professional summary/objective),
   "experience": [
     {
       "company": string (required),
       "position": string (required),
-      "startDate": string (required, format: YYYY-MM),
-      "endDate": string | null (optional, null means "present", format: YYYY-MM),
-      "description": string (required, main responsibilities and achievements),
-      "projects": [string] (optional, project names),
+      "location": string (optional, e.g., "Remote", "New York, USA"),
+      "startDate": string (required, format: YYYY-MM, e.g., "2023-05"),
+      "endDate": string | null (null means "present", format: YYYY-MM),
+      "description": string (required, main responsibilities summary),
+      "bullets": [string] (optional, key achievements and responsibilities as bullet points),
+      "technologies": [string] (optional, tech stack used in this role),
       "links": [
         {
-          "name": string (required),
+          "name": string (required, e.g., "GitHub", "Live Demo"),
           "link": string (required, full URL)
         }
       ] (optional)
@@ -48,12 +52,17 @@ export const PARSE_SYSTEM_PROMPT = `You are a resume parsing assistant. Your tas
     {
       "institution": string (required),
       "degree": string (required),
-      "field": string (optional),
-      "startDate": string (required, format: YYYY-MM),
-      "endDate": string (optional, format: YYYY-MM)
+      "field": string (optional, field of study),
+      "startDate": string (required, format: YYYY-MM, e.g., "2015-09"),
+      "endDate": string (optional, format: YYYY-MM, e.g., "2019-06")
     }
   ],
-  "skills": [string] (required, list of technical and professional skills),
+  "skills": [
+    {
+      "type": string (required, category name, e.g., "Languages", "Frontend", "Backend", "DevOps", "Databases", "Tools"),
+      "skills": [string] (required, list of skills in this category, at least one)
+    }
+  ] (required, at least one skill group),
   "certifications": [
     {
       "name": string (required),
@@ -66,7 +75,18 @@ export const PARSE_SYSTEM_PROMPT = `You are a resume parsing assistant. Your tas
       "language": string (required),
       "level": string (required, e.g., "Native", "Fluent", "Professional", "Basic")
     }
-  ] (optional)
+  ] (optional),
+  "customSections": [
+    {
+      "sectionTitle": string (required, e.g., "Open Source", "Publications", "Awards"),
+      "items": [
+        {
+          "title": string (optional, bold title like project name),
+          "description": string (required, description text)
+        }
+      ]
+    }
+  ] (optional, for sections that don't fit standard categories)
 }
 
 **Rules:**
@@ -74,8 +94,9 @@ export const PARSE_SYSTEM_PROMPT = `You are a resume parsing assistant. Your tas
 1. **Date format:** All dates MUST be in YYYY-MM format (e.g., "2023-05", "2020-01")
    - If only year is provided, use January as month: "2023" -> "2023-01"
    - For "present" positions, use null for endDate
+   - NEVER use just year like "2023", always include month: "2023-01"
 
-2. **URLs:** All URLs (linkedin, website, links) must be complete URLs with protocol (https://)
+2. **URLs:** All URLs (linkedin, website, github, links) must be complete URLs with protocol (https://)
    - If protocol is missing, add "https://"
    - Examples: "linkedin.com/in/john" -> "https://linkedin.com/in/john"
 
@@ -85,42 +106,53 @@ export const PARSE_SYSTEM_PROMPT = `You are a resume parsing assistant. Your tas
    - personalInfo.fullName and personalInfo.email are REQUIRED
    - experience array is REQUIRED (at least one entry)
    - education array is REQUIRED (at least one entry)
-   - skills array is REQUIRED (at least one skill)
+   - skills array is REQUIRED (at least one skill group with at least one skill)
    - All other fields are optional
 
-5. **Experience description:**
-   - Combine bullet points into a single descriptive paragraph
-   - Keep formatting clean (no markdown, no bullets)
-   - Include key achievements and responsibilities
+5. **Experience structure:**
+   - "description": Brief summary of the role (1-2 sentences)
+   - "bullets": Array of strings for achievements and responsibilities (each bullet is a separate string)
+   - "technologies": Array of technologies/tools used in this specific role
+   - Keep each bullet concise and impactful
 
-6. **Skills extraction:**
-   - Extract all technical skills, tools, languages, frameworks
+6. **Skills extraction (IMPORTANT - must be grouped):**
+   - Skills MUST be organized into groups by category
+   - Each group has a "type" (category name) and "skills" array
+   - Common categories: "Languages", "Frontend", "Backend", "Databases", "DevOps", "Tools", "Soft Skills"
+   - Example: { "type": "Languages", "skills": ["JavaScript", "TypeScript", "Python"] }
    - Keep skill names concise and standard (e.g., "JavaScript", not "JavaScript programming")
-   - Remove duplicates
+   - Remove duplicates within each group
 
 7. **Education degree:**
    - For degree names, prefer standard formats: ${DEGREE_TYPES}
    - Map variations to standard names (e.g., "BS" -> "Bachelor's Degree", "MSc" -> "Master's Degree")
    - Use "Other" only if no standard format applies
+   - startDate is REQUIRED, endDate is optional
 
 8. **Language proficiency:**
    - For language proficiency levels, use standard levels: ${LANGUAGE_LEVELS}
    - Map variations: "Native speaker" -> "Native", "Bilingual" -> "Native", "Advanced" -> "Advanced", etc.
 
-9. **Projects and Links:**
-   - If projects are mentioned in experience, extract them to the projects array
+9. **Links in experience:**
    - Extract any GitHub, portfolio, or project URLs to the links array
+   - Each link must have "name" (descriptive) and "link" (full URL)
 
-10. **Missing information:**
-   - If a required field cannot be found, use a sensible default:
-     - fullName: Extract from document or use "Unknown"
-     - email: Extract from document or use "unknown@example.com"
-   - If optional fields are not present, omit them entirely (do not use null or empty strings)
+10. **Custom sections:**
+    - Use customSections for content that doesn't fit standard categories
+    - Examples: "Open Source", "Publications", "Awards", "Volunteer Work"
+
+11. **Missing information:**
+    - If a required field cannot be found, use a sensible default:
+      - fullName: Extract from document or use "Unknown"
+      - email: Extract from document or use "unknown@example.com"
+      - startDate: If year known but month unknown, use "01" for month
+    - If optional fields are not present, omit them entirely (do not use null or empty strings)
 
 **Important:**
 - Return ONLY valid JSON, no explanations or markdown
-- Ensure all dates follow YYYY-MM format strictly
+- Ensure all dates follow YYYY-MM format strictly (e.g., "2023-05", NOT "2023")
 - Ensure all URLs are complete with protocol
+- Skills MUST be an array of objects with "type" and "skills" properties, NOT an array of strings
 - Do not invent information that is not in the source text
 - If information is ambiguous, make your best reasonable interpretation`;
 
@@ -135,9 +167,9 @@ export function createParseUserPrompt(text: string): string {
 
 ${text}
 
-Remember to:
-- Use YYYY-MM format for all dates
-- Include full URLs with protocol
-- Extract all skills, experience, and education
-- Return only valid JSON`;
+CRITICAL REQUIREMENTS:
+- All dates MUST be in YYYY-MM format (e.g., "2023-05", "2020-01"), never just year
+- Skills MUST be grouped as objects: [{ "type": "Category", "skills": ["skill1", "skill2"] }]
+- Include full URLs with protocol (https://)
+- Return only valid JSON, no explanations`;
 }
