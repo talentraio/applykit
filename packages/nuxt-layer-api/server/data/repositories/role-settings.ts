@@ -1,47 +1,21 @@
 import type { Role, RoleSettingsInput } from '@int/schema';
-import process from 'node:process';
+import type { RoleSettings } from '../schema';
 import { PLATFORM_PROVIDER_VALUES, USER_ROLE_MAP } from '@int/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { roleSettings } from '../schema';
 
 const defaultPlatformProvider = PLATFORM_PROVIDER_VALUES[0];
 
-type RoleSettingsRow = {
-  role: Role;
-  platformLlmEnabled: boolean | number | string;
-  byokEnabled: boolean | number | string;
-  platformProvider: RoleSettingsInput['platformProvider'];
-  dailyBudgetCap: string | number;
-  updatedAt: Date;
-};
-
-const normalizeBoolean = (value: unknown): boolean => {
-  if (value === true) return true;
-  if (value === false) return false;
-  if (value === 1 || value === '1') return true;
-  if (value === 0 || value === '0') return false;
-  if (value === 'true') return true;
-  if (value === 'false') return false;
-  return Boolean(value);
-};
-
-const normalizeRoleSettingsRow = (
-  row: RoleSettingsRow
-): RoleSettingsInput & { updatedAt: Date } => {
+const normalizeRoleSettingsRow = (row: RoleSettings): RoleSettingsInput & { updatedAt: Date } => {
   return {
     role: row.role,
-    platformLlmEnabled: normalizeBoolean(row.platformLlmEnabled),
-    byokEnabled: normalizeBoolean(row.byokEnabled),
+    platformLlmEnabled: row.platformLlmEnabled,
+    byokEnabled: row.byokEnabled,
     platformProvider: row.platformProvider,
     dailyBudgetCap: Number(row.dailyBudgetCap),
     updatedAt: row.updatedAt
   };
-};
-
-const isSqliteRuntime = (): boolean => {
-  const runtimeConfig = useRuntimeConfig();
-  return process.env.NODE_ENV !== 'production' && !runtimeConfig.databaseUrl;
 };
 
 const buildUpsertValues = (
@@ -49,27 +23,16 @@ const buildUpsertValues = (
   updatedAt: Date
 ): {
   role: Role;
-  platformLlmEnabled: boolean | ReturnType<typeof sql>;
-  byokEnabled: boolean | ReturnType<typeof sql>;
+  platformLlmEnabled: boolean;
+  byokEnabled: boolean;
   platformProvider: RoleSettingsInput['platformProvider'];
   dailyBudgetCap: string;
   updatedAt: Date;
 } => {
-  if (!isSqliteRuntime()) {
-    return {
-      role: input.role,
-      platformLlmEnabled: input.platformLlmEnabled,
-      byokEnabled: input.byokEnabled,
-      platformProvider: input.platformProvider,
-      dailyBudgetCap: input.dailyBudgetCap.toString(),
-      updatedAt
-    };
-  }
-
   return {
     role: input.role,
-    platformLlmEnabled: sql`${input.platformLlmEnabled ? 1 : 0}`,
-    byokEnabled: sql`${input.byokEnabled ? 1 : 0}`,
+    platformLlmEnabled: input.platformLlmEnabled,
+    byokEnabled: input.byokEnabled,
     platformProvider: input.platformProvider,
     dailyBudgetCap: input.dailyBudgetCap.toString(),
     updatedAt

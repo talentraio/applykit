@@ -20,7 +20,6 @@
     "@pinia/nuxt": "catalog:",
     "@vercel/blob": "catalog:",
     "bcryptjs": "catalog:",
-    "better-sqlite3": "catalog:",
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
     "h3-formidable": "catalog:",
@@ -38,7 +37,6 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "catalog:",
-    "@types/better-sqlite3": "catalog:",
     "drizzle-kit": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"

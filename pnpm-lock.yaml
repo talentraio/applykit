@@ -33,9 +33,6 @@ catalogs:
     '@playwright/test':
       specifier: ^1.49.1
       version: 1.57.0
-    '@types/better-sqlite3':
-      specifier: ^7.6.13
-      version: 7.6.13
     '@vercel/blob':
       specifier: ^2.0.0
       version: 2.0.0
@@ -45,9 +42,6 @@ catalogs:
     '@vueuse/core':
       specifier: ^14.1.0
       version: 14.1.0
-    better-sqlite3:
-      specifier: ^12.6.2
-      version: 12.6.2
     date-fns:
       specifier: ^4.1.0
       version: 4.1.0
@@ -299,9 +293,6 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
-      better-sqlite3:
-        specifier: 'catalog:'
-        version: 12.6.2
       date-fns:
         specifier: 'catalog:'
         version: 4.1.0
@@ -348,9 +339,6 @@ importers:
       '@types/bcryptjs':
         specifier: ^3.0.0
         version: 3.0.0
-      '@types/better-sqlite3':
-        specifier: 'catalog:'
-        version: 7.6.13
       drizzle-kit:
         specifier: 'catalog:'
         version: 0.30.6

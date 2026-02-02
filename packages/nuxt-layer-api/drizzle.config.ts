@@ -6,7 +6,8 @@ export default defineConfig({
   out: './server/data/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.NUXT_DATABASE_URL || 'postgresql://localhost:5432/resume_editor_dev'
+    url:
+      process.env.NUXT_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/resume_editor'
   },
   verbose: true,
   strict: true

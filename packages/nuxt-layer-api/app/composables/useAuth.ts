@@ -222,6 +222,10 @@ function getSafeRedirect(value: unknown): string | null {
     return null;
   }
 
+  if (trimmed.startsWith('/auth/google') || trimmed.startsWith('/auth/linkedin')) {
+    return null;
+  }
+
   if (hasProtocol(trimmed, { acceptRelative: true })) {
     return null;
   }

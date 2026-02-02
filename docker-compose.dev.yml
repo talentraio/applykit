@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: applykit-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: resume_editor
+    ports:
+      - '5432:5432'
+    volumes:
+      - applykit_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U postgres -d resume_editor]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  applykit_postgres_data:

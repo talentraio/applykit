@@ -1,5 +1,5 @@
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '@int/schema';
-import { getQuery } from 'h3';
+import { eventHandler, getQuery } from 'h3';
 import { decode, hasLeadingSlash, hasProtocol } from 'ufo';
 import { userRepository } from '../../data/repositories';
 
@@ -16,7 +16,7 @@ import { userRepository } from '../../data/repositories';
  * Feature: 003-auth-expansion
  */
 
-export default defineOAuthLinkedInEventHandler({
+const oauthHandler = defineOAuthLinkedInEventHandler({
   async onSuccess(event, { user }) {
     const runtimeConfig = useRuntimeConfig(event);
     const query = getQuery(event);
@@ -114,6 +114,11 @@ export default defineOAuthLinkedInEventHandler({
   }
 });
 
+export default eventHandler(async event => {
+  normalizeOAuthQuery(event);
+  return oauthHandler(event);
+});
+
 function getSafeRedirect(value: unknown): string | null {
   const raw = Array.isArray(value) ? value[0] : value;
   if (typeof raw !== 'string') {
@@ -125,9 +130,41 @@ function getSafeRedirect(value: unknown): string | null {
     return null;
   }
 
+  if (decoded.startsWith('/auth/google') || decoded.startsWith('/auth/linkedin')) {
+    return null;
+  }
+
   if (hasProtocol(decoded, { acceptRelative: true })) {
     return null;
   }
 
   return decoded;
+}
+
+function normalizeOAuthQuery(event: { node: { req: { url?: string } } }): void {
+  const url = new URL(event.node.req.url ?? '/', 'http://localhost');
+  const params = url.searchParams;
+  const keys = ['code', 'state', 'scope', 'authuser', 'prompt'];
+
+  let changed = false;
+
+  for (const key of keys) {
+    const values = params.getAll(key);
+    if (values.length > 1) {
+      const lastValue = values.at(-1);
+      if (!lastValue) {
+        continue;
+      }
+      params.delete(key);
+      params.set(key, lastValue);
+      changed = true;
+    }
+  }
+
+  if (!changed) {
+    return;
+  }
+
+  const search = params.toString();
+  event.node.req.url = search ? `${url.pathname}?${search}` : url.pathname;
 }

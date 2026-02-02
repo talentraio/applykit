@@ -869,7 +869,7 @@ export default defineNuxtConfig({
 
 ### Session 2026-01-22
 
-- Q: Database choice for MVP? → A: PostgreSQL + Drizzle ORM (SQLite locally). External Postgres provider (Supabase/Neon), not platform-specific. Architectural constraints: (1) Separate data-access layer - no ORM calls spread in server/api/\*, (2) Domain types in @int/schema (Zod) independent of ORM - ORM is adapter only, (3) Storage abstraction via small interface (put/get/delete) for Vercel Blob ↔ Netlify Blobs portability, (4) Background tasks as cron-endpoint + idempotence for future orchestrator migration.
+- Q: Database choice for MVP? → A: PostgreSQL + Drizzle ORM (PostgreSQL locally via Docker). External Postgres provider (Supabase/Neon), not platform-specific. Architectural constraints: (1) Separate data-access layer - no ORM calls spread in server/api/\*, (2) Domain types in @int/schema (Zod) independent of ORM - ORM is adapter only, (3) Storage abstraction via small interface (put/get/delete) for Vercel Blob ↔ Netlify Blobs portability, (4) Background tasks as cron-endpoint + idempotence for future orchestrator migration.
 - Q: Auth module choice? → A: nuxt-auth-utils (Nuxt team, lightweight sessions). Cookie-based auth with Google OAuth support. Works with separated data-access layer.
 - Q: PDF generation library? → A: Playwright. Better serverless support for Vercel, consistent Chromium rendering, full CSS fidelity for ATS/Human views.
 - Q: Export caching backend? → A: Resolved by storage abstraction (Q1). Uses Vercel Blob via adapter interface; cached PDFs stored with generation ID key for invalidation.
