@@ -1,6 +1,6 @@
 <template>
-  <section class="resume-ats-view">
-    <header class="resume-ats-view__header space-y-2">
+  <section class="resume-ats-design1">
+    <header class="resume-ats-design1__header space-y-2">
       <h1 class="text-2xl font-semibold">
         {{ content.personalInfo.fullName }}
       </h1>
@@ -9,7 +9,7 @@
       </p>
       <div
         v-if="contactItems.length"
-        class="resume-ats-view__contacts space-y-1 text-sm text-muted"
+        class="resume-ats-design1__contacts space-y-1 text-sm text-muted"
       >
         <p v-for="item in contactItems" :key="item">
           {{ item }}
@@ -17,8 +17,8 @@
       </div>
     </header>
 
-    <div class="resume-ats-view__sections mt-6 space-y-6">
-      <section v-if="content.summary" class="resume-ats-view__section space-y-2">
+    <div class="resume-ats-design1__sections mt-6 space-y-6">
+      <section v-if="content.summary" class="resume-ats-design1__section space-y-2">
         <h2 class="text-lg font-semibold">
           {{ $t('resume.section.summary') }}
         </h2>
@@ -27,7 +27,7 @@
         </p>
       </section>
 
-      <section v-if="content.experience.length" class="resume-ats-view__section space-y-4">
+      <section v-if="content.experience.length" class="resume-ats-design1__section space-y-4">
         <h2 class="text-lg font-semibold">
           {{ $t('resume.section.experience') }}
         </h2>
@@ -65,7 +65,7 @@
         </div>
       </section>
 
-      <section v-if="content.education.length" class="resume-ats-view__section space-y-4">
+      <section v-if="content.education.length" class="resume-ats-design1__section space-y-4">
         <h2 class="text-lg font-semibold">
           {{ $t('resume.section.education') }}
         </h2>
@@ -86,7 +86,7 @@
         </div>
       </section>
 
-      <section v-if="content.skills.length" class="resume-ats-view__section space-y-2">
+      <section v-if="content.skills.length" class="resume-ats-design1__section space-y-2">
         <h2 class="text-lg font-semibold">
           {{ $t('resume.section.skills') }}
         </h2>
@@ -102,7 +102,7 @@
         </template>
       </section>
 
-      <section v-if="content.certifications?.length" class="resume-ats-view__section space-y-2">
+      <section v-if="content.certifications?.length" class="resume-ats-design1__section space-y-2">
         <h2 class="text-lg font-semibold">
           {{ $t('resume.section.certifications') }}
         </h2>
@@ -115,7 +115,7 @@
         </ul>
       </section>
 
-      <section v-if="content.languages?.length" class="resume-ats-view__section space-y-2">
+      <section v-if="content.languages?.length" class="resume-ats-design1__section space-y-2">
         <h2 class="text-lg font-semibold">
           {{ $t('resume.section.languages') }}
         </h2>
@@ -131,7 +131,7 @@
       <section
         v-for="customSection in content.customSections"
         :key="customSection.sectionTitle"
-        class="resume-ats-view__section space-y-2"
+        class="resume-ats-design1__section space-y-2"
       >
         <h2 class="text-lg font-semibold">
           {{ customSection.sectionTitle }}
@@ -151,17 +151,22 @@
 
 <script setup lang="ts">
 /**
- * Resume ATS View Component
+ * Resume ATS View - Design 1
  *
  * Plain resume rendering optimized for ATS parsing.
  * Server-rendered and lightweight (no client-only logic).
  *
- * Related: T119 (US6)
+ * Design patterns:
+ * - Linear layout for machine readability
+ * - Minimal styling for ATS compatibility
+ * - Clear section hierarchy
+ *
+ * Related: T023 (US2)
  */
 
 import type { ResumeContent } from '@int/schema';
 
-defineOptions({ name: 'VacancyResumeAtsView' });
+defineOptions({ name: 'ResumeAtsViewDesign1' });
 
 const props = defineProps<{
   content: ResumeContent;
@@ -187,7 +192,7 @@ const formatDateRange = (startDate: string, endDate?: string | null) => {
 </script>
 
 <style lang="scss">
-.resume-ats-view {
-  // ATS view styling is intentionally minimal
+.resume-ats-design1 {
+  // ATS view styling is intentionally minimal for machine readability
 }
 </style>

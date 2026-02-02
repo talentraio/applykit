@@ -76,18 +76,18 @@
 
 ### Implementation for US2
 
-- [ ] T016 [US2] Create BlockModel and PageModel types in `apps/site/layers/resume/app/types/preview.ts`
-- [ ] T017 [US2] Create `useResumeBlocks` composable in `apps/site/layers/resume/app/composables/useResumeBlocks.ts` converting ResumeContent to BlockModel[]
-- [ ] T018 [US2] Create `useBlockMeasurer` composable in `apps/site/layers/resume/app/composables/useBlockMeasurer.ts` for measuring block heights
-- [ ] T019 [US2] Create `usePaginator` composable in `apps/site/layers/resume/app/composables/usePaginator.ts` with greedy packing and keepWithNext rules
-- [ ] T020 [US2] Create `usePageScale` composable in `apps/site/layers/resume/app/composables/usePageScale.ts` using VueUse ResizeObserver
-- [ ] T021 [US2] Refactor `PaperSheet.vue` in `apps/site/layers/resume/app/components/Preview/PaperSheet.vue` for A4 container with zoom scaling and CSS variables
-- [ ] T022 [US2] Create `Paginator.vue` in `apps/site/layers/resume/app/components/Preview/Paginator.vue` rendering pages from PageModel[]
-- [ ] T023 [US2] Move and refactor AtsView to `apps/site/layers/resume/app/components/Preview/AtsView/Design1.vue`
-- [ ] T024 [US2] Move and refactor HumanView to `apps/site/layers/resume/app/components/Preview/HumanView/Design1.vue`
-- [ ] T025 [US2] Refactor Preview/index.vue in `apps/site/layers/resume/app/components/Preview/index.vue` to orchestrate blocks → paginator → pages with type and settings props
-- [ ] T026 [US2] Delete old vacancy preview components: `apps/site/layers/vacancy/app/components/resume/AtsView.vue`, `HumanView.vue`, `PaperSheet.vue`
-- [ ] T027 [US2] Update vacancy ATS/Human pages to use shared Preview components: `apps/site/layers/vacancy/app/pages/vacancies/[id]/ats.vue`, `human.vue`
+- [x] T016 [US2] Create BlockModel and PageModel types in `apps/site/layers/resume/app/types/preview.ts`
+- [x] T017 [US2] Create `useResumeBlocks` composable in `apps/site/layers/resume/app/composables/useResumeBlocks.ts` converting ResumeContent to BlockModel[]
+- [x] T018 [US2] Create `useBlockMeasurer` composable in `apps/site/layers/resume/app/composables/useBlockMeasurer.ts` for measuring block heights
+- [x] T019 [US2] Create `usePaginator` composable in `apps/site/layers/resume/app/composables/usePaginator.ts` with greedy packing and keepWithNext rules
+- [x] T020 [US2] Create `usePageScale` composable in `apps/site/layers/resume/app/composables/usePageScale.ts` using VueUse ResizeObserver
+- [x] T021 [US2] Refactor `PaperSheet.vue` in `apps/site/layers/resume/app/components/Preview/PaperSheet.vue` for A4 container with zoom scaling and CSS variables
+- [x] T022 [US2] Create `Paginator.vue` in `apps/site/layers/resume/app/components/Preview/Paginator.vue` rendering pages from PageModel[]
+- [x] T023 [US2] Move and refactor AtsView to `apps/site/layers/resume/app/components/Preview/AtsView/Design1.vue`
+- [x] T024 [US2] Move and refactor HumanView to `apps/site/layers/resume/app/components/Preview/HumanView/Design1.vue`
+- [x] T025 [US2] Refactor Preview/index.vue in `apps/site/layers/resume/app/components/Preview/index.vue` to orchestrate blocks → paginator → pages with type and settings props
+- [x] T026 [US2] Delete old vacancy preview components: `apps/site/layers/vacancy/app/components/resume/AtsView.vue`, `HumanView.vue`, `PaperSheet.vue`
+- [x] T027 [US2] Update vacancy ATS/Human pages to use shared Preview components: `apps/site/layers/vacancy/app/pages/vacancies/[id]/ats.vue`, `human.vue`
 
 **Checkpoint**: A4 preview renders with zoom scaling, pagination, supports both ATS and Human designs
 
@@ -101,27 +101,27 @@
 
 ### Store & Infrastructure for US3
 
-- [ ] T028 [US3] Refactor resume store in `apps/site/layers/resume/app/stores/index.ts` with new state (editingContent, previewType, settings, history, historyIndex, activeTab)
-- [ ] T029 [US3] Add undo/redo actions to resume store with history management
-- [ ] T030 [US3] Add auto-save with debounce using VueUse `watchDebounced` in resume store
-- [ ] T031 [US3] Create `useResume` composable in `apps/site/layers/resume/app/composables/useResume.ts` wrapping store for page use
+- [x] T028 [US3] Refactor resume store in `apps/site/layers/resume/app/stores/index.ts` with new state (editingContent, previewType, settings, history, historyIndex, activeTab)
+- [x] T029 [US3] Add undo/redo actions to resume store with history management
+- [x] T030 [US3] Add auto-save with debounce using VueUse `watchDebounced` in resume store
+- [x] T031 [US3] Create `useResume` composable in `apps/site/layers/resume/app/composables/useResume.ts` wrapping store for page use
 
 ### Components for US3
 
-- [ ] T032 [US3] Create `EditorLayout.vue` in `apps/site/layers/resume/app/components/EditorLayout.vue` with two-column layout (40%/60%), slots for header/left/right/footer
-- [ ] T033 [US3] Create `Upload/index.vue` in `apps/site/layers/resume/app/components/Upload/index.vue` with dropzone and "Create from scratch" button
-- [ ] T034 [US3] Create `UploadModal.vue` in `apps/site/layers/resume/app/components/UploadModal.vue` wrapping Upload for "Upload new file" flow
-- [ ] T035 [US3] Create `Settings/index.vue` in `apps/site/layers/resume/app/components/Settings/index.vue` with preview type toggle, margins, fontSize, lineHeight, blockSpacing selectors
-- [ ] T036 [US3] Create `UndoRedoControls.vue` in `apps/site/layers/resume/app/components/UndoRedoControls.vue` with undo/redo buttons bound to store
-- [ ] T037 [US3] Create `TabAIEnhance.vue` placeholder in `apps/site/layers/resume/app/components/TabAIEnhance.vue` showing "Coming Soon"
+- [x] T032 [US3] Create `EditorLayout.vue` in `apps/site/layers/resume/app/components/EditorLayout.vue` with two-column layout (40%/60%), slots for header/left/right/footer
+- [x] T033 [US3] Create `Upload/index.vue` in `apps/site/layers/resume/app/components/form/Upload/index.vue` with dropzone and "Create from scratch" button
+- [x] T034 [US3] Create `Upload.vue` in `apps/site/layers/resume/app/components/modal/Upload.vue` wrapping Upload for "Upload new file" flow
+- [x] T035 [US3] Create `Settings/index.vue` in `apps/site/layers/resume/app/components/Settings/index.vue` with preview type toggle, margins, fontSize, lineHeight, blockSpacing selectors
+- [x] T036 [US3] Create `UndoRedoControls.vue` in `apps/site/layers/_base/app/components/base/UndoRedoControls.vue` with undo/redo buttons bound to store
+- [x] T037 [US3] Create `TabAIEnhance.vue` placeholder in `apps/site/layers/resume/app/components/TabAIEnhance.vue` showing "Coming Soon"
 
 ### Page for US3
 
-- [ ] T038 [US3] Create new page `apps/site/layers/resume/app/pages/resume.vue` with conditional rendering: no resume → Upload, has resume → EditorLayout with tabs
-- [ ] T039 [US3] Delete old pages: `apps/site/layers/resume/app/pages/resumes/index.vue`, `new.vue`, `[id].vue`
-- [ ] T040 [US3] Add redirect from `/resumes` to `/resume` in `apps/site/nuxt.config.ts` or middleware
-- [ ] T041 [US3] Remove profile completion blocking from resume upload flow
-- [ ] T042 [US3] [P] Add resume page i18n keys to `packages/nuxt-layer-ui/i18n/locales/en.json` (resume.page._, resume.tabs._, resume.settings._, resume.upload._, resume.history.\*)
+- [x] T038 [US3] Create new page `apps/site/layers/resume/app/pages/resume.vue` with conditional rendering: no resume → Upload, has resume → EditorLayout with tabs
+- [x] T039 [US3] Delete old pages: `apps/site/layers/resume/app/pages/resumes/index.vue`, `new.vue`, `[id].vue`
+- [x] T040 [US3] Add redirect from `/resumes` to `/resume` in `apps/site/nuxt.config.ts` or middleware
+- [x] T041 [US3] Remove profile completion blocking from resume upload flow
+- [x] T042 [US3] [P] Add resume page i18n keys to `packages/nuxt-layer-ui/i18n/locales/en.json` (resume.page._, resume.tabs._, resume.settings._, resume.upload._, resume.history.\*)
 
 **Checkpoint**: /resume page functional with upload, editing, settings, undo/redo
 
@@ -135,16 +135,16 @@
 
 ### Store for US4
 
-- [ ] T043 [US4] Enhance vacancy store in `apps/site/layers/vacancy/app/stores/index.ts` with editingGenerationContent, generationHistory, generationHistoryIndex
-- [ ] T044 [US4] Add updateGenerationContent, undoGeneration, redoGeneration actions to vacancy store
+- [x] T043 [US4] Enhance vacancy store in `apps/site/layers/vacancy/app/stores/index.ts` with editingGenerationContent, generationHistory, generationHistoryIndex
+- [x] T044 [US4] Add updateGenerationContent, undoGeneration, redoGeneration actions to vacancy store
 
 ### Components for US4
 
-- [ ] T045 [US4] Update vacancy detail page `apps/site/layers/vacancy/app/pages/vacancies/[id]/index.vue` with two-column layout using ResumeEditorLayout after generation
-- [ ] T046 [US4] Add "Edit Resume" button to vacancy detail that expands ResumeForm with generation.content
-- [ ] T047 [US4] Add preview type toggle (ATS/Human) to vacancy detail right column
-- [ ] T048 [US4] Add undo/redo controls for generation editing
-- [ ] T049 [US4] [P] Add vacancy detail i18n keys to `packages/nuxt-layer-ui/i18n/locales/en.json` (vacancy.detail.editResume, vacancy.detail.editVacancy)
+- [x] T045 [US4] Update vacancy detail page `apps/site/layers/vacancy/app/pages/vacancies/[id]/index.vue` with two-column layout using ResumeEditorLayout after generation
+- [x] T046 [US4] Add "Edit Resume" button to vacancy detail that expands ResumeForm with generation.content
+- [x] T047 [US4] Add preview type toggle (ATS/Human) to vacancy detail right column
+- [x] T048 [US4] Add undo/redo controls for generation editing
+- [x] T049 [US4] [P] Add vacancy detail i18n keys to `packages/nuxt-layer-ui/i18n/locales/en.json` (vacancy.detail.editResume, vacancy.detail.editVacancy)
 
 **Checkpoint**: Vacancy page shows two-column layout after generation, can edit generated resume
 
@@ -158,12 +158,12 @@
 
 ### Components for US5
 
-- [ ] T050 [US5] Create `PreviewFloatButton.vue` in `apps/site/layers/resume/app/components/PreviewFloatButton.vue` - FAB bottom-right, visible only on mobile
-- [ ] T051 [US5] Create `PreviewOverlay.vue` in `apps/site/layers/resume/app/components/PreviewOverlay.vue` - full-screen preview with Download and Close buttons
-- [ ] T052 [US5] Update EditorLayout.vue to hide preview column on mobile (<1024px) and show PreviewFloatButton
-- [ ] T053 [US5] Integrate PreviewFloatButton and PreviewOverlay into `/resume` page
-- [ ] T054 [US5] Integrate PreviewFloatButton and PreviewOverlay into vacancy detail page
-- [ ] T055 [US5] [P] Add mobile preview i18n keys to `packages/nuxt-layer-ui/i18n/locales/en.json` (resume.preview.mobileButton, resume.preview.close)
+- [x] T050 [US5] Create `PreviewFloatButton.vue` in `apps/site/layers/resume/app/components/PreviewFloatButton.vue` - FAB bottom-right, visible only on mobile
+- [x] T051 [US5] Create `PreviewOverlay.vue` in `apps/site/layers/resume/app/components/PreviewOverlay.vue` - full-screen preview with Download and Close buttons
+- [x] T052 [US5] Update EditorLayout.vue to hide preview column on mobile (<1024px) and show PreviewFloatButton
+- [x] T053 [US5] Integrate PreviewFloatButton and PreviewOverlay into `/resume` page
+- [x] T054 [US5] Integrate PreviewFloatButton and PreviewOverlay into vacancy detail page
+- [x] T055 [US5] [P] Add mobile preview i18n keys to `packages/nuxt-layer-ui/i18n/locales/en.json` (resume.preview.mobileButton, resume.preview.close)
 
 **Checkpoint**: Mobile shows float button, preview overlay works on both /resume and vacancy pages
 
@@ -173,12 +173,12 @@
 
 **Purpose**: Final polish, navigation updates, PDF verification
 
-- [ ] T056 [P] Update default layout navigation to link to `/resume` instead of `/resumes` in `apps/site/app/layouts/default.vue`
-- [ ] T057 [P] Update dashboard links to `/resume` in `apps/site/layers/landing/app/pages/index.vue` if applicable
-- [ ] T058 Verify PDF export matches preview appearance - test with Playwright PDF generation
-- [ ] T059 [P] Add any missing i18n keys identified during implementation
-- [ ] T060 Run typecheck and lint, fix any issues
-- [ ] T061 Manual testing: complete happy path (upload → edit → settings → undo/redo → vacancy → generate → edit generation → PDF download)
+- [x] T056 [P] Update default layout navigation to link to `/resume` instead of `/resumes` in `apps/site/app/layouts/default.vue`
+- [x] T057 [P] Update dashboard links to `/resume` in `apps/site/layers/landing/app/pages/index.vue` if applicable
+- [x] T058 Verify PDF export matches preview appearance - test with Playwright PDF generation
+- [x] T059 [P] Add any missing i18n keys identified during implementation
+- [x] T060 Run typecheck and lint, fix any issues
+- [x] T061 Manual testing: complete happy path (upload → edit → settings → undo/redo → vacancy → generate → edit generation → PDF download)
 
 ---
 

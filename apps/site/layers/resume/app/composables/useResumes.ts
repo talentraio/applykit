@@ -1,12 +1,14 @@
 /**
- * Resumes Composable
+ * Resumes Composable (Legacy Compatibility Layer)
  *
- * Thin proxy over resume store for convenient access in components.
- * Does NOT hold state - all state lives in useResumeStore.
+ * Thin proxy over resume store for backward compatibility.
+ * New code should use useResume() instead.
+ *
+ * Single resume architecture: one resume per user.
  *
  * T078 [US2] useResumes composable
  * TR007 - Refactored to use store instead of direct $fetch
- *         Moved from @int/api to site/layers/resume (site-specific)
+ * T028 [US3] Updated for single-resume architecture
  */
 
 import type { Resume, ResumeContent } from '@int/schema';
@@ -21,12 +23,13 @@ type SerializableError = {
 
 export type UseResumesReturn = {
   /**
-   * List of resumes (from store)
+   * @deprecated Single resume architecture - use useResume().resume instead
+   * Returns array with single resume for backward compatibility
    */
   resumes: ComputedRef<Resume[]>;
 
   /**
-   * Currently selected resume (from store)
+   * Current resume (same as store.resume)
    */
   current: ComputedRef<Resume | null>;
 
@@ -41,17 +44,17 @@ export type UseResumesReturn = {
   error: ComputedRef<SerializableError>;
 
   /**
-   * Check if user has any resumes
+   * Check if user has a resume
    */
   hasResumes: ComputedRef<boolean>;
 
   /**
-   * Fetch all resumes
+   * Fetch user's resume
    */
-  fetchResumes: () => Promise<Resume[]>;
+  fetchResumes: () => Promise<Resume | null>;
 
   /**
-   * Fetch a single resume by ID
+   * @deprecated Use fetchResumes() - single resume architecture
    */
   fetchResume: (id: string) => Promise<Resume | null>;
 
@@ -61,12 +64,12 @@ export type UseResumesReturn = {
   uploadResume: (file: File, title?: string) => Promise<Resume>;
 
   /**
-   * Update resume content or title
+   * @deprecated Use useResume().updateContent() instead
    */
   updateResume: (id: string, data: { content?: ResumeContent; title?: string }) => Promise<Resume>;
 
   /**
-   * Delete a resume
+   * @deprecated Not supported in single-resume architecture
    */
   deleteResume: (id: string) => Promise<void>;
 };
@@ -76,18 +79,29 @@ export function useResumes(): UseResumesReturn {
 
   return {
     // Computed refs from store state
-    resumes: computed(() => store.resumes),
-    current: computed(() => store.currentResume),
+    // Wrap single resume in array for backward compatibility
+    resumes: computed(() => (store.resume ? [store.resume] : [])),
+    current: computed(() => store.resume),
     loading: computed(() => store.loading),
     error: computed(() => store.error),
-    hasResumes: computed(() => store.hasResumes),
+    hasResumes: computed(() => store.hasResume),
 
     // Proxy to store actions
-    fetchResumes: () => store.fetchResumes(),
-    fetchResume: (id: string) => store.fetchResume(id),
+    fetchResumes: () => store.fetchResume(),
+    fetchResume: (_id: string) => store.fetchResume(), // ID ignored in single-resume architecture
     uploadResume: (file: File, title?: string) => store.uploadResume(file, title),
-    updateResume: (id: string, data: { content?: ResumeContent; title?: string }) =>
-      store.updateResume(id, data),
-    deleteResume: (id: string) => store.deleteResume(id)
+    updateResume: async (_id: string, data: { content?: ResumeContent; title?: string }) => {
+      // Update content if provided
+      if (data.content) {
+        store.updateContent(data.content);
+        const result = await store.saveContent();
+        return result ?? store.resume!;
+      }
+      return store.resume!;
+    },
+    deleteResume: async (_id: string) => {
+      // Not supported in single-resume architecture
+      console.warn('deleteResume is not supported in single-resume architecture');
+    }
   };
 }

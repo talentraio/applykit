@@ -1,5 +1,5 @@
 <template>
-  <UModal v-model:open="isModalOpen" :title="modalTitle">
+  <UModal v-model:open="isModalOpen" :title="modalTitle" :description="modalDescription">
     <template #body>
       <AuthModalLoginForm v-if="view === 'login'" @switch-view="handleSwitchView" />
       <AuthModalRegisterForm v-else-if="view === 'register'" @switch-view="handleSwitchView" />
@@ -40,6 +40,19 @@ const modalTitle = computed(() => {
       return t('auth.modal.register.title');
     case 'forgot':
       return t('auth.modal.forgot.title');
+    default:
+      return '';
+  }
+});
+
+const modalDescription = computed(() => {
+  switch (view.value) {
+    case 'login':
+      return t('auth.login.description');
+    case 'register':
+      return t('auth.modal.register.description');
+    case 'forgot':
+      return t('auth.modal.forgot.description');
     default:
       return '';
   }

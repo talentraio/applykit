@@ -144,7 +144,7 @@ const navLinks = computed(() => [
   },
   {
     label: t('nav.resumes'),
-    to: '/resumes',
+    to: '/resume',
     icon: 'i-lucide-file-text'
   },
   {
