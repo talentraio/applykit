@@ -12,7 +12,7 @@
       <div class="preview-overlay">
         <!-- Header with preview type toggle -->
         <div class="preview-overlay__header">
-          <UButtonGroup size="sm">
+          <UFieldGroup size="sm">
             <UButton
               :color="previewType === 'ats' ? 'primary' : 'neutral'"
               :variant="previewType === 'ats' ? 'solid' : 'outline'"
@@ -27,7 +27,7 @@
             >
               {{ $t('resume.settings.previewType.human') }}
             </UButton>
-          </UButtonGroup>
+          </UFieldGroup>
         </div>
 
         <!-- Preview content area with scrolling -->
