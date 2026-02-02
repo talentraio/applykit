@@ -264,6 +264,11 @@
       "certifications": "Certifications",
       "languages": "Languages"
     },
+    "placeholder": {
+      "fullName": "Your Name",
+      "skillType": "Skills",
+      "skill": "Your skill"
+    },
     "view": {
       "atsTitle": "ATS Resume",
       "humanTitle": "Human Resume"

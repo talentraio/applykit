@@ -365,18 +365,25 @@ function handleCreateFromScratch() {
 
 /**
  * Create empty resume
+ * Uses profile data when available, otherwise uses placeholder values that pass schema validation
  */
 async function handleCreateEmpty() {
+  // Build fullName from profile or use placeholder
+  const fullName = profile.value?.firstName
+    ? `${profile.value.firstName} ${profile.value.lastName ?? ''}`.trim()
+    : t('resume.placeholder.fullName');
+
+  // Use profile email or placeholder
+  const email = profile.value?.email || 'your.email@example.com';
+
   const emptyContent: ResumeContent = {
     personalInfo: {
-      fullName: profile.value?.firstName
-        ? `${profile.value.firstName} ${profile.value.lastName ?? ''}`
-        : '',
-      email: profile.value?.email ?? ''
+      fullName,
+      email
     },
     experience: [],
     education: [],
-    skills: [{ type: 'Skills', skills: [] }]
+    skills: [{ type: t('resume.placeholder.skillType'), skills: [t('resume.placeholder.skill')] }]
   };
 
   try {
