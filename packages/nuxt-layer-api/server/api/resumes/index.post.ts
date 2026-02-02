@@ -19,6 +19,8 @@ import { logUsage } from '../../utils/usage';
 /**
  * POST /api/resumes
  *
+ * DEPRECATED: Use POST /api/resume instead
+ *
  * Upload and parse a resume file (DOCX/PDF)
  *
  * Request:
@@ -32,9 +34,16 @@ import { logUsage } from '../../utils/usage';
  *
  * Rate limiting: Enforces daily parse limits per role
  *
+ * This endpoint is deprecated and will be removed in a future version.
+ * Migrate to the new singular /api/resume endpoint.
+ *
  * Related: T074 (US2)
  */
 export default defineEventHandler(async event => {
+  // Add deprecation header
+  setHeader(event, 'Deprecation', 'true');
+  setHeader(event, 'Sunset', new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toUTCString());
+  setHeader(event, 'Link', '</api/resume>; rel="successor-version"');
   // Require authentication
   const session = await requireUserSession(event);
   const userId = getUserId(session);

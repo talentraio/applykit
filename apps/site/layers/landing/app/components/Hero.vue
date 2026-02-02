@@ -88,14 +88,14 @@ const { open: openAuthModal } = useAuthModal();
 
 /**
  * Handle "Try it" button click
- * - If logged in: navigate to /resumes
- * - If not logged in: open auth modal with redirect to /resumes
+ * - If logged in: navigate to /resume
+ * - If not logged in: open auth modal with redirect to /resume
  */
 const handleTryIt = () => {
   if (loggedIn.value) {
-    navigateTo('/resumes');
+    navigateTo('/resume');
   } else {
-    openAuthModal('login', '/resumes');
+    openAuthModal('login', '/resume');
   }
 };
 

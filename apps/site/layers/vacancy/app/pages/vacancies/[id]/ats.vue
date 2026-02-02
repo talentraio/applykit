@@ -44,9 +44,7 @@
       :title="$t('export.error.noGeneration')"
     />
 
-    <VacancyResumePaperSheet v-else>
-      <VacancyResumeAtsView :content="generation.content" />
-    </VacancyResumePaperSheet>
+    <ResumePreview v-else :content="generation.content" type="ats" />
   </div>
 </template>
 
@@ -55,8 +53,9 @@
  * Vacancy ATS View Page
  *
  * Server-rendered ATS resume view for a vacancy.
+ * Uses shared ResumePreview component from resume layer.
  *
- * Related: T121 (US6)
+ * Related: T027 (US2)
  */
 
 import { getVacancyTitle } from '@int/schema';

@@ -86,6 +86,7 @@
       },
       "register": {
         "title": "Create Your Account",
+        "description": "Create an account to start tailoring your resumes",
         "google": "Continue with Google",
         "linkedin": "Continue with LinkedIn",
         "or": "or",
@@ -154,6 +155,15 @@
     "role": "Role"
   },
   "resume": {
+    "page": {
+      "title": "My Resume",
+      "description": "Upload your resume to get started with tailored applications",
+      "editTitle": "Resume Editor",
+      "uploadNew": "Upload New",
+      "createTitle": "Create Resume",
+      "createDescription": "Start with a blank resume and fill in your details manually.",
+      "createButton": "Create Empty Resume"
+    },
     "list": {
       "title": "My Resumes",
       "empty": "No resumes yet",
@@ -170,7 +180,12 @@
       "button": "Choose File",
       "uploading": "Uploading and parsing...",
       "success": "Resume uploaded successfully",
-      "parsing": "Parsing resume with AI..."
+      "parsing": "Parsing resume with AI...",
+      "or": "or",
+      "createFromScratch": "Create from Scratch",
+      "createFromScratchHint": "Start with an empty resume and fill in your details manually",
+      "modalTitle": "Upload New Resume",
+      "modalDescription": "Upload a new resume file to replace your current one. This will create a new version."
     },
     "editor": {
       "title": "Edit Resume",
@@ -187,7 +202,59 @@
       "education": "Education",
       "skills": "Skills",
       "certifications": "Certifications",
-      "languages": "Languages"
+      "languages": "Languages",
+      "changesDiscarded": "Changes discarded"
+    },
+    "history": {
+      "undo": "Undo",
+      "redo": "Redo",
+      "undoDisabled": "Nothing to undo",
+      "redoDisabled": "Nothing to redo",
+      "changes": "{count} change(s) in history"
+    },
+    "tabs": {
+      "edit": "Edit",
+      "settings": "Settings",
+      "ai": "AI Enhance"
+    },
+    "settings": {
+      "previewType": {
+        "label": "Preview Type",
+        "description": "Choose how your resume will be displayed",
+        "ats": "ATS",
+        "human": "Human"
+      },
+      "format": {
+        "label": "Format Settings",
+        "descriptionAts": "Adjust formatting for ATS-optimized resume",
+        "descriptionHuman": "Adjust formatting for human-readable resume"
+      },
+      "margins": {
+        "label": "Margins",
+        "hint": "Page margins in millimeters (10-26mm)"
+      },
+      "fontSize": {
+        "label": "Font Size",
+        "hint": "Base font size in points (9-13pt)"
+      },
+      "lineHeight": {
+        "label": "Line Height",
+        "hint": "Line spacing multiplier (1.1-1.5)"
+      },
+      "blockSpacing": {
+        "label": "Section Spacing",
+        "hint": "Space between sections (1-9)"
+      },
+      "save": "Save Settings",
+      "reset": "Reset"
+    },
+    "ai": {
+      "title": "AI Resume Enhancement",
+      "description": "Use AI to improve your resume content and make it more impactful.",
+      "feature1": "Improve bullet points with action verbs",
+      "feature2": "Enhance professional summary",
+      "feature3": "Optimize for ATS keywords",
+      "comingSoon": "Coming Soon"
     },
     "section": {
       "summary": "Summary",
@@ -200,6 +267,12 @@
     "view": {
       "atsTitle": "ATS Resume",
       "humanTitle": "Human Resume"
+    },
+    "preview": {
+      "empty": "No content to preview",
+      "mobileButton": "Preview resume",
+      "overlayTitle": "Resume Preview",
+      "close": "Close"
     },
     "detail": {
       "title": "Resume Details",
@@ -229,7 +302,18 @@
       "deleteFailed": "Failed to delete resume",
       "emptyFile": "File is empty or contains no text",
       "corruptedFile": "File appears to be corrupted",
-      "rateLimitExceeded": "Daily parse limit exceeded. Please try again tomorrow or use your own API key."
+      "rateLimitExceeded": "Daily parse limit exceeded. Please try again tomorrow or use your own API key.",
+      "alreadyExists": "You already have a resume. Update it or delete it first.",
+      "notFound": "Resume not found",
+      "invalidContent": "Invalid resume content. Please check the data and try again.",
+      "invalidSettings": "Invalid formatting settings. Please check the values and try again.",
+      "settingsUpdateFailed": "Failed to update resume settings"
+    },
+    "success": {
+      "created": "Resume created successfully",
+      "updated": "Resume updated successfully",
+      "settingsUpdated": "Formatting settings updated successfully",
+      "versionCreated": "Resume saved. A new version has been created."
     },
     "profileIncomplete": {
       "title": "Complete Your Profile First",
@@ -623,6 +707,9 @@
       "noPosition": "Position not specified",
       "noUrl": "No URL provided",
       "noNotes": "No notes",
+      "tailoredResume": "Tailored Resume",
+      "editResume": "Edit Resume",
+      "editVacancy": "Edit Vacancy",
       "actions": {
         "edit": "Edit",
         "delete": "Delete",

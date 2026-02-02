@@ -44,9 +44,7 @@
       :title="$t('export.error.noGeneration')"
     />
 
-    <VacancyResumePaperSheet v-else>
-      <VacancyResumeHumanView :content="generation.content" :photo-url="profilePhotoUrl" />
-    </VacancyResumePaperSheet>
+    <ResumePreview v-else :content="generation.content" type="human" :photo-url="profilePhotoUrl" />
   </div>
 </template>
 
@@ -55,8 +53,9 @@
  * Vacancy Human View Page
  *
  * Server-rendered human resume view for a vacancy.
+ * Uses shared ResumePreview component from resume layer.
  *
- * Related: T122 (US6)
+ * Related: T027 (US2)
  */
 
 import { getVacancyTitle } from '@int/schema';

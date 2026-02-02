@@ -1,6 +1,6 @@
 <template>
-  <section class="resume-human-view">
-    <header class="resume-human-view__header" :class="{ 'flex gap-6': photoUrl }">
+  <section class="resume-human-design1">
+    <header class="resume-human-design1__header" :class="{ 'flex gap-6': photoUrl }">
       <!-- Profile Photo -->
       <div v-if="photoUrl" class="flex-shrink-0">
         <img
@@ -22,7 +22,7 @@
             {{ content.summary }}
           </p>
         </div>
-        <div v-if="contactItems.length" class="resume-human-view__contacts flex flex-wrap gap-3">
+        <div v-if="contactItems.length" class="resume-human-design1__contacts flex flex-wrap gap-3">
           <template v-for="item in contactItems" :key="item.value">
             <ULink
               v-if="item.href"
@@ -38,9 +38,9 @@
       </div>
     </header>
 
-    <div class="resume-human-view__grid mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">
+    <div class="resume-human-design1__grid mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">
       <div class="space-y-8">
-        <section v-if="content.experience.length" class="resume-human-view__section space-y-4">
+        <section v-if="content.experience.length" class="resume-human-design1__section space-y-4">
           <h2 class="text-lg font-semibold">
             {{ $t('resume.section.experience') }}
           </h2>
@@ -87,7 +87,7 @@
           </div>
         </section>
 
-        <section v-if="content.education.length" class="resume-human-view__section space-y-4">
+        <section v-if="content.education.length" class="resume-human-design1__section space-y-4">
           <h2 class="text-lg font-semibold">
             {{ $t('resume.section.education') }}
           </h2>
@@ -112,7 +112,7 @@
         <section
           v-for="customSection in content.customSections"
           :key="customSection.sectionTitle"
-          class="resume-human-view__section space-y-4"
+          class="resume-human-design1__section space-y-4"
         >
           <h2 class="text-lg font-semibold">
             {{ customSection.sectionTitle }}
@@ -128,7 +128,7 @@
       </div>
 
       <aside class="space-y-8">
-        <section v-if="content.skills.length" class="resume-human-view__section space-y-3">
+        <section v-if="content.skills.length" class="resume-human-design1__section space-y-3">
           <h2 class="text-lg font-semibold">
             {{ $t('resume.section.skills') }}
           </h2>
@@ -165,7 +165,10 @@
           </template>
         </section>
 
-        <section v-if="content.certifications?.length" class="resume-human-view__section space-y-3">
+        <section
+          v-if="content.certifications?.length"
+          class="resume-human-design1__section space-y-3"
+        >
           <h2 class="text-lg font-semibold">
             {{ $t('resume.section.certifications') }}
           </h2>
@@ -178,7 +181,7 @@
           </ul>
         </section>
 
-        <section v-if="content.languages?.length" class="resume-human-view__section space-y-3">
+        <section v-if="content.languages?.length" class="resume-human-design1__section space-y-3">
           <h2 class="text-lg font-semibold">
             {{ $t('resume.section.languages') }}
           </h2>
@@ -196,17 +199,23 @@
 
 <script setup lang="ts">
 /**
- * Resume Human View Component
+ * Resume Human View - Design 1
  *
  * Styled resume rendering optimized for human readers.
- * Server-rendered and structured for readability.
+ * Server-rendered with structured layout for readability.
  *
- * Related: T120 (US6)
+ * Design patterns:
+ * - Two-column grid layout (2fr/1fr)
+ * - Profile photo support
+ * - Badge display for skills
+ * - Card styling for experience entries
+ *
+ * Related: T024 (US2)
  */
 
 import type { ResumeContent } from '@int/schema';
 
-defineOptions({ name: 'VacancyResumeHumanView' });
+defineOptions({ name: 'ResumeHumanViewDesign1' });
 
 const props = defineProps<{
   content: ResumeContent;
@@ -283,7 +292,7 @@ const formatDateRange = (startDate: string, endDate?: string | null) => {
 </script>
 
 <style lang="scss">
-.resume-human-view {
+.resume-human-design1 {
   // Human view styling is handled via utility classes
 }
 </style>

@@ -135,6 +135,8 @@ export const resumes = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     title: varchar('title', { length: 255 }).notNull(),
     content: jsonb('content').$type<ResumeContent>().notNull(),
+    atsSettings: jsonb('ats_settings'),
+    humanSettings: jsonb('human_settings'),
     sourceFileName: varchar('source_file_name', { length: 255 }).notNull(),
     sourceFileType: sourceFileTypeEnum('source_file_type').notNull(),
     createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
@@ -143,6 +145,28 @@ export const resumes = pgTable(
   table => ({
     userIdIdx: index('idx_resumes_user_id').on(table.userId),
     createdAtIdx: index('idx_resumes_created_at').on(table.createdAt)
+  })
+);
+
+/**
+ * Resume Versions table
+ * Version history for a resume
+ * Stores snapshots of resume content at different points in time
+ */
+export const resumeVersions = pgTable(
+  'resume_versions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    resumeId: uuid('resume_id')
+      .notNull()
+      .references(() => resumes.id, { onDelete: 'cascade' }),
+    content: jsonb('content').$type<ResumeContent>().notNull(),
+    versionNumber: integer('version_number').notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => ({
+    resumeIdIdx: index('idx_resume_versions_resume_id').on(table.resumeId),
+    versionIdx: unique('unique_resume_version').on(table.resumeId, table.versionNumber)
   })
 );
 
@@ -278,6 +302,9 @@ export type NewProfile = typeof profiles.$inferInsert;
 
 export type Resume = typeof resumes.$inferSelect;
 export type NewResume = typeof resumes.$inferInsert;
+
+export type ResumeVersion = typeof resumeVersions.$inferSelect;
+export type NewResumeVersion = typeof resumeVersions.$inferInsert;
 
 export type Vacancy = typeof vacancies.$inferSelect;
 export type NewVacancy = typeof vacancies.$inferInsert;
