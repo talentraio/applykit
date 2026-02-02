@@ -78,7 +78,7 @@
           <div class="vacancy-detail-page__preview">
             <div class="vacancy-detail-page__preview-header">
               <!-- Preview Type Toggle (T047) -->
-              <UButtonGroup size="sm">
+              <UFieldGroup size="sm">
                 <UButton
                   :color="previewType === 'ats' ? 'primary' : 'neutral'"
                   :variant="previewType === 'ats' ? 'solid' : 'outline'"
@@ -93,7 +93,7 @@
                 >
                   {{ $t('resume.settings.previewType.human') }}
                 </UButton>
-              </UButtonGroup>
+              </UFieldGroup>
             </div>
             <div class="vacancy-detail-page__preview-content">
               <ResumePreview

@@ -15,7 +15,7 @@
 import type { ResumeContent } from '@int/schema';
 import Design1 from './Design1.vue';
 
-defineOptions({ name: 'ResumeHumanView' });
+defineOptions({ name: 'ResumePreviewHumanView' });
 
 const props = defineProps<{
   content: ResumeContent;

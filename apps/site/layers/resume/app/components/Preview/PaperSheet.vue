@@ -27,7 +27,7 @@
 import { usePageScale } from '../../composables/usePageScale';
 import { A4_HEIGHT_PX, A4_WIDTH_PX, MM_TO_PX } from '../../types/preview';
 
-defineOptions({ name: 'ResumePaperSheet' });
+defineOptions({ name: 'ResumePreviewPaperSheet' });
 
 const props = withDefaults(
   defineProps<{

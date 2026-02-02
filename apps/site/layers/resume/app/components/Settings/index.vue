@@ -8,7 +8,7 @@
       <p class="resume-settings__description">
         {{ $t('resume.settings.previewType.description') }}
       </p>
-      <UButtonGroup class="mt-3">
+      <UFieldGroup class="mt-3">
         <UButton
           :color="previewType === 'ats' ? 'primary' : 'neutral'"
           :variant="previewType === 'ats' ? 'solid' : 'outline'"
@@ -25,7 +25,7 @@
         >
           {{ $t('resume.settings.previewType.human') }}
         </UButton>
-      </UButtonGroup>
+      </UFieldGroup>
     </div>
 
     <USeparator />

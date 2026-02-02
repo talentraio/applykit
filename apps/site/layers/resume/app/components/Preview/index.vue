@@ -1,17 +1,17 @@
 <template>
   <div class="resume-preview">
     <!-- A4 Paper Preview with selected view type -->
-    <ResumePaperSheet
+    <PaperSheet
       :padding-mm="settings.margins"
       :font-size="settings.fontSize"
       :line-height="settings.lineHeight"
     >
       <!-- ATS View -->
-      <ResumePreviewAtsView v-if="type === 'ats'" :content="content" />
+      <AtsView v-if="type === 'ats'" :content="content" />
 
       <!-- Human View -->
-      <ResumePreviewHumanView v-else :content="content" :photo-url="photoUrl" />
-    </ResumePaperSheet>
+      <HumanView v-else :content="content" :photo-url="photoUrl" />
+    </PaperSheet>
   </div>
 </template>
 
@@ -33,6 +33,9 @@
 
 import type { ResumeContent, ResumeFormatSettings } from '@int/schema';
 import type { PreviewType } from '../../types/preview';
+import AtsView from './AtsView/index.vue';
+import HumanView from './HumanView/index.vue';
+import PaperSheet from './PaperSheet.vue';
 
 defineOptions({ name: 'ResumePreview' });
 
