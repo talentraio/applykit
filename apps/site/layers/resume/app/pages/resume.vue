@@ -414,8 +414,8 @@ function handleExport(_type: PreviewType) {
 
 <style lang="scss">
 .resume-page {
-  height: 100%;
-  min-height: calc(100vh - 64px); // Subtract header height
+  // Fixed height for proper scrolling in child columns
+  height: calc(100vh - 64px); // Subtract header height
 
   &__loading {
     display: flex;
