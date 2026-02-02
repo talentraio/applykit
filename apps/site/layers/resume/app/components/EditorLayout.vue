@@ -58,6 +58,8 @@ defineOptions({ name: 'ResumeEditorLayout' });
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  max-width: 1920px;
+  margin: 0 auto;
 
   &__header {
     flex-shrink: 0;
@@ -109,7 +111,7 @@ defineOptions({ name: 'ResumeEditorLayout' });
     display: flex;
     flex-direction: column;
     flex: 1;
-    overflow: hidden;
+    overflow-y: auto; // Enable vertical scrolling for preview
     background-color: var(--color-neutral-100);
     padding: 1.5rem;
 
