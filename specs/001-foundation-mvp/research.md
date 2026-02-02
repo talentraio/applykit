@@ -12,14 +12,14 @@ This document captures research findings for technology decisions in the Foundat
 
 ### Decision
 
-**PostgreSQL + Drizzle ORM** (SQLite for local development)
+**PostgreSQL + Drizzle ORM** (PostgreSQL for local development)
 
 ### Rationale
 
 - Type-safe schema definition with TypeScript inference
 - Excellent Nuxt/Nitro integration
 - Migration support out of the box
-- Driver abstraction allows SQLite locally, PostgreSQL in production
+- Driver abstraction allows PostgreSQL locally and in production
 - Lighter than Prisma, better serverless cold-start
 
 ### Alternatives Considered

@@ -86,7 +86,7 @@ No custom patterns outside Nuxt UI Pro.
 ### 2.2 Database & Data Layer
 
 - [x] T023 Install Drizzle ORM and PostgreSQL driver in `packages/nuxt-layer-api/`
-- [x] T024 Create DB connection in `packages/nuxt-layer-api/server/data/db.ts` with env-based config (SQLite local, PostgreSQL prod)
+- [x] T024 Create DB connection in `packages/nuxt-layer-api/server/data/db.ts` with env-based config (PostgreSQL local + prod)
 - [x] T025 Create Drizzle schema with all tables in `packages/nuxt-layer-api/server/data/schema.ts`
 - [x] T026 Create initial migration SQL in `packages/nuxt-layer-api/server/data/migrations/001_init.sql`
 - [x] T027 Add `pnpm db:migrate` and `pnpm db:studio` scripts to `packages/nuxt-layer-api/package.json`

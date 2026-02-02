@@ -25,7 +25,7 @@ Build an end-to-end resume tailoring MVP: users upload DOCX/PDF resumes, LLM par
 
 - PostgreSQL (external: Supabase/Neon)
 - Vercel Blob (file storage via adapter)
-- SQLite (local development)
+- PostgreSQL (local development)
 
 **Testing**: Vitest (unit/integration), Playwright (E2E)
 **Target Platform**: Vercel (serverless), SSR + Edge-compatible
@@ -214,14 +214,14 @@ See [research.md](./research.md) for detailed findings.
 
 ### Key Decisions
 
-| Topic         | Decision                              | Rationale                                          |
-| ------------- | ------------------------------------- | -------------------------------------------------- |
-| Database      | PostgreSQL + Drizzle ORM              | Type-safe, migration support, SQLite for local dev |
-| Auth          | nuxt-auth-utils                       | Nuxt-native, lightweight, Google OAuth             |
-| PDF           | Playwright                            | Serverless-compatible, full CSS fidelity           |
-| Storage       | Vercel Blob + adapter                 | Portable, pay-per-use                              |
-| LLM           | OpenAI primary, Gemini Flash fallback | Quality vs cost tradeoff                           |
-| Rate limiting | In-memory for MVP                     | Redis post-MVP if needed                           |
+| Topic         | Decision                              | Rationale                                            |
+| ------------- | ------------------------------------- | ---------------------------------------------------- |
+| Database      | PostgreSQL + Drizzle ORM              | Type-safe, migration support, Postgres for local dev |
+| Auth          | nuxt-auth-utils                       | Nuxt-native, lightweight, Google OAuth               |
+| PDF           | Playwright                            | Serverless-compatible, full CSS fidelity             |
+| Storage       | Vercel Blob + adapter                 | Portable, pay-per-use                                |
+| LLM           | OpenAI primary, Gemini Flash fallback | Quality vs cost tradeoff                             |
+| Rate limiting | In-memory for MVP                     | Redis post-MVP if needed                             |
 
 ### Remaining Unknowns (Low Impact)
 

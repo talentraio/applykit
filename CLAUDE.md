@@ -10,6 +10,7 @@ Key conventions:
 
 - Shared layers as internal packages: @int/schema, @int/api, @int/ui
 - Type safety end-to-end (avoid client-side generic typing for API)
+- `NUXT_DATABASE_URL` is optional for local development (defaults to local Postgres if unset).
 - **CRITICAL**: Avoid `any` and type assertions (`as Type`) in TypeScript code
   - Only use `as const`, `as unknown as Type` (with justification), or in truly critical cases
   - Always import and use proper types from libraries instead of suppressing errors

@@ -1,6 +1,5 @@
 import type { Role, UserStatus } from '@int/schema';
 import type { NewUser, User } from '../schema';
-import process from 'node:process';
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '@int/schema';
 import { isValid, parseISO } from 'date-fns';
 import { and, desc, eq, like, sql } from 'drizzle-orm';
@@ -26,25 +25,6 @@ type UserRow = {
   deletedAt?: Date | string | null;
 };
 
-const isSqliteRuntime = (): boolean => {
-  const runtimeConfig = useRuntimeConfig();
-  return process.env.NODE_ENV !== 'production' && !runtimeConfig.databaseUrl;
-};
-
-/**
- * Convert boolean to SQLite-compatible value
- * SQLite doesn't support boolean type natively, uses INTEGER (0/1)
- * Returns type as boolean for Drizzle schema compatibility
- */
-const toSqliteBool = (value: boolean): boolean => {
-  if (isSqliteRuntime()) {
-    // SQLite needs integer, but Drizzle expects boolean type
-    // The actual value will be 0/1 at runtime
-    return (value ? 1 : 0) as unknown as boolean;
-  }
-  return value;
-};
-
 const baseSelectFields = {
   id: users.id,
   email: users.email,
@@ -62,25 +42,6 @@ const baseSelectFields = {
   updatedAt: users.updatedAt,
   lastLoginAt: users.lastLoginAt,
   deletedAt: users.deletedAt
-};
-
-const sqliteSelectFields = {
-  id: users.id,
-  email: users.email,
-  googleId: users.googleId,
-  linkedInId: users.linkedInId,
-  passwordHash: users.passwordHash,
-  emailVerified: users.emailVerified,
-  emailVerificationToken: users.emailVerificationToken,
-  emailVerificationExpires: sql<string>`strftime('%Y-%m-%d %H:%M:%S', ${users.emailVerificationExpires})`,
-  passwordResetToken: users.passwordResetToken,
-  passwordResetExpires: sql<string>`strftime('%Y-%m-%d %H:%M:%S', ${users.passwordResetExpires})`,
-  role: users.role,
-  status: users.status,
-  createdAt: sql<string>`strftime('%Y-%m-%d %H:%M:%S', ${users.createdAt})`,
-  updatedAt: sql<string>`strftime('%Y-%m-%d %H:%M:%S', ${users.updatedAt})`,
-  lastLoginAt: sql<string>`strftime('%Y-%m-%d %H:%M:%S', ${users.lastLoginAt})`,
-  deletedAt: sql<string>`strftime('%Y-%m-%d %H:%M:%S', ${users.deletedAt})`
 };
 
 const normalizeDateValue = (value: Date | string | null | undefined): Date | null => {
@@ -107,7 +68,6 @@ const normalizeOptionalDate = (value: Date | string | null): Date | null => {
 const normalizeUserRow = (row: UserRow): User => {
   return {
     ...row,
-    // Convert SQLite integer (0/1) to boolean
     emailVerified: Boolean(row.emailVerified),
     emailVerificationExpires: normalizeOptionalDate(row.emailVerificationExpires),
     passwordResetExpires: normalizeOptionalDate(row.passwordResetExpires),
@@ -129,9 +89,7 @@ export const userRepository = {
    * Find user by ID
    */
   async findById(id: string): Promise<User | null> {
-    const query = isSqliteRuntime()
-      ? db.select(sqliteSelectFields).from(users)
-      : db.select(baseSelectFields).from(users);
+    const query = db.select(baseSelectFields).from(users);
     const result = await query.where(eq(users.id, id)).limit(1);
     const user = result[0];
     return user ? normalizeUserRow(user) : null;
@@ -142,9 +100,7 @@ export const userRepository = {
    * Used for login and user lookup
    */
   async findByEmail(email: string): Promise<User | null> {
-    const query = isSqliteRuntime()
-      ? db.select(sqliteSelectFields).from(users)
-      : db.select(baseSelectFields).from(users);
+    const query = db.select(baseSelectFields).from(users);
     const result = await query.where(eq(users.email, email)).limit(1);
     const user = result[0];
     return user ? normalizeUserRow(user) : null;
@@ -155,9 +111,7 @@ export const userRepository = {
    * Used during OAuth callback to find or create user
    */
   async findByGoogleId(googleId: string): Promise<User | null> {
-    const query = isSqliteRuntime()
-      ? db.select(sqliteSelectFields).from(users)
-      : db.select(baseSelectFields).from(users);
+    const query = db.select(baseSelectFields).from(users);
     const result = await query.where(eq(users.googleId, googleId)).limit(1);
     const user = result[0];
     return user ? normalizeUserRow(user) : null;
@@ -168,9 +122,7 @@ export const userRepository = {
    * Used during OAuth callback to find or create user
    */
   async findByLinkedInId(linkedInId: string): Promise<User | null> {
-    const query = isSqliteRuntime()
-      ? db.select(sqliteSelectFields).from(users)
-      : db.select(baseSelectFields).from(users);
+    const query = db.select(baseSelectFields).from(users);
     const result = await query.where(eq(users.linkedInId, linkedInId)).limit(1);
     const user = result[0];
     return user ? normalizeUserRow(user) : null;
@@ -193,17 +145,13 @@ export const userRepository = {
         email: data.email,
         googleId: data.googleId,
         linkedInId: data.linkedInId,
-        emailVerified: toSqliteBool(true), // OAuth-verified emails are trusted
+        emailVerified: true, // OAuth-verified emails are trusted
         role: data.role ?? USER_ROLE_MAP.PUBLIC,
         status: USER_STATUS_MAP.ACTIVE,
         lastLoginAt: new Date()
       })
       .returning();
     const created = result[0]!;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(created.id);
-      return fresh ?? normalizeUserRow(created);
-    }
     return normalizeUserRow(created);
   },
 
@@ -218,14 +166,10 @@ export const userRepository = {
         email: data.email,
         role: data.role,
         status: USER_STATUS_MAP.INVITED,
-        emailVerified: toSqliteBool(false)
+        emailVerified: false
       })
       .returning();
     const created = result[0]!;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(created.id);
-      return fresh ?? normalizeUserRow(created);
-    }
     return normalizeUserRow(created);
   },
 
@@ -243,7 +187,7 @@ export const userRepository = {
       .set({
         googleId: params.googleId,
         linkedInId: params.linkedInId,
-        emailVerified: toSqliteBool(true), // OAuth emails are trusted
+        emailVerified: true, // OAuth emails are trusted
         status: USER_STATUS_MAP.ACTIVE,
         lastLoginAt: new Date(),
         updatedAt: new Date()
@@ -252,10 +196,6 @@ export const userRepository = {
       .returning();
     const updated = result[0];
     if (!updated) return null;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(updated.id);
-      return fresh ?? normalizeUserRow(updated);
-    }
     return normalizeUserRow(updated);
   },
 
@@ -271,10 +211,6 @@ export const userRepository = {
       .returning();
     const updated = result[0];
     if (!updated) return null;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(updated.id);
-      return fresh ?? normalizeUserRow(updated);
-    }
     return normalizeUserRow(updated);
   },
 
@@ -290,10 +226,6 @@ export const userRepository = {
       .returning();
     const updated = result[0];
     if (!updated) return null;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(updated.id);
-      return fresh ?? normalizeUserRow(updated);
-    }
     return normalizeUserRow(updated);
   },
 
@@ -308,10 +240,6 @@ export const userRepository = {
       .returning();
     const updated = result[0];
     if (!updated) return null;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(updated.id);
-      return fresh ?? normalizeUserRow(updated);
-    }
     return normalizeUserRow(updated);
   },
 
@@ -373,9 +301,7 @@ export const userRepository = {
 
     const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
-    const listQuery = isSqliteRuntime()
-      ? db.select(sqliteSelectFields).from(users)
-      : db.select(baseSelectFields).from(users);
+    const listQuery = db.select(baseSelectFields).from(users);
     const filteredList = whereClause ? listQuery.where(whereClause) : listQuery;
     const list = await filteredList
       .orderBy(sql`${users.lastLoginAt} is null`, desc(users.lastLoginAt), desc(users.createdAt))
@@ -408,7 +334,7 @@ export const userRepository = {
       .values({
         email: data.email,
         passwordHash: data.passwordHash,
-        emailVerified: toSqliteBool(false),
+        emailVerified: false,
         emailVerificationToken: data.emailVerificationToken,
         emailVerificationExpires: data.emailVerificationExpires,
         role: USER_ROLE_MAP.PUBLIC,
@@ -417,10 +343,6 @@ export const userRepository = {
       })
       .returning();
     const created = result[0]!;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(created.id);
-      return fresh ?? normalizeUserRow(created);
-    }
     return normalizeUserRow(created);
   },
 
@@ -428,9 +350,7 @@ export const userRepository = {
    * Find user by email verification token
    */
   async findByEmailVerificationToken(token: string): Promise<User | null> {
-    const query = isSqliteRuntime()
-      ? db.select(sqliteSelectFields).from(users)
-      : db.select(baseSelectFields).from(users);
+    const query = db.select(baseSelectFields).from(users);
     const result = await query.where(eq(users.emailVerificationToken, token)).limit(1);
     const user = result[0];
     return user ? normalizeUserRow(user) : null;
@@ -452,10 +372,6 @@ export const userRepository = {
       .returning();
     const updated = result[0];
     if (!updated) return null;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(updated.id);
-      return fresh ?? normalizeUserRow(updated);
-    }
     return normalizeUserRow(updated);
   },
 
@@ -467,7 +383,7 @@ export const userRepository = {
     const result = await db
       .update(users)
       .set({
-        emailVerified: toSqliteBool(true),
+        emailVerified: true,
         emailVerificationToken: null,
         emailVerificationExpires: null,
         updatedAt: new Date()
@@ -476,10 +392,6 @@ export const userRepository = {
       .returning();
     const updated = result[0];
     if (!updated) return null;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(updated.id);
-      return fresh ?? normalizeUserRow(updated);
-    }
     return normalizeUserRow(updated);
   },
 
@@ -487,9 +399,7 @@ export const userRepository = {
    * Find user by password reset token
    */
   async findByPasswordResetToken(token: string): Promise<User | null> {
-    const query = isSqliteRuntime()
-      ? db.select(sqliteSelectFields).from(users)
-      : db.select(baseSelectFields).from(users);
+    const query = db.select(baseSelectFields).from(users);
     const result = await query.where(eq(users.passwordResetToken, token)).limit(1);
     const user = result[0];
     return user ? normalizeUserRow(user) : null;
@@ -511,10 +421,6 @@ export const userRepository = {
       .returning();
     const updated = result[0];
     if (!updated) return null;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(updated.id);
-      return fresh ?? normalizeUserRow(updated);
-    }
     return normalizeUserRow(updated);
   },
 
@@ -535,10 +441,6 @@ export const userRepository = {
       .returning();
     const updated = result[0];
     if (!updated) return null;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(updated.id);
-      return fresh ?? normalizeUserRow(updated);
-    }
     return normalizeUserRow(updated);
   },
 
@@ -553,16 +455,12 @@ export const userRepository = {
   ): Promise<User | null> {
     const updateData =
       provider === 'google'
-        ? { googleId: providerId, emailVerified: toSqliteBool(true), updatedAt: new Date() }
-        : { linkedInId: providerId, emailVerified: toSqliteBool(true), updatedAt: new Date() };
+        ? { googleId: providerId, emailVerified: true, updatedAt: new Date() }
+        : { linkedInId: providerId, emailVerified: true, updatedAt: new Date() };
 
     const result = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
     const updated = result[0];
     if (!updated) return null;
-    if (isSqliteRuntime()) {
-      const fresh = await this.findById(updated.id);
-      return fresh ?? normalizeUserRow(updated);
-    }
     return normalizeUserRow(updated);
   },
 
@@ -571,9 +469,7 @@ export const userRepository = {
    * Returns full user with passwordHash field
    */
   async findByEmailWithPassword(email: string): Promise<User | null> {
-    const query = isSqliteRuntime()
-      ? db.select(sqliteSelectFields).from(users)
-      : db.select(baseSelectFields).from(users);
+    const query = db.select(baseSelectFields).from(users);
     const result = await query.where(eq(users.email, email)).limit(1);
     const user = result[0];
     return user ? normalizeUserRow(user) : null;

@@ -1,16 +1,13 @@
 import type { Role } from '@int/schema';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 import { RoleSchema, USER_ROLE_MAP } from '@int/schema';
-import Database from 'better-sqlite3';
+import postgres from 'postgres';
 import { z } from 'zod';
 
 type RawArgs = {
   email?: string;
   role?: string;
-  dbPath?: string;
+  databaseUrl?: string;
   help?: boolean;
 };
 
@@ -20,11 +17,11 @@ type UserRow = {
   role: Role;
 };
 
-const DEFAULT_DB_PATH = fileURLToPath(new URL('../.data/local.db', import.meta.url));
+const DEFAULT_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/resume_editor';
 const cliSchema = z.object({
   email: z.string().email(),
   role: RoleSchema,
-  dbPath: z.string().optional()
+  databaseUrl: z.string().optional()
 });
 
 const rawArgs = parseArgs(process.argv.slice(2));
@@ -37,7 +34,7 @@ if (rawArgs.help) {
 const parsed = cliSchema.safeParse({
   email: rawArgs.email,
   role: rawArgs.role,
-  dbPath: rawArgs.dbPath
+  databaseUrl: rawArgs.databaseUrl
 });
 
 if (!parsed.success) {
@@ -49,21 +46,20 @@ if (!parsed.success) {
   process.exit(1);
 }
 
-const dbPath = parsed.data.dbPath ? resolve(process.cwd(), parsed.data.dbPath) : DEFAULT_DB_PATH;
+const databaseUrl =
+  parsed.data.databaseUrl ?? process.env.NUXT_DATABASE_URL ?? DEFAULT_DATABASE_URL;
 
-if (!existsSync(dbPath)) {
-  console.error(`Database not found: ${dbPath}`);
-  console.error('Start the app once to create the local SQLite database.');
-  process.exit(1);
-}
-
-const db = new Database(dbPath);
+const sql = postgres(databaseUrl, { max: 1 });
 
 try {
-  const selectUser = db.prepare<[string], UserRow>(
-    'select id, email, role from users where email = ?'
-  );
-  const user = selectUser.get(parsed.data.email);
+  const users = await sql<UserRow[]>`
+    select id, email, role
+    from users
+    where email = ${parsed.data.email}
+    limit 1
+  `;
+
+  const user = users[0];
 
   if (!user) {
     console.error(`User not found: ${parsed.data.email}`);
@@ -75,20 +71,21 @@ try {
     process.exit(0);
   }
 
-  const updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const updateRole = db.prepare<[Role, string, string]>(
-    'update users set role = ?, updated_at = ? where email = ?'
-  );
-  const result = updateRole.run(parsed.data.role, updatedAt, parsed.data.email);
+  const updates = await sql<{ id: string }[]>`
+    update users
+    set role = ${parsed.data.role}, updated_at = ${new Date()}
+    where email = ${parsed.data.email}
+    returning id
+  `;
 
-  if (result.changes === 0) {
+  if (updates.length === 0) {
     console.error('No rows updated. Check the email and try again.');
     process.exit(1);
   }
 
   console.log(`Updated role: ${user.email} ${user.role} -> ${parsed.data.role}`);
 } finally {
-  db.close();
+  await sql.end({ timeout: 5 });
 }
 
 function parseArgs(argv: string[]): RawArgs {
@@ -116,8 +113,9 @@ function parseArgs(argv: string[]): RawArgs {
         result.role = normalized[i + 1];
         i += 1;
         break;
-      case '--db':
-        result.dbPath = normalized[i + 1];
+      case '--database-url':
+      case '--url':
+        result.databaseUrl = normalized[i + 1];
         i += 1;
         break;
       case '--help':
@@ -143,7 +141,8 @@ function printUsage(): void {
   console.log('Usage: pnpm --filter @int/api db:set-role -- --email <email> --role <role>');
   console.log('   or: pnpm --filter @int/api db:set-role -- <email> <role>');
   console.log('Options:');
-  console.log('  --email, -e  User email');
-  console.log(`  --role, -r   Role: ${Object.values(USER_ROLE_MAP).join(' | ')}`);
-  console.log('  --db         Path to SQLite database (optional)');
+  console.log('  --email, -e        User email');
+  console.log(`  --role, -r         Role: ${Object.values(USER_ROLE_MAP).join(' | ')}`);
+  console.log('  --database-url     PostgreSQL connection string (optional)');
+  console.log(`                     Default: ${DEFAULT_DATABASE_URL}`);
 }

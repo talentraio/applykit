@@ -7,10 +7,9 @@ export default defineNuxtConfig({
   modules: ['nuxt-auth-utils', '@pinia/nuxt'],
 
   runtimeConfig: {
-    db: {
-      sqlitePath: fileURLToPath(new URL('.data/local.db', import.meta.url))
-    },
-    databaseUrl: '',
+    databaseUrl:
+      process.env.NUXT_DATABASE_URL ??
+      'postgresql://postgres:postgres@localhost:5432/resume_editor',
     llm: {
       openaiApiKey: '',
       geminiApiKey: ''

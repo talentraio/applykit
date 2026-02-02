@@ -1,41 +1,19 @@
 import type { Operation, ProviderType, UsageContext } from '@int/schema';
 import type { UsageLog } from '../schema';
-import process from 'node:process';
-import { format, startOfDay, subDays } from 'date-fns';
+import { startOfDay, subDays } from 'date-fns';
 import { and, eq, gte, lt, lte, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { usageLogs } from '../schema';
 
-const formatSqliteDate = (value: Date): string => {
-  return format(value, 'yyyy-MM-dd HH:mm:ss');
-};
-
-const isSqliteRuntime = (): boolean => {
-  const runtimeConfig = useRuntimeConfig();
-  return process.env.NODE_ENV !== 'production' && !runtimeConfig.databaseUrl;
-};
-
-const buildDateGte = (value: Date): ReturnType<typeof sql> => {
-  if (isSqliteRuntime()) {
-    return sql`${usageLogs.createdAt} >= ${formatSqliteDate(value)}`;
-  }
-
+const buildDateGte = (value: Date): ReturnType<typeof gte> => {
   return gte(usageLogs.createdAt, value);
 };
 
-const buildDateLte = (value: Date): ReturnType<typeof sql> => {
-  if (isSqliteRuntime()) {
-    return sql`${usageLogs.createdAt} <= ${formatSqliteDate(value)}`;
-  }
-
+const buildDateLte = (value: Date): ReturnType<typeof lte> => {
   return lte(usageLogs.createdAt, value);
 };
 
-const buildDateLt = (value: Date): ReturnType<typeof sql> => {
-  if (isSqliteRuntime()) {
-    return sql`${usageLogs.createdAt} < ${formatSqliteDate(value)}`;
-  }
-
+const buildDateLt = (value: Date): ReturnType<typeof lt> => {
   return lt(usageLogs.createdAt, value);
 };
 
@@ -192,7 +170,7 @@ export const usageLogRepository = {
     };
 
     result.forEach(row => {
-      breakdown[row.operation as Operation] = Number(row.count);
+      breakdown[row.operation] = Number(row.count);
     });
 
     return breakdown;
@@ -247,7 +225,7 @@ export const usageLogRepository = {
     const breakdown = { platform: 0, byok: 0 };
 
     result.forEach(row => {
-      breakdown[row.providerType as ProviderType] = Number(row.count);
+      breakdown[row.providerType] = Number(row.count);
     });
 
     return breakdown;

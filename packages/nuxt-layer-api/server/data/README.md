@@ -1,6 +1,6 @@
 # Database Layer
 
-Drizzle ORM-based data layer for the `@int/api` package with PostgreSQL (production) and SQLite (local development).
+Drizzle ORM-based data layer for the `@int/api` package with PostgreSQL (all environments).
 
 ## Overview
 
@@ -13,12 +13,15 @@ This directory contains the complete database infrastructure:
 
 ## Database Configuration
 
-### Local Development (SQLite)
+### Local Development (PostgreSQL)
 
 ```bash
-# No setup needed - SQLite file created automatically
-# Database location (default): packages/nuxt-layer-api/.data/local.db (runtimeConfig.db.sqlitePath)
-pnpm dev
+# Recommended: start the local Postgres container
+pnpm db:up
+
+# Default connection string:
+# postgresql://postgres:postgres@localhost:5432/resume_editor
+# Override with NUXT_DATABASE_URL if needed
 ```
 
 ### Production (PostgreSQL)
@@ -193,10 +196,10 @@ server/data/
 
 ## Environment Variables
 
-| Variable            | Required        | Default     | Purpose                      |
-| ------------------- | --------------- | ----------- | ---------------------------- |
-| `NUXT_DATABASE_URL` | Production only | -           | PostgreSQL connection string |
-| `NODE_ENV`          | No              | development | Environment mode             |
+| Variable            | Required                                         | Default                                                       | Purpose                      |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------------------- | ---------------------------- |
+| `NUXT_DATABASE_URL` | Production only (dev defaults to local Postgres) | `postgresql://postgres:postgres@localhost:5432/resume_editor` | PostgreSQL connection string |
+| `NODE_ENV`          | No                                               | development                                                   | Environment mode             |
 
 ## Repository Methods Summary
 

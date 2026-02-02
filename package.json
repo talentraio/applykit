@@ -5,6 +5,9 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
+    "db:up": "bash ./scripts/dev/db-up.sh",
+    "db:down": "bash ./scripts/dev/db-down.sh",
+    "db:status": "bash ./scripts/dev/db-status.sh",
     "dev:site": "pnpm --filter site dev",
     "dev:admin": "pnpm --filter admin dev",
     "build:site": "pnpm --filter site build",

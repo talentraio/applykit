@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1769509931932,
+      "tag": "001_init",
+      "breakpoints": false
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1769619606068,
+      "tag": "002_admin_roles_users",
+      "breakpoints": false
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769962296279,
+      "tag": "003_resume_versions",
+      "breakpoints": false
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770039876000,
+      "tag": "004_user_auth_columns",
+      "breakpoints": false
+    }
+  ]
+}

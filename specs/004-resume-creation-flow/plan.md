@@ -11,16 +11,16 @@
 
 ### Technologies
 
-| Technology        | Version | Purpose           |
-| ----------------- | ------- | ----------------- |
-| Nuxt              | 4.x     | App framework     |
-| Vue               | 3.x     | UI framework      |
-| Pinia             | 2.x     | State management  |
-| Drizzle ORM       | latest  | Database          |
-| SQLite/PostgreSQL | -       | Storage           |
-| Zod               | 3.x     | Schema validation |
-| VueUse            | latest  | Composables       |
-| NuxtUI            | 4.x     | UI components     |
+| Technology  | Version | Purpose           |
+| ----------- | ------- | ----------------- |
+| Nuxt        | 4.x     | App framework     |
+| Vue         | 3.x     | UI framework      |
+| Pinia       | 2.x     | State management  |
+| Drizzle ORM | latest  | Database          |
+| PostgreSQL  | -       | Storage           |
+| Zod         | 3.x     | Schema validation |
+| VueUse      | latest  | Composables       |
+| NuxtUI      | 4.x     | UI components     |
 
 ### Dependencies
 

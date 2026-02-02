@@ -11,7 +11,7 @@ This guide provides step-by-step setup instructions for developing the Foundatio
 
 - **Node.js**: 20.x LTS
 - **pnpm**: 9.x (`npm install -g pnpm`)
-- **Docker**: For local PostgreSQL (optional, can use SQLite)
+- **Docker**: For local PostgreSQL (recommended)
 - **Git**: Version control
 
 ### Accounts Needed
@@ -47,11 +47,8 @@ Create `.env` files for each app:
 > Avoid bare names like `DATABASE_URL` in this repo.
 
 ```bash
-# Database (local development uses SQLite by default)
-NUXT_DATABASE_URL="file:./dev.db"
-
-# For PostgreSQL (production or local Docker):
-# NUXT_DATABASE_URL="postgresql://user:pass@localhost:5432/applykit"
+# Database (defaults to local Postgres if unset)
+NUXT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/resume_editor"
 
 # Google OAuth
 NUXT_OAUTH_GOOGLE_CLIENT_ID="your-google-client-id"
@@ -89,28 +86,21 @@ NUXT_PUBLIC_BASE_URL="http://localhost:3001"
 
 ## 3. Database Setup
 
-### Option A: SQLite (Simplest for Development)
-
-SQLite is the default for local development. No setup required.
+### Option A: Local PostgreSQL with Docker (recommended)
 
 ```bash
+# Start PostgreSQL
+pnpm db:up
+
 # Run migrations
 pnpm db:migrate
 ```
 
-### Option B: Local PostgreSQL with Docker
+### Option B: Local PostgreSQL (system install)
 
 ```bash
-# Start PostgreSQL
-docker run --name applykit-db \
-  -e POSTGRES_USER=applykit \
-  -e POSTGRES_PASSWORD=applykit \
-  -e POSTGRES_DB=applykit \
-  -p 5432:5432 \
-  -d postgres:16
-
-# Update NUXT_DATABASE_URL in .env
-NUXT_DATABASE_URL="postgresql://applykit:applykit@localhost:5432/applykit"
+# Ensure PostgreSQL is running, then:
+export NUXT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/resume_editor"
 
 # Run migrations
 pnpm db:migrate
@@ -294,8 +284,8 @@ pnpm test:e2e -- --grep "happy path"
 
 **Database connection failed**
 
-- For SQLite: ensure `dev.db` directory is writable
-- For PostgreSQL: check `NUXT_DATABASE_URL` format and credentials
+- Ensure PostgreSQL is running (`pnpm db:up` or local service)
+- Check `NUXT_DATABASE_URL` format and credentials
 
 **LLM parsing fails**
 

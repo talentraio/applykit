@@ -3,7 +3,7 @@
 > **Feature**: 001-foundation-mvp
 > **Date**: 2026-01-22
 > **ORM**: Drizzle
-> **Database**: PostgreSQL (SQLite for local dev)
+> **Database**: PostgreSQL (local dev via Docker)
 
 This document defines the database schema and domain types for the Foundation MVP.
 
