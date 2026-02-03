@@ -259,7 +259,7 @@ export default defineEventHandler(async event => {
 ### Export Endpoint
 
 ```typescript
-// server/api/vacancies/[id]/export.post.ts
+// server/api/pdf/prepare.post.ts
 export default defineEventHandler(async event => {
   const user = event.context.user;
 
@@ -267,12 +267,12 @@ export default defineEventHandler(async event => {
   await requireLimit(user.id, 'export', user.role);
 
   // Perform export (usually no LLM tokens)
-  const pdfUrl = await exportToPDF({});
+  const { token } = await createPdfToken({});
 
   // Log usage (no tokens/cost for PDF generation)
   await logExport(user.id, 'platform');
 
-  return { url: pdfUrl };
+  return { token };
 });
 ```
 

@@ -19,7 +19,7 @@
         <UButton variant="outline" icon="i-lucide-file-text" :to="`/vacancies/${vacancyId}/ats`">
           {{ $t('vacancy.detail.actions.viewAts') }}
         </UButton>
-        <VacancyExportButtons :vacancy-id="vacancyId" :generation-id="generation.id" />
+        <BaseDownloadPdf :content="generation.content" :photo-url="profilePhotoUrl" />
       </div>
     </div>
 

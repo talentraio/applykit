@@ -1,2 +1,9 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
+
+/* Layout dimensions - used across app for consistent spacing */
+:root {
+  --layout-header-height: 64px; /* h-16 in Tailwind */
+  --layout-footer-height: 53px;
+  --layout-editor-footer-height: 52px; /* Undo/redo bar in editor */
+}

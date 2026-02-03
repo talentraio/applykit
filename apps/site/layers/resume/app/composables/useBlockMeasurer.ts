@@ -22,6 +22,14 @@ export type MeasurementResult = {
 };
 
 /**
+ * Measurer options for triggering remeasurement
+ */
+export type MeasurerOptions = {
+  /** Keys that when changed should trigger remeasurement (e.g., fontSize, lineHeight) */
+  measurementKeys?: MaybeRef<unknown>[];
+};
+
+/**
  * Measure block heights for pagination
  *
  * Uses a hidden measurement container to render blocks
@@ -30,12 +38,15 @@ export type MeasurementResult = {
  *
  * @param blocks - Blocks to measure
  * @param measurerRef - Ref to the measurement container element
+ * @param options - Options including keys that trigger remeasurement
  * @returns Measurement result with block heights
  */
 export function useBlockMeasurer(
   blocks: Ref<BlockModel[]> | ComputedRef<BlockModel[]>,
-  measurerRef: Ref<HTMLElement | null>
+  measurerRef: Ref<HTMLElement | null>,
+  options: MeasurerOptions = {}
 ) {
+  const { measurementKeys = [] } = options;
   const heightMap = ref<Map<string, number>>(new Map());
   const isComplete = ref(false);
 
@@ -75,6 +86,8 @@ export function useBlockMeasurer(
       const blockId = el.getAttribute('data-block-id');
       if (blockId) {
         const rect = el.getBoundingClientRect();
+        // Measure height WITHOUT margin - margin is handled by paginator
+        // based on position within each page
         newHeightMap.set(blockId, rect.height);
       }
     });
@@ -121,6 +134,19 @@ export function useBlockMeasurer(
     },
     { immediate: true }
   );
+
+  // Watch for measurement key changes (e.g., fontSize, lineHeight)
+  if (measurementKeys.length > 0) {
+    watch(
+      measurementKeys.map(key => () => unref(key)),
+      () => {
+        // Wait for DOM to update with new styles, then remeasure
+        nextTick(() => {
+          measureAll();
+        });
+      }
+    );
+  }
 
   return {
     measuredBlocks,

@@ -25,6 +25,13 @@
 - `pnpm test` / `pnpm test:watch` / `pnpm test:coverage` run Vitest.
 - `pnpm e2e` / `pnpm e2e:ui` run Playwright against the site app.
 
+## Important Rules
+
+- **No unauthorized changes**: Do NOT make business logic changes (like removing auto-save, changing
+  core functionality) or global layout changes without explicit user approval.
+- **Server cleanup**: After using Playwright or running dev servers for testing, always stop
+  servers to free up ports.
+
 ## Coding Style & Naming Conventions
 
 - Before any code changes, read `docs/codestyle/base.md` (always-on). Use other

@@ -2,11 +2,11 @@
   <div class="resume-paginator">
     <!-- Pages -->
     <div v-for="page in pages" :key="page.index" class="resume-paginator__page">
-      <ResumePaperSheet :padding-mm="paddingMm" :font-size="fontSize" :line-height="lineHeight">
+      <PaperSheet :padding-mm="paddingMm" :font-size="fontSize" :line-height="lineHeight">
         <div class="resume-paginator__blocks">
           <slot :page="page" :blocks="page.blocks" />
         </div>
-      </ResumePaperSheet>
+      </PaperSheet>
 
       <!-- Page number indicator -->
       <div v-if="showPageNumbers && pages.length > 1" class="resume-paginator__page-number">
@@ -34,8 +34,9 @@
  */
 
 import type { PageModel } from '../../types/preview';
+import PaperSheet from './PaperSheet.vue';
 
-defineOptions({ name: 'ResumePaginator' });
+defineOptions({ name: 'ResumePreviewPaginator' });
 
 withDefaults(
   defineProps<{

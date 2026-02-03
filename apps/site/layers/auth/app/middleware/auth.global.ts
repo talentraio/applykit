@@ -10,7 +10,10 @@
 export default defineNuxtRouteMiddleware(to => {
   // Skip middleware for auth-related routes
   const publicRoutes = ['/login', '/'];
-  if (publicRoutes.includes(to.path)) {
+  const token = typeof to.query.token === 'string' ? to.query.token : '';
+  const isPdfPreview = to.path === '/pdf/preview' && Boolean(token);
+
+  if (publicRoutes.includes(to.path) || isPdfPreview) {
     return;
   }
 

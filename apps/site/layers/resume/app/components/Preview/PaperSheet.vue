@@ -27,7 +27,7 @@
 import { usePageScale } from '../../composables/usePageScale';
 import { A4_HEIGHT_PX, A4_WIDTH_PX, MM_TO_PX } from '../../types/preview';
 
-defineOptions({ name: 'ResumePaperSheet' });
+defineOptions({ name: 'ResumePreviewPaperSheet' });
 
 const props = withDefaults(
   defineProps<{
@@ -75,7 +75,7 @@ const containerStyle = computed(() => ({
 // Paper style with scaling
 const paperStyle = computed(() => ({
   width: `${A4_WIDTH_PX}px`,
-  minHeight: `${A4_HEIGHT_PX}px`,
+  height: `${A4_HEIGHT_PX}px`,
   transform: `scale(${scale.value})`,
   transformOrigin: 'top left'
 }));
@@ -111,6 +111,7 @@ defineExpose({
   border: 1px solid #e5e7eb; // gray-200
   position: relative;
   box-sizing: border-box;
+  overflow: hidden; // Prevent content overflow beyond A4 page
 
   &__content {
     // Reset any dark mode styles inside paper

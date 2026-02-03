@@ -20,7 +20,7 @@ export default defineNuxtConfig({
     },
     storage: {
       blobReadWriteToken: '',
-      baseUrl: '/api/storage',
+      baseUrl: '/storage',
       baseDir: ''
     },
     session: {

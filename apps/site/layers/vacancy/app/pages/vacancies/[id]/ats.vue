@@ -19,7 +19,7 @@
         <UButton variant="outline" icon="i-lucide-user" :to="`/vacancies/${vacancyId}/human`">
           {{ $t('vacancy.detail.actions.viewHuman') }}
         </UButton>
-        <VacancyExportButtons :vacancy-id="vacancyId" :generation-id="generation.id" />
+        <BaseDownloadPdf :content="generation.content" />
       </div>
     </div>
 

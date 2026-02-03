@@ -12,7 +12,7 @@
       <div class="preview-overlay">
         <!-- Header with preview type toggle -->
         <div class="preview-overlay__header">
-          <UButtonGroup size="sm">
+          <UFieldGroup size="sm">
             <UButton
               :color="previewType === 'ats' ? 'primary' : 'neutral'"
               :variant="previewType === 'ats' ? 'solid' : 'outline'"
@@ -27,7 +27,7 @@
             >
               {{ $t('resume.settings.previewType.human') }}
             </UButton>
-          </UButtonGroup>
+          </UFieldGroup>
         </div>
 
         <!-- Preview content area with scrolling -->
@@ -36,7 +36,7 @@
             v-if="content"
             :content="content"
             :type="previewType"
-            :settings="settings"
+            :settings="resolvedSettings"
             :photo-url="photoUrl"
           />
           <div v-else class="preview-overlay__empty">
@@ -50,11 +50,12 @@
           <UButton variant="ghost" color="neutral" icon="i-lucide-x" @click="isOpen = false">
             {{ $t('resume.preview.close') }}
           </UButton>
-          <UDropdownMenu v-if="showDownload" :items="downloadMenuItems">
-            <UButton color="primary" icon="i-lucide-download" trailing-icon="i-lucide-chevron-down">
-              {{ $t('export.button.download') }}
-            </UButton>
-          </UDropdownMenu>
+          <BaseDownloadPdf
+            v-if="showDownload && content"
+            :content="content"
+            :settings="settings"
+            :photo-url="photoUrl"
+          />
         </div>
       </div>
     </template>
@@ -99,9 +100,9 @@ const props = withDefaults(
      */
     previewType?: PreviewType;
     /**
-     * Format settings
+     * Format settings (single or per-format)
      */
-    settings?: Partial<ResumeFormatSettings>;
+    settings?: FormatSettings;
     /**
      * Profile photo URL for human view
      */
@@ -122,10 +123,18 @@ const props = withDefaults(
 const emit = defineEmits<{
   'update:open': [value: boolean];
   'update:preview-type': [type: PreviewType];
-  download: [type: PreviewType];
 }>();
 
-const { t } = useI18n();
+type FormatSettingsMap = {
+  ats: Partial<ResumeFormatSettings>;
+  human: Partial<ResumeFormatSettings>;
+};
+
+type FormatSettings = Partial<ResumeFormatSettings> | FormatSettingsMap;
+
+const isFormatSettingsMap = (value: FormatSettings): value is FormatSettingsMap => {
+  return typeof value === 'object' && value !== null && 'ats' in value && 'human' in value;
+};
 
 // Two-way binding for open state
 const isOpen = computed({
@@ -133,21 +142,13 @@ const isOpen = computed({
   set: value => emit('update:open', value)
 });
 
-// Download menu items
-const downloadMenuItems = computed(() => [
-  [
-    {
-      label: t('export.format.ats'),
-      icon: 'i-lucide-file-text',
-      onSelect: () => emit('download', 'ats')
-    },
-    {
-      label: t('export.format.human'),
-      icon: 'i-lucide-user',
-      onSelect: () => emit('download', 'human')
-    }
-  ]
-]);
+const resolvedSettings = computed<Partial<ResumeFormatSettings>>(() => {
+  if (!props.settings) return {};
+  if (isFormatSettingsMap(props.settings)) {
+    return props.previewType === 'ats' ? props.settings.ats : props.settings.human;
+  }
+  return props.settings;
+});
 </script>
 
 <style lang="scss">

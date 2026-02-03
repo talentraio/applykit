@@ -24,6 +24,13 @@ Key conventions:
 Before any code changes, always read `docs/codestyle/base.md` and follow it. Then read any
 other docs/\* relevant to the task.
 
+## Important Rules
+
+- **No unauthorized changes**: Do NOT make business logic changes (like removing auto-save, changing
+  core functionality) or global layout changes without explicit user approval.
+- **Server cleanup**: After using Playwright or running dev servers for testing, always stop
+  servers to free up ports.
+
 ## Tooling & docs policy
 
 - Use **latest Nuxt v4** and **latest NuxtUI v4**.

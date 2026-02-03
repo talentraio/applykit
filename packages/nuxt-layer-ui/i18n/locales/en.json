@@ -9,6 +9,7 @@
     "view": "View",
     "remove": "Remove",
     "add": "Add",
+    "new": "New",
     "loading": "Loading...",
     "submit": "Submit",
     "close": "Close",
@@ -141,7 +142,7 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "resumes": "Resumes",
+    "resume": "Resume",
     "vacancies": "Vacancies",
     "profile": "Profile",
     "settings": "Settings",
@@ -229,9 +230,13 @@
         "descriptionAts": "Adjust formatting for ATS-optimized resume",
         "descriptionHuman": "Adjust formatting for human-readable resume"
       },
-      "margins": {
-        "label": "Margins",
-        "hint": "Page margins in millimeters (10-26mm)"
+      "marginX": {
+        "label": "Horizontal Margins",
+        "hint": "Left and right margins in millimeters (10-26mm)"
+      },
+      "marginY": {
+        "label": "Vertical Margins",
+        "hint": "Top and bottom margins in millimeters (10-26mm)"
       },
       "fontSize": {
         "label": "Font Size",
@@ -262,7 +267,17 @@
       "education": "Education",
       "skills": "Skills",
       "certifications": "Certifications",
-      "languages": "Languages"
+      "languages": "Languages",
+      "Open Source & Side Projects": "Open Source & Side Projects",
+      "Publications": "Publications",
+      "Awards": "Awards",
+      "Volunteer Work": "Volunteer Work",
+      "Interests": "Interests"
+    },
+    "placeholder": {
+      "fullName": "Your Name",
+      "skillType": "Skills",
+      "skill": "Your skill"
     },
     "view": {
       "atsTitle": "ATS Resume",

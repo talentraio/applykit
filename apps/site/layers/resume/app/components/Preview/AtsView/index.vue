@@ -15,7 +15,7 @@
 import type { ResumeContent } from '@int/schema';
 import Design1 from './Design1.vue';
 
-defineOptions({ name: 'ResumeAtsView' });
+defineOptions({ name: 'ResumePreviewAtsView' });
 
 const props = defineProps<{
   content: ResumeContent;

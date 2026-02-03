@@ -23,7 +23,9 @@ export class LocalAdapter implements StorageAdapter {
 
     // Generate local URL (for dev server)
     // Use relative URL to avoid port mismatch issues
-    this.baseUrl = runtimeConfig.storage?.baseUrl || '/api/storage';
+    this.baseUrl = runtimeConfig.storage?.baseUrl || '/storage';
+
+    void this.migrateLegacyStorage();
   }
 
   async put(path: string, data: Buffer | Blob, _options?: PutOptions): Promise<string> {
@@ -159,6 +161,46 @@ export class LocalAdapter implements StorageAdapter {
       .map(segment => encodeURIComponent(segment))
       .join('/');
     return `${this.baseUrl}/${encodedPath}`;
+  }
+
+  private async migrateLegacyStorage(): Promise<void> {
+    const legacyDir = join(process.cwd(), 'public', 'storage');
+
+    if (legacyDir === this.baseDir) return;
+
+    try {
+      await fs.access(legacyDir);
+    } catch {
+      return;
+    }
+
+    await fs.mkdir(this.baseDir, { recursive: true });
+    await this.copyDirectory(legacyDir, this.baseDir);
+  }
+
+  private async copyDirectory(sourceDir: string, targetDir: string): Promise<void> {
+    const entries = await fs.readdir(sourceDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const sourcePath = join(sourceDir, entry.name);
+      const targetPath = join(targetDir, entry.name);
+
+      if (entry.isDirectory()) {
+        await fs.mkdir(targetPath, { recursive: true });
+        await this.copyDirectory(sourcePath, targetPath);
+        continue;
+      }
+
+      if (!entry.isFile()) continue;
+
+      try {
+        await fs.access(targetPath);
+        continue;
+      } catch {
+        await fs.mkdir(dirname(targetPath), { recursive: true });
+        await fs.copyFile(sourcePath, targetPath);
+      }
+    }
   }
 }
 

@@ -100,7 +100,7 @@ NUXT_STORAGE_BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 ### Local Filesystem (Development)
 
 - **Directory**: `.data/storage/` (default)
-- **Base URL**: `http://localhost:3000/api/storage` (default)
+- **Base URL**: `http://localhost:3000/storage` (default)
 - **Features**:
   - No external dependencies
   - Instant local development

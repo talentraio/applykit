@@ -3,7 +3,7 @@
     <header class="resume-human-design1__header" :class="{ 'flex gap-6': photoUrl }">
       <!-- Profile Photo -->
       <div v-if="photoUrl" class="flex-shrink-0">
-        <img
+        <NuxtImg
           :src="photoUrl"
           :alt="content.personalInfo.fullName"
           class="h-24 w-24 rounded-full border-2 border-primary/20 object-cover"

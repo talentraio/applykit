@@ -110,6 +110,44 @@ export function useResume(options: UseResumeOptions = {}) {
         deep: true
       }
     );
+
+    // Auto-save settings when changed
+    // Track initial settings to detect actual changes
+    let initialAtsSettings = JSON.stringify(store.atsSettings);
+    let initialHumanSettings = JSON.stringify(store.humanSettings);
+
+    watchDebounced(
+      () => ({
+        ats: JSON.stringify(store.atsSettings),
+        human: JSON.stringify(store.humanSettings)
+      }),
+      async newVal => {
+        if (!store.resume) return;
+
+        // Skip if settings haven't actually changed from initial
+        const atsChanged = newVal.ats !== initialAtsSettings;
+        const humanChanged = newVal.human !== initialHumanSettings;
+        if (!atsChanged && !humanChanged) return;
+
+        try {
+          await store.saveSettings();
+          // Update initial settings after successful save
+          initialAtsSettings = newVal.ats;
+          initialHumanSettings = newVal.human;
+        } catch {
+          toast.add({
+            title: t('resume.error.settingsUpdateFailed'),
+            description: store.error?.message,
+            color: 'error',
+            icon: 'i-lucide-alert-circle'
+          });
+        }
+      },
+      {
+        debounce: autoSaveDelay,
+        deep: false // No need for deep since we're comparing serialized strings
+      }
+    );
   }
 
   // =========================================

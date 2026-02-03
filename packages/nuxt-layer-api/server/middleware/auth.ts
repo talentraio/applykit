@@ -14,7 +14,7 @@ import { userRepository } from '../data/repositories';
 /**
  * Public routes that don't require authentication
  */
-const publicRoutes = ['/api/health'];
+const publicRoutes = ['/api/health', '/api/pdf/payload'];
 
 /**
  * Route patterns that don't require authentication (regex)

@@ -84,7 +84,7 @@ export default defineEventHandler(async event => {
     // Update profile with new photo URL
     await profileRepository.update(userId, { photoUrl });
 
-    return { photoUrl };
+    return { photoUrl: resolveStorageUrl(photoUrl) ?? photoUrl };
   } catch (error) {
     console.error('Failed to upload photo:', error);
     throw createError({

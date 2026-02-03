@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare & nuxt prepare .playground"
   },
   "dependencies": {
+    "@nuxt/image": "catalog:",
     "@nuxt/ui": "catalog:",
     "@nuxtjs/i18n": "catalog:",
     "nuxt": "catalog:",
