@@ -44,15 +44,27 @@
       </p>
 
       <div class="mt-4 space-y-4">
-        <!-- Margins -->
+        <!-- Horizontal Margins (left/right) -->
         <div class="resume-settings__control">
           <label class="resume-settings__label">
-            {{ $t('resume.settings.margins.label') }}
-            <span class="resume-settings__value">{{ localSettings.margins }}mm</span>
+            {{ $t('resume.settings.marginX.label') }}
+            <span class="resume-settings__value">{{ localSettings.marginX }}mm</span>
           </label>
-          <URange v-model="localSettings.margins" :min="10" :max="26" :step="1" />
+          <USlider v-model="localSettings.marginX" :min="10" :max="26" :step="1" />
           <p class="resume-settings__hint">
-            {{ $t('resume.settings.margins.hint') }}
+            {{ $t('resume.settings.marginX.hint') }}
+          </p>
+        </div>
+
+        <!-- Vertical Margins (top/bottom) -->
+        <div class="resume-settings__control">
+          <label class="resume-settings__label">
+            {{ $t('resume.settings.marginY.label') }}
+            <span class="resume-settings__value">{{ localSettings.marginY }}mm</span>
+          </label>
+          <USlider v-model="localSettings.marginY" :min="10" :max="26" :step="1" />
+          <p class="resume-settings__hint">
+            {{ $t('resume.settings.marginY.hint') }}
           </p>
         </div>
 
@@ -62,7 +74,7 @@
             {{ $t('resume.settings.fontSize.label') }}
             <span class="resume-settings__value">{{ localSettings.fontSize }}pt</span>
           </label>
-          <URange v-model="localSettings.fontSize" :min="9" :max="13" :step="0.5" />
+          <USlider v-model="localSettings.fontSize" :min="9" :max="13" :step="0.5" />
           <p class="resume-settings__hint">
             {{ $t('resume.settings.fontSize.hint') }}
           </p>
@@ -74,7 +86,7 @@
             {{ $t('resume.settings.lineHeight.label') }}
             <span class="resume-settings__value">{{ localSettings.lineHeight.toFixed(1) }}</span>
           </label>
-          <URange v-model="localSettings.lineHeight" :min="1.1" :max="1.5" :step="0.05" />
+          <USlider v-model="localSettings.lineHeight" :min="1.1" :max="1.5" :step="0.05" />
           <p class="resume-settings__hint">
             {{ $t('resume.settings.lineHeight.hint') }}
           </p>
@@ -86,36 +98,12 @@
             {{ $t('resume.settings.blockSpacing.label') }}
             <span class="resume-settings__value">{{ localSettings.blockSpacing }}</span>
           </label>
-          <URange v-model="localSettings.blockSpacing" :min="1" :max="9" :step="1" />
+          <USlider v-model="localSettings.blockSpacing" :min="1" :max="9" :step="1" />
           <p class="resume-settings__hint">
             {{ $t('resume.settings.blockSpacing.hint') }}
           </p>
         </div>
       </div>
-    </div>
-
-    <USeparator />
-
-    <!-- Save Settings Button -->
-    <div class="resume-settings__actions">
-      <UButton
-        color="primary"
-        icon="i-lucide-save"
-        :loading="saving"
-        :disabled="!isDirty"
-        @click="handleSave"
-      >
-        {{ $t('resume.settings.save') }}
-      </UButton>
-      <UButton
-        v-if="isDirty"
-        variant="ghost"
-        color="neutral"
-        icon="i-lucide-rotate-ccw"
-        @click="handleReset"
-      >
-        {{ $t('resume.settings.reset') }}
-      </UButton>
     </div>
   </div>
 </template>
@@ -124,14 +112,16 @@
 /**
  * Resume Settings Component
  *
- * Format settings panel with:
+ * Format settings panel with auto-save:
  * - Preview type toggle (ATS/Human)
- * - Margins slider (10-26mm)
+ * - Horizontal margins slider (10-26mm)
+ * - Vertical margins slider (10-26mm)
  * - Font size slider (9-13pt)
  * - Line height slider (1.1-1.5)
  * - Block spacing slider (1-9)
  *
  * Settings are per preview type (ATS and Human have separate settings).
+ * Changes are emitted immediately and auto-saved by parent.
  *
  * Related: T035 (US3)
  */
@@ -141,66 +131,46 @@ import type { PreviewType } from '../../types/preview';
 
 defineOptions({ name: 'ResumeSettings' });
 
-const props = withDefaults(
-  defineProps<{
-    /**
-     * Current preview type
-     */
-    previewType: PreviewType;
-    /**
-     * Current format settings
-     */
-    settings: ResumeFormatSettings;
-    /**
-     * Whether settings are being saved
-     */
-    saving?: boolean;
-  }>(),
-  {
-    saving: false
-  }
-);
+const props = defineProps<{
+  /**
+   * Current preview type
+   */
+  previewType: PreviewType;
+  /**
+   * Current format settings
+   */
+  settings: ResumeFormatSettings;
+}>();
 
 const emit = defineEmits<{
   /** Update preview type */
   'update:previewType': [type: PreviewType];
-  /** Update settings */
+  /** Update settings (triggers auto-save in parent) */
   'update:settings': [settings: ResumeFormatSettings];
-  /** Save settings to server */
-  save: [];
 }>();
 
 // Local copy of settings for editing
 const localSettings = reactive<ResumeFormatSettings>({
-  margins: props.settings.margins,
+  marginX: props.settings.marginX,
+  marginY: props.settings.marginY,
   fontSize: props.settings.fontSize,
   lineHeight: props.settings.lineHeight,
   blockSpacing: props.settings.blockSpacing
 });
 
-// Track if settings changed
-const isDirty = computed(() => {
-  return (
-    localSettings.margins !== props.settings.margins ||
-    localSettings.fontSize !== props.settings.fontSize ||
-    localSettings.lineHeight !== props.settings.lineHeight ||
-    localSettings.blockSpacing !== props.settings.blockSpacing
-  );
-});
-
-// Sync local settings when props change (e.g., switching preview type)
+// Sync local settings when preview type changes (switching between ATS/Human)
 watch(
-  () => props.settings,
-  newSettings => {
-    localSettings.margins = newSettings.margins;
-    localSettings.fontSize = newSettings.fontSize;
-    localSettings.lineHeight = newSettings.lineHeight;
-    localSettings.blockSpacing = newSettings.blockSpacing;
-  },
-  { deep: true }
+  () => props.previewType,
+  () => {
+    localSettings.marginX = props.settings.marginX;
+    localSettings.marginY = props.settings.marginY;
+    localSettings.fontSize = props.settings.fontSize;
+    localSettings.lineHeight = props.settings.lineHeight;
+    localSettings.blockSpacing = props.settings.blockSpacing;
+  }
 );
 
-// Emit settings changes for live preview
+// Emit settings changes for live preview and auto-save
 watch(
   localSettings,
   newSettings => {
@@ -208,23 +178,6 @@ watch(
   },
   { deep: true }
 );
-
-/**
- * Save settings to server
- */
-function handleSave() {
-  emit('save');
-}
-
-/**
- * Reset settings to original values
- */
-function handleReset() {
-  localSettings.margins = props.settings.margins;
-  localSettings.fontSize = props.settings.fontSize;
-  localSettings.lineHeight = props.settings.lineHeight;
-  localSettings.blockSpacing = props.settings.blockSpacing;
-}
 </script>
 
 <style lang="scss">
@@ -268,12 +221,6 @@ function handleReset() {
   &__hint {
     font-size: 0.75rem;
     color: var(--color-neutral-400);
-  }
-
-  &__actions {
-    display: flex;
-    gap: 0.75rem;
-    padding-top: 1rem;
   }
 }
 </style>

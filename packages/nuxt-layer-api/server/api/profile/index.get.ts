@@ -13,5 +13,12 @@ export default defineEventHandler(async event => {
   const session = await requireUserSession(event);
 
   // Get profile for user
-  return await profileRepository.findByUserId((session.user as { id: string }).id);
+  const profile = await profileRepository.findByUserId((session.user as { id: string }).id);
+
+  if (!profile) return null;
+
+  return {
+    ...profile,
+    photoUrl: resolveStorageUrl(profile.photoUrl) ?? undefined
+  };
 });

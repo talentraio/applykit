@@ -9,7 +9,7 @@
         <div
           class="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-default bg-neutral-100 dark:bg-neutral-800"
         >
-          <img
+          <NuxtImg
             v-if="previewUrl"
             :src="previewUrl"
             alt="Profile photo"

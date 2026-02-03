@@ -65,7 +65,7 @@ export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
     ? {
         ...profile,
         phones: profile.phones ?? undefined,
-        photoUrl: profile.photoUrl ?? undefined
+        photoUrl: resolveStorageUrl(profile.photoUrl) ?? undefined
       }
     : null;
 

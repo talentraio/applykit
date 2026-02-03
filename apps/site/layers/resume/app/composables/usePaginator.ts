@@ -14,8 +14,10 @@ import { A4_HEIGHT_PX, MM_TO_PX } from '../types/preview';
  * Paginator options
  */
 export type PaginatorOptions = {
-  /** Page padding in mm (default: 20) */
-  paddingMm?: number;
+  /** Vertical padding (top/bottom) in mm (default: 15) */
+  paddingYMm?: MaybeRef<number>;
+  /** Block spacing in px (default: 10) */
+  blockSpacingPx?: MaybeRef<number>;
 };
 
 /**
@@ -57,10 +59,18 @@ function getBlockGroup(blocks: MeasuredBlock[], startIndex: number): MeasuredBlo
 }
 
 /**
- * Calculate total height of a block group
+ * Calculate total height of a block group including spacing between blocks
+ * @param group - Blocks in the group
+ * @param spacing - Spacing between blocks in px
+ * @param isFirstOnPage - Whether this group is first on the page (no leading spacing)
  */
-function getGroupHeight(group: MeasuredBlock[]): number {
-  return group.reduce((sum, block) => sum + block.height, 0);
+function getGroupHeight(group: MeasuredBlock[], spacing: number, isFirstOnPage: boolean): number {
+  const blocksHeight = group.reduce((sum, block) => sum + block.height, 0);
+  // Spacing between blocks within the group
+  const internalSpacing = group.length > 1 ? (group.length - 1) * spacing : 0;
+  // Spacing before group if not first on page
+  const leadingSpacing = isFirstOnPage ? 0 : spacing;
+  return blocksHeight + internalSpacing + leadingSpacing;
 }
 
 /**
@@ -74,15 +84,16 @@ export function usePaginator(
   measuredBlocks: Ref<MeasuredBlock[]> | ComputedRef<MeasuredBlock[]>,
   options: PaginatorOptions = {}
 ) {
-  const { paddingMm = 20 } = options;
+  const { paddingYMm = 15, blockSpacingPx = 10 } = options;
 
   const pages = computed<PageModel[]>(() => {
     const blocks = unref(measuredBlocks);
     if (blocks.length === 0) return [];
 
     // Calculate usable page height (A4 height minus top and bottom padding)
-    const paddingPx = paddingMm * MM_TO_PX;
+    const paddingPx = unref(paddingYMm) * MM_TO_PX;
     const usableHeight = A4_HEIGHT_PX - paddingPx * 2;
+    const spacing = unref(blockSpacingPx);
 
     const result: PageModel[] = [];
     let currentPage: PageModel = { index: 0, blocks: [] };
@@ -92,7 +103,8 @@ export function usePaginator(
     while (blockIndex < blocks.length) {
       // Get the group of blocks that must stay together
       const group = getBlockGroup(blocks, blockIndex);
-      const groupHeight = getGroupHeight(group);
+      const isFirstOnPage = currentPage.blocks.length === 0;
+      const groupHeight = getGroupHeight(group, spacing, isFirstOnPage);
 
       // Check if group fits on current page
       if (currentPageHeight + groupHeight <= usableHeight) {
@@ -104,13 +116,14 @@ export function usePaginator(
         currentPage.blocks.push(...group);
         currentPageHeight += groupHeight;
       } else {
-        // Start new page
+        // Start new page - group will be first, so no leading spacing
         result.push(currentPage);
+        const newPageGroupHeight = getGroupHeight(group, spacing, true);
         currentPage = {
           index: result.length,
           blocks: [...group]
         };
-        currentPageHeight = groupHeight;
+        currentPageHeight = newPageGroupHeight;
       }
 
       // Move past the group

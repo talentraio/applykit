@@ -88,14 +88,15 @@ const { open: openAuthModal } = useAuthModal();
 
 /**
  * Handle "Try it" button click
- * - If logged in: navigate to /resume
- * - If not logged in: open auth modal with redirect to /resume
+ * - If logged in: navigate to post-login redirect
+ * - If not logged in: open auth modal with post-login redirect
  */
+const { redirects } = useAppConfig();
 const handleTryIt = () => {
   if (loggedIn.value) {
-    navigateTo('/resume');
+    navigateTo(redirects.afterLandingTryIt);
   } else {
-    openAuthModal('login', '/resume');
+    openAuthModal('login', redirects.afterLandingTryIt);
   }
 };
 

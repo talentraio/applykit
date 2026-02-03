@@ -28,17 +28,16 @@
       </UButton>
     </div>
 
-    <VacancyExportButtons
-      :vacancy-id="vacancyId"
-      :generation-id="generation.id"
+    <BaseDownloadPdf
+      :content="generation.content"
+      :settings="exportSettings"
+      :photo-url="photoUrl"
       :disabled="isGenerating"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Generation } from '@int/schema';
-import GenerateButton from '../GenerateButton.vue';
 /**
  * Generation Exists View
  *
@@ -47,6 +46,8 @@ import GenerateButton from '../GenerateButton.vue';
  *
  * Related: T112, T113 (US5)
  */
+import type { Generation } from '@int/schema';
+import GenerateButton from '../GenerateButton.vue';
 import LifetimeIndicator from './LifetimeIndicator.vue';
 import MatchScoreDisplay from './MatchScoreDisplay.vue';
 
@@ -68,13 +69,22 @@ defineProps<{
    */
   isGenerating: boolean;
 }>();
+
 const emit = defineEmits<{
   /**
    * Emitted when generate button is clicked
    */
   generate: [];
 }>();
+const vacancyStore = useVacancyStore();
+const { profile } = useProfile();
 
+const exportSettings = computed(() => ({
+  ats: vacancyStore.atsSettings,
+  human: vacancyStore.humanSettings
+}));
+
+const photoUrl = computed(() => profile.value?.photoUrl);
 // Event handler
 const handleGenerate = () => {
   emit('generate');

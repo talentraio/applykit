@@ -51,17 +51,15 @@
               icon="i-lucide-upload"
               @click="isUploadModalOpen = true"
             >
-              {{ $t('resume.page.uploadNew') }}
+              <span class="hidden md:inline">{{ $t('resume.page.uploadNew') }}</span>
+              <span class="md:hidden">{{ $t('common.new') }}</span>
             </UButton>
-            <UDropdownMenu :items="downloadMenuItems">
-              <UButton
-                color="primary"
-                icon="i-lucide-download"
-                trailing-icon="i-lucide-chevron-down"
-              >
-                {{ $t('export.button.download') }}
-              </UButton>
-            </UDropdownMenu>
+            <BaseDownloadPdf
+              v-if="content"
+              :content="content"
+              :settings="{ ats: atsSettings, human: humanSettings }"
+              :photo-url="photoUrl"
+            />
           </div>
         </div>
       </template>
@@ -170,10 +168,9 @@
           v-model:open="isMobilePreviewOpen"
           :content="content"
           :preview-type="previewType"
-          :settings="currentSettings"
+          :settings="{ ats: atsSettings, human: humanSettings }"
           :photo-url="photoUrl"
           @update:preview-type="setPreviewType"
-          @download="handleExport"
         />
       </template>
     </ResumeEditorLayout>
@@ -220,9 +217,13 @@
  */
 
 import type { Resume, ResumeContent } from '@int/schema';
-import type { PreviewType } from '../types/preview';
 
 defineOptions({ name: 'ResumePage' });
+
+// Use editor layout (no footer) for full-screen editing experience
+definePageMeta({
+  layout: 'editor'
+});
 
 // Auth is handled by global middleware (auth.global.ts)
 
@@ -242,6 +243,8 @@ const {
   isDirty,
   previewType,
   currentSettings,
+  atsSettings,
+  humanSettings,
   canUndo,
   canRedo,
   historyLength,
@@ -279,22 +282,6 @@ const tabItems = computed(() => [
     value: 'ai',
     icon: 'i-lucide-sparkles'
   }
-]);
-
-// Download menu items
-const downloadMenuItems = computed(() => [
-  [
-    {
-      label: t('export.format.ats'),
-      icon: 'i-lucide-file-text',
-      onSelect: () => handleExport('ats')
-    },
-    {
-      label: t('export.format.human'),
-      icon: 'i-lucide-user',
-      onSelect: () => handleExport('human')
-    }
-  ]
 ]);
 
 // Photo URL from profile
@@ -398,24 +385,12 @@ async function handleCreateEmpty() {
     // Error handled in composable
   }
 }
-
-/**
- * Handle PDF export
- */
-function handleExport(_type: PreviewType) {
-  // TODO: Implement PDF export
-  toast.add({
-    title: t('export.inProgress'),
-    color: 'primary',
-    icon: 'i-lucide-loader-2'
-  });
-}
 </script>
 
 <style lang="scss">
 .resume-page {
-  // Fixed height for proper scrolling in child columns
-  height: calc(100vh - 64px); // Subtract header height
+  // Full height minus header (uses CSS variable from main.css)
+  height: calc(100vh - var(--layout-header-height, 64px));
 
   &__loading {
     display: flex;

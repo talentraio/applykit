@@ -102,3 +102,4 @@ Thumbs.db
 *.key
 .data/
 *.local.*
+public/storage/

@@ -1,5 +1,16 @@
 <template>
   <div class="landing-page">
+    <UButton
+      v-if="!loggedIn"
+      class="landing-page__signin fixed right-4 top-4 z-50"
+      color="primary"
+      variant="outline"
+      size="xl"
+      @click="handleSignIn"
+    >
+      {{ $t('auth.modal.login.submit') }}
+    </UButton>
+
     <LandingHero />
     <LandingSteps />
     <LandingComparison />
@@ -35,6 +46,14 @@ defineOptions({ name: 'LandingPage' });
 definePageMeta({
   layout: false // Use custom layout for landing page
 });
+
+const { loggedIn } = useAuth();
+const { open: openAuthModal } = useAuthModal();
+const { redirects } = useAppConfig();
+
+const handleSignIn = () => {
+  openAuthModal('login', redirects.afterLandingTryIt);
+};
 </script>
 
 <style lang="scss">

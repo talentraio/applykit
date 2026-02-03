@@ -1,5 +1,5 @@
 <template>
-  <div ref="containerRef" class="resume-preview">
+  <div ref="containerRef" class="resume-preview" :data-ready="isReady ? 'true' : 'false'">
     <!-- Hidden measurement container (same width as page, scale=1) -->
     <div ref="measurerRef" class="resume-preview__measurer" aria-hidden="true">
       <div class="resume-preview__measurer-content" :style="measurerContentStyle">
@@ -99,14 +99,16 @@ const props = withDefaults(
 
 // Merge with defaults
 const settings = computed<ResumeFormatSettings>(() => ({
-  margins: props.settings?.margins ?? 20,
+  marginX: props.settings?.marginX ?? 20,
+  marginY: props.settings?.marginY ?? 15,
   fontSize: props.settings?.fontSize ?? 12,
   lineHeight: props.settings?.lineHeight ?? 1.2,
   blockSpacing: props.settings?.blockSpacing ?? 5
 }));
 
-// Convert padding to pixels
-const paddingPx = computed(() => settings.value.margins * MM_TO_PX);
+// Convert padding to pixels (separate X and Y)
+const paddingXPx = computed(() => settings.value.marginX * MM_TO_PX);
+const paddingYPx = computed(() => settings.value.marginY * MM_TO_PX);
 
 // Refs
 const containerRef = ref<HTMLElement | null>(null);
@@ -116,22 +118,34 @@ const measurerRef = ref<HTMLElement | null>(null);
 const contentRef = computed(() => props.content);
 const { blocks } = useResumeBlocks(contentRef);
 
-// Measure block heights
-const { measuredBlocks } = useBlockMeasurer(blocks, measurerRef);
-
-// Paginate blocks into pages
-const { pages } = usePaginator(measuredBlocks, {
-  paddingMm: settings.value.margins
+// Measure block heights (re-measure when fontSize, lineHeight, or blockSpacing change)
+const { measuredBlocks, isComplete } = useBlockMeasurer(blocks, measurerRef, {
+  measurementKeys: [
+    computed(() => settings.value.fontSize),
+    computed(() => settings.value.lineHeight),
+    computed(() => settings.value.marginX), // Content width changes with marginX
+    computed(() => settings.value.blockSpacing) // Block spacing affects heights
+  ]
 });
+
+// Paginate blocks into pages (reactive to marginY and blockSpacing changes)
+const { pages } = usePaginator(measuredBlocks, {
+  paddingYMm: computed(() => settings.value.marginY),
+  blockSpacingPx: computed(() => settings.value.blockSpacing * 2)
+});
+
+const isReady = computed(() => isComplete.value && pages.value.length > 0);
 
 // Calculate scale based on container width
 const { scale } = usePageScale(containerRef);
 
 // Measurer content style (same width as A4 page inner width)
 const measurerContentStyle = computed(() => ({
-  width: `${A4_WIDTH_PX - paddingPx.value * 2}px`,
+  width: `${A4_WIDTH_PX - paddingXPx.value * 2}px`,
   fontSize: `${settings.value.fontSize}pt`,
-  lineHeight: settings.value.lineHeight
+  lineHeight: settings.value.lineHeight,
+  '--line-height': settings.value.lineHeight,
+  '--block-spacing': `${settings.value.blockSpacing * 2}px`
 }));
 
 // Container for all pages
@@ -139,9 +153,11 @@ const pagesContainerStyle = computed(() => ({
   '--page-scale': scale.value,
   '--page-width': `${A4_WIDTH_PX}px`,
   '--page-height': `${A4_HEIGHT_PX}px`,
-  '--page-pad': `${paddingPx.value}px`,
+  '--page-pad-x': `${paddingXPx.value}px`,
+  '--page-pad-y': `${paddingYPx.value}px`,
   '--font-size': `${settings.value.fontSize}pt`,
-  '--line-height': settings.value.lineHeight
+  '--line-height': settings.value.lineHeight,
+  '--block-spacing': `${settings.value.blockSpacing * 2}px`
 }));
 
 // Wrapper for each page (reserves space for scaled page)
@@ -158,11 +174,13 @@ const pageStyle = computed(() => ({
   transformOrigin: 'top left'
 }));
 
-// Page content padding style
+// Page content padding style (separate X and Y)
 const pageContentStyle = computed(() => ({
-  padding: `${paddingPx.value}px`,
+  padding: `${paddingYPx.value}px ${paddingXPx.value}px`,
   fontSize: `${settings.value.fontSize}pt`,
-  lineHeight: settings.value.lineHeight
+  lineHeight: settings.value.lineHeight,
+  '--line-height': settings.value.lineHeight,
+  '--block-spacing': `${settings.value.blockSpacing * 2}px`
 }));
 </script>
 
@@ -183,6 +201,50 @@ const pageContentStyle = computed(() => ({
   &__measurer-content {
     background: white;
     color: #1f2937;
+
+    // Same text scaling as page content for accurate measurement
+    // Must match __page-content exactly for correct pagination
+    .text-2xl {
+      font-size: 1.5em !important;
+      line-height: inherit !important;
+    }
+
+    .text-xl {
+      font-size: 1.25em !important;
+      line-height: inherit !important;
+    }
+
+    .text-lg {
+      font-size: 1.125em !important;
+      line-height: inherit !important;
+    }
+
+    .text-base {
+      font-size: 1em !important;
+      line-height: inherit !important;
+    }
+
+    .text-sm {
+      font-size: 0.875em !important;
+      line-height: inherit !important;
+    }
+
+    .text-xs {
+      font-size: 0.75em !important;
+      line-height: inherit !important;
+    }
+
+    .leading-relaxed {
+      line-height: calc(var(--line-height, 1.2) * 1.3) !important;
+    }
+
+    .leading-normal {
+      line-height: var(--line-height, 1.2) !important;
+    }
+
+    .leading-tight {
+      line-height: calc(var(--line-height, 1.2) * 0.9) !important;
+    }
   }
 
   // Pages container
@@ -213,7 +275,7 @@ const pageContentStyle = computed(() => ({
 
   &__page-content {
     box-sizing: border-box;
-    height: 100%;
+    height: 100%; // Fill the A4 page so bottom padding aligns to page bottom
 
     // Override dark mode inside page
     .text-muted {
@@ -227,10 +289,60 @@ const pageContentStyle = computed(() => ({
     a {
       color: #2563eb !important;
     }
+
+    // Scale Tailwind text classes relative to base font size
+    // Base font size is set via inline style (e.g., 12pt)
+    // These scale proportionally when base changes
+    // Also reset line-height to inherit from parent (Tailwind text classes include line-height)
+    .text-2xl {
+      font-size: 1.5em !important;
+      line-height: inherit !important;
+    }
+
+    .text-xl {
+      font-size: 1.25em !important;
+      line-height: inherit !important;
+    }
+
+    .text-lg {
+      font-size: 1.125em !important;
+      line-height: inherit !important;
+    }
+
+    .text-base {
+      font-size: 1em !important;
+      line-height: inherit !important;
+    }
+
+    .text-sm {
+      font-size: 0.875em !important;
+      line-height: inherit !important;
+    }
+
+    .text-xs {
+      font-size: 0.75em !important;
+      line-height: inherit !important;
+    }
+
+    // Scale leading classes relative to base line height
+    .leading-relaxed {
+      line-height: calc(var(--line-height, 1.2) * 1.3) !important;
+    }
+
+    .leading-normal {
+      line-height: var(--line-height, 1.2) !important;
+    }
+
+    .leading-tight {
+      line-height: calc(var(--line-height, 1.2) * 0.9) !important;
+    }
   }
 
   &__block {
-    // Block spacing handled by BlockRenderer
+    // Block spacing using CSS variable
+    &:not(:first-child) {
+      margin-top: var(--block-spacing, 10px);
+    }
   }
 
   &__page-number {

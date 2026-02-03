@@ -40,7 +40,8 @@ const MAX_HISTORY_SIZE = 50;
  * Default format settings
  */
 const DEFAULT_FORMAT_SETTINGS: ResumeFormatSettings = {
-  margins: 20,
+  marginX: 20,
+  marginY: 15,
   fontSize: 12,
   lineHeight: 1.2,
   blockSpacing: 5

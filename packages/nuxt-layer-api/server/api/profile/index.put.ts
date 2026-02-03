@@ -42,9 +42,16 @@ export default defineEventHandler(async event => {
         message: 'Failed to update profile'
       });
     }
-    return updated;
+    return {
+      ...updated,
+      photoUrl: resolveStorageUrl(updated.photoUrl) ?? undefined
+    };
   } else {
     // Create new profile
-    return await profileRepository.create(userId, data);
+    const created = await profileRepository.create(userId, data);
+    return {
+      ...created,
+      photoUrl: resolveStorageUrl(created.photoUrl) ?? undefined
+    };
   }
 });

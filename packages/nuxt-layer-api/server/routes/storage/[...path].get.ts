@@ -3,7 +3,7 @@ import { extname, join } from 'node:path';
 import process from 'node:process';
 
 /**
- * GET /api/storage/[...path]
+ * GET /storage/[...path]
  *
  * Serve files from local storage (development only)
  * In production, files are served directly from Vercel Blob
@@ -24,7 +24,7 @@ export default defineEventHandler(async event => {
   // Get file path from URL
   const url = getRequestURL(event);
   const urlPath = url.pathname;
-  const prefix = '/api/storage/';
+  const prefix = '/storage/';
 
   if (!urlPath.startsWith(prefix)) {
     throw createError({
@@ -52,7 +52,8 @@ export default defineEventHandler(async event => {
   }
 
   // Get storage base directory
-  const baseDir = join(process.cwd(), '.data', 'storage');
+  const runtimeConfig = useRuntimeConfig();
+  const baseDir = runtimeConfig.storage?.baseDir || join(process.cwd(), '.data', 'storage');
   const fullPath = join(baseDir, filePath);
 
   // Security: ensure the resolved path is still within baseDir

@@ -5,7 +5,7 @@
       <header class="flex gap-4" :class="{ 'items-start': photoUrl }">
         <!-- Profile Photo -->
         <div v-if="photoUrl" class="flex-shrink-0">
-          <img
+          <NuxtImg
             :src="photoUrl"
             :alt="personalInfo.fullName"
             class="h-20 w-20 rounded-full border-2 border-primary/20 object-cover"
