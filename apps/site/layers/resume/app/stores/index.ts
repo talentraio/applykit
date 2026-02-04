@@ -50,6 +50,13 @@ const DEFAULT_FORMAT_SETTINGS: ResumeFormatSettings = {
   blockSpacing: 5
 };
 
+const cloneResumeContent = (content: ResumeContent): ResumeContent => {
+  // JSON clone strips Vue proxies/refs so history stays serializable.
+  return JSON.parse(JSON.stringify(content)) as unknown as ResumeContent;
+};
+
+const serializeResumeContent = (content: ResumeContent): string => JSON.stringify(content);
+
 export const useResumeStore = defineStore('ResumeStore', {
   state: (): {
     // Server state
@@ -128,9 +135,9 @@ export const useResumeStore = defineStore('ResumeStore', {
     canRedo: (state): boolean => state.historyIndex < state.history.length - 1,
 
     /**
-     * Get history length for display
+     * Get history length for display (exclude initial snapshot)
      */
-    historyLength: (state): number => state.history.length
+    historyLength: (state): number => Math.max(0, state.history.length - 1)
   },
 
   actions: {
@@ -151,7 +158,7 @@ export const useResumeStore = defineStore('ResumeStore', {
 
         if (resume) {
           // Initialize editing state from server data
-          this.editingContent = structuredClone(resume.content);
+          this.editingContent = cloneResumeContent(resume.content);
           this.atsSettings = resume.atsSettings ?? { ...DEFAULT_FORMAT_SETTINGS };
           this.humanSettings = resume.humanSettings ?? { ...DEFAULT_FORMAT_SETTINGS };
 
@@ -182,7 +189,7 @@ export const useResumeStore = defineStore('ResumeStore', {
         this.resume = resume;
 
         // Initialize editing state
-        this.editingContent = structuredClone(resume.content);
+        this.editingContent = cloneResumeContent(resume.content);
         this.atsSettings = resume.atsSettings ?? { ...DEFAULT_FORMAT_SETTINGS };
         this.humanSettings = resume.humanSettings ?? { ...DEFAULT_FORMAT_SETTINGS };
         this.isDirty = false;
@@ -213,7 +220,7 @@ export const useResumeStore = defineStore('ResumeStore', {
         this.resume = resume;
 
         // Initialize editing state
-        this.editingContent = structuredClone(resume.content);
+        this.editingContent = cloneResumeContent(resume.content);
         this.isDirty = false;
 
         // Initialize history
@@ -241,7 +248,6 @@ export const useResumeStore = defineStore('ResumeStore', {
     updateContent(content: ResumeContent): void {
       this.editingContent = content;
       this.isDirty = true;
-      this._pushToHistory(content);
     },
 
     /**
@@ -255,7 +261,6 @@ export const useResumeStore = defineStore('ResumeStore', {
         [field]: value
       };
       this.isDirty = true;
-      this._pushToHistory(this.editingContent);
     },
 
     /**
@@ -270,7 +275,16 @@ export const useResumeStore = defineStore('ResumeStore', {
       try {
         const resume = await resumeApi.updateContent(this.editingContent);
         this.resume = resume;
+        this.editingContent = cloneResumeContent(resume.content);
         this.isDirty = false;
+        const currentSnapshot = this.history[this.historyIndex];
+        const isSameAsCurrent =
+          currentSnapshot &&
+          serializeResumeContent(currentSnapshot.content) ===
+            serializeResumeContent(resume.content);
+        if (!isSameAsCurrent) {
+          this._pushToHistory(resume.content);
+        }
         return resume;
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to save resume';
@@ -295,7 +309,7 @@ export const useResumeStore = defineStore('ResumeStore', {
       this.historyIndex--;
       const snapshot = this.history[this.historyIndex];
       if (snapshot) {
-        this.editingContent = structuredClone(snapshot.content);
+        this.editingContent = cloneResumeContent(snapshot.content);
         this.isDirty = true;
       }
     },
@@ -309,7 +323,7 @@ export const useResumeStore = defineStore('ResumeStore', {
       this.historyIndex++;
       const snapshot = this.history[this.historyIndex];
       if (snapshot) {
-        this.editingContent = structuredClone(snapshot.content);
+        this.editingContent = cloneResumeContent(snapshot.content);
         this.isDirty = true;
       }
     },
@@ -318,7 +332,8 @@ export const useResumeStore = defineStore('ResumeStore', {
      * Initialize history with initial content
      */
     _initializeHistory(content: ResumeContent): void {
-      this.history = [{ content: structuredClone(content), timestamp: Date.now() }];
+      const snapshot = cloneResumeContent(content);
+      this.history = [{ content: snapshot, timestamp: Date.now() }];
       this.historyIndex = 0;
       this.isDirty = false;
     },
@@ -332,9 +347,11 @@ export const useResumeStore = defineStore('ResumeStore', {
         this.history = this.history.slice(0, this.historyIndex + 1);
       }
 
+      const snapshot = cloneResumeContent(content);
+
       // Add new snapshot
       this.history.push({
-        content: structuredClone(content),
+        content: snapshot,
         timestamp: Date.now()
       });
       this.historyIndex = this.history.length - 1;
@@ -412,7 +429,7 @@ export const useResumeStore = defineStore('ResumeStore', {
     discardChanges(): void {
       if (!this.resume) return;
 
-      this.editingContent = structuredClone(this.resume.content);
+      this.editingContent = cloneResumeContent(this.resume.content);
       this._initializeHistory(this.resume.content);
       this.isDirty = false;
     },

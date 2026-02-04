@@ -3,12 +3,11 @@
     <h3 class="text-lg font-semibold">{{ $t('resume.form.summary.title') }}</h3>
 
     <UTextarea
-      :model-value="modelValue ?? ''"
+      v-model="summaryText"
       :rows="4"
       :placeholder="$t('resume.form.summary.placeholder')"
       size="lg"
       class="w-full"
-      @update:model-value="$emit('update:modelValue', $event || undefined)"
     />
     <p class="text-xs text-muted">{{ $t('resume.form.summary.hint') }}</p>
   </div>
@@ -23,11 +22,12 @@
 
 defineOptions({ name: 'ResumeFormSectionSummary' });
 
-defineProps<{
-  modelValue?: string;
-}>();
+const modelValue = defineModel<string | undefined>({ default: undefined });
 
-defineEmits<{
-  'update:modelValue': [value: string | undefined];
-}>();
+const summaryText = computed({
+  get: () => modelValue.value ?? '',
+  set: value => {
+    modelValue.value = value || undefined;
+  }
+});
 </script>

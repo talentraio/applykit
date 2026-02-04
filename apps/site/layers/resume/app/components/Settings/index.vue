@@ -1,35 +1,5 @@
 <template>
   <div class="resume-settings">
-    <!-- Preview Type Toggle -->
-    <div class="resume-settings__section">
-      <h3 class="resume-settings__title">
-        {{ $t('resume.settings.previewType.label') }}
-      </h3>
-      <p class="resume-settings__description">
-        {{ $t('resume.settings.previewType.description') }}
-      </p>
-      <UFieldGroup class="mt-3">
-        <UButton
-          :color="previewType === 'ats' ? 'primary' : 'neutral'"
-          :variant="previewType === 'ats' ? 'solid' : 'outline'"
-          icon="i-lucide-file-text"
-          @click="emit('update:previewType', 'ats')"
-        >
-          {{ $t('resume.settings.previewType.ats') }}
-        </UButton>
-        <UButton
-          :color="previewType === 'human' ? 'primary' : 'neutral'"
-          :variant="previewType === 'human' ? 'solid' : 'outline'"
-          icon="i-lucide-user"
-          @click="emit('update:previewType', 'human')"
-        >
-          {{ $t('resume.settings.previewType.human') }}
-        </UButton>
-      </UFieldGroup>
-    </div>
-
-    <USeparator />
-
     <!-- Format Settings -->
     <div class="resume-settings__section">
       <h3 class="resume-settings__title">
@@ -113,7 +83,6 @@
  * Resume Settings Component
  *
  * Format settings panel with auto-save:
- * - Preview type toggle (ATS/Human)
  * - Horizontal margins slider (10-26mm)
  * - Vertical margins slider (10-26mm)
  * - Font size slider (9-13pt)
@@ -143,8 +112,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  /** Update preview type */
-  'update:previewType': [type: PreviewType];
   /** Update settings (triggers auto-save in parent) */
   'update:settings': [settings: ResumeFormatSettings];
 }>();

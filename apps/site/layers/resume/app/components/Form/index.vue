@@ -1,29 +1,46 @@
 <template>
   <div class="resume-form">
     <form class="space-y-8" @submit.prevent="handleSubmit">
-      <!-- Personal Info Section -->
-      <ResumeFormSectionPersonalInfo v-model="formData.personalInfo" />
+      <UAccordion
+        v-model="activeSection"
+        type="single"
+        :collapsible="true"
+        :unmount-on-hide="false"
+        :items="sectionItems"
+        class="resume-form__sections"
+      >
+        <template #personal-info>
+          <ResumeFormSectionPersonalInfo v-model="formData.personalInfo" />
+        </template>
 
-      <!-- Summary Section -->
-      <ResumeFormSectionSummary v-model="formData.summary" />
+        <template #summary>
+          <ResumeFormSectionSummary v-model="formData.summary" />
+        </template>
 
-      <!-- Experience Section -->
-      <ResumeFormSectionExperience v-model="formData.experience" />
+        <template #skills>
+          <ResumeFormSectionSkills v-model="formData.skills" />
+        </template>
 
-      <!-- Education Section -->
-      <ResumeFormSectionEducation v-model="formData.education" />
+        <template #experience>
+          <ResumeFormSectionExperience v-model="formData.experience" />
+        </template>
 
-      <!-- Skills Section -->
-      <ResumeFormSectionSkills v-model="formData.skills" />
+        <template #education>
+          <ResumeFormSectionEducation v-model="formData.education" />
+        </template>
 
-      <!-- Certifications Section -->
-      <ResumeFormSectionCertifications v-model="formData.certifications" />
+        <template #certifications>
+          <ResumeFormSectionCertifications v-model="formData.certifications" />
+        </template>
 
-      <!-- Languages Section -->
-      <ResumeFormSectionLanguages v-model="formData.languages" />
+        <template #additional>
+          <ResumeFormSectionCustomSections v-model="formData.customSections" />
+        </template>
 
-      <!-- Custom Sections -->
-      <ResumeFormSectionCustomSections v-model="formData.customSections" />
+        <template #languages>
+          <ResumeFormSectionLanguages v-model="formData.languages" />
+        </template>
+      </UAccordion>
 
       <!-- Validation Error -->
       <UAlert
@@ -33,15 +50,6 @@
         icon="i-lucide-alert-circle"
         :title="$t('resume.form.validationError')"
         :description="validationError"
-      />
-
-      <!-- Actions -->
-      <ResumeFormActions
-        :show-cancel="showCancel"
-        :saving="saving"
-        :has-unsaved-changes="hasUnsavedChanges"
-        :save-success="saveSuccess"
-        @cancel="handleCancel"
       />
     </form>
   </div>
@@ -55,6 +63,7 @@
  * Orchestrates sub-components for each section.
  */
 
+import type { AccordionItem } from '#ui/types';
 import type {
   CertificationEntry,
   CustomSection,
@@ -67,40 +76,6 @@ import type {
 } from '@int/schema';
 import { ResumeContentSchema } from '@int/schema';
 
-defineOptions({ name: 'ResumeForm' });
-
-const props = withDefaults(
-  defineProps<{
-    /**
-     * Resume content to edit
-     */
-    modelValue: ResumeContent;
-    /**
-     * Resume ID for saving changes
-     */
-    resumeId: string;
-    /**
-     * Show cancel button
-     */
-    showCancel?: boolean;
-    /**
-     * Loading state
-     */
-    saving?: boolean;
-  }>(),
-  {
-    showCancel: false,
-    saving: false
-  }
-);
-
-const emit = defineEmits<{
-  'update:modelValue': [value: ResumeContent];
-  save: [content: ResumeContent];
-  cancel: [];
-  error: [error: Error];
-}>();
-
 // Form data structure (mutable copy of the input)
 type ResumeFormData = {
   personalInfo: PersonalInfo;
@@ -112,6 +87,24 @@ type ResumeFormData = {
   languages?: ResumeLanguage[];
   customSections?: CustomSection[];
 };
+
+defineOptions({ name: 'ResumeForm' });
+
+const props = withDefaults(
+  defineProps<{
+    /**
+     * Resume content to edit
+     */
+    modelValue: ResumeContent;
+  }>(),
+  {}
+);
+
+const emit = defineEmits<{
+  'update:modelValue': [value: ResumeContent];
+}>();
+
+const { t } = useI18n();
 
 // Helper to check if skills data is in legacy format (flat array of strings)
 const isLegacySkillsFormat = (skills: unknown[]): skills is string[] =>
@@ -144,29 +137,81 @@ const createFormData = (content: ResumeContent): ResumeFormData => ({
 
 const formData = reactive<ResumeFormData>(createFormData(props.modelValue));
 
-// Track changes
-const hasUnsavedChanges = ref(false);
-const saveSuccess = ref(false);
 const validationError = ref<string | null>(null);
+const isSyncing = ref(false);
+const lastEmittedSnapshot = ref<string | null>(null);
+const activeSection = ref<string | undefined>(undefined);
 
-// Mark as changed when any field updates
+const sectionItems = computed<AccordionItem[]>(() => [
+  {
+    label: t('resume.form.personalInfo.title'),
+    value: 'personal-info',
+    slot: 'personal-info'
+  },
+  {
+    label: t('resume.form.summary.title'),
+    value: 'summary',
+    slot: 'summary'
+  },
+  {
+    label: t('resume.form.skills.title'),
+    value: 'skills',
+    slot: 'skills'
+  },
+  {
+    label: t('resume.form.experience.title'),
+    value: 'experience',
+    slot: 'experience'
+  },
+  {
+    label: t('resume.form.education.title'),
+    value: 'education',
+    slot: 'education'
+  },
+  {
+    label: t('resume.form.certifications.title'),
+    value: 'certifications',
+    slot: 'certifications'
+  },
+  {
+    label: t('resume.form.customSections.title'),
+    value: 'additional',
+    slot: 'additional'
+  },
+  {
+    label: t('resume.form.languages.title'),
+    value: 'languages',
+    slot: 'languages'
+  }
+]);
+
+// Emit updates for auto-save + preview (skip sync updates)
 watch(
   formData,
   () => {
-    hasUnsavedChanges.value = true;
-    saveSuccess.value = false;
+    if (isSyncing.value) return;
     validationError.value = null;
+    const nextContent = buildContent();
+    lastEmittedSnapshot.value = JSON.stringify(nextContent);
+    emit('update:modelValue', nextContent);
   },
-  { deep: true }
+  {
+    deep: true
+  }
 );
 
 // Watch for external modelValue changes
 watch(
   () => props.modelValue,
   newValue => {
-    if (!hasUnsavedChanges.value) {
-      Object.assign(formData, createFormData(newValue));
-    }
+    const incomingSnapshot = JSON.stringify(newValue);
+    if (incomingSnapshot === lastEmittedSnapshot.value) return;
+
+    isSyncing.value = true;
+    Object.assign(formData, createFormData(newValue));
+    nextTick(() => {
+      isSyncing.value = false;
+    });
   },
   { deep: true }
 );
@@ -174,22 +219,35 @@ watch(
 /**
  * Build ResumeContent from form data
  */
-const buildContent = (): ResumeContent => ({
-  personalInfo: formData.personalInfo,
-  summary: formData.summary?.trim() || undefined,
-  experience: formData.experience,
-  education: formData.education,
-  skills: formData.skills,
-  certifications:
-    formData.certifications && formData.certifications.length > 0
-      ? formData.certifications
-      : undefined,
-  languages: formData.languages && formData.languages.length > 0 ? formData.languages : undefined,
-  customSections:
-    formData.customSections && formData.customSections.length > 0
-      ? formData.customSections
-      : undefined
-});
+function buildContent(): ResumeContent {
+  const rawFormData = toRaw(formData);
+
+  return {
+    personalInfo: { ...rawFormData.personalInfo },
+    summary: rawFormData.summary?.trim() || undefined,
+    experience: rawFormData.experience.map(entry => ({ ...entry })),
+    education: rawFormData.education.map(entry => ({ ...entry })),
+    skills: rawFormData.skills.map(group => ({
+      type: group.type,
+      skills: [...group.skills]
+    })),
+    certifications:
+      rawFormData.certifications && rawFormData.certifications.length > 0
+        ? rawFormData.certifications.map(entry => ({ ...entry }))
+        : undefined,
+    languages:
+      rawFormData.languages && rawFormData.languages.length > 0
+        ? rawFormData.languages.map(entry => ({ ...entry }))
+        : undefined,
+    customSections:
+      rawFormData.customSections && rawFormData.customSections.length > 0
+        ? rawFormData.customSections.map(section => ({
+            sectionTitle: section.sectionTitle,
+            items: section.items.map(item => ({ ...item }))
+          }))
+        : undefined
+  };
+}
 
 /**
  * Validate form data with Zod
@@ -221,35 +279,13 @@ const handleSubmit = () => {
   if (!content) return;
 
   emit('update:modelValue', content);
-  emit('save', content);
-
-  // Reset change tracking on successful validation
-  hasUnsavedChanges.value = false;
-  saveSuccess.value = true;
-
-  // Clear success message after 3 seconds
-  setTimeout(() => {
-    saveSuccess.value = false;
-  }, 3000);
-};
-
-/**
- * Handle cancel
- */
-const handleCancel = () => {
-  // Reset form to original values
-  Object.assign(formData, createFormData(props.modelValue));
-  hasUnsavedChanges.value = false;
-  validationError.value = null;
-  emit('cancel');
 };
 
 /**
  * Expose validation for external use
  */
 defineExpose({
-  validate,
-  hasUnsavedChanges: computed(() => hasUnsavedChanges.value)
+  validate
 });
 </script>
 

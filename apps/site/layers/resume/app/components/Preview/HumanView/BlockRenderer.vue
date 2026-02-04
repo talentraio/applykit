@@ -63,15 +63,6 @@
       <p class="mt-1 text-sm leading-relaxed">
         {{ experienceDescription.text }}
       </p>
-      <div v-if="experienceDescription.technologies?.length" class="mt-1 flex flex-wrap gap-1">
-        <span
-          v-for="tech in experienceDescription.technologies"
-          :key="tech"
-          class="rounded bg-neutral-100 px-1.5 py-0.5 text-xs"
-        >
-          {{ tech }}
-        </span>
-      </div>
     </template>
 
     <!-- Experience Bullet -->
@@ -79,6 +70,19 @@
       <div class="flex text-sm">
         <span class="mr-2 text-primary">•</span>
         <span>{{ bulletPayload.text }}</span>
+      </div>
+    </template>
+
+    <!-- Experience Technologies -->
+    <template v-else-if="block.kind === 'experience-technologies'">
+      <div class="mt-1 flex flex-wrap gap-1">
+        <span
+          v-for="tech in experienceTechnologies.technologies"
+          :key="tech"
+          class="rounded bg-neutral-100 px-1.5 py-0.5 text-xs"
+        >
+          {{ tech }}
+        </span>
       </div>
     </template>
 
@@ -194,6 +198,9 @@ const experienceDescription = computed(
   () => props.block.payload as BlockPayload['experience-description']
 );
 const bulletPayload = computed(() => props.block.payload as BlockPayload['experience-bullet']);
+const experienceTechnologies = computed(
+  () => props.block.payload as BlockPayload['experience-technologies']
+);
 const educationEntry = computed(() => props.block.payload as EducationEntry);
 const skillGroup = computed(() => props.block.payload as SkillGroup);
 const certificationEntry = computed(() => props.block.payload as CertificationEntry);

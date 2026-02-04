@@ -23,7 +23,12 @@
     <!-- Content -->
     <template v-else-if="vacancy">
       <!-- Two-Column Layout when editing generation (T045) -->
-      <ResumeEditorLayout v-if="isEditingGeneration && latestGeneration">
+      <ResumeEditorLayout
+        v-if="isEditingGeneration && latestGeneration"
+        v-model:preview-type="previewTypeModel"
+        :preview-content="displayGenerationContent"
+        :preview-settings="currentSettings"
+      >
         <!-- Header: Actions -->
         <template #header>
           <div class="vacancy-detail-page__header">
@@ -63,46 +68,12 @@
         <template #left>
           <div class="p-4">
             <ResumeForm
-              v-if="editingGenerationContent"
-              :model-value="editingGenerationContent"
+              v-if="generationContentModel"
+              v-model="generationContentModel"
               :resume-id="latestGeneration.resumeId"
               :saving="savingGeneration"
-              @update:model-value="handleGenerationContentUpdate"
               @save="handleSaveGeneration"
             />
-          </div>
-        </template>
-
-        <!-- Right: Preview with type toggle (T047) -->
-        <template #right>
-          <div class="vacancy-detail-page__preview">
-            <div class="vacancy-detail-page__preview-header">
-              <!-- Preview Type Toggle (T047) -->
-              <UFieldGroup size="sm">
-                <UButton
-                  :color="previewType === 'ats' ? 'primary' : 'neutral'"
-                  :variant="previewType === 'ats' ? 'solid' : 'outline'"
-                  @click="setPreviewType('ats')"
-                >
-                  {{ $t('resume.settings.previewType.ats') }}
-                </UButton>
-                <UButton
-                  :color="previewType === 'human' ? 'primary' : 'neutral'"
-                  :variant="previewType === 'human' ? 'solid' : 'outline'"
-                  @click="setPreviewType('human')"
-                >
-                  {{ $t('resume.settings.previewType.human') }}
-                </UButton>
-              </UFieldGroup>
-            </div>
-            <div class="vacancy-detail-page__preview-content">
-              <ResumePreview
-                v-if="displayGenerationContent"
-                :content="displayGenerationContent"
-                :type="previewType"
-                :settings="currentSettings"
-              />
-            </div>
           </div>
         </template>
 
@@ -146,11 +117,10 @@
           <ResumePreviewFloatButton @click="isMobilePreviewOpen = true" />
           <ResumePreviewOverlay
             v-model:open="isMobilePreviewOpen"
+            v-model:preview-type="previewTypeModel"
             :content="displayGenerationContent"
-            :preview-type="previewType"
             :settings="currentSettings"
             :show-download="false"
-            @update:preview-type="setPreviewType"
           />
         </template>
       </ResumeEditorLayout>
@@ -333,6 +303,16 @@ const currentSettings = computed(() => vacancyStore.currentSettings);
 const canUndoGeneration = computed(() => vacancyStore.canUndoGeneration);
 const canRedoGeneration = computed(() => vacancyStore.canRedoGeneration);
 const generationHistoryLength = computed(() => vacancyStore.generationHistoryLength);
+const generationContentModel = computed<ResumeContent | null>({
+  get: () => editingGenerationContent.value,
+  set: value => {
+    if (value) vacancyStore.updateGenerationContent(value);
+  }
+});
+const previewTypeModel = computed<'ats' | 'human'>({
+  get: () => previewType.value,
+  set: value => setPreviewType(value)
+});
 
 // Fetch vacancy (SSR-compatible)
 const { pending, error } = await useAsyncData(`vacancy-${vacancyId.value}`, () => {
@@ -422,10 +402,6 @@ function startEditingGeneration() {
 
 function stopEditingGeneration() {
   vacancyStore.stopEditingGeneration();
-}
-
-function handleGenerationContentUpdate(content: ResumeContent) {
-  vacancyStore.updateGenerationContent(content);
 }
 
 async function handleSaveGeneration() {
@@ -544,27 +520,6 @@ const handleGenerate = async () => {
     justify-content: space-between;
     gap: 1rem;
     flex-wrap: wrap;
-  }
-
-  &__preview {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-
-  &__preview-header {
-    flex-shrink: 0;
-    padding: 0.5rem 0;
-    display: flex;
-    justify-content: center;
-  }
-
-  &__preview-content {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
   }
 
   &__footer {

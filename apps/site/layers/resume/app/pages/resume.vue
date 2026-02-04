@@ -33,97 +33,33 @@
     </div>
 
     <!-- Has Resume: Show Editor Layout -->
-    <ResumeEditorLayout v-else>
-      <!-- Header: Actions -->
-      <template #header>
-        <div class="resume-page__header">
-          <div class="flex items-center gap-4">
-            <h1 class="text-xl font-semibold">{{ $t('resume.page.editTitle') }}</h1>
-            <UBadge v-if="isDirty" color="warning" variant="soft">
-              {{ $t('resume.editor.unsavedChanges') }}
-            </UBadge>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <UButton
-              variant="ghost"
-              color="neutral"
-              icon="i-lucide-upload"
-              @click="isUploadModalOpen = true"
-            >
-              <span class="hidden md:inline">{{ $t('resume.page.uploadNew') }}</span>
-              <span class="md:hidden">{{ $t('common.new') }}</span>
-            </UButton>
-            <BaseDownloadPdf
-              v-if="content"
-              :content="content"
-              :settings="{ ats: atsSettings, human: humanSettings }"
-              :photo-url="photoUrl"
-            />
-          </div>
-        </div>
-      </template>
-
+    <ResumeEditorLayout
+      v-else
+      v-model:preview-type="previewTypeModel"
+      :preview-content="content"
+      :preview-settings="currentSettings"
+      :photo-url="photoUrl"
+    >
       <!-- Left: Editor Tabs -->
       <template #left>
-        <UTabs v-model="activeTab" :items="tabItems" class="resume-page__tabs">
-          <template #content="{ item }">
-            <!-- Edit Tab -->
-            <div v-if="item.value === 'edit'" class="resume-page__tab-content">
-              <ResumeForm
-                v-if="editingContent"
-                :model-value="editingContent"
-                :resume-id="resume!.id"
-                :saving="saving"
-                @update:model-value="handleContentUpdate"
-                @save="handleSave"
-              />
-            </div>
-
-            <!-- Settings Tab -->
-            <div v-else-if="item.value === 'settings'" class="resume-page__tab-content">
-              <ResumeSettings
-                :preview-type="previewType"
-                :settings="currentSettings"
-                :saving="saving"
-                @update:preview-type="setPreviewType"
-                @update:settings="updateSettings"
-                @save="handleSaveSettings"
-              />
-            </div>
-
-            <!-- AI Tab -->
-            <div v-else-if="item.value === 'ai'" class="resume-page__tab-content">
-              <ResumeTabAIEnhance />
-            </div>
-          </template>
-        </UTabs>
+        <ResumeEditorTools
+          v-model="activeTab"
+          v-model:content="contentModel"
+          v-model:settings="settingsModel"
+          :items="tabItems"
+          :preview-type="previewType"
+          @upload-new="isUploadModalOpen = true"
+        />
       </template>
 
-      <!-- Right: Preview -->
-      <template #right>
-        <div class="resume-page__preview">
-          <div class="resume-page__preview-header">
-            <span class="text-sm font-medium text-muted">
-              {{
-                previewType === 'ats' ? $t('resume.view.atsTitle') : $t('resume.view.humanTitle')
-              }}
-            </span>
-          </div>
-          <div class="resume-page__preview-content">
-            <ResumePreview
-              v-if="content"
-              :content="content"
-              :type="previewType"
-              :settings="currentSettings"
-              :photo-url="photoUrl"
-            />
-            <div v-else class="resume-page__preview-empty">
-              <UIcon name="i-lucide-file-text" class="h-12 w-12 text-muted" />
-              <p class="mt-4 text-muted">{{ $t('resume.preview.empty') }}</p>
-            </div>
-          </div>
-        </div>
+      <template #right-actions>
+        <BaseDownloadPdf
+          v-if="content"
+          :content="content"
+          :settings="{ ats: atsSettings, human: humanSettings }"
+          :photo-url="photoUrl"
+          size="sm"
+        />
       </template>
 
       <!-- Footer: Undo/Redo -->
@@ -148,15 +84,6 @@
             >
               {{ $t('common.cancel') }}
             </UButton>
-            <UButton
-              color="primary"
-              size="sm"
-              :loading="saving"
-              :disabled="!isDirty"
-              @click="handleSave"
-            >
-              {{ $t('common.save') }}
-            </UButton>
           </div>
         </div>
       </template>
@@ -166,11 +93,10 @@
         <ResumePreviewFloatButton @click="isMobilePreviewOpen = true" />
         <ResumePreviewOverlay
           v-model:open="isMobilePreviewOpen"
+          v-model:preview-type="previewTypeModel"
           :content="content"
-          :preview-type="previewType"
           :settings="{ ats: atsSettings, human: humanSettings }"
           :photo-url="photoUrl"
-          @update:preview-type="setPreviewType"
         />
       </template>
     </ResumeEditorLayout>
@@ -184,16 +110,11 @@
     />
 
     <!-- Create From Scratch Modal -->
-    <UModal v-model:open="isCreateModalOpen" :title="$t('resume.page.createTitle')">
-      <template #body>
-        <p class="mb-4 text-sm text-muted">
-          {{ $t('resume.page.createDescription') }}
-        </p>
-        <UButton color="primary" block :loading="loading" @click="handleCreateEmpty">
-          {{ $t('resume.page.createButton') }}
-        </UButton>
-      </template>
-    </UModal>
+    <ResumeModalCreateFromScratch
+      v-model:open="isCreateModalOpen"
+      :loading="loading"
+      @confirm="handleCreateEmpty"
+    />
   </div>
 </template>
 
@@ -216,7 +137,9 @@
  * Related: T038 (US3), T053 (US5)
  */
 
-import type { Resume, ResumeContent } from '@int/schema';
+import type { Resume, ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type { ResumeEditorTabItem } from '@site/resume/app/types/editor';
+import type { PreviewType } from '@site/resume/app/types/preview';
 
 defineOptions({ name: 'ResumePage' });
 
@@ -233,12 +156,10 @@ const { profile } = useProfile();
 
 // Resume composable with auto-save
 const {
-  resume,
   hasResume,
   content,
   editingContent,
   loading,
-  saving,
   error,
   isDirty,
   previewType,
@@ -255,7 +176,6 @@ const {
   redo,
   setPreviewType,
   updateSettings,
-  saveSettings,
   discardChanges
 } = useResume();
 
@@ -264,25 +184,42 @@ const isUploadModalOpen = ref(false);
 const isCreateModalOpen = ref(false);
 const isMobilePreviewOpen = ref(false);
 const activeTab = ref('edit');
+const previewTypeModel = computed<PreviewType>({
+  get: () => previewType.value,
+  set: value => setPreviewType(value)
+});
+const contentModel = computed<ResumeContent | null>({
+  get: () => editingContent.value,
+  set: value => {
+    if (value) updateContent(value);
+  }
+});
+const settingsModel = computed<ResumeFormatSettings>({
+  get: () => currentSettings.value,
+  set: value => updateSettings(value)
+});
 
 // Tab items
-const tabItems = computed(() => [
-  {
-    label: t('resume.tabs.edit'),
-    value: 'edit',
-    icon: 'i-lucide-pencil'
-  },
-  {
-    label: t('resume.tabs.settings'),
-    value: 'settings',
-    icon: 'i-lucide-settings'
-  },
-  {
-    label: t('resume.tabs.ai'),
-    value: 'ai',
-    icon: 'i-lucide-sparkles'
-  }
-]);
+const tabItems = computed(
+  () =>
+    [
+      {
+        label: t('resume.tabs.edit'),
+        value: 'edit',
+        icon: 'i-lucide-pencil'
+      },
+      {
+        label: t('resume.tabs.settings'),
+        value: 'settings',
+        icon: 'i-lucide-settings'
+      },
+      {
+        label: t('resume.tabs.ai'),
+        value: 'ai',
+        icon: 'i-lucide-sparkles'
+      }
+    ] satisfies ResumeEditorTabItem[]
+);
 
 // Photo URL from profile
 const photoUrl = computed(() => profile.value?.photoUrl ?? undefined);
@@ -295,29 +232,6 @@ await callOnce('resume-page', async () => {
 /**
  * Handle content update from form
  */
-function handleContentUpdate(newContent: ResumeContent) {
-  updateContent(newContent);
-}
-
-/**
- * Handle manual save
- */
-async function handleSave() {
-  // Save is handled by auto-save, but manual save can be triggered
-  // The useResume composable handles the actual save
-}
-
-/**
- * Handle settings save
- */
-async function handleSaveSettings() {
-  try {
-    await saveSettings();
-  } catch {
-    // Error handled in composable
-  }
-}
-
 /**
  * Handle upload success
  */
@@ -423,55 +337,6 @@ async function handleCreateEmpty() {
   &__description {
     font-size: 1rem;
     color: var(--color-neutral-500);
-  }
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  &__tabs {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  &__tab-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-  }
-
-  &__preview {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-
-  &__preview-header {
-    flex-shrink: 0;
-    padding: 0.5rem 0;
-    text-align: center;
-  }
-
-  &__preview-content {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-  }
-
-  &__preview-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    text-align: center;
   }
 
   &__footer {

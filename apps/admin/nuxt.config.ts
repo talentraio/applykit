@@ -1,4 +1,9 @@
+import { mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const dataDir = resolve(fileURLToPath(new URL('.', import.meta.url)), '.data');
+mkdirSync(dataDir, { recursive: true });
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
@@ -24,6 +29,10 @@ export default defineNuxtConfig({
 
   devtools: {
     enabled: true
+  },
+
+  image: {
+    dir: dataDir
   },
 
   typescript: {

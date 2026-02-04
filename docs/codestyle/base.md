@@ -83,8 +83,9 @@ defineOptions({ name: 'AuthFormRegistration' });
 - `defineProps` / `defineEmits` / `defineSlots`:
   - Prefer **inline interfaces/types** when used only in that component.
 - v-model proxying:
-  - Prefer `defineModel()` first.
-  - If custom logic is required, use `computed({ get, set })`.
+  - **Proxy-only components must use `defineModel()`** and bind with `v-model` in templates.
+  - Avoid `:model-value` + `@update:model-value` when you are only forwarding the value.
+  - If custom logic is required (transform, validation, merging), use `computed({ get, set })` or explicit emit handlers.
 
 ## Imports & auto-import
 

@@ -5,6 +5,7 @@
         color="primary"
         icon="i-lucide-download"
         trailing-icon="i-lucide-chevron-down"
+        :size="size"
         :loading="isExporting"
         :disabled="isDisabled"
       >
@@ -23,6 +24,7 @@
  * Generates PDF on the client side using the shared resume preview.
  */
 
+import type { ButtonProps } from '#ui/types';
 import type { ExportFormat, ResumeContent, ResumeFormatSettings } from '@int/schema';
 import { EXPORT_FORMAT_MAP } from '@int/schema';
 
@@ -36,13 +38,15 @@ const props = withDefaults(
     disabled?: boolean;
     filename?: string;
     formats?: ExportFormat[];
+    size?: ButtonProps['size'];
   }>(),
   {
     settings: undefined,
     photoUrl: undefined,
     disabled: false,
     filename: undefined,
-    formats: () => [EXPORT_FORMAT_MAP.ATS, EXPORT_FORMAT_MAP.HUMAN]
+    formats: () => [EXPORT_FORMAT_MAP.ATS, EXPORT_FORMAT_MAP.HUMAN],
+    size: undefined
   }
 );
 

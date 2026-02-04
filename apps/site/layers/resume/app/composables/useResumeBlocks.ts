@@ -55,6 +55,26 @@ export function useResumeBlocks(content: Ref<ResumeContent> | ComputedRef<Resume
       });
     }
 
+    // Skills section
+    if (data.skills.length > 0) {
+      result.push({
+        id: generateBlockId('skills', 'section-heading'),
+        kind: 'section-heading',
+        section: 'skills',
+        keepWithNext: 1,
+        payload: { title: 'skills' }
+      });
+
+      data.skills.forEach((group, groupIndex) => {
+        result.push({
+          id: generateBlockId('skills', 'skill-group', groupIndex),
+          kind: 'skill-group',
+          section: 'skills',
+          payload: group
+        });
+      });
+    }
+
     // Experience section
     if (data.experience.length > 0) {
       result.push({
@@ -88,8 +108,7 @@ export function useResumeBlocks(content: Ref<ResumeContent> | ComputedRef<Resume
             kind: 'experience-description',
             section: 'experience',
             payload: {
-              text: exp.description,
-              technologies: exp.technologies
+              text: exp.description
             }
           });
         }
@@ -103,6 +122,15 @@ export function useResumeBlocks(content: Ref<ResumeContent> | ComputedRef<Resume
               section: 'experience',
               payload: { text: bullet }
             });
+          });
+        }
+
+        if (exp.technologies?.length) {
+          result.push({
+            id: generateBlockId('experience', 'experience-technologies', expIndex),
+            kind: 'experience-technologies',
+            section: 'experience',
+            payload: { technologies: exp.technologies }
           });
         }
       });
@@ -128,26 +156,6 @@ export function useResumeBlocks(content: Ref<ResumeContent> | ComputedRef<Resume
       });
     }
 
-    // Skills section
-    if (data.skills.length > 0) {
-      result.push({
-        id: generateBlockId('skills', 'section-heading'),
-        kind: 'section-heading',
-        section: 'skills',
-        keepWithNext: 1,
-        payload: { title: 'skills' }
-      });
-
-      data.skills.forEach((group, groupIndex) => {
-        result.push({
-          id: generateBlockId('skills', 'skill-group', groupIndex),
-          kind: 'skill-group',
-          section: 'skills',
-          payload: group
-        });
-      });
-    }
-
     // Certifications section
     if (data.certifications?.length) {
       result.push({
@@ -164,26 +172,6 @@ export function useResumeBlocks(content: Ref<ResumeContent> | ComputedRef<Resume
           kind: 'certification-entry',
           section: 'certifications',
           payload: cert
-        });
-      });
-    }
-
-    // Languages section
-    if (data.languages?.length) {
-      result.push({
-        id: generateBlockId('languages', 'section-heading'),
-        kind: 'section-heading',
-        section: 'languages',
-        keepWithNext: 1,
-        payload: { title: 'languages' }
-      });
-
-      data.languages.forEach((lang, langIndex) => {
-        result.push({
-          id: generateBlockId('languages', 'language-entry', langIndex),
-          kind: 'language-entry',
-          section: 'languages',
-          payload: lang
         });
       });
     }
@@ -208,6 +196,26 @@ export function useResumeBlocks(content: Ref<ResumeContent> | ComputedRef<Resume
             section: sectionId,
             payload: item
           });
+        });
+      });
+    }
+
+    // Languages section
+    if (data.languages?.length) {
+      result.push({
+        id: generateBlockId('languages', 'section-heading'),
+        kind: 'section-heading',
+        section: 'languages',
+        keepWithNext: 1,
+        payload: { title: 'languages' }
+      });
+
+      data.languages.forEach((lang, langIndex) => {
+        result.push({
+          id: generateBlockId('languages', 'language-entry', langIndex),
+          kind: 'language-entry',
+          section: 'languages',
+          payload: lang
         });
       });
     }
