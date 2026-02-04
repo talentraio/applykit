@@ -21,7 +21,8 @@ export default defineEventHandler(async event => {
     const deletedCount = await storage.deleteByPrefix(`photos/${userId}/`);
 
     // Update profile to remove photo URL
-    await profileRepository.update(userId, { photoUrl: undefined });
+    // Use empty string to ensure the column is cleared (undefined may be ignored by the ORM)
+    await profileRepository.update(userId, { photoUrl: '' });
 
     return { success: true, deletedCount };
   } catch (error) {

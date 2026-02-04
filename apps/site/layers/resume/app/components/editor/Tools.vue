@@ -57,13 +57,11 @@ const settingsModel = defineModel<ResumeFormatSettings>('settings', { required: 
   &__tab-content {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem;
   }
 
   &__tab-actions {
     display: flex;
     justify-content: flex-end;
-    margin-top: 1.5rem;
   }
 }
 </style>

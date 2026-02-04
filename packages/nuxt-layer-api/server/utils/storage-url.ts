@@ -28,3 +28,22 @@ export const resolveStorageUrl = (value?: string | null): string | undefined => 
 
   return normalized;
 };
+
+export const appendCacheBuster = (value?: string | null, token?: string): string | undefined => {
+  if (!value) return undefined;
+
+  const cacheToken = token ?? Date.now().toString();
+  try {
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      const url = new URL(value);
+      url.searchParams.set('v', cacheToken);
+      return url.toString();
+    }
+
+    const url = new URL(value, 'http://local');
+    url.searchParams.set('v', cacheToken);
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return value;
+  }
+};
