@@ -27,6 +27,22 @@
         </p>
       </section>
 
+      <section v-if="content.skills.length" class="resume-ats-design1__section space-y-2">
+        <h2 class="text-lg font-semibold">
+          {{ $t('resume.section.skills') }}
+        </h2>
+        <!-- Single skill group - show as simple list -->
+        <template v-if="content.skills.length === 1">
+          <p class="text-sm">{{ content.skills[0]!.skills.join(', ') }}</p>
+        </template>
+        <!-- Multiple skill groups - show with labels -->
+        <template v-else>
+          <div v-for="group in content.skills" :key="group.type" class="text-sm">
+            <strong>{{ group.type }}:</strong> {{ group.skills.join(', ') }}
+          </div>
+        </template>
+      </section>
+
       <section v-if="content.experience.length" class="resume-ats-design1__section space-y-4">
         <h2 class="text-lg font-semibold">
           {{ $t('resume.section.experience') }}
@@ -86,22 +102,6 @@
         </div>
       </section>
 
-      <section v-if="content.skills.length" class="resume-ats-design1__section space-y-2">
-        <h2 class="text-lg font-semibold">
-          {{ $t('resume.section.skills') }}
-        </h2>
-        <!-- Single skill group - show as simple list -->
-        <template v-if="content.skills.length === 1">
-          <p class="text-sm">{{ content.skills[0]!.skills.join(', ') }}</p>
-        </template>
-        <!-- Multiple skill groups - show with labels -->
-        <template v-else>
-          <div v-for="group in content.skills" :key="group.type" class="text-sm">
-            <strong>{{ group.type }}:</strong> {{ group.skills.join(', ') }}
-          </div>
-        </template>
-      </section>
-
       <section v-if="content.certifications?.length" class="resume-ats-design1__section space-y-2">
         <h2 class="text-lg font-semibold">
           {{ $t('resume.section.certifications') }}
@@ -111,18 +111,6 @@
             {{ certification.name }}
             <span v-if="certification.issuer"> - {{ certification.issuer }}</span>
             <span v-if="certification.date"> ({{ certification.date }})</span>
-          </li>
-        </ul>
-      </section>
-
-      <section v-if="content.languages?.length" class="resume-ats-design1__section space-y-2">
-        <h2 class="text-lg font-semibold">
-          {{ $t('resume.section.languages') }}
-        </h2>
-        <ul class="list-disc space-y-1 pl-4 text-sm">
-          <li v-for="language in content.languages" :key="language.language">
-            {{ language.language }}
-            <span v-if="language.level"> - {{ language.level }}</span>
           </li>
         </ul>
       </section>
@@ -144,6 +132,18 @@
             {{ item.description }}
           </template>
         </div>
+      </section>
+
+      <section v-if="content.languages?.length" class="resume-ats-design1__section space-y-2">
+        <h2 class="text-lg font-semibold">
+          {{ $t('resume.section.languages') }}
+        </h2>
+        <ul class="list-disc space-y-1 pl-4 text-sm">
+          <li v-for="language in content.languages" :key="language.language">
+            {{ language.language }}
+            <span v-if="language.level"> - {{ language.level }}</span>
+          </li>
+        </ul>
       </section>
     </div>
   </section>

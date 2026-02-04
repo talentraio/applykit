@@ -40,6 +40,43 @@
 
     <div class="resume-human-design1__grid mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">
       <div class="space-y-8">
+        <section v-if="content.skills.length" class="resume-human-design1__section space-y-3">
+          <h2 class="text-lg font-semibold">
+            {{ $t('resume.section.skills') }}
+          </h2>
+          <!-- Single skill group - show as badges -->
+          <template v-if="content.skills.length === 1">
+            <div class="flex flex-wrap gap-2">
+              <UBadge
+                v-for="skill in content.skills[0]!.skills"
+                :key="skill"
+                color="primary"
+                variant="soft"
+                size="sm"
+              >
+                {{ skill }}
+              </UBadge>
+            </div>
+          </template>
+          <!-- Multiple skill groups - show with labels -->
+          <template v-else>
+            <div v-for="group in content.skills" :key="group.type" class="space-y-2">
+              <h3 class="text-sm font-medium text-muted">{{ group.type }}</h3>
+              <div class="flex flex-wrap gap-2">
+                <UBadge
+                  v-for="skill in group.skills"
+                  :key="skill"
+                  color="primary"
+                  variant="soft"
+                  size="sm"
+                >
+                  {{ skill }}
+                </UBadge>
+              </div>
+            </div>
+          </template>
+        </section>
+
         <section v-if="content.experience.length" class="resume-human-design1__section space-y-4">
           <h2 class="text-lg font-semibold">
             {{ $t('resume.section.experience') }}
@@ -128,43 +165,6 @@
       </div>
 
       <aside class="space-y-8">
-        <section v-if="content.skills.length" class="resume-human-design1__section space-y-3">
-          <h2 class="text-lg font-semibold">
-            {{ $t('resume.section.skills') }}
-          </h2>
-          <!-- Single skill group - show as badges -->
-          <template v-if="content.skills.length === 1">
-            <div class="flex flex-wrap gap-2">
-              <UBadge
-                v-for="skill in content.skills[0]!.skills"
-                :key="skill"
-                color="primary"
-                variant="soft"
-                size="sm"
-              >
-                {{ skill }}
-              </UBadge>
-            </div>
-          </template>
-          <!-- Multiple skill groups - show with labels -->
-          <template v-else>
-            <div v-for="group in content.skills" :key="group.type" class="space-y-2">
-              <h3 class="text-sm font-medium text-muted">{{ group.type }}</h3>
-              <div class="flex flex-wrap gap-2">
-                <UBadge
-                  v-for="skill in group.skills"
-                  :key="skill"
-                  color="primary"
-                  variant="soft"
-                  size="sm"
-                >
-                  {{ skill }}
-                </UBadge>
-              </div>
-            </div>
-          </template>
-        </section>
-
         <section
           v-if="content.certifications?.length"
           class="resume-human-design1__section space-y-3"

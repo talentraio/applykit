@@ -27,6 +27,7 @@ export type BlockKind =
   | 'experience-header'
   | 'experience-description'
   | 'experience-bullet'
+  | 'experience-technologies'
   | 'education-entry'
   | 'skill-group'
   | 'certification-entry'
@@ -57,8 +58,9 @@ export type BlockPayload = {
     ExperienceEntry,
     'company' | 'position' | 'location' | 'startDate' | 'endDate'
   >;
-  'experience-description': { text: string; technologies?: string[] };
+  'experience-description': { text: string };
   'experience-bullet': { text: string };
+  'experience-technologies': { technologies: string[] };
   'education-entry': EducationEntry;
   'skill-group': SkillGroup;
   'certification-entry': CertificationEntry;

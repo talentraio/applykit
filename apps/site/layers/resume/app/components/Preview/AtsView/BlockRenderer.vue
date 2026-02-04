@@ -47,9 +47,6 @@
       <p class="text-sm leading-relaxed">
         {{ experienceDescription.text }}
       </p>
-      <p v-if="experienceDescription.technologies?.length" class="mt-1 text-xs text-muted">
-        Tech: {{ experienceDescription.technologies.join(', ') }}
-      </p>
     </template>
 
     <!-- Experience Bullet -->
@@ -58,6 +55,13 @@
         <span class="mr-2">•</span>
         <span>{{ bulletPayload.text }}</span>
       </div>
+    </template>
+
+    <!-- Experience Technologies -->
+    <template v-else-if="block.kind === 'experience-technologies'">
+      <p class="mt-1 text-xs text-muted">
+        Tech: {{ experienceTechnologies.technologies.join(', ') }}
+      </p>
     </template>
 
     <!-- Education Entry -->
@@ -155,6 +159,9 @@ const experienceDescription = computed(
   () => props.block.payload as BlockPayload['experience-description']
 );
 const bulletPayload = computed(() => props.block.payload as BlockPayload['experience-bullet']);
+const experienceTechnologies = computed(
+  () => props.block.payload as BlockPayload['experience-technologies']
+);
 const educationEntry = computed(() => props.block.payload as EducationEntry);
 const skillGroup = computed(() => props.block.payload as SkillGroup);
 const certificationEntry = computed(() => props.block.payload as CertificationEntry);

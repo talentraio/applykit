@@ -1,5 +1,5 @@
 <template>
-  <UModal v-model:open="isOpen" :title="$t('resume.upload.modalTitle')">
+  <UModal v-model:open="isOpen" :title="$t('resume.upload.modalTitle')" class="resume-modal-upload">
     <template #body>
       <div class="p-4">
         <p class="mb-4 text-sm text-muted">

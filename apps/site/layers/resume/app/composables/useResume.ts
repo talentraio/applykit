@@ -16,6 +16,7 @@
 import type { ResumeContent, ResumeFormatSettings } from '@int/schema';
 import type { EditorTab } from '../stores';
 import type { PreviewType } from '../types/preview';
+import { ResumeContentSchema } from '@int/schema';
 import { watchDebounced } from '@vueuse/core';
 import { useResumeStore } from '../stores';
 
@@ -89,13 +90,11 @@ export function useResume(options: UseResumeOptions = {}) {
       async () => {
         if (!store.isDirty || !store.editingContent) return;
 
+        const validation = ResumeContentSchema.safeParse(store.editingContent);
+        if (!validation.success) return;
+
         try {
           await store.saveContent();
-          toast.add({
-            title: t('resume.success.updated'),
-            color: 'success',
-            icon: 'i-lucide-check'
-          });
         } catch {
           toast.add({
             title: t('resume.error.updateFailed'),

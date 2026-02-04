@@ -161,6 +161,7 @@
       "description": "Upload your resume to get started with tailored applications",
       "editTitle": "Resume Editor",
       "uploadNew": "Upload New",
+      "clearAndCreateNew": "Clear and create new",
       "createTitle": "Create Resume",
       "createDescription": "Start with a blank resume and fill in your details manually.",
       "createButton": "Create Empty Resume"
