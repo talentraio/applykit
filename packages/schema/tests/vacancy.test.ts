@@ -10,6 +10,7 @@ describe('getVacancyTitle', () => {
       company: 'Acme Corp',
       jobPosition: 'Senior Developer',
       description: 'Job description',
+      status: 'created',
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -24,6 +25,7 @@ describe('getVacancyTitle', () => {
       company: 'Acme Corp',
       jobPosition: undefined,
       description: 'Job description',
+      status: 'created',
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -38,6 +40,7 @@ describe('getVacancyTitle', () => {
       company: 'Acme Corp',
       jobPosition: null,
       description: 'Job description',
+      status: 'created',
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -52,6 +55,7 @@ describe('getVacancyTitle', () => {
       company: 'Smith & Co.',
       jobPosition: 'UI/UX Designer',
       description: 'Job description',
+      status: 'created',
       createdAt: new Date(),
       updatedAt: new Date()
     };

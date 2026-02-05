@@ -44,6 +44,9 @@ other docs/\* relevant to the task.
 
 ## Active Technologies
 
+- TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, NuxtUI v4, Pinia, VueUse, Zod (005-new-vacancy-flow)
+- PostgreSQL (via Drizzle ORM in @int/api layer) (005-new-vacancy-flow)
+
 - TypeScript 5.x (Nuxt 4 / Vue 3) (001-foundation-mvp)
 
 ## Recent Changes

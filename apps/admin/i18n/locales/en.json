@@ -1,0 +1,394 @@
+{
+  "admin": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "roles": "Roles",
+      "system": "System",
+      "admin": "Admin"
+    },
+    "users": {
+      "title": "Users",
+      "search": "Search by email",
+      "role": "Role",
+      "count": "{count} user(s)",
+      "empty": "No users found",
+      "columns": {
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "lastLoginAt": "Last login"
+      },
+      "filters": {
+        "role": "Role filter",
+        "roleAll": "All roles",
+        "pageSize": "Page size",
+        "perPage": "{count} / page"
+      },
+      "pagination": {
+        "summary": "Total {count} user(s) - Page {page} - {pageSize} / page"
+      },
+      "fields": {
+        "role": "Role",
+        "status": "Status",
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "lastLoginAt": "Last login",
+        "deletedAt": "Deleted",
+        "profileCreatedAt": "Profile created",
+        "profileUpdatedAt": "Profile updated"
+      },
+      "detail": {
+        "title": "User details",
+        "titleWithEmail": "User: {email}",
+        "account": "Account",
+        "profile": "Profile",
+        "stats": "Usage stats"
+      },
+      "profile": {
+        "empty": "This user has not created a profile yet."
+      },
+      "invite": {
+        "button": "Add user",
+        "title": "Invite user",
+        "description": "Add a user by email and assign a role for their first login.",
+        "email": "Email",
+        "emailPlaceholder": "user at example.com",
+        "role": "Role",
+        "submit": "Invite user",
+        "success": "Invitation created"
+      },
+      "delete": {
+        "button": "Delete user",
+        "title": "Delete user",
+        "description": "This will mark the user as deleted. You can’t undo this action.",
+        "confirm": "Delete user"
+      },
+      "status": {
+        "invited": "Invited",
+        "active": "Active",
+        "blocked": "Blocked",
+        "deleted": "Deleted"
+      },
+      "stats": {
+        "resumeCount": "Resumes",
+        "vacancyCount": "Vacancies",
+        "generationCount": "Generations",
+        "todayUsage": "Today usage",
+        "totalGenerations": "Total generations",
+        "avgGenerationsPerDay30d": "Avg generations/day (30d)",
+        "avgGenerationsPerDay7d": "Avg generations/day (7d)",
+        "avgGenerationsPerWeek30d": "Avg generations/week (30d)",
+        "costLast30Days": "Cost (last 30 days)",
+        "costMonthToDate": "Cost (month to date)",
+        "operations": {
+          "parse": "Parse",
+          "generate": "Generate",
+          "export": "Export"
+        }
+      },
+      "roles": {
+        "super_admin": "Super Admin",
+        "friend": "Friend",
+        "public": "Public"
+      }
+    },
+    "roles": {
+      "title": "Roles",
+      "empty": "No roles found",
+      "manage": "Manage",
+      "settingsTitle": "Role settings",
+      "settingsDescription": "Configure LLM access and budgets for this role.",
+      "detailTitle": "Role: {role}",
+      "superAdminHint": "Super Admin can only change platform provider.",
+      "fields": {
+        "platformLlm": "Platform LLM",
+        "byok": "BYOK",
+        "provider": "Platform provider",
+        "dailyBudget": "Daily budget per user"
+      },
+      "names": {
+        "super_admin": "Super Admin",
+        "friend": "Friend",
+        "public": "Public"
+      }
+    },
+    "system": {
+      "title": "System",
+      "platformLlm": "Platform LLM",
+      "byok": "BYOK",
+      "platformProvider": "Platform provider",
+      "budget": "Budget",
+      "budgetHelper": "Set the platform LLM budget cap in USD.",
+      "budgetUsage": "Budget usage",
+      "budgetCap": "Monthly cap",
+      "budgetUsed": "Used",
+      "budgetRemaining": "Remaining",
+      "budgetUpdate": "Update budget",
+      "budgetSaving": "Updating...",
+      "controls": {
+        "title": "LLM controls",
+        "description": "Toggle platform access and default provider settings."
+      },
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "providers": {
+        "openai": "OpenAI",
+        "gemini_flash": "Gemini Flash"
+      },
+      "usage": {
+        "title": "Usage",
+        "description": "System-wide usage across parse, generate, and export operations.",
+        "period": "Period",
+        "periods": {
+          "day": "Today",
+          "week": "Last 7 days",
+          "month": "Last 30 days"
+        },
+        "totalOperations": "Total operations",
+        "totalCost": "Total cost",
+        "uniqueUsers": "Unique users",
+        "byOperation": "By operation",
+        "byProvider": "By provider",
+        "operations": {
+          "parse": "Parse",
+          "generate": "Generate",
+          "export": "Export"
+        },
+        "providers": {
+          "platform": "Platform",
+          "byok": "BYOK"
+        }
+      },
+      "currency": "{amount} USD",
+      "percent": "{value}%"
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "description": "Complete your profile to enable resume generation",
+    "section": {
+      "photo": "Profile Photo",
+      "basic": "Basic Information",
+      "languages": "Languages",
+      "phones": "Phone Numbers"
+    },
+    "languages": {
+      "empty": "Add at least one language"
+    },
+    "phones": {
+      "empty": "No phone numbers added (optional)"
+    },
+    "form": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "country": "Country",
+      "countryHint": "ISO 3166-1 alpha-2 code (e.g., US, GB, DE)",
+      "searchRegion": "Search Region",
+      "workFormat": "Work Format",
+      "languages": "Languages",
+      "phones": "Phone Numbers",
+      "language": "Language",
+      "languageLevel": "Level",
+      "languagePlaceholder": "English",
+      "levelPlaceholder": "Native",
+      "addLanguage": "Add Language",
+      "removeLanguage": "Remove",
+      "phoneNumber": "Phone Number",
+      "phoneLabel": "Label",
+      "phonePlaceholder": "+1 234 567 8900",
+      "labelPlaceholder": "Mobile",
+      "addPhone": "Add Phone Number",
+      "removePhone": "Remove",
+      "workFormatOptions": {
+        "remote": "Remote",
+        "onsite": "On-site",
+        "hybrid": "Hybrid"
+      },
+      "languageLevelOptions": {
+        "native": "Native or bilingual proficiency",
+        "fullProfessional": "Full professional proficiency",
+        "professional": "Professional working proficiency",
+        "limited": "Limited working proficiency",
+        "elementary": "Elementary proficiency"
+      },
+      "countryPlaceholder": "Search country...",
+      "searchRegionPlaceholder": "Select region...",
+      "searchRegionOptions": {
+        "worldwide": "Worldwide",
+        "europe": "Europe",
+        "eu": "European Union",
+        "northAmerica": "North America",
+        "usa": "United States",
+        "uk": "United Kingdom",
+        "emea": "EMEA (Europe, Middle East, Africa)",
+        "apac": "Asia-Pacific",
+        "latam": "Latin America",
+        "middleEast": "Middle East",
+        "africa": "Africa",
+        "oceania": "Oceania"
+      },
+      "phoneLabelOptions": {
+        "mobile": "Mobile",
+        "work": "Work",
+        "home": "Home"
+      },
+      "photoDescription": "Add a professional photo for human-readable resumes (optional)",
+      "photoUpload": "Upload Photo",
+      "photoChange": "Change Photo",
+      "photoFormats": "JPEG, PNG or WebP, max 5MB",
+      "photoInvalidType": "Invalid file type. Please upload a JPEG, PNG, or WebP image.",
+      "photoTooLarge": "File too large. Maximum size is 5MB.",
+      "photoUploadFailed": "Failed to upload photo. Please try again.",
+      "photoDeleteFailed": "Failed to delete photo. Please try again.",
+      "terms": {
+        "title": "Terms & Privacy",
+        "agreement": "I agree to the",
+        "termsLink": "Terms of Service",
+        "and": "and",
+        "privacyLink": "Privacy Policy",
+        "required": "You must accept the terms to continue"
+      },
+      "emailVerified": "Verified",
+      "emailNotVerified": "Not verified",
+      "verifyEmail": "Verify",
+      "verificationSent": "Verification email sent! Check your inbox."
+    },
+    "completeness": {
+      "complete": "Your profile is complete",
+      "incomplete": "Profile Incomplete",
+      "incompleteDescription": "Complete your profile to enable accurate resume parsing and better vacancy matching.",
+      "fromResumeUpload": "You were redirected here because your profile needs to be completed before uploading resumes.",
+      "missing": "Missing required fields",
+      "benefits": {
+        "parsing": "Better resume parsing accuracy",
+        "matching": "More relevant vacancy matching",
+        "tailoring": "Improved resume tailoring suggestions"
+      }
+    },
+    "save": {
+      "button": "Save Profile",
+      "saving": "Saving...",
+      "success": "Profile saved successfully"
+    },
+    "error": {
+      "fetchFailed": "Failed to load profile",
+      "saveFailed": "Failed to save profile",
+      "invalidData": "Please check your input and try again",
+      "completenessCheckFailed": "Failed to check profile completeness"
+    },
+    "delete": {
+      "title": "Delete Account",
+      "description": "Permanently delete your account and all associated data. This action cannot be undone.",
+      "button": "Delete Account",
+      "confirmTitle": "Delete Account?",
+      "confirmDescription": "Are you sure you want to delete your account? This will permanently delete:",
+      "willDelete": {
+        "profile": "Your profile information",
+        "resumes": "All uploaded resumes",
+        "vacancies": "All job vacancies",
+        "generations": "All generated tailored resumes",
+        "apiKeys": "All saved API keys"
+      },
+      "irreversible": "This action is irreversible and cannot be undone.",
+      "confirmButton": "Yes, Delete My Account",
+      "deleting": "Deleting...",
+      "error": "Failed to delete account. Please try again."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to your account",
+      "google": "Sign in with Google",
+      "welcome": "Welcome back",
+      "description": "Sign in to access your resume tailoring workspace",
+      "forbidden": "You do not have access. Please choose a different account or contact support."
+    },
+    "logout": "Sign out",
+    "user": {
+      "profile": "Profile",
+      "settings": "Settings"
+    },
+    "error": {
+      "oauthFailed": "Authentication failed. Please try again.",
+      "sessionExpired": "Your session has expired. Please sign in again.",
+      "unauthorized": "You must be signed in to access this page.",
+      "generic": "An authentication error occurred. Please try again."
+    },
+    "modal": {
+      "login": {
+        "title": "Sign In to ApplyKit",
+        "google": "Continue with Google",
+        "linkedin": "Continue with LinkedIn",
+        "or": "or",
+        "email": "Email",
+        "password": "Password",
+        "forgotPassword": "Forgot password?",
+        "submit": "Sign In",
+        "noAccount": "Don't have an account?",
+        "register": "Register",
+        "invalidCredentials": "Invalid email or password",
+        "accountBlocked": "Your account has been suspended",
+        "error": "Sign in failed. Please try again."
+      },
+      "register": {
+        "title": "Create Your Account",
+        "description": "Create an account to start tailoring your resumes",
+        "google": "Continue with Google",
+        "linkedin": "Continue with LinkedIn",
+        "or": "or",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "passwordHint": "At least 8 characters, 1 uppercase letter, and 1 number",
+        "submit": "Create Account",
+        "hasAccount": "Already have an account?",
+        "login": "Sign In",
+        "emailExists": "An account with this email already exists",
+        "error": "Registration failed. Please try again."
+      },
+      "forgot": {
+        "title": "Reset Password",
+        "description": "Enter your email address and we'll send you a link to reset your password.",
+        "email": "Email",
+        "submit": "Send Reset Link",
+        "emailSent": "Check your email",
+        "emailSentDescription": "If an account exists with that email, we've sent password reset instructions.",
+        "backToLogin": "Back to Sign In",
+        "remembered": "Remembered your password?",
+        "error": "Failed to send reset email. Please try again."
+      },
+      "validation": {
+        "emailInvalid": "Please enter a valid email address",
+        "passwordRequired": "Password is required",
+        "passwordMin": "Password must be at least 8 characters",
+        "passwordUppercase": "Password must contain at least one uppercase letter",
+        "passwordNumber": "Password must contain at least one number",
+        "passwordMismatch": "Passwords do not match",
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required"
+      }
+    },
+    "resetPassword": {
+      "title": "Reset Your Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "passwordHint": "At least 8 characters, 1 uppercase letter, and 1 number",
+      "submit": "Reset Password",
+      "success": "Password Reset Successfully",
+      "successDescription": "Your password has been reset. You can now sign in with your new password.",
+      "signIn": "Sign In",
+      "invalidToken": "Invalid or Expired Link",
+      "invalidTokenDescription": "This password reset link is invalid or has expired. Please request a new one.",
+      "requestNew": "Request New Link",
+      "error": "Failed to reset password. Please try again."
+    }
+  }
+}

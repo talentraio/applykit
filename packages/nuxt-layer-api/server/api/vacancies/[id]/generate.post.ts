@@ -1,5 +1,11 @@
 import type { Role } from '@int/schema';
-import { OPERATION_MAP, PROVIDER_TYPE_MAP, USAGE_CONTEXT_MAP, USER_ROLE_MAP } from '@int/schema';
+import {
+  OPERATION_MAP,
+  PROVIDER_TYPE_MAP,
+  USAGE_CONTEXT_MAP,
+  USER_ROLE_MAP,
+  VACANCY_STATUS_MAP
+} from '@int/schema';
 import {
   generationRepository,
   resumeRepository,
@@ -140,6 +146,11 @@ export default defineEventHandler(async event => {
       result.tokensUsed,
       result.cost
     );
+
+    // Auto-advance status from 'created' to 'generated' on first generation
+    if (vacancy.status === VACANCY_STATUS_MAP.CREATED) {
+      await vacancyRepository.update(vacancyId, userId, { status: VACANCY_STATUS_MAP.GENERATED });
+    }
 
     return generation;
   } catch (error) {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { VacancyStatusSchema } from './enums';
 
 export const VacancySchema = z.object({
   id: z.string().uuid(),
@@ -8,6 +9,7 @@ export const VacancySchema = z.object({
   description: z.string().min(1),
   url: z.string().url().max(2048).nullable().optional(),
   notes: z.string().nullable().optional(),
+  status: VacancyStatusSchema.default('created'),
   createdAt: z.date(),
   updatedAt: z.date()
 });

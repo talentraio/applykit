@@ -144,7 +144,8 @@ const handleSubmit = () => {
     jobPosition: formData.jobPosition || null,
     description: formData.description,
     url: formData.url || null,
-    notes: formData.notes || null
+    notes: formData.notes || null,
+    status: props.vacancy?.status ?? 'created'
   });
 };
 

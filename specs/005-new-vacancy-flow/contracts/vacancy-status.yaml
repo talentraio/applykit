@@ -1,0 +1,234 @@
+# API Contract: Vacancy Status Updates
+# Feature: 005-new-vacancy-flow
+# Date: 2026-02-04
+
+openapi: 3.0.3
+info:
+  title: Vacancy Status API Extensions
+  version: 1.0.0
+  description: Extensions to existing vacancy API for status tracking
+
+paths:
+  /api/vacancies/{id}:
+    put:
+      summary: Update vacancy (extended with status)
+      description: |
+        Update vacancy details including status field.
+        Status validation rules:
+        - 'generated' can only be set automatically via generation success
+        - Status cannot be 'generated' if no generation exists for this vacancy
+        - Status cannot be 'created' if a generation exists
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyInput'
+      responses:
+        '200':
+          description: Vacancy updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vacancy'
+        '400':
+          description: Invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Vacancy not found
+
+  /api/generations:
+    post:
+      summary: Create generation (triggers auto-status update)
+      description: |
+        Create a new tailored resume generation.
+        Side effect: If vacancy.status === 'created', automatically updates to 'generated'.
+        This is wrapped in a transaction to ensure atomicity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - vacancyId
+              properties:
+                vacancyId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Generation created, vacancy status may have been updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Generation'
+
+components:
+  schemas:
+    VacancyStatus:
+      type: string
+      enum:
+        - created
+        - generated
+        - screening
+        - rejected
+        - interview
+        - offer
+      description: |
+        Application tracking status:
+        - created: Initial state, no actions taken
+        - generated: First resume generated (auto-set)
+        - screening: Application submitted
+        - rejected: Received rejection
+        - interview: Invited to interview
+        - offer: Received offer
+
+    Vacancy:
+      type: object
+      required:
+        - id
+        - userId
+        - company
+        - description
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        company:
+          type: string
+          minLength: 1
+          maxLength: 255
+        jobPosition:
+          type: string
+          maxLength: 255
+          nullable: true
+        description:
+          type: string
+          minLength: 1
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/VacancyStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    VacancyInput:
+      type: object
+      properties:
+        company:
+          type: string
+          minLength: 1
+          maxLength: 255
+        jobPosition:
+          type: string
+          maxLength: 255
+          nullable: true
+        description:
+          type: string
+          minLength: 1
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/VacancyStatus'
+          description: Optional status update. See validation rules in endpoint description.
+
+    Generation:
+      type: object
+      required:
+        - id
+        - vacancyId
+        - resumeId
+        - content
+        - matchScoreBefore
+        - matchScoreAfter
+        - generatedAt
+        - expiresAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        vacancyId:
+          type: string
+          format: uuid
+        resumeId:
+          type: string
+          format: uuid
+        content:
+          type: object
+          description: Resume content (ResumeContent schema)
+        matchScoreBefore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        matchScoreAfter:
+          type: integer
+          minimum: 0
+          maximum: 100
+        generatedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+
+# Status Transition Validation Rules (for implementation reference)
+x-status-transitions:
+  description: |
+    Server-side validation logic for status updates:
+
+    1. On PUT /api/vacancies/:id with status field:
+       - Check if vacancy has any generations
+       - If hasGeneration && status === 'created': reject (400)
+       - If !hasGeneration && status === 'generated': reject (400)
+       - Otherwise: allow transition
+
+    2. On POST /api/generations success:
+       - Fetch vacancy
+       - If vacancy.status === 'created':
+         - Update vacancy.status to 'generated' in same transaction
+       - Else: no status change

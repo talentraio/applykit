@@ -19,7 +19,7 @@ export default defineNuxtConfig({
     './layers/roles'
   ],
 
-  modules: ['@pinia/nuxt'],
+  modules: ['@pinia/nuxt', '@nuxtjs/i18n'],
 
   runtimeConfig: {
     redirects: {
@@ -33,6 +33,20 @@ export default defineNuxtConfig({
 
   image: {
     dir: dataDir
+  },
+
+  i18n: {
+    defaultLocale: 'en',
+    strategy: 'no_prefix',
+    langDir: 'locales',
+    locales: [
+      {
+        code: 'en',
+        name: 'English',
+        file: 'en.json'
+      }
+    ],
+    detectBrowserLanguage: false
   },
 
   typescript: {

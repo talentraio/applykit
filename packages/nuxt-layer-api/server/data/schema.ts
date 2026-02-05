@@ -9,6 +9,7 @@ import {
   USER_ROLE_MAP,
   USER_ROLE_VALUES,
   USER_STATUS_VALUES,
+  VACANCY_STATUS_VALUES,
   WORK_FORMAT_VALUES
 } from '@int/schema';
 import {
@@ -46,6 +47,7 @@ export const providerTypeEnum = pgEnum('provider_type', PROVIDER_TYPE_VALUES);
 export const platformProviderEnum = pgEnum('platform_provider', PLATFORM_PROVIDER_VALUES);
 export const userStatusEnum = pgEnum('user_status', USER_STATUS_VALUES);
 export const usageContextEnum = pgEnum('usage_context', USAGE_CONTEXT_VALUES);
+export const vacancyStatusEnum = pgEnum('vacancy_status', VACANCY_STATUS_VALUES);
 
 // ============================================================================
 // Tables
@@ -186,6 +188,7 @@ export const vacancies = pgTable(
     description: text('description').notNull(),
     url: varchar('url', { length: 2048 }),
     notes: text('notes'),
+    status: vacancyStatusEnum('status').notNull().default('created'),
     createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
   },

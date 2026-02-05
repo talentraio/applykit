@@ -29,6 +29,13 @@
       "when": 1770039876000,
       "tag": "004_user_auth_columns",
       "breakpoints": false
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770148800000,
+      "tag": "005_add_vacancy_status",
+      "breakpoints": false
     }
   ]
 }

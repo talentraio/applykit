@@ -3,7 +3,8 @@ import type {
   ResumeContent,
   ResumeFormatSettings,
   Vacancy,
-  VacancyInput
+  VacancyInput,
+  VacancyStatus
 } from '@int/schema';
 import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
 
@@ -248,6 +249,14 @@ export const useVacancyStore = defineStore('VacancyStore', {
       } finally {
         this.loading = false;
       }
+    },
+
+    /**
+     * Update status of the current vacancy
+     */
+    async updateVacancyStatus(status: VacancyStatus): Promise<void> {
+      if (!this.currentVacancy) return;
+      await this.updateVacancy(this.currentVacancy.id, { status });
     },
 
     /**

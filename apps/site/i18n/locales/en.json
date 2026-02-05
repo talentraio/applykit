@@ -1,0 +1,871 @@
+{
+  "errors": {
+    "generic": {
+      "title": "Something went wrong",
+      "description": "We hit an unexpected error. Please try again."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "We could not find the page you were looking for.",
+      "pathLabel": "Requested path: {path}"
+    },
+    "actions": {
+      "home": "Go to home",
+      "back": "Go back",
+      "retry": "Try again"
+    }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "resume": "Resume",
+    "vacancies": "Vacancies",
+    "profile": "Profile",
+    "settings": "Settings",
+    "account": "Account",
+    "menu": "Menu"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {name}!",
+    "email": "Email",
+    "role": "Role"
+  },
+  "resume": {
+    "page": {
+      "title": "My Resume",
+      "description": "Upload your resume to get started with tailored applications",
+      "editTitle": "Resume Editor",
+      "uploadNew": "Upload New",
+      "clearAndCreateNew": "Clear and create new",
+      "createTitle": "Create Resume",
+      "createDescription": "Start with a blank resume and fill in your details manually.",
+      "createButton": "Create Empty Resume"
+    },
+    "list": {
+      "title": "My Resumes",
+      "empty": "No resumes yet",
+      "emptyDescription": "Upload your first resume to get started",
+      "uploadButton": "Upload Resume",
+      "count": "{count} resume(s)"
+    },
+    "upload": {
+      "title": "Upload Resume",
+      "dropzone": "Drop your resume here or click to browse",
+      "dropzoneActive": "Drop file here",
+      "formats": "Supported formats: DOCX, PDF",
+      "maxSize": "Maximum file size: 10MB",
+      "button": "Choose File",
+      "uploading": "Uploading and parsing...",
+      "success": "Resume uploaded successfully",
+      "parsing": "Parsing resume with AI...",
+      "or": "or",
+      "createFromScratch": "Create from Scratch",
+      "createFromScratchHint": "Start with an empty resume and fill in your details manually",
+      "modalTitle": "Upload New Resume",
+      "modalDescription": "Upload a new resume file to replace your current one. This will create a new version."
+    },
+    "editor": {
+      "title": "Edit Resume",
+      "formTab": "Form Editor",
+      "jsonTab": "JSON Editor",
+      "previewTab": "Preview",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "saved": "Changes saved",
+      "unsavedChanges": "You have unsaved changes",
+      "invalidJson": "Invalid JSON format",
+      "personalInfo": "Personal Information",
+      "experience": "Experience",
+      "education": "Education",
+      "skills": "Skills",
+      "certifications": "Certifications",
+      "languages": "Languages",
+      "changesDiscarded": "Changes discarded"
+    },
+    "history": {
+      "undo": "Undo",
+      "redo": "Redo",
+      "undoDisabled": "Nothing to undo",
+      "redoDisabled": "Nothing to redo",
+      "changes": "{count} change(s) in history"
+    },
+    "tabs": {
+      "edit": "Edit",
+      "settings": "Settings",
+      "ai": "AI Enhance"
+    },
+    "settings": {
+      "previewType": {
+        "label": "Preview Type",
+        "description": "Choose how your resume will be displayed",
+        "ats": "ATS",
+        "human": "Human"
+      },
+      "format": {
+        "label": "Format Settings",
+        "descriptionAts": "Adjust formatting for ATS-optimized resume",
+        "descriptionHuman": "Adjust formatting for human-readable resume"
+      },
+      "marginX": {
+        "label": "Horizontal Margins",
+        "hint": "Left and right margins in millimeters (10-26mm)"
+      },
+      "marginY": {
+        "label": "Vertical Margins",
+        "hint": "Top and bottom margins in millimeters (10-26mm)"
+      },
+      "fontSize": {
+        "label": "Font Size",
+        "hint": "Base font size in points (9-13pt)"
+      },
+      "lineHeight": {
+        "label": "Line Height",
+        "hint": "Line spacing multiplier (1.1-1.5)"
+      },
+      "blockSpacing": {
+        "label": "Section Spacing",
+        "hint": "Space between sections (1-9)"
+      },
+      "save": "Save Settings",
+      "reset": "Reset"
+    },
+    "ai": {
+      "title": "AI Resume Enhancement",
+      "description": "Use AI to improve your resume content and make it more impactful.",
+      "feature1": "Improve bullet points with action verbs",
+      "feature2": "Enhance professional summary",
+      "feature3": "Optimize for ATS keywords",
+      "comingSoon": "Coming Soon"
+    },
+    "section": {
+      "summary": "Summary",
+      "experience": "Experience",
+      "education": "Education",
+      "skills": "Skills",
+      "certifications": "Certifications",
+      "languages": "Languages",
+      "Open Source & Side Projects": "Open Source & Side Projects",
+      "Publications": "Publications",
+      "Awards": "Awards",
+      "Volunteer Work": "Volunteer Work",
+      "Interests": "Interests"
+    },
+    "placeholder": {
+      "fullName": "Your Name",
+      "skillType": "Skills",
+      "skill": "Your skill"
+    },
+    "view": {
+      "atsTitle": "ATS Resume",
+      "humanTitle": "Human Resume"
+    },
+    "preview": {
+      "empty": "No content to preview",
+      "mobileButton": "Preview resume",
+      "overlayTitle": "Resume Preview",
+      "close": "Close"
+    },
+    "detail": {
+      "title": "Resume Details",
+      "sourceFile": "Source File",
+      "uploadedAt": "Uploaded At",
+      "lastModified": "Last Modified",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "download": "Download Original"
+      }
+    },
+    "delete": {
+      "confirm": "Are you sure you want to delete this resume?",
+      "description": "This action cannot be undone. All associated tailored versions will also be deleted.",
+      "button": "Delete Resume",
+      "deleting": "Deleting...",
+      "success": "Resume deleted successfully"
+    },
+    "error": {
+      "uploadFailed": "Failed to upload resume",
+      "parseFailed": "Failed to parse resume. Please try again.",
+      "invalidFormat": "Invalid file format. Only DOCX and PDF are supported.",
+      "fileTooLarge": "File is too large. Maximum size is 10MB.",
+      "fetchFailed": "Failed to load resume",
+      "updateFailed": "Failed to update resume",
+      "deleteFailed": "Failed to delete resume",
+      "emptyFile": "File is empty or contains no text",
+      "corruptedFile": "File appears to be corrupted",
+      "rateLimitExceeded": "Daily parse limit exceeded. Please try again tomorrow or use your own API key.",
+      "alreadyExists": "You already have a resume. Update it or delete it first.",
+      "notFound": "Resume not found",
+      "invalidContent": "Invalid resume content. Please check the data and try again.",
+      "invalidSettings": "Invalid formatting settings. Please check the values and try again.",
+      "settingsUpdateFailed": "Failed to update resume settings"
+    },
+    "success": {
+      "created": "Resume created successfully",
+      "updated": "Resume updated successfully",
+      "settingsUpdated": "Formatting settings updated successfully",
+      "versionCreated": "Resume saved. A new version has been created."
+    },
+    "profileIncomplete": {
+      "title": "Complete Your Profile First",
+      "description": "For accurate resume parsing and better vacancy matching, please complete your profile with your basic information and language preferences.",
+      "cancel": "Cancel",
+      "goToProfile": "Go to Profile"
+    },
+    "form": {
+      "validationError": "Please fix the errors below",
+      "personalInfo": {
+        "title": "Personal Information",
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "John Doe",
+        "email": "Email",
+        "emailPlaceholder": "john{'@'}example.com",
+        "phone": "Phone",
+        "phonePlaceholder": "+1 234 567 8900",
+        "location": "Location",
+        "locationPlaceholder": "New York, NY",
+        "linkedin": "LinkedIn",
+        "linkedinPlaceholder": "https://linkedin.com/in/johndoe",
+        "website": "Website",
+        "websitePlaceholder": "https://johndoe.com",
+        "github": "GitHub",
+        "githubPlaceholder": "https://github.com/johndoe",
+        "titlePlaceholder": "Senior Software Engineer"
+      },
+      "summary": {
+        "title": "Summary",
+        "placeholder": "A brief professional summary highlighting your key qualifications and career objectives...",
+        "hint": "Optional. A 2-3 sentence overview of your professional background."
+      },
+      "experience": {
+        "title": "Experience",
+        "add": "Add Experience",
+        "empty": "No experience entries. Add your work history.",
+        "company": "Company",
+        "companyPlaceholder": "Acme Corporation",
+        "position": "Position",
+        "positionPlaceholder": "Senior Software Engineer",
+        "location": "Location",
+        "locationPlaceholder": "Remote / San Francisco, CA",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "currentlyHere": "I currently work here",
+        "description": "Description",
+        "descriptionPlaceholder": "Brief overview of your role and responsibilities...",
+        "bullets": "Key Achievements",
+        "bulletPlaceholder": "Achieved X by doing Y, resulting in Z...",
+        "addBullet": "Add Achievement",
+        "technologies": "Technologies Used",
+        "technologyPlaceholder": "React, TypeScript, Node.js...",
+        "links": "Project Links",
+        "linkName": "Name",
+        "linkUrl": "URL",
+        "addLink": "Add Link"
+      },
+      "education": {
+        "title": "Education",
+        "add": "Add Education",
+        "empty": "No education entries. Add your educational background.",
+        "institution": "Institution",
+        "institutionPlaceholder": "University of California",
+        "degree": "Degree",
+        "degreePlaceholder": "Bachelor of Science",
+        "field": "Field of Study",
+        "fieldPlaceholder": "Computer Science",
+        "startDate": "Start Date",
+        "endDate": "End Date"
+      },
+      "skills": {
+        "title": "Skills",
+        "addGroup": "Add Skill Group",
+        "hint": "At least one skill group is required. Group skills by category (e.g., Languages, Frameworks, Tools).",
+        "type": "Category",
+        "typePlaceholder": "e.g., Programming Languages, Frameworks",
+        "skills": "Skills",
+        "skillPlaceholder": "Type a skill and press Enter"
+      },
+      "certifications": {
+        "title": "Certifications",
+        "add": "Add Certification",
+        "empty": "No certifications. Add your professional certifications.",
+        "name": "Certification Name",
+        "namePlaceholder": "AWS Solutions Architect",
+        "issuer": "Issuer",
+        "issuerPlaceholder": "Amazon Web Services",
+        "date": "Date Obtained"
+      },
+      "languages": {
+        "title": "Languages",
+        "add": "Add Language",
+        "empty": "No languages added.",
+        "language": "Language",
+        "languagePlaceholder": "English",
+        "level": "Proficiency Level",
+        "levelPlaceholder": "Native or bilingual"
+      },
+      "customSections": {
+        "title": "Additional Sections",
+        "add": "Add Section",
+        "empty": "No additional sections. Add custom sections like Open Source, Publications, Awards.",
+        "hint": "Add custom sections for Open Source contributions, Publications, Awards, etc.",
+        "sectionTitle": "Section Title",
+        "sectionTitlePlaceholder": "e.g., Open Source, Publications",
+        "items": "Items",
+        "addItem": "Add Item",
+        "itemTitle": "Title",
+        "itemTitlePlaceholder": "Project or publication name",
+        "itemDescription": "Description",
+        "itemDescriptionPlaceholder": "Brief description..."
+      },
+      "date": {
+        "year": "Year",
+        "month": "Month",
+        "months": {
+          "01": "Jan",
+          "02": "Feb",
+          "03": "Mar",
+          "04": "Apr",
+          "05": "May",
+          "06": "Jun",
+          "07": "Jul",
+          "08": "Aug",
+          "09": "Sep",
+          "10": "Oct",
+          "11": "Nov",
+          "12": "Dec"
+        }
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your API keys and preferences",
+    "keys": {
+      "title": "API Keys",
+      "description": "Bring your own key for higher limits and faster iterations.",
+      "provider": "Provider",
+      "key": "API Key",
+      "keyPlaceholder": "Paste your API key",
+      "keyHint": "Stored as **** {hint}",
+      "localNote": "Keys are stored only in this browser and sent per request.",
+      "localStatus": "Stored in this browser",
+      "save": "Save Key",
+      "saving": "Saving...",
+      "delete": "Remove",
+      "empty": "No keys saved yet",
+      "providers": {
+        "openai": "OpenAI",
+        "gemini": "Gemini"
+      },
+      "success": {
+        "saved": "Key saved",
+        "deleted": "Key removed"
+      },
+      "error": {
+        "invalidKey": "Enter a valid API key",
+        "fetchFailed": "Failed to load keys",
+        "saveFailed": "Failed to save key",
+        "deleteFailed": "Failed to remove key"
+      }
+    }
+  },
+  "generation": {
+    "button": "Generate Tailored Resume",
+    "inProgress": "Generating...",
+    "success": "Resume generated successfully",
+    "matchScore": {
+      "title": "Match Score",
+      "before": "Before: {score}%",
+      "after": "After: {score}%",
+      "improvement": "Improvement: +{points}%",
+      "description": "How well your resume matches this job"
+    },
+    "lifetime": {
+      "title": "Expiration",
+      "expiresIn": "Expires in {days} day(s)",
+      "expires": "Expires {date}",
+      "expired": "This generation has expired",
+      "duration": "90 days"
+    },
+    "error": {
+      "generationFailed": "Failed to generate tailored resume",
+      "rateLimitExceeded": "Daily generation limit exceeded. Please try again tomorrow or use your own API key.",
+      "profileIncomplete": "Please complete your profile before generating resumes",
+      "noResume": "No resume found. Please upload a resume first.",
+      "invalidVacancy": "Vacancy not found or access denied",
+      "generic": "An error occurred during generation. Please try again."
+    }
+  },
+  "export": {
+    "button": {
+      "ats": "Export ATS Version",
+      "human": "Export Human Version",
+      "download": "Download PDF"
+    },
+    "inProgress": "Generating PDF...",
+    "success": "PDF exported successfully",
+    "format": {
+      "ats": "ATS Format",
+      "human": "Human-Readable Format",
+      "atsDescription": "Plain text format optimized for Applicant Tracking Systems",
+      "humanDescription": "Professionally styled format for human readers"
+    },
+    "error": {
+      "exportFailed": "Failed to export resume",
+      "noGeneration": "No tailored resume found. Please generate a resume first.",
+      "generationExpired": "This tailored resume has expired. Please regenerate it.",
+      "rateLimitExceeded": "Daily export limit exceeded. Please try again tomorrow.",
+      "invalidFormat": "Invalid export format specified",
+      "generic": "An error occurred during export. Please try again."
+    }
+  },
+  "vacancy": {
+    "list": {
+      "title": "Job Vacancies",
+      "empty": "No vacancies yet",
+      "emptyDescription": "Add your first job vacancy to start tailoring resumes",
+      "createButton": "Add Vacancy",
+      "count": "{count} vacancy(ies)",
+      "perPage": "Per page:",
+      "allLoaded": "All vacancies loaded"
+    },
+    "form": {
+      "title": "Vacancy Details",
+      "createTitle": "Add New Vacancy",
+      "editTitle": "Edit Vacancy",
+      "company": "Company Name",
+      "companyPlaceholder": "Acme Corporation",
+      "companyHint": "Required. The company offering the position.",
+      "jobPosition": "Job Position",
+      "jobPositionPlaceholder": "Senior Software Engineer",
+      "jobPositionHint": "Optional. Leave blank if not specified.",
+      "description": "Job Description",
+      "descriptionPlaceholder": "Paste the full job description here...",
+      "descriptionHint": "Required. Include requirements, responsibilities, and qualifications.",
+      "url": "Vacancy URL",
+      "urlPlaceholder": "https://example.com/careers/job-123",
+      "urlHint": "Optional. Link to the job posting.",
+      "notes": "Notes",
+      "notesPlaceholder": "Add any personal notes about this vacancy...",
+      "notesHint": "Optional. Private notes for your reference.",
+      "submit": "Save Vacancy",
+      "submitting": "Saving...",
+      "cancel": "Cancel",
+      "success": "Vacancy saved successfully"
+    },
+    "detail": {
+      "title": "Vacancy Details",
+      "company": "Company",
+      "position": "Position",
+      "description": "Description",
+      "url": "Job Posting",
+      "notes": "Notes",
+      "createdAt": "Created",
+      "updatedAt": "Last Updated",
+      "generateHint": "Generate a tailored resume optimized for this vacancy. The AI will analyze the job description and emphasize your most relevant skills and experience.",
+      "noPosition": "Position not specified",
+      "noUrl": "No URL provided",
+      "noNotes": "No notes",
+      "tailoredResume": "Tailored Resume",
+      "editResume": "Edit Resume",
+      "editVacancy": "Edit Vacancy",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "generate": "Generate Resume",
+        "viewAts": "View ATS",
+        "viewHuman": "View Human",
+        "viewGenerations": "View Generations"
+      }
+    },
+    "card": {
+      "createdAt": "Added {date}",
+      "updatedAt": "Updated {date}",
+      "noPosition": "Position not specified",
+      "viewDetails": "View Details",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "delete": {
+      "confirm": "Are you sure you want to delete this vacancy?",
+      "description": "This action cannot be undone. All associated tailored resumes will also be deleted.",
+      "button": "Delete Vacancy",
+      "deleting": "Deleting...",
+      "success": "Vacancy deleted successfully"
+    },
+    "status": {
+      "created": "Created",
+      "generated": "Generated",
+      "screening": "Screening",
+      "rejected": "Rejected",
+      "interview": "Interview",
+      "offer": "Offer",
+      "updateSuccess": "Status updated",
+      "updateFailed": "Failed to update status",
+      "invalidTransition": "This status change is not allowed"
+    },
+    "nav": {
+      "overview": "Overview",
+      "resume": "Resume",
+      "coverLetter": "Cover Letter",
+      "preparation": "Preparation"
+    },
+    "overview": {
+      "generateResume": "Generate Tailored Resume",
+      "generateCoverLetter": "Generate Cover Letter",
+      "lastUpdated": "Last Updated"
+    },
+    "breadcrumbs": {
+      "vacancies": "Vacancies"
+    },
+    "comingSoon": "Coming soon",
+    "resume": {
+      "fetchFailed": "Failed to load generation",
+      "noGeneration": "No Generated Resume",
+      "generateFirst": "Generate a tailored resume from the overview page first.",
+      "backToOverview": "Back to Overview",
+      "saving": "Saving...",
+      "autoSaved": "Changes saved",
+      "saveFailed": "Failed to save changes"
+    },
+    "error": {
+      "fetchFailed": "Failed to load vacancies",
+      "fetchDetailFailed": "Failed to load vacancy details",
+      "createFailed": "Failed to create vacancy",
+      "updateFailed": "Failed to update vacancy",
+      "deleteFailed": "Failed to delete vacancy",
+      "invalidData": "Please check your input and try again",
+      "companyRequired": "Company name is required",
+      "descriptionRequired": "Job description is required",
+      "invalidUrl": "Please enter a valid URL"
+    }
+  },
+  "static": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated: {date}"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last updated: {date}"
+    }
+  },
+  "footer": {
+    "copyright": "© {year} ApplyKit. All rights reserved.",
+    "tagline": "Tailor your resume for every opportunity",
+    "product": "Product",
+    "features": "Features",
+    "pricing": "Pricing",
+    "docs": "Documentation",
+    "company": "Company",
+    "about": "About",
+    "blog": "Blog",
+    "contact": "Contact",
+    "legal": "Legal",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "landing": {
+    "hero": {
+      "headline": "Tailor your resume to every vacancy — fast.",
+      "subheadline": "Upload a DOCX or PDF, review the structured result, generate ATS + human-friendly versions, and export clean PDFs.",
+      "ctaPrimary": "Try it",
+      "ctaSecondary": "See how it works",
+      "disclaimer": "Free tier available. Bring your own API key if you want higher limits."
+    },
+    "steps": {
+      "title": "How it works",
+      "upload": {
+        "title": "Upload",
+        "description": "Upload your resume in DOCX or PDF format"
+      },
+      "review": {
+        "title": "Review",
+        "description": "Review parsed JSON and fix any missing fields"
+      },
+      "vacancy": {
+        "title": "Add Vacancy",
+        "description": "Add company, position, and job description"
+      },
+      "export": {
+        "title": "Generate & Export",
+        "description": "Generate tailored resumes and export ATS/Human PDFs"
+      }
+    },
+    "comparison": {
+      "title": "ATS vs Human Resume",
+      "subtitle": "ApplyKit keeps the content consistent between both versions — only the presentation changes.",
+      "ats": {
+        "title": "ATS Resume",
+        "point1": "Optimized for parsers (simple structure)",
+        "point2": "No fancy layout, minimal styling",
+        "point3": "Best for mass applications"
+      },
+      "human": {
+        "title": "Human Resume",
+        "point1": "Clean A4 layout, readable typography",
+        "point2": "Optional photo + visual hierarchy",
+        "point3": "Best when recruiter asks for a \"nice PDF\""
+      }
+    },
+    "metrics": {
+      "title": "Your Progress",
+      "vacanciesTracked": "Vacancies tracked",
+      "resumesGenerated": "Resumes generated",
+      "avgMatchScore": "Avg. match score",
+      "bestMatchScore": "Best match score",
+      "timeSaved": "Time saved",
+      "lastGeneration": "Last generation",
+      "placeholder": {
+        "vacanciesTracked": "12",
+        "resumesGenerated": "48",
+        "avgMatchScore": "72%",
+        "bestMatchScore": "89%",
+        "timeSaved": "~3h/week",
+        "lastGeneration": "Today"
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "apiKey": {
+        "question": "Is it safe to paste my API key?",
+        "answer": "You can use the free tier, or bring your own key. Keys are treated as sensitive. Prefer temporary keys."
+      },
+      "atsPlain": {
+        "question": "Why does my ATS resume look plain?",
+        "answer": "That's intentional: ATS parsers prefer predictable structure."
+      },
+      "editing": {
+        "question": "Can I edit the result?",
+        "answer": "Yes — MVP uses a JSON editor. A friendly UI editor comes later."
+      },
+      "formats": {
+        "question": "DOCX or PDF?",
+        "answer": "DOCX is preferred, but PDF parsing is supported too."
+      }
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "description": "Complete your profile to enable resume generation",
+    "section": {
+      "photo": "Profile Photo",
+      "basic": "Basic Information",
+      "languages": "Languages",
+      "phones": "Phone Numbers"
+    },
+    "languages": {
+      "empty": "Add at least one language"
+    },
+    "phones": {
+      "empty": "No phone numbers added (optional)"
+    },
+    "form": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "country": "Country",
+      "countryHint": "ISO 3166-1 alpha-2 code (e.g., US, GB, DE)",
+      "searchRegion": "Search Region",
+      "workFormat": "Work Format",
+      "languages": "Languages",
+      "phones": "Phone Numbers",
+      "language": "Language",
+      "languageLevel": "Level",
+      "languagePlaceholder": "English",
+      "levelPlaceholder": "Native",
+      "addLanguage": "Add Language",
+      "removeLanguage": "Remove",
+      "phoneNumber": "Phone Number",
+      "phoneLabel": "Label",
+      "phonePlaceholder": "+1 234 567 8900",
+      "labelPlaceholder": "Mobile",
+      "addPhone": "Add Phone Number",
+      "removePhone": "Remove",
+      "workFormatOptions": {
+        "remote": "Remote",
+        "onsite": "On-site",
+        "hybrid": "Hybrid"
+      },
+      "languageLevelOptions": {
+        "native": "Native or bilingual proficiency",
+        "fullProfessional": "Full professional proficiency",
+        "professional": "Professional working proficiency",
+        "limited": "Limited working proficiency",
+        "elementary": "Elementary proficiency"
+      },
+      "countryPlaceholder": "Search country...",
+      "searchRegionPlaceholder": "Select region...",
+      "searchRegionOptions": {
+        "worldwide": "Worldwide",
+        "europe": "Europe",
+        "eu": "European Union",
+        "northAmerica": "North America",
+        "usa": "United States",
+        "uk": "United Kingdom",
+        "emea": "EMEA (Europe, Middle East, Africa)",
+        "apac": "Asia-Pacific",
+        "latam": "Latin America",
+        "middleEast": "Middle East",
+        "africa": "Africa",
+        "oceania": "Oceania"
+      },
+      "phoneLabelOptions": {
+        "mobile": "Mobile",
+        "work": "Work",
+        "home": "Home"
+      },
+      "photoDescription": "Add a professional photo for human-readable resumes (optional)",
+      "photoUpload": "Upload Photo",
+      "photoChange": "Change Photo",
+      "photoFormats": "JPEG, PNG or WebP, max 5MB",
+      "photoInvalidType": "Invalid file type. Please upload a JPEG, PNG, or WebP image.",
+      "photoTooLarge": "File too large. Maximum size is 5MB.",
+      "photoUploadFailed": "Failed to upload photo. Please try again.",
+      "photoDeleteFailed": "Failed to delete photo. Please try again.",
+      "terms": {
+        "title": "Terms & Privacy",
+        "agreement": "I agree to the",
+        "termsLink": "Terms of Service",
+        "and": "and",
+        "privacyLink": "Privacy Policy",
+        "required": "You must accept the terms to continue"
+      },
+      "emailVerified": "Verified",
+      "emailNotVerified": "Not verified",
+      "verifyEmail": "Verify",
+      "verificationSent": "Verification email sent! Check your inbox."
+    },
+    "completeness": {
+      "complete": "Your profile is complete",
+      "incomplete": "Profile Incomplete",
+      "incompleteDescription": "Complete your profile to enable accurate resume parsing and better vacancy matching.",
+      "fromResumeUpload": "You were redirected here because your profile needs to be completed before uploading resumes.",
+      "missing": "Missing required fields",
+      "benefits": {
+        "parsing": "Better resume parsing accuracy",
+        "matching": "More relevant vacancy matching",
+        "tailoring": "Improved resume tailoring suggestions"
+      }
+    },
+    "save": {
+      "button": "Save Profile",
+      "saving": "Saving...",
+      "success": "Profile saved successfully"
+    },
+    "error": {
+      "fetchFailed": "Failed to load profile",
+      "saveFailed": "Failed to save profile",
+      "invalidData": "Please check your input and try again",
+      "completenessCheckFailed": "Failed to check profile completeness"
+    },
+    "delete": {
+      "title": "Delete Account",
+      "description": "Permanently delete your account and all associated data. This action cannot be undone.",
+      "button": "Delete Account",
+      "confirmTitle": "Delete Account?",
+      "confirmDescription": "Are you sure you want to delete your account? This will permanently delete:",
+      "willDelete": {
+        "profile": "Your profile information",
+        "resumes": "All uploaded resumes",
+        "vacancies": "All job vacancies",
+        "generations": "All generated tailored resumes",
+        "apiKeys": "All saved API keys"
+      },
+      "irreversible": "This action is irreversible and cannot be undone.",
+      "confirmButton": "Yes, Delete My Account",
+      "deleting": "Deleting...",
+      "error": "Failed to delete account. Please try again."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to your account",
+      "google": "Sign in with Google",
+      "welcome": "Welcome back",
+      "description": "Sign in to access your resume tailoring workspace",
+      "forbidden": "You do not have access. Please choose a different account or contact support."
+    },
+    "logout": "Sign out",
+    "user": {
+      "profile": "Profile",
+      "settings": "Settings"
+    },
+    "error": {
+      "oauthFailed": "Authentication failed. Please try again.",
+      "sessionExpired": "Your session has expired. Please sign in again.",
+      "unauthorized": "You must be signed in to access this page.",
+      "generic": "An authentication error occurred. Please try again."
+    },
+    "modal": {
+      "login": {
+        "title": "Sign In to ApplyKit",
+        "google": "Continue with Google",
+        "linkedin": "Continue with LinkedIn",
+        "or": "or",
+        "email": "Email",
+        "password": "Password",
+        "forgotPassword": "Forgot password?",
+        "submit": "Sign In",
+        "noAccount": "Don't have an account?",
+        "register": "Register",
+        "invalidCredentials": "Invalid email or password",
+        "accountBlocked": "Your account has been suspended",
+        "error": "Sign in failed. Please try again."
+      },
+      "register": {
+        "title": "Create Your Account",
+        "description": "Create an account to start tailoring your resumes",
+        "google": "Continue with Google",
+        "linkedin": "Continue with LinkedIn",
+        "or": "or",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "passwordHint": "At least 8 characters, 1 uppercase letter, and 1 number",
+        "submit": "Create Account",
+        "hasAccount": "Already have an account?",
+        "login": "Sign In",
+        "emailExists": "An account with this email already exists",
+        "error": "Registration failed. Please try again."
+      },
+      "forgot": {
+        "title": "Reset Password",
+        "description": "Enter your email address and we'll send you a link to reset your password.",
+        "email": "Email",
+        "submit": "Send Reset Link",
+        "emailSent": "Check your email",
+        "emailSentDescription": "If an account exists with that email, we've sent password reset instructions.",
+        "backToLogin": "Back to Sign In",
+        "remembered": "Remembered your password?",
+        "error": "Failed to send reset email. Please try again."
+      },
+      "validation": {
+        "emailInvalid": "Please enter a valid email address",
+        "passwordRequired": "Password is required",
+        "passwordMin": "Password must be at least 8 characters",
+        "passwordUppercase": "Password must contain at least one uppercase letter",
+        "passwordNumber": "Password must contain at least one number",
+        "passwordMismatch": "Passwords do not match",
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required"
+      }
+    },
+    "resetPassword": {
+      "title": "Reset Your Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "passwordHint": "At least 8 characters, 1 uppercase letter, and 1 number",
+      "submit": "Reset Password",
+      "success": "Password Reset Successfully",
+      "successDescription": "Your password has been reset. You can now sign in with your new password.",
+      "signIn": "Sign In",
+      "invalidToken": "Invalid or Expired Link",
+      "invalidTokenDescription": "This password reset link is invalid or has expired. Please request a new one.",
+      "requestNew": "Request New Link",
+      "error": "Failed to reset password. Please try again."
+    }
+  }
+}
