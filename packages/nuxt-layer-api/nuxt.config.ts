@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
 
   modules: ['nuxt-auth-utils', '@pinia/nuxt'],
+  extends: ['@int/utils'],
 
   runtimeConfig: {
     databaseUrl:

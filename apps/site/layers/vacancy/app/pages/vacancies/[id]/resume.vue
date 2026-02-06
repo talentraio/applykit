@@ -55,14 +55,7 @@
       <!-- Footer: Undo/Redo + Saving Indicator (T038, T039) -->
       <template #footer>
         <div class="vacancy-resume-page__footer">
-          <BaseUndoRedoControls
-            :can-undo="canUndo"
-            :can-redo="canRedo"
-            :history-length="historyLength"
-            show-count
-            @undo="undo"
-            @redo="redo"
-          />
+          <BaseUndoRedoControls :can-undo="canUndo" :can-redo="canRedo" @undo="undo" @redo="redo" />
 
           <div class="flex items-center gap-2">
             <!-- Saving Indicator (T039) -->
@@ -154,7 +147,6 @@ const {
   isDirty,
   canUndo,
   canRedo,
-  historyLength,
   fetchGeneration,
   updateContent,
   undo,

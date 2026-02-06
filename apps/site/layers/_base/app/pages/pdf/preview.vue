@@ -33,21 +33,17 @@ type PdfPayload = {
 const route = useRoute();
 const token = computed(() => (typeof route.query.token === 'string' ? route.query.token : ''));
 
-const { data: payload, pending } = await useAsyncData<PdfPayload | null>(
-  'pdf-preview',
-  async () => {
-    if (!token.value) return null;
-    try {
-      return await useApi<PdfPayload>('/api/pdf/payload', {
-        query: {
-          token: token.value
-        }
-      });
-    } catch {
-      return null;
-    }
-  }
-);
+const { data, pending } = await useAsyncData<PdfPayload | true>('pdf-preview', async () => {
+  if (!token.value) return true;
+
+  return await useApi('/api/pdf/payload', {
+    query: { token: token.value }
+  });
+});
+
+const payload = computed(() => {
+  return data.value !== true ? data.value : null;
+});
 
 const previewType = computed(() => (payload.value?.format === 'human' ? 'human' : 'ats'));
 const isReady = computed(() => Boolean(payload.value?.content) && !pending.value);

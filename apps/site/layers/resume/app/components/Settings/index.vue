@@ -125,15 +125,15 @@ const localSettings = reactive<ResumeFormatSettings>({
   blockSpacing: props.settings.blockSpacing
 });
 
-// Sync local settings when preview type changes (switching between ATS/Human)
+// Sync local settings when props change (preview type switch or undo/redo)
 watch(
-  () => props.previewType,
-  () => {
-    localSettings.marginX = props.settings.marginX;
-    localSettings.marginY = props.settings.marginY;
-    localSettings.fontSize = props.settings.fontSize;
-    localSettings.lineHeight = props.settings.lineHeight;
-    localSettings.blockSpacing = props.settings.blockSpacing;
+  () => props.settings,
+  newSettings => {
+    localSettings.marginX = newSettings.marginX;
+    localSettings.marginY = newSettings.marginY;
+    localSettings.fontSize = newSettings.fontSize;
+    localSettings.lineHeight = newSettings.lineHeight;
+    localSettings.blockSpacing = newSettings.blockSpacing;
   }
 );
 

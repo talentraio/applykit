@@ -55,24 +55,26 @@
       >
         <span>{{ t('vacancy.overview.lastUpdated') }}: {{ formattedUpdatedAt }}</span>
 
-        <UButton
-          v-if="vacancy.url"
-          variant="link"
-          color="primary"
-          size="xs"
-          icon="i-lucide-external-link"
-          :to="vacancy.url"
-          target="_blank"
-        >
-          {{ t('vacancy.detail.url') }}
-        </UButton>
+        <div class="ml-auto flex w-full items-center justify-end gap-3 sm:w-auto">
+          <UButton
+            v-if="vacancy.url"
+            variant="link"
+            color="primary"
+            size="xs"
+            icon="i-lucide-external-link"
+            :to="vacancy.url"
+            target="_blank"
+          >
+            {{ t('vacancy.detail.url') }}
+          </UButton>
 
-        <VacancyStatusBadge
-          :status="vacancy.status"
-          :has-generation="hasGeneration"
-          :loading="isUpdatingStatus"
-          @change="handleStatusChange"
-        />
+          <VacancyStatusBadge
+            :status="vacancy.status"
+            :has-generation="hasGeneration"
+            :loading="isUpdatingStatus"
+            @change="handleStatusChange"
+          />
+        </div>
       </div>
 
       <!-- Actions Row (T023) -->
@@ -80,11 +82,11 @@
         <UButton
           :loading="isGenerating"
           :disabled="isGenerating"
-          icon="i-lucide-sparkles"
+          :icon="primaryActionIcon"
           size="lg"
-          @click="handleGenerate"
+          @click="handlePrimaryAction"
         >
-          {{ isGenerating ? t('generation.inProgress') : t('vacancy.overview.generateResume') }}
+          {{ primaryActionLabel }}
         </UButton>
 
         <UButton variant="outline" icon="i-lucide-mail" size="lg" disabled>
@@ -121,27 +123,6 @@
           :generation="latestGeneration"
           class="mb-6"
         />
-
-        <!-- View Resume Links -->
-        <div class="mb-6 flex flex-wrap gap-3">
-          <UButton
-            variant="outline"
-            icon="i-lucide-file-edit"
-            :to="`/vacancies/${vacancy.id}/resume`"
-          >
-            {{ t('vacancy.detail.editResume') }}
-          </UButton>
-          <UButton variant="outline" icon="i-lucide-file-text" :to="`/vacancies/${vacancy.id}/ats`">
-            {{ t('vacancy.detail.actions.viewAts') }}
-          </UButton>
-          <UButton
-            variant="outline"
-            icon="i-lucide-layout-template"
-            :to="`/vacancies/${vacancy.id}/human`"
-          >
-            {{ t('vacancy.detail.actions.viewHuman') }}
-          </UButton>
-        </div>
       </template>
 
       <!-- Description Block (T026) -->
@@ -192,7 +173,8 @@
  * Related: T020-T027 (US2)
  */
 
-import type { Generation, Vacancy, VacancyInput, VacancyStatus } from '@int/schema';
+import type { Vacancy, VacancyInput, VacancyStatus } from '@int/schema';
+import type { VacanciesResumeGeneration } from '@layer/api/types/vacancies';
 import { format, parseISO } from 'date-fns';
 
 defineOptions({ name: 'VacancyOverviewPage' });
@@ -208,9 +190,8 @@ const router = useRouter();
 const { t } = useI18n();
 const toast = useToast();
 
-// Store and composables
-const { updateVacancy, deleteVacancy } = useVacancies();
-const { generate, getLatestGeneration } = useGenerations();
+// Store
+const vacancyStore = useVacancyStore();
 
 // --- State ---
 const isEditMode = ref(false);
@@ -223,13 +204,18 @@ const showDeleteModal = ref(false);
 
 // --- Generation Data ---
 const {
-  data: latestGeneration,
+  data,
   pending: generationPending,
   refresh: refreshGeneration
-} = await useAsyncData<Generation | null>(
+} = await useAsyncData<VacanciesResumeGeneration>(
   `overview-generation-${props.vacancy.id}`,
-  () => getLatestGeneration(props.vacancy.id),
-  { default: () => null }
+  () => vacancyStore.fetchLatestGeneration(props.vacancy.id),
+  {
+    default: () => ({
+      isValid: true,
+      generation: null
+    })
+  }
 );
 
 // --- Computed ---
@@ -242,7 +228,20 @@ const formattedUpdatedAt = computed(() => {
   return format(resolved, 'MMM d, yyyy');
 });
 
+const latestGeneration = computed(() => data.value?.generation || null);
 const hasGeneration = computed(() => latestGeneration.value !== null);
+const primaryActionLabel = computed(() => {
+  if (isGenerating.value) {
+    return t('generation.inProgress');
+  }
+
+  return hasGeneration.value
+    ? t('vacancy.overview.viewResume')
+    : t('vacancy.overview.generateResume');
+});
+const primaryActionIcon = computed(() =>
+  hasGeneration.value ? 'i-lucide-file-text' : 'i-lucide-sparkles'
+);
 
 // --- Event Handlers ---
 
@@ -260,7 +259,7 @@ const handleSave = async (data: VacancyInput) => {
   isSaving.value = true;
 
   try {
-    await updateVacancy(props.vacancy.id, data);
+    await vacancyStore.updateVacancy(props.vacancy.id, data);
     isEditMode.value = false;
 
     toast.add({
@@ -299,7 +298,7 @@ const handleDeleteConfirm = async () => {
   isDeleting.value = true;
 
   try {
-    await deleteVacancy(props.vacancy.id);
+    await vacancyStore.deleteVacancy(props.vacancy.id);
     showDeleteModal.value = false;
 
     toast.add({
@@ -328,7 +327,7 @@ const handleGenerate = async () => {
   generationError.value = null;
 
   try {
-    await generate(props.vacancy.id);
+    await vacancyStore.generateResume(props.vacancy.id);
     await refreshGeneration();
 
     // Navigate to resume sub-page after successful generation
@@ -342,13 +341,25 @@ const handleGenerate = async () => {
 };
 
 /**
+ * Handle primary action in the overview toolbar
+ */
+const handlePrimaryAction = async () => {
+  if (hasGeneration.value) {
+    await router.push(`/vacancies/${props.vacancy.id}/resume`);
+    return;
+  }
+
+  await handleGenerate();
+};
+
+/**
  * Handle status change from StatusBadge dropdown (T032-T033)
  */
 const handleStatusChange = async (newStatus: VacancyStatus) => {
   isUpdatingStatus.value = true;
 
   try {
-    await updateVacancy(props.vacancy.id, { status: newStatus });
+    await vacancyStore.updateVacancy(props.vacancy.id, { status: newStatus });
 
     toast.add({
       title: t('vacancy.status.updateSuccess'),

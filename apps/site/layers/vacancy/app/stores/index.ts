@@ -6,6 +6,9 @@ import type {
   VacancyInput,
   VacancyStatus
 } from '@int/schema';
+import type { VacanciesResumeGeneration } from '@layer/api/types/vacancies';
+import type { GenerateOptions } from '@site/vacancy/app/infrastructure/generation.api';
+import { generationApi } from '@site/vacancy/app/infrastructure/generation.api';
 import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
 
 /**
@@ -14,7 +17,8 @@ import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
  * Manages vacancy data and operations.
  * Site-specific - uses vacancy.api.ts from vacancy layer.
  *
- * Enhanced with generation editing state for US4 (T043, T044).
+ * Generation editing uses cached generations array with direct editing.
+ * Undo/redo history is managed by useResumeEditHistory composable.
  *
  * Related: T097 (US4), T043, T044 (US4)
  */
@@ -25,17 +29,17 @@ import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
 type PreviewType = 'ats' | 'human';
 
 /**
- * History snapshot for undo/redo
+ * Cached generation entry
  */
-type HistorySnapshot = {
-  content: ResumeContent;
-  timestamp: number;
+type CachedGeneration = {
+  id: string;
+  generation: Generation;
 };
 
 /**
- * Maximum history snapshots to keep
+ * Max cached generations
  */
-const MAX_HISTORY_SIZE = 50;
+const MAX_CACHED_GENERATIONS = 20;
 
 /**
  * Default format settings
@@ -55,20 +59,21 @@ export const useVacancyStore = defineStore('VacancyStore', {
     loading: boolean;
     error: Error | null;
 
-    // Generation editing state (T043)
-    currentGeneration: Generation | null;
-    editingGenerationContent: ResumeContent | null;
-    isGenerationDirty: boolean;
+    // Generation state
+    generations: Generation[];
+    latestGeneration: Generation | null;
+    generationLoading: boolean;
+    generating: boolean;
     savingGeneration: boolean;
+
+    // Cached generations for editing (max 20)
+    cachedGenerations: CachedGeneration[];
+    currentGenerationId: string | null;
 
     // Preview state for generation
     previewType: PreviewType;
     atsSettings: ResumeFormatSettings;
     humanSettings: ResumeFormatSettings;
-
-    // History for undo/redo (T043)
-    generationHistory: HistorySnapshot[];
-    generationHistoryIndex: number;
 
     // UI state
     isEditingGeneration: boolean;
@@ -78,20 +83,21 @@ export const useVacancyStore = defineStore('VacancyStore', {
     loading: false,
     error: null,
 
-    // Generation editing state
-    currentGeneration: null,
-    editingGenerationContent: null,
-    isGenerationDirty: false,
+    // Generation state
+    generations: [],
+    latestGeneration: null,
+    generationLoading: false,
+    generating: false,
     savingGeneration: false,
+
+    // Cached generations for editing
+    cachedGenerations: [],
+    currentGenerationId: null,
 
     // Preview state
     previewType: 'ats',
     atsSettings: { ...DEFAULT_FORMAT_SETTINGS },
     humanSettings: { ...DEFAULT_FORMAT_SETTINGS },
-
-    // History for undo/redo
-    generationHistory: [],
-    generationHistoryIndex: -1,
 
     // UI state
     isEditingGeneration: false
@@ -115,19 +121,30 @@ export const useVacancyStore = defineStore('VacancyStore', {
     },
 
     // =========================================
-    // Generation Editing Getters (T043)
+    // Generation Getters
     // =========================================
+
+    /**
+     * Get current generation from cache
+     */
+    currentGeneration: (state): Generation | null => {
+      if (!state.currentGenerationId) return null;
+      const cached = state.cachedGenerations.find(c => c.id === state.currentGenerationId);
+      return cached?.generation ?? null;
+    },
 
     /**
      * Check if generation has content to display
      */
-    hasGeneration: (state): boolean => state.currentGeneration !== null,
+    hasGeneration(): boolean {
+      return this.currentGeneration !== null;
+    },
 
     /**
-     * Get content for display (editing or original)
+     * Get content for display from current generation
      */
-    displayGenerationContent: (state): ResumeContent | null => {
-      return state.editingGenerationContent ?? state.currentGeneration?.content ?? null;
+    displayGenerationContent(): ResumeContent | null {
+      return this.currentGeneration?.content ?? null;
     },
 
     /**
@@ -135,23 +152,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     currentSettings: (state): ResumeFormatSettings => {
       return state.previewType === 'ats' ? state.atsSettings : state.humanSettings;
-    },
-
-    /**
-     * Check if undo is available
-     */
-    canUndoGeneration: (state): boolean => state.generationHistoryIndex > 0,
-
-    /**
-     * Check if redo is available
-     */
-    canRedoGeneration: (state): boolean =>
-      state.generationHistoryIndex < state.generationHistory.length - 1,
-
-    /**
-     * Get history length for display
-     */
-    generationHistoryLength: (state): number => state.generationHistory.length
+    }
   },
 
   actions: {
@@ -285,26 +286,238 @@ export const useVacancyStore = defineStore('VacancyStore', {
     },
 
     // =========================================
-    // Generation Editing Actions (T044)
+    // Generation API Actions
     // =========================================
 
     /**
-     * Set current generation for editing
+     * Generate a tailored resume for a vacancy
+     * Returns the generated data for useAsyncData compatibility
+     */
+    async generateResume(vacancyId: string, options?: GenerateOptions): Promise<Generation> {
+      this.generating = true;
+      this.error = null;
+
+      try {
+        const generation = await generationApi.generate(vacancyId, options);
+        this.latestGeneration = generation;
+        this.generations.unshift(generation);
+
+        // Add to cache
+        this._addToCache(generation);
+
+        return generation;
+      } catch (err) {
+        this.error = err instanceof Error ? err : new Error('Failed to generate resume');
+        throw this.error;
+      } finally {
+        this.generating = false;
+      }
+    },
+
+    /**
+     * Fetch all generations for a vacancy
+     * Returns data for useAsyncData compatibility
+     */
+    async fetchGenerations(vacancyId: string): Promise<Generation[]> {
+      this.generationLoading = true;
+      this.error = null;
+
+      try {
+        const data = await generationApi.fetchAll(vacancyId);
+        this.generations = data;
+        return data;
+      } catch (err) {
+        this.error = err instanceof Error ? err : new Error('Failed to fetch generations');
+        throw this.error;
+      } finally {
+        this.generationLoading = false;
+      }
+    },
+
+    /**
+     * Fetch the latest generation for a vacancy
+     * Returns data for useAsyncData compatibility
+     */
+    async fetchLatestGeneration(vacancyId: string): Promise<VacanciesResumeGeneration> {
+      this.generationLoading = true;
+      this.error = null;
+
+      try {
+        const payload = await generationApi.fetchLatest(vacancyId);
+        this.latestGeneration = payload.generation;
+
+        // Add to cache if exists
+        if (payload.generation) {
+          this._addToCache(payload.generation);
+        }
+
+        return payload;
+      } catch (err) {
+        this.error = err instanceof Error ? err : new Error('Failed to fetch latest generation');
+        throw this.error;
+      } finally {
+        this.generationLoading = false;
+      }
+    },
+
+    /**
+     * Persist generation content to server
+     * Returns updated generation for useAsyncData compatibility
+     */
+    async persistGenerationContent(
+      vacancyId: string,
+      generationId: string,
+      content: ResumeContent
+    ): Promise<Generation> {
+      this.savingGeneration = true;
+      this.error = null;
+
+      try {
+        const updated = await generationApi.updateContent(vacancyId, generationId, content);
+
+        // Update in list
+        const index = this.generations.findIndex(g => g.id === generationId);
+        if (index !== -1) {
+          this.generations[index] = updated;
+        }
+
+        // Update latest if it's the same generation
+        if (this.latestGeneration?.id === generationId) {
+          this.latestGeneration = updated;
+        }
+
+        // Update in cache
+        this._updateInCache(updated);
+
+        return updated;
+      } catch (err) {
+        this.error = err instanceof Error ? err : new Error('Failed to update generation');
+        throw this.error;
+      } finally {
+        this.savingGeneration = false;
+      }
+    },
+
+    // =========================================
+    // Generation Cache Actions
+    // =========================================
+
+    /**
+     * Set current generation for editing (adds to cache if needed)
      */
     setCurrentGeneration(generation: Generation | null): void {
-      this.currentGeneration = generation;
-
       if (generation) {
-        this.editingGenerationContent = structuredClone(generation.content);
-        this._initializeGenerationHistory(generation.content);
+        this._addToCache(generation);
+        this.currentGenerationId = generation.id;
       } else {
-        this.editingGenerationContent = null;
-        this.generationHistory = [];
-        this.generationHistoryIndex = -1;
+        this.currentGenerationId = null;
       }
-
-      this.isGenerationDirty = false;
     },
+
+    /**
+     * Update content of a generation in cache
+     */
+    updateGenerationContent(content: ResumeContent): void {
+      if (!this.currentGenerationId) return;
+
+      const cached = this.cachedGenerations.find(c => c.id === this.currentGenerationId);
+      if (cached) {
+        cached.generation = {
+          ...cached.generation,
+          content
+        };
+      }
+    },
+
+    /**
+     * Update a specific field in generation content
+     */
+    updateGenerationField<K extends keyof ResumeContent>(field: K, value: ResumeContent[K]): void {
+      if (!this.currentGenerationId) return;
+
+      const cached = this.cachedGenerations.find(c => c.id === this.currentGenerationId);
+      if (cached?.generation.content) {
+        cached.generation = {
+          ...cached.generation,
+          content: {
+            ...cached.generation.content,
+            [field]: value
+          }
+        };
+      }
+    },
+
+    /**
+     * Save current generation content to server
+     */
+    async saveGenerationContent(vacancyId: string): Promise<Generation | null> {
+      const generation = this.currentGeneration;
+      if (!generation) return null;
+
+      return this.persistGenerationContent(vacancyId, generation.id, generation.content);
+    },
+
+    /**
+     * Discard changes and reload from server
+     */
+    async discardGenerationChanges(vacancyId: string): Promise<void> {
+      if (!this.currentGenerationId) return;
+
+      // Remove from cache
+      this.cachedGenerations = this.cachedGenerations.filter(
+        c => c.id !== this.currentGenerationId
+      );
+
+      // Refetch
+      const payload = await this.fetchLatestGeneration(vacancyId);
+      if (payload.generation) {
+        this.setCurrentGeneration(payload.generation);
+      }
+    },
+
+    /**
+     * Add generation to cache
+     */
+    _addToCache(generation: Generation): void {
+      // Check if already in cache
+      const existingIndex = this.cachedGenerations.findIndex(c => c.id === generation.id);
+
+      if (existingIndex !== -1) {
+        // Update existing
+        this.cachedGenerations[existingIndex] = {
+          id: generation.id,
+          generation: structuredClone(generation)
+        };
+      } else {
+        // Add new
+        this.cachedGenerations.unshift({
+          id: generation.id,
+          generation: structuredClone(generation)
+        });
+
+        // Trim if exceeds max
+        if (this.cachedGenerations.length > MAX_CACHED_GENERATIONS) {
+          this.cachedGenerations = this.cachedGenerations.slice(0, MAX_CACHED_GENERATIONS);
+        }
+      }
+    },
+
+    /**
+     * Update generation in cache
+     */
+    _updateInCache(generation: Generation): void {
+      const index = this.cachedGenerations.findIndex(c => c.id === generation.id);
+      if (index !== -1) {
+        this.cachedGenerations[index] = {
+          id: generation.id,
+          generation: structuredClone(generation)
+        };
+      }
+    },
+
+    // =========================================
+    // UI State Actions
+    // =========================================
 
     /**
      * Start editing generation content
@@ -318,94 +531,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     stopEditingGeneration(): void {
       this.isEditingGeneration = false;
-    },
-
-    /**
-     * Update generation content (local state only)
-     */
-    updateGenerationContent(content: ResumeContent): void {
-      this.editingGenerationContent = content;
-      this.isGenerationDirty = true;
-      this._pushToGenerationHistory(content);
-    },
-
-    /**
-     * Update a specific field in generation content
-     */
-    updateGenerationField<K extends keyof ResumeContent>(field: K, value: ResumeContent[K]): void {
-      if (!this.editingGenerationContent) return;
-
-      this.editingGenerationContent = {
-        ...this.editingGenerationContent,
-        [field]: value
-      };
-      this.isGenerationDirty = true;
-      this._pushToGenerationHistory(this.editingGenerationContent);
-    },
-
-    /**
-     * Save generation content to server
-     * Note: This requires the generation update API endpoint
-     */
-    async saveGenerationContent(): Promise<void> {
-      if (!this.editingGenerationContent || !this.isGenerationDirty || !this.currentGeneration)
-        return;
-
-      this.savingGeneration = true;
-
-      try {
-        // TODO: Implement generation content update API call
-        // For now, update local state
-        this.currentGeneration = {
-          ...this.currentGeneration,
-          content: structuredClone(this.editingGenerationContent)
-        };
-        this.isGenerationDirty = false;
-      } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to save generation');
-        throw this.error;
-      } finally {
-        this.savingGeneration = false;
-      }
-    },
-
-    /**
-     * Undo generation content change
-     */
-    undoGeneration(): void {
-      if (this.generationHistoryIndex <= 0) return;
-
-      this.generationHistoryIndex--;
-      const snapshot = this.generationHistory[this.generationHistoryIndex];
-      if (snapshot) {
-        this.editingGenerationContent = structuredClone(snapshot.content);
-        this.isGenerationDirty = true;
-      }
-    },
-
-    /**
-     * Redo generation content change
-     */
-    redoGeneration(): void {
-      if (this.generationHistoryIndex >= this.generationHistory.length - 1) return;
-
-      this.generationHistoryIndex++;
-      const snapshot = this.generationHistory[this.generationHistoryIndex];
-      if (snapshot) {
-        this.editingGenerationContent = structuredClone(snapshot.content);
-        this.isGenerationDirty = true;
-      }
-    },
-
-    /**
-     * Discard generation editing changes
-     */
-    discardGenerationChanges(): void {
-      if (!this.currentGeneration) return;
-
-      this.editingGenerationContent = structuredClone(this.currentGeneration.content);
-      this._initializeGenerationHistory(this.currentGeneration.content);
-      this.isGenerationDirty = false;
     },
 
     /**
@@ -427,38 +552,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
     },
 
     /**
-     * Initialize generation history with initial content
-     */
-    _initializeGenerationHistory(content: ResumeContent): void {
-      this.generationHistory = [{ content: structuredClone(content), timestamp: Date.now() }];
-      this.generationHistoryIndex = 0;
-    },
-
-    /**
-     * Push new snapshot to generation history
-     */
-    _pushToGenerationHistory(content: ResumeContent): void {
-      // Remove any future states if we're not at the end
-      if (this.generationHistoryIndex < this.generationHistory.length - 1) {
-        this.generationHistory = this.generationHistory.slice(0, this.generationHistoryIndex + 1);
-      }
-
-      // Add new snapshot
-      this.generationHistory.push({
-        content: structuredClone(content),
-        timestamp: Date.now()
-      });
-      this.generationHistoryIndex = this.generationHistory.length - 1;
-
-      // Trim history if too large
-      if (this.generationHistory.length > MAX_HISTORY_SIZE) {
-        const trimCount = this.generationHistory.length - MAX_HISTORY_SIZE;
-        this.generationHistory = this.generationHistory.slice(trimCount);
-        this.generationHistoryIndex = Math.max(0, this.generationHistoryIndex - trimCount);
-      }
-    },
-
-    /**
      * Reset store state
      */
     $reset() {
@@ -467,20 +560,21 @@ export const useVacancyStore = defineStore('VacancyStore', {
       this.loading = false;
       this.error = null;
 
-      // Generation editing state
-      this.currentGeneration = null;
-      this.editingGenerationContent = null;
-      this.isGenerationDirty = false;
+      // Generation state
+      this.generations = [];
+      this.latestGeneration = null;
+      this.generationLoading = false;
+      this.generating = false;
       this.savingGeneration = false;
+
+      // Cached generations
+      this.cachedGenerations = [];
+      this.currentGenerationId = null;
 
       // Preview state
       this.previewType = 'ats';
       this.atsSettings = { ...DEFAULT_FORMAT_SETTINGS };
       this.humanSettings = { ...DEFAULT_FORMAT_SETTINGS };
-
-      // History
-      this.generationHistory = [];
-      this.generationHistoryIndex = -1;
 
       // UI state
       this.isEditingGeneration = false;

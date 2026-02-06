@@ -14,6 +14,7 @@
     "@int/api": "workspace:*",
     "@int/schema": "workspace:*",
     "@int/ui": "workspace:*",
+    "@int/utils": "workspace:*",
     "@pinia/nuxt": "catalog:",
     "@vueuse/core": "catalog:",
     "date-fns": "catalog:",

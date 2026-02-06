@@ -13,7 +13,7 @@
       <UButton
         variant="outline"
         icon="i-lucide-file-text"
-        :to="`/vacancies/${vacancyId}/ats`"
+        :to="{ path: `/vacancies/${vacancyId}/resume`, query: { preview: 'ats' } }"
         :disabled="isGenerating"
       >
         {{ $t('vacancy.detail.actions.viewAts') }}
@@ -21,7 +21,7 @@
       <UButton
         variant="outline"
         icon="i-lucide-layout-template"
-        :to="`/vacancies/${vacancyId}/human`"
+        :to="{ path: `/vacancies/${vacancyId}/resume`, query: { preview: 'human' } }"
         :disabled="isGenerating"
       >
         {{ $t('vacancy.detail.actions.viewHuman') }}

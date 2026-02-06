@@ -11,6 +11,7 @@ export default defineNuxtConfig({
   extends: [
     '@int/ui',
     '@int/api',
+    '@int/utils',
     // Internal layers (order matters: _base must be first)
     './layers/_base',
     './layers/auth',

@@ -17,6 +17,7 @@
   "dependencies": {
     "@google/genai": "catalog:",
     "@int/schema": "workspace:*",
+    "@int/utils": "workspace:*",
     "@pinia/nuxt": "catalog:",
     "@vercel/blob": "catalog:",
     "bcryptjs": "catalog:",

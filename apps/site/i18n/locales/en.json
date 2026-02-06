@@ -86,8 +86,7 @@
       "undo": "Undo",
       "redo": "Redo",
       "undoDisabled": "Nothing to undo",
-      "redoDisabled": "Nothing to redo",
-      "changes": "{count} change(s) in history"
+      "redoDisabled": "Nothing to redo"
     },
     "tabs": {
       "edit": "Edit",
@@ -467,7 +466,6 @@
       "noUrl": "No URL provided",
       "noNotes": "No notes",
       "tailoredResume": "Tailored Resume",
-      "editResume": "Edit Resume",
       "editVacancy": "Edit Vacancy",
       "actions": {
         "edit": "Edit",
@@ -512,6 +510,7 @@
     },
     "overview": {
       "generateResume": "Generate Tailored Resume",
+      "viewResume": "View Resume",
       "generateCoverLetter": "Generate Cover Letter",
       "lastUpdated": "Last Updated"
     },

@@ -12,14 +12,7 @@
  */
 
 import type { Resume, ResumeContent } from '@int/schema';
-
-/**
- * Serializable error type for SSR hydration compatibility.
- */
-type SerializableError = {
-  message: string;
-  statusCode?: number;
-} | null;
+import type { SerializableError } from '@layer/api/types/serializable-error';
 
 export type UseResumesReturn = {
   /**
@@ -76,15 +69,17 @@ export type UseResumesReturn = {
 
 export function useResumes(): UseResumesReturn {
   const store = useResumeStore();
+  const cachedResumes = computed(() => store.cachedResumesList);
+  const currentResume = computed(() => cachedResumes.value[0]?.resume ?? null);
 
   return {
     // Computed refs from store state
     // Wrap single resume in array for backward compatibility
-    resumes: computed(() => (store.resume ? [store.resume] : [])),
-    current: computed(() => store.resume),
+    resumes: computed(() => (currentResume.value ? [currentResume.value] : [])),
+    current: computed(() => currentResume.value),
     loading: computed(() => store.loading),
     error: computed(() => store.error),
-    hasResumes: computed(() => store.hasResume),
+    hasResumes: computed(() => currentResume.value !== null),
 
     // Proxy to store actions
     fetchResumes: () => store.fetchResume(),
@@ -92,12 +87,18 @@ export function useResumes(): UseResumesReturn {
     uploadResume: (file: File, title?: string) => store.uploadResume(file, title),
     updateResume: async (_id: string, data: { content?: ResumeContent; title?: string }) => {
       // Update content if provided
-      if (data.content) {
-        store.updateContent(data.content);
-        const result = await store.saveContent();
-        return result ?? store.resume!;
+      const resume = currentResume.value ?? (await store.fetchResume());
+      if (!resume) {
+        throw new Error('Resume not found');
       }
-      return store.resume!;
+
+      if (data.content) {
+        store.updateContent(data.content, resume.id);
+        const result = await store.saveContent(resume.id);
+        return result ?? resume;
+      }
+
+      return resume;
     },
     deleteResume: async (_id: string) => {
       // Not supported in single-resume architecture

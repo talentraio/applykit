@@ -72,14 +72,25 @@ const { t } = useI18n();
 // --- Computed ---
 
 /**
+ * Current status used for display (hide "generated" if no generation exists)
+ */
+const displayStatus = computed<VacancyStatus>(() => {
+  if (!props.hasGeneration && props.status === 'generated') {
+    return 'created';
+  }
+
+  return props.status;
+});
+
+/**
  * Current status color for badge
  */
-const currentColor = computed(() => getStatusColor(props.status));
+const currentColor = computed(() => getStatusColor(displayStatus.value));
 
 /**
  * Current status label
  */
-const currentLabel = computed(() => t(`vacancy.status.${props.status}`));
+const currentLabel = computed(() => t(`vacancy.status.${displayStatus.value}`));
 
 /**
  * Available status options for dropdown

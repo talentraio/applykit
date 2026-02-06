@@ -2,7 +2,10 @@
   <div class="resume-editor-tools">
     <UTabs v-model="activeTab" :items="items" class="resume-editor-tools__tabs px-4 pt-4">
       <template #content="{ item }">
-        <div v-if="item.value === 'edit'" class="resume-editor-tools__tab-content">
+        <div
+          v-if="item.value === RESUME_EDITOR_TABS_MAP.EDIT"
+          class="resume-editor-tools__tab-content"
+        >
           <ResumeForm v-if="contentModel" v-model="contentModel" />
 
           <div v-if="contentModel" class="resume-editor-tools__tab-actions mt-10">
@@ -12,11 +15,17 @@
           </div>
         </div>
 
-        <div v-else-if="item.value === 'settings'" class="resume-editor-tools__tab-content">
+        <div
+          v-else-if="item.value === RESUME_EDITOR_TABS_MAP.SETTINGS"
+          class="resume-editor-tools__tab-content"
+        >
           <ResumeSettings v-model:settings="settingsModel" :preview-type="previewType" />
         </div>
 
-        <div v-else-if="item.value === 'ai'" class="resume-editor-tools__tab-content">
+        <div
+          v-else-if="item.value === RESUME_EDITOR_TABS_MAP.AI"
+          class="resume-editor-tools__tab-content"
+        >
           <ResumeTabAIEnhance />
         </div>
       </template>
@@ -27,6 +36,7 @@
 <script setup lang="ts">
 import type { ResumeContent, ResumeFormatSettings } from '@int/schema';
 import type { ResumeEditorTabItem } from '@site/resume/app/types/editor';
+import { RESUME_EDITOR_TABS_MAP } from '@site/resume/app/constants';
 
 defineOptions({ name: 'ResumeEditorTools' });
 

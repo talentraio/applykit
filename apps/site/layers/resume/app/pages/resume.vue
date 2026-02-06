@@ -1,7 +1,7 @@
 <template>
   <div class="resume-page">
     <!-- Loading State -->
-    <div v-if="loading" class="resume-page__loading">
+    <div v-if="pageLoading" class="resume-page__loading">
       <UIcon name="i-lucide-loader-2" class="h-8 w-8 animate-spin text-primary" />
       <p class="mt-4 text-muted">{{ $t('common.loading') }}</p>
     </div>
@@ -65,14 +65,7 @@
       <!-- Footer: Undo/Redo -->
       <template #footer>
         <div class="resume-page__footer">
-          <BaseUndoRedoControls
-            :can-undo="canUndo"
-            :can-redo="canRedo"
-            :history-length="historyLength"
-            show-count
-            @undo="undo"
-            @redo="redo"
-          />
+          <BaseUndoRedoControls :can-undo="canUndo" :can-redo="canRedo" @undo="undo" @redo="redo" />
 
           <div class="flex items-center gap-2">
             <UButton
@@ -140,6 +133,7 @@
 import type { Resume, ResumeContent, ResumeFormatSettings } from '@int/schema';
 import type { ResumeEditorTabItem } from '@site/resume/app/types/editor';
 import type { PreviewType } from '@site/resume/app/types/preview';
+import { RESUME_EDITOR_TABS_MAP } from '@site/resume/app/constants';
 
 defineOptions({ name: 'ResumePage' });
 
@@ -168,7 +162,6 @@ const {
   humanSettings,
   canUndo,
   canRedo,
-  historyLength,
   fetchResume,
   createFromContent,
   updateContent,
@@ -183,7 +176,7 @@ const {
 const isUploadModalOpen = ref(false);
 const isCreateModalOpen = ref(false);
 const isMobilePreviewOpen = ref(false);
-const activeTab = ref('edit');
+const activeTab = ref(RESUME_EDITOR_TABS_MAP.EDIT);
 const previewTypeModel = computed<PreviewType>({
   get: () => previewType.value,
   set: value => setPreviewType(value)
@@ -205,17 +198,17 @@ const tabItems = computed(
     [
       {
         label: t('resume.tabs.edit'),
-        value: 'edit',
+        value: RESUME_EDITOR_TABS_MAP.EDIT,
         icon: 'i-lucide-pencil'
       },
       {
         label: t('resume.tabs.settings'),
-        value: 'settings',
+        value: RESUME_EDITOR_TABS_MAP.SETTINGS,
         icon: 'i-lucide-settings'
       },
       {
         label: t('resume.tabs.ai'),
-        value: 'ai',
+        value: RESUME_EDITOR_TABS_MAP.AI,
         icon: 'i-lucide-sparkles'
       }
     ] satisfies ResumeEditorTabItem[]
@@ -225,50 +218,46 @@ const tabItems = computed(
 const photoUrl = computed(() => profile.value?.photoUrl ?? undefined);
 
 // Fetch resume on mount
-await callOnce('resume-page', async () => {
-  await fetchResume();
-});
+const { pending } = await useAsyncData('resume-page', fetchResume);
+const pageLoading = computed(() => !hasResume.value && pending.value);
 
-/**
- * Handle content update from form
- */
 /**
  * Handle upload success
  */
-function handleUploadSuccess(_resume: Resume) {
+const handleUploadSuccess = (_resume: Resume) => {
   isUploadModalOpen.value = false;
   toast.add({
     title: t('resume.upload.success'),
     color: 'success',
     icon: 'i-lucide-check'
   });
-}
+};
 
 /**
  * Handle upload error
  */
-function handleUploadError(err: Error) {
+const handleUploadError = (err: Error) => {
   toast.add({
     title: t('resume.error.uploadFailed'),
     description: err.message,
     color: 'error',
     icon: 'i-lucide-alert-circle'
   });
-}
+};
 
 /**
  * Handle create from scratch click
  */
-function handleCreateFromScratch() {
+const handleCreateFromScratch = () => {
   isUploadModalOpen.value = false;
   isCreateModalOpen.value = true;
-}
+};
 
 /**
  * Create empty resume
  * Uses profile data when available, otherwise uses placeholder values that pass schema validation
  */
-async function handleCreateEmpty() {
+const handleCreateEmpty = async () => {
   // Build fullName from profile or use placeholder
   const fullName = profile.value?.firstName
     ? `${profile.value.firstName} ${profile.value.lastName ?? ''}`.trim()
@@ -298,7 +287,7 @@ async function handleCreateEmpty() {
   } catch {
     // Error handled in composable
   }
-}
+};
 </script>
 
 <style lang="scss">

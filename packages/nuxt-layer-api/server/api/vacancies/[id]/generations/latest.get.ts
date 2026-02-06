@@ -1,4 +1,5 @@
-import { generationRepository, vacancyRepository } from '../../../../data/repositories';
+import type { VacanciesResumeGeneration } from '@layer/api/types/vacancies';
+import { generationRepository, vacancyRepository } from '@layer/api/server/data/repositories';
 
 /**
  * GET /api/vacancies/:id/generations/latest
@@ -43,5 +44,8 @@ export default defineEventHandler(async event => {
   const generation = await generationRepository.findLatestByVacancyId(vacancyId);
 
   // Return null if no valid generation exists (valid state for new vacancies)
-  return generation;
+  return {
+    isValid: !!generation,
+    generation
+  } satisfies VacanciesResumeGeneration;
 });

@@ -63,11 +63,12 @@ const vacancyId = computed(() => {
 });
 
 // Fetch vacancy data at layout level so all child pages have access
-const { current: vacancy, fetchVacancy } = useVacancies();
+const vacancyStore = useVacancyStore();
+const vacancy = computed(() => vacancyStore.currentVacancy);
 
-const { pending, error } = await useAsyncData(`vacancy-layout-${vacancyId.value}`, () =>
-  fetchVacancy(vacancyId.value)
-);
+const { pending, error } = await useAsyncData(`vacancy-layout-${vacancyId.value}`, () => {
+  return vacancyStore.fetchVacancy(vacancyId.value);
+});
 
 // Page meta
 useHead({
