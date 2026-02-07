@@ -104,8 +104,8 @@ export const PARSE_SYSTEM_PROMPT = `You are a resume parsing assistant. Your tas
 
 4. **Required vs Optional:**
    - personalInfo.fullName and personalInfo.email are REQUIRED
-   - experience array is REQUIRED (at least one entry)
-   - education array is REQUIRED (at least one entry)
+   - experience array key is REQUIRED (can be empty if no clear experience entries found)
+   - education array key is REQUIRED (can be empty if no clear education entries found)
    - skills array is REQUIRED (at least one skill group with at least one skill)
    - All other fields are optional
 

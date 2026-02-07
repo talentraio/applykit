@@ -44,6 +44,9 @@ other docs/\* relevant to the task.
 
 ## Active Technologies
 
+- TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, NuxtUI v4, Pinia, VueUse (`useThrottleFn`), Zod, Drizzle ORM (006-resume-settings-refactoring)
+- PostgreSQL (via Drizzle ORM in `@int/api` layer) (006-resume-settings-refactoring)
+
 - TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, NuxtUI v4, Pinia, VueUse, Zod (005-new-vacancy-flow)
 - PostgreSQL (via Drizzle ORM in @int/api layer) (005-new-vacancy-flow)
 

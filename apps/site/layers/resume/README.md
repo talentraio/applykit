@@ -41,7 +41,7 @@ resume/
 
 ```typescript
 // In components
-const { resumes, current, loading, error, uploadResume, fetchResumes } = useResumes();
+const { resumes, current, loading, error, uploadResume, fetchResumes } = useResume();
 
 // Upload resume
 await uploadResume(file, 'My Resume');

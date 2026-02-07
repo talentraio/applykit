@@ -1,11 +1,4 @@
-import type {
-  Generation,
-  ResumeContent,
-  ResumeFormatSettings,
-  Vacancy,
-  VacancyInput,
-  VacancyStatus
-} from '@int/schema';
+import type { Generation, ResumeContent, Vacancy, VacancyInput, VacancyStatus } from '@int/schema';
 import type { VacanciesResumeGeneration } from '@layer/api/types/vacancies';
 import type { GenerateOptions } from '@site/vacancy/app/infrastructure/generation.api';
 import { generationApi } from '@site/vacancy/app/infrastructure/generation.api';
@@ -15,18 +8,9 @@ import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
  * Vacancy Store
  *
  * Manages vacancy data and operations.
- * Site-specific - uses vacancy.api.ts from vacancy layer.
- *
- * Generation editing uses cached generations array with direct editing.
+ * Format settings are managed by useFormatSettingsStore in _base layer.
  * Undo/redo history is managed by useResumeEditHistory composable.
- *
- * Related: T097 (US4), T043, T044 (US4)
  */
-
-/**
- * Preview type for generation editing
- */
-type PreviewType = 'ats' | 'human';
 
 /**
  * Cached generation entry
@@ -40,17 +24,6 @@ type CachedGeneration = {
  * Max cached generations
  */
 const MAX_CACHED_GENERATIONS = 20;
-
-/**
- * Default format settings
- */
-const DEFAULT_FORMAT_SETTINGS: ResumeFormatSettings = {
-  marginX: 20,
-  marginY: 15,
-  fontSize: 12,
-  lineHeight: 1.2,
-  blockSpacing: 5
-};
 
 export const useVacancyStore = defineStore('VacancyStore', {
   state: (): {
@@ -70,11 +43,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
     cachedGenerations: CachedGeneration[];
     currentGenerationId: string | null;
 
-    // Preview state for generation
-    previewType: PreviewType;
-    atsSettings: ResumeFormatSettings;
-    humanSettings: ResumeFormatSettings;
-
     // UI state
     isEditingGeneration: boolean;
   } => ({
@@ -93,11 +61,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
     // Cached generations for editing
     cachedGenerations: [],
     currentGenerationId: null,
-
-    // Preview state
-    previewType: 'ats',
-    atsSettings: { ...DEFAULT_FORMAT_SETTINGS },
-    humanSettings: { ...DEFAULT_FORMAT_SETTINGS },
 
     // UI state
     isEditingGeneration: false
@@ -145,20 +108,12 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     displayGenerationContent(): ResumeContent | null {
       return this.currentGeneration?.content ?? null;
-    },
-
-    /**
-     * Get current format settings based on preview type
-     */
-    currentSettings: (state): ResumeFormatSettings => {
-      return state.previewType === 'ats' ? state.atsSettings : state.humanSettings;
     }
   },
 
   actions: {
     /**
      * Fetch all vacancies for current user
-     * Returns data for useAsyncData compatibility
      */
     async fetchVacancies(): Promise<Vacancy[]> {
       this.loading = true;
@@ -178,7 +133,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
     /**
      * Fetch a single vacancy by ID
-     * Returns data for useAsyncData compatibility
      */
     async fetchVacancy(id: string): Promise<Vacancy | null> {
       this.loading = true;
@@ -199,7 +153,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
     /**
      * Create a new vacancy
-     * Returns the created vacancy
      */
     async createVacancy(data: VacancyInput): Promise<Vacancy> {
       this.loading = true;
@@ -207,11 +160,8 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
       try {
         const vacancy = await vacancyApi.create(data);
-
-        // Add to list at the beginning (most recent)
         this.vacancies.unshift(vacancy);
         this.currentVacancy = vacancy;
-
         return vacancy;
       } catch (err) {
         this.error = err instanceof Error ? err : new Error('Failed to create vacancy');
@@ -223,7 +173,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
     /**
      * Update a vacancy
-     * Returns the updated vacancy
      */
     async updateVacancy(id: string, data: Partial<VacancyInput>): Promise<Vacancy> {
       this.loading = true;
@@ -232,13 +181,11 @@ export const useVacancyStore = defineStore('VacancyStore', {
       try {
         const vacancy = await vacancyApi.update(id, data);
 
-        // Update in list
         const index = this.vacancies.findIndex(v => v.id === id);
         if (index !== -1) {
           this.vacancies[index] = vacancy;
         }
 
-        // Update current if it's the same vacancy
         if (this.currentVacancy?.id === id) {
           this.currentVacancy = vacancy;
         }
@@ -269,11 +216,8 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
       try {
         await vacancyApi.delete(id);
-
-        // Remove from list
         this.vacancies = this.vacancies.filter(v => v.id !== id);
 
-        // Clear current if it's the deleted vacancy
         if (this.currentVacancy?.id === id) {
           this.currentVacancy = null;
         }
@@ -291,7 +235,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
     /**
      * Generate a tailored resume for a vacancy
-     * Returns the generated data for useAsyncData compatibility
      */
     async generateResume(vacancyId: string, options?: GenerateOptions): Promise<Generation> {
       this.generating = true;
@@ -301,10 +244,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
         const generation = await generationApi.generate(vacancyId, options);
         this.latestGeneration = generation;
         this.generations.unshift(generation);
-
-        // Add to cache
         this._addToCache(generation);
-
         return generation;
       } catch (err) {
         this.error = err instanceof Error ? err : new Error('Failed to generate resume');
@@ -316,7 +256,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
     /**
      * Fetch all generations for a vacancy
-     * Returns data for useAsyncData compatibility
      */
     async fetchGenerations(vacancyId: string): Promise<Generation[]> {
       this.generationLoading = true;
@@ -336,7 +275,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
     /**
      * Fetch the latest generation for a vacancy
-     * Returns data for useAsyncData compatibility
      */
     async fetchLatestGeneration(vacancyId: string): Promise<VacanciesResumeGeneration> {
       this.generationLoading = true;
@@ -346,7 +284,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
         const payload = await generationApi.fetchLatest(vacancyId);
         this.latestGeneration = payload.generation;
 
-        // Add to cache if exists
         if (payload.generation) {
           this._addToCache(payload.generation);
         }
@@ -362,7 +299,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
     /**
      * Persist generation content to server
-     * Returns updated generation for useAsyncData compatibility
      */
     async persistGenerationContent(
       vacancyId: string,
@@ -375,20 +311,16 @@ export const useVacancyStore = defineStore('VacancyStore', {
       try {
         const updated = await generationApi.updateContent(vacancyId, generationId, content);
 
-        // Update in list
         const index = this.generations.findIndex(g => g.id === generationId);
         if (index !== -1) {
           this.generations[index] = updated;
         }
 
-        // Update latest if it's the same generation
         if (this.latestGeneration?.id === generationId) {
           this.latestGeneration = updated;
         }
 
-        // Update in cache
         this._updateInCache(updated);
-
         return updated;
       } catch (err) {
         this.error = err instanceof Error ? err : new Error('Failed to update generation');
@@ -463,12 +395,10 @@ export const useVacancyStore = defineStore('VacancyStore', {
     async discardGenerationChanges(vacancyId: string): Promise<void> {
       if (!this.currentGenerationId) return;
 
-      // Remove from cache
       this.cachedGenerations = this.cachedGenerations.filter(
         c => c.id !== this.currentGenerationId
       );
 
-      // Refetch
       const payload = await this.fetchLatestGeneration(vacancyId);
       if (payload.generation) {
         this.setCurrentGeneration(payload.generation);
@@ -479,23 +409,19 @@ export const useVacancyStore = defineStore('VacancyStore', {
      * Add generation to cache
      */
     _addToCache(generation: Generation): void {
-      // Check if already in cache
       const existingIndex = this.cachedGenerations.findIndex(c => c.id === generation.id);
 
       if (existingIndex !== -1) {
-        // Update existing
         this.cachedGenerations[existingIndex] = {
           id: generation.id,
           generation: structuredClone(generation)
         };
       } else {
-        // Add new
         this.cachedGenerations.unshift({
           id: generation.id,
           generation: structuredClone(generation)
         });
 
-        // Trim if exceeds max
         if (this.cachedGenerations.length > MAX_CACHED_GENERATIONS) {
           this.cachedGenerations = this.cachedGenerations.slice(0, MAX_CACHED_GENERATIONS);
         }
@@ -534,24 +460,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
     },
 
     /**
-     * Set preview type (ATS or Human)
-     */
-    setPreviewType(type: PreviewType): void {
-      this.previewType = type;
-    },
-
-    /**
-     * Update format settings for current preview type
-     */
-    updateSettings(settings: Partial<ResumeFormatSettings>): void {
-      if (this.previewType === 'ats') {
-        this.atsSettings = { ...this.atsSettings, ...settings };
-      } else {
-        this.humanSettings = { ...this.humanSettings, ...settings };
-      }
-    },
-
-    /**
      * Reset store state
      */
     $reset() {
@@ -560,23 +468,15 @@ export const useVacancyStore = defineStore('VacancyStore', {
       this.loading = false;
       this.error = null;
 
-      // Generation state
       this.generations = [];
       this.latestGeneration = null;
       this.generationLoading = false;
       this.generating = false;
       this.savingGeneration = false;
 
-      // Cached generations
       this.cachedGenerations = [];
       this.currentGenerationId = null;
 
-      // Preview state
-      this.previewType = 'ats';
-      this.atsSettings = { ...DEFAULT_FORMAT_SETTINGS };
-      this.humanSettings = { ...DEFAULT_FORMAT_SETTINGS };
-
-      // UI state
       this.isEditingGeneration = false;
     }
   }

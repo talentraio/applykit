@@ -25,7 +25,12 @@
  */
 
 import type { ButtonProps } from '#ui/types';
-import type { ExportFormat, ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type {
+  ExportFormat,
+  ResumeContent,
+  ResumeFormatSettingsAts,
+  ResumeFormatSettingsHuman
+} from '@int/schema';
 import { EXPORT_FORMAT_MAP } from '@int/schema';
 
 defineOptions({ name: 'BaseDownloadPdf' });
@@ -33,7 +38,7 @@ defineOptions({ name: 'BaseDownloadPdf' });
 const props = withDefaults(
   defineProps<{
     content: ResumeContent;
-    settings?: FormatSettings;
+    settings?: FormatSettingsMap;
     photoUrl?: string;
     disabled?: boolean;
     filename?: string;
@@ -51,11 +56,9 @@ const props = withDefaults(
 );
 
 type FormatSettingsMap = {
-  ats: Partial<ResumeFormatSettings>;
-  human: Partial<ResumeFormatSettings>;
+  ats: ResumeFormatSettingsAts;
+  human: ResumeFormatSettingsHuman;
 };
-
-type FormatSettings = Partial<ResumeFormatSettings> | FormatSettingsMap;
 
 const { t } = useI18n();
 const toast = useToast();
@@ -68,16 +71,11 @@ const exportingFormat = ref<ExportFormat | null>(null);
 const isExporting = computed(() => exportingFormat.value !== null);
 const isDisabled = computed(() => props.disabled || !props.content || isExporting.value);
 
-const isFormatSettingsMap = (value: FormatSettings): value is FormatSettingsMap => {
-  return typeof value === 'object' && value !== null && 'ats' in value && 'human' in value;
-};
-
-const resolveSettings = (format: ExportFormat): Partial<ResumeFormatSettings> | undefined => {
+const resolveSettings = (
+  format: ExportFormat
+): ResumeFormatSettingsAts | ResumeFormatSettingsHuman | undefined => {
   if (!props.settings) return undefined;
-  if (isFormatSettingsMap(props.settings)) {
-    return format === atsFormat ? props.settings.ats : props.settings.human;
-  }
-  return props.settings;
+  return format === atsFormat ? props.settings.ats : props.settings.human;
 };
 
 const availableFormats = computed(() =>
@@ -132,10 +130,11 @@ const handleExport = async (format: ExportFormat) => {
   exportingFormat.value = format;
 
   try {
+    const resolved = resolveSettings(format);
     const payload = {
       format,
       content: props.content,
-      settings: resolveSettings(format),
+      settings: resolved?.spacing,
       photoUrl: props.photoUrl,
       filename: getFilename(format)
     };

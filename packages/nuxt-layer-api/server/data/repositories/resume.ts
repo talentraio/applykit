@@ -1,4 +1,4 @@
-import type { ResumeContent, ResumeFormatSettings, SourceFileType } from '@int/schema';
+import type { ResumeContent, SourceFileType } from '@int/schema';
 import type { Resume } from '../schema';
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../db';
@@ -54,8 +54,6 @@ export const resumeRepository = {
     content: ResumeContent;
     sourceFileName: string;
     sourceFileType: SourceFileType;
-    atsSettings?: ResumeFormatSettings;
-    humanSettings?: ResumeFormatSettings;
   }): Promise<Resume> {
     const result = await db
       .insert(resumes)
@@ -64,9 +62,7 @@ export const resumeRepository = {
         title: data.title,
         content: data.content,
         sourceFileName: data.sourceFileName,
-        sourceFileType: data.sourceFileType,
-        atsSettings: data.atsSettings,
-        humanSettings: data.humanSettings
+        sourceFileType: data.sourceFileType
       })
       .returning();
     return result[0]!;
@@ -89,37 +85,6 @@ export const resumeRepository = {
   },
 
   /**
-   * Update resume formatting settings
-   * Can update ATS and/or Human settings independently
-   */
-  async updateSettings(
-    id: string,
-    userId: string,
-    settings: {
-      atsSettings?: ResumeFormatSettings | null;
-      humanSettings?: ResumeFormatSettings | null;
-    }
-  ): Promise<Resume | null> {
-    const updateData: Record<string, unknown> = {
-      updatedAt: new Date()
-    };
-
-    if (settings.atsSettings !== undefined) {
-      updateData.atsSettings = settings.atsSettings;
-    }
-    if (settings.humanSettings !== undefined) {
-      updateData.humanSettings = settings.humanSettings;
-    }
-
-    const result = await db
-      .update(resumes)
-      .set(updateData)
-      .where(and(eq(resumes.id, id), eq(resumes.userId, userId)))
-      .returning();
-    return result[0] ?? null;
-  },
-
-  /**
    * Update resume title
    */
   async updateTitle(id: string, userId: string, title: string): Promise<Resume | null> {
@@ -127,6 +92,34 @@ export const resumeRepository = {
       .update(resumes)
       .set({
         title,
+        updatedAt: new Date()
+      })
+      .where(and(eq(resumes.id, id), eq(resumes.userId, userId)))
+      .returning();
+    return result[0] ?? null;
+  },
+
+  /**
+   * Replace base resume data (title, content, source metadata)
+   * Used by "clear and create new" flow in single-resume architecture
+   */
+  async replaceBaseData(
+    id: string,
+    userId: string,
+    data: {
+      title: string;
+      content: ResumeContent;
+      sourceFileName: string;
+      sourceFileType: SourceFileType;
+    }
+  ): Promise<Resume | null> {
+    const result = await db
+      .update(resumes)
+      .set({
+        title: data.title,
+        content: data.content,
+        sourceFileName: data.sourceFileName,
+        sourceFileType: data.sourceFileType,
         updatedAt: new Date()
       })
       .where(and(eq(resumes.id, id), eq(resumes.userId, userId)))

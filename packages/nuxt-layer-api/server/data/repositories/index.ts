@@ -4,6 +4,7 @@
  * Central export point for all data access repositories
  */
 
+export { formatSettingsRepository } from './format-settings';
 export { generationRepository } from './generation';
 export { llmKeyRepository } from './llm-key';
 export { profileRepository } from './profile';

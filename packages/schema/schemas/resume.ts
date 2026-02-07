@@ -92,23 +92,11 @@ export const ResumeContentSchema = z.object({
 });
 export type ResumeContent = z.infer<typeof ResumeContentSchema>;
 
-export const ResumeFormatSettingsSchema = z.object({
-  marginX: z.number().min(10).max(26).default(20), // mm - horizontal (left/right)
-  marginY: z.number().min(10).max(26).default(15), // mm - vertical (top/bottom)
-  fontSize: z.number().min(9).max(13).default(12), // pt
-  lineHeight: z.number().min(1.1).max(1.5).default(1.2),
-  blockSpacing: z.number().min(1).max(9).default(5) // 1 = lineHeight, 9 = lineHeight * 2.5
-});
-
-export type ResumeFormatSettings = z.infer<typeof ResumeFormatSettingsSchema>;
-
 export const ResumeSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
   title: z.string().min(1).max(255),
   content: ResumeContentSchema,
-  atsSettings: ResumeFormatSettingsSchema.optional(),
-  humanSettings: ResumeFormatSettingsSchema.optional(),
   sourceFileName: z.string().min(1).max(255),
   sourceFileType: SourceFileTypeSchema,
   createdAt: z.date(),

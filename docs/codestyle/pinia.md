@@ -81,7 +81,7 @@ Composables can wrap store access for convenience, but must NOT:
 - Use `onMounted` for data fetching (use `useAsyncData` / `callOnce`)
 
 ```typescript
-// composables/useResumes.ts — thin proxy
+// composables/useResume.ts — thin proxy
 export function useResumes() {
   const store = useResumeStore();
   return {

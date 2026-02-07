@@ -36,6 +36,20 @@
       "when": 1770148800000,
       "tag": "005_add_vacancy_status",
       "breakpoints": false
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1770402175673,
+      "tag": "0005_special_psylocke",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1770404934411,
+      "tag": "0006_greedy_the_executioner",
+      "breakpoints": true
     }
   ]
 }

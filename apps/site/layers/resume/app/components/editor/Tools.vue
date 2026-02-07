@@ -34,15 +34,16 @@
 </template>
 
 <script setup lang="ts">
-import type { ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type { ResumeContent, SpacingSettings } from '@int/schema';
 import type { ResumeEditorTabItem } from '@site/resume/app/types/editor';
+import type { PreviewType } from '@site/resume/app/types/preview';
 import { RESUME_EDITOR_TABS_MAP } from '@site/resume/app/constants';
 
 defineOptions({ name: 'ResumeEditorTools' });
 
 defineProps<{
   items: ResumeEditorTabItem[];
-  previewType: 'ats' | 'human';
+  previewType: PreviewType;
 }>();
 
 const emit = defineEmits<{
@@ -51,7 +52,7 @@ const emit = defineEmits<{
 
 const activeTab = defineModel<string>({ required: true });
 const contentModel = defineModel<ResumeContent | null>('content', { default: null });
-const settingsModel = defineModel<ResumeFormatSettings>('settings', { required: true });
+const settingsModel = defineModel<SpacingSettings>('settings', { required: true });
 </script>
 
 <style lang="scss">

@@ -12,7 +12,14 @@
  * Related: T035 (US4)
  */
 
-import type { Generation, ResumeContent } from '@int/schema';
+import type {
+  ExportFormat,
+  Generation,
+  PatchFormatSettingsBody,
+  ResumeContent,
+  ResumeFormatSettingsAts,
+  ResumeFormatSettingsHuman
+} from '@int/schema';
 import type { VacanciesResumeGeneration } from '@layer/api/types/vacancies';
 
 /**
@@ -42,6 +49,12 @@ export type UseVacancyGenerationReturn = {
   error: ComputedRef<Error | null>;
   isDirty: ComputedRef<boolean>;
 
+  // Settings (from format settings store)
+  previewType: ComputedRef<ExportFormat>;
+  currentSettings: ComputedRef<ResumeFormatSettingsAts | ResumeFormatSettingsHuman>;
+  atsSettings: ComputedRef<ResumeFormatSettingsAts>;
+  humanSettings: ComputedRef<ResumeFormatSettingsHuman>;
+
   // Undo/Redo
   canUndo: ComputedRef<boolean>;
   canRedo: ComputedRef<boolean>;
@@ -49,7 +62,10 @@ export type UseVacancyGenerationReturn = {
 
   // Actions
   fetchGeneration: () => Promise<VacanciesResumeGeneration>;
+  fetchSettings: () => Promise<void>;
   updateContent: (newContent: ResumeContent) => void;
+  updateSettings: (partial: PatchFormatSettingsBody) => void;
+  setPreviewType: (type: ExportFormat) => void;
   saveContent: () => Promise<Generation | null>;
   undo: () => void;
   redo: () => void;
@@ -71,6 +87,10 @@ export function useVacancyGeneration(
   const { autoSave = true, autoSaveDelay = appConfig.resume.autosaveDelay } = options;
 
   const store = useVacancyStore();
+  const formatSettingsStore = useFormatSettingsStore();
+  const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
+    storeToRefs(formatSettingsStore);
+  const { fetchSettings, updateSettings, setPreviewType } = formatSettingsStore;
 
   // =========================================
   // Computed refs from store
@@ -92,14 +112,19 @@ export function useVacancyGeneration(
   const history = useResumeEditHistory({
     resumeId: () => store.currentGenerationId,
     getContent: () => store.displayGenerationContent,
-    getSettings: () => store.currentSettings,
+    getSettings: () => ({ ats: formatSettingsStore.ats, human: formatSettingsStore.human }),
     setContent: newContent => store.updateGenerationContent(newContent),
-    setSettings: newSettings => store.updateSettings(newSettings),
+    setSettings: newSettings => formatSettingsStore.setFullSettings(newSettings),
     debounceDelay: autoSaveDelay,
     autoSnapshot: autoSave,
     autoSave: autoSave
       ? {
           save: () => store.saveGenerationContent(vacancyId),
+          saveSettings: () =>
+            formatSettingsStore.patchSettings({
+              ats: formatSettingsStore.ats,
+              human: formatSettingsStore.human
+            }),
           isSaving: () => store.savingGeneration,
           onError: () => {
             toast.add({
@@ -180,6 +205,12 @@ export function useVacancyGeneration(
     error,
     isDirty,
 
+    // Settings (from format settings store)
+    previewType: getPreviewType,
+    currentSettings: getCurrentSettings,
+    atsSettings: getAtsSettings,
+    humanSettings: getHumanSettings,
+
     // Undo/Redo
     canUndo,
     canRedo,
@@ -187,7 +218,10 @@ export function useVacancyGeneration(
 
     // Actions
     fetchGeneration,
+    fetchSettings,
     updateContent,
+    updateSettings,
+    setPreviewType,
     saveContent,
     undo,
     redo,

@@ -7,7 +7,7 @@
       </h3>
       <p class="resume-settings__description">
         {{
-          previewType === 'ats'
+          previewType === atsFormat
             ? $t('resume.settings.format.descriptionAts')
             : $t('resume.settings.format.descriptionHuman')
         }}
@@ -95,8 +95,9 @@
  * Related: T035 (US3)
  */
 
-import type { ResumeFormatSettings } from '@int/schema';
+import type { SpacingSettings } from '@int/schema';
 import type { PreviewType } from '../../types/preview';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 
 defineOptions({ name: 'ResumeSettings' });
 
@@ -106,18 +107,20 @@ const props = defineProps<{
    */
   previewType: PreviewType;
   /**
-   * Current format settings
+   * Current spacing settings
    */
-  settings: ResumeFormatSettings;
+  settings: SpacingSettings;
 }>();
 
 const emit = defineEmits<{
   /** Update settings (triggers auto-save in parent) */
-  'update:settings': [settings: ResumeFormatSettings];
+  'update:settings': [settings: SpacingSettings];
 }>();
 
+const atsFormat = EXPORT_FORMAT_MAP.ATS;
+
 // Local copy of settings for editing
-const localSettings = reactive<ResumeFormatSettings>({
+const localSettings = reactive<SpacingSettings>({
   marginX: props.settings.marginX,
   marginY: props.settings.marginY,
   fontSize: props.settings.fontSize,

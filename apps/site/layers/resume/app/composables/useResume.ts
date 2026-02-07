@@ -3,19 +3,16 @@
  *
  * High-level composable wrapping the resume store for page use.
  * Provides reactive state, auto-save with debounce, and undo/redo via shared history.
+ * Settings are sourced from the shared format settings store in _base layer.
  *
  * Features:
  * - Auto-save on content changes (via useResumeEditHistory)
- * - Auto-save on settings changes
- * - Undo/redo via useResumeEditHistory
+ * - Settings managed by useFormatSettingsStore (throttled PATCH)
+ * - Undo/redo via useResumeEditHistory with tagged entries
  * - Reactive computed properties
- *
- * Related: T030, T031 (US3)
  */
 
-import type { ResumeContent, ResumeFormatSettings } from '@int/schema';
-import type { EditorTab } from '../stores';
-import type { PreviewType } from '../types/preview';
+import type { PatchFormatSettingsBody, ResumeContent } from '@int/schema';
 import { useResumeStore } from '../stores';
 
 /**
@@ -44,18 +41,18 @@ export function useResume(options: UseResumeOptions = {}) {
   const { autoSave = true, autoSaveDelay = appConfig.resume.autosaveDelay } = options;
 
   const store = useResumeStore();
-  const {
-    getLoading,
-    getSaving,
-    getLastError,
-    getPreviewType,
-    currentSettings,
-    getAtsSettings,
-    getHumanSettings,
-    getActiveTab
-  } = storeToRefs(store);
+  const formatSettingsStore = useFormatSettingsStore();
+  const { getActiveTab } = storeToRefs(store);
+  const { setActiveTab, createFromContent, fetchResume } = store;
+  const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
+    storeToRefs(formatSettingsStore);
+  const { fetchSettings, updateSettings, setPreviewType } = formatSettingsStore;
   const toast = useToast();
   const { t } = useI18n();
+
+  const getErrorMessage = (error: unknown): string | undefined => {
+    return error instanceof Error && error.message ? error.message : undefined;
+  };
 
   // =========================================
   // Reactive State
@@ -74,25 +71,28 @@ export function useResume(options: UseResumeOptions = {}) {
   const history = useResumeEditHistory({
     resumeId: () => resumeId.value,
     getContent: () => content.value,
-    getSettings: () => store.currentSettings,
+    getSettings: () => ({ ats: formatSettingsStore.ats, human: formatSettingsStore.human }),
     setContent: newContent => {
       if (resumeId.value) {
         store.updateContent(newContent, resumeId.value);
       }
     },
-    setSettings: newSettings => store.updateSettings(newSettings),
+    setSettings: newSettings => formatSettingsStore.setFullSettings(newSettings),
     debounceDelay: autoSaveDelay,
     autoSnapshot: autoSave,
     autoSave: autoSave
       ? {
           save: () => (resumeId.value ? store.saveContent(resumeId.value) : Promise.resolve(null)),
           saveSettings: () =>
-            resumeId.value ? store.saveSettings(resumeId.value) : Promise.resolve(null),
-          isSaving: () => store.saving,
-          onError: () => {
+            formatSettingsStore.patchSettings({
+              ats: formatSettingsStore.ats,
+              human: formatSettingsStore.human
+            }),
+          isSaving: () => store.isContentSaveInProgress,
+          onError: error => {
             toast.add({
               title: t('resume.error.updateFailed'),
-              description: store.error?.message,
+              description: getErrorMessage(error),
               color: 'error',
               icon: 'i-lucide-alert-circle'
             });
@@ -108,8 +108,6 @@ export function useResume(options: UseResumeOptions = {}) {
   // Actions
   // =========================================
 
-  const fetchResume = async () => store.fetchResume();
-
   const uploadResume = async (file: File, title?: string) => {
     const result = await store.uploadResume(file, title);
     toast.add({
@@ -120,19 +118,14 @@ export function useResume(options: UseResumeOptions = {}) {
     return result;
   };
 
-  const createFromContent = async (resumeContent: ResumeContent, title?: string) =>
-    store.createFromContent(resumeContent, title);
-
   const updateContent = (newContent: ResumeContent) => {
-    if (resumeId.value) {
-      store.updateContent(newContent, resumeId.value);
-    }
+    if (!resumeId.value) return;
+    store.updateContent(newContent, resumeId.value);
   };
 
   const updateField = <K extends keyof ResumeContent>(field: K, value: ResumeContent[K]) => {
-    if (resumeId.value) {
-      store.updateField(field, value, resumeId.value);
-    }
+    if (!resumeId.value) return;
+    store.updateField(field, value, resumeId.value);
   };
 
   const saveContent = async () => {
@@ -149,62 +142,47 @@ export function useResume(options: UseResumeOptions = {}) {
         icon: 'i-lucide-check'
       });
       return result;
-    } catch {
+    } catch (error) {
       toast.add({
         title: t('resume.error.updateFailed'),
-        description: store.error?.message,
+        description: getErrorMessage(error),
         color: 'error',
         icon: 'i-lucide-alert-circle'
       });
-      throw store.error;
+      throw error;
     }
   };
 
-  const setPreviewType = (type: PreviewType) => {
-    store.setPreviewType(type);
-  };
-
-  const updateSettings = (settings: Partial<ResumeFormatSettings>) => {
-    store.updateSettings(settings);
-  };
-
-  const saveSettings = async () => {
-    const id = resumeId.value;
-    if (!id) {
-      throw new Error(t('resume.error.fetchFailed'));
-    }
-
+  const patchSettings = async (partial: PatchFormatSettingsBody) => {
     try {
-      const result = await store.saveSettings(id);
-      toast.add({
-        title: t('resume.success.settingsUpdated'),
-        color: 'success',
-        icon: 'i-lucide-check'
-      });
-      return result;
+      await formatSettingsStore.patchSettings(partial);
     } catch {
       toast.add({
         title: t('resume.error.settingsUpdateFailed'),
-        description: store.error?.message,
         color: 'error',
         icon: 'i-lucide-alert-circle'
       });
-      throw store.error;
     }
   };
 
-  const setActiveTab = (tab: EditorTab) => {
-    store.setActiveTab(tab);
-  };
-
   const discardChanges = async () => {
-    await store.fetchResume();
-    history.clearHistory();
-    toast.add({
-      title: t('resume.editor.changesDiscarded'),
-      color: 'neutral',
-      icon: 'i-lucide-undo'
-    });
+    try {
+      await store.fetchResume();
+      history.clearHistory();
+      toast.add({
+        title: t('resume.editor.changesDiscarded'),
+        color: 'neutral',
+        icon: 'i-lucide-undo'
+      });
+    } catch (error) {
+      toast.add({
+        title: t('resume.error.fetchFailed'),
+        description: getErrorMessage(error),
+        color: 'error',
+        icon: 'i-lucide-alert-circle'
+      });
+      throw error;
+    }
   };
 
   return {
@@ -213,14 +191,11 @@ export function useResume(options: UseResumeOptions = {}) {
     hasResume,
     content,
     editingContent,
-    loading: getLoading,
-    saving: getSaving,
-    error: getLastError,
     isDirty,
 
-    // Preview state
+    // Preview state (from format settings store)
     previewType: getPreviewType,
-    currentSettings,
+    currentSettings: getCurrentSettings,
     atsSettings: getAtsSettings,
     humanSettings: getHumanSettings,
 
@@ -232,6 +207,7 @@ export function useResume(options: UseResumeOptions = {}) {
 
     // Actions
     fetchResume,
+    fetchSettings,
     uploadResume,
     createFromContent,
     updateContent,
@@ -241,7 +217,7 @@ export function useResume(options: UseResumeOptions = {}) {
     redo: history.redo,
     setPreviewType,
     updateSettings,
-    saveSettings,
+    patchSettings,
     setActiveTab,
     discardChanges
   };

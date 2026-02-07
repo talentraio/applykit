@@ -125,8 +125,12 @@
         "label": "Section Spacing",
         "hint": "Space between sections (1-9)"
       },
-      "save": "Save Settings",
-      "reset": "Reset"
+      "saveButton": "Save Settings",
+      "reset": "Reset",
+      "save": {
+        "success": "Settings saved successfully",
+        "error": "Failed to save settings"
+      }
     },
     "ai": {
       "title": "AI Resume Enhancement",
@@ -143,6 +147,7 @@
       "skills": "Skills",
       "certifications": "Certifications",
       "languages": "Languages",
+      "Open Source": "Open Source",
       "Open Source & Side Projects": "Open Source & Side Projects",
       "Publications": "Publications",
       "Awards": "Awards",
@@ -189,6 +194,7 @@
       "fileTooLarge": "File is too large. Maximum size is 10MB.",
       "fetchFailed": "Failed to load resume",
       "updateFailed": "Failed to update resume",
+      "createFailed": "Failed to create resume",
       "deleteFailed": "Failed to delete resume",
       "emptyFile": "File is empty or contains no text",
       "corruptedFile": "File appears to be corrupted",

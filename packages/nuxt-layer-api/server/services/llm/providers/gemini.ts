@@ -87,7 +87,8 @@ export class GeminiProvider implements ILLMProvider {
         contents,
         config: {
           temperature: request.temperature ?? 0.7,
-          maxOutputTokens: request.maxTokens
+          maxOutputTokens: request.maxTokens,
+          responseMimeType: request.responseFormat === 'json' ? 'application/json' : undefined
         }
       });
 

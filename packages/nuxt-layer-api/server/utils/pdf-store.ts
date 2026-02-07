@@ -1,15 +1,15 @@
-import type { ExportFormat, ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type { ExportFormat, ResumeContent, SpacingSettings } from '@int/schema';
 import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import process from 'node:process';
-import { ExportFormatSchema, ResumeContentSchema, ResumeFormatSettingsSchema } from '@int/schema';
+import { ExportFormatSchema, ResumeContentSchema, SpacingSettingsSchema } from '@int/schema';
 import { z } from 'zod';
 
 export type PdfPayload = {
   format: ExportFormat;
   content: ResumeContent;
-  settings?: Partial<ResumeFormatSettings>;
+  settings?: Partial<SpacingSettings>;
   photoUrl?: string;
   filename?: string;
 };
@@ -22,7 +22,7 @@ type StoredPayload = {
 const PdfPayloadSchema = z.object({
   format: ExportFormatSchema,
   content: ResumeContentSchema,
-  settings: ResumeFormatSettingsSchema.partial().optional(),
+  settings: SpacingSettingsSchema.partial().optional(),
   photoUrl: z.string().optional(),
   filename: z.string().optional()
 });

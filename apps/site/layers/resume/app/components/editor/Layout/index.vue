@@ -77,7 +77,11 @@
  * Related: T032 (US3), T052 (US5)
  */
 
-import type { ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type {
+  ResumeContent,
+  ResumeFormatSettingsAts,
+  ResumeFormatSettingsHuman
+} from '@int/schema';
 import type { PreviewType } from '@site/resume/app/types/preview';
 import PreviewTypeToggle from './PreviewTypeToggle.vue';
 
@@ -86,7 +90,7 @@ defineOptions({ name: 'ResumeEditorLayout' });
 withDefaults(
   defineProps<{
     previewContent?: ResumeContent | null;
-    previewSettings?: Partial<ResumeFormatSettings>;
+    previewSettings?: ResumeFormatSettingsAts | ResumeFormatSettingsHuman;
     photoUrl?: string;
   }>(),
   {

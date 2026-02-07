@@ -6,17 +6,6 @@
       <p class="mt-4 text-muted">{{ $t('common.loading') }}</p>
     </div>
 
-    <!-- Error State -->
-    <UAlert
-      v-else-if="error"
-      color="error"
-      variant="soft"
-      icon="i-lucide-alert-circle"
-      :title="$t('resume.error.fetchFailed')"
-      :description="error.message"
-      class="m-4"
-    />
-
     <!-- No Resume: Show Upload Form -->
     <div v-else-if="!hasResume" class="resume-page__upload">
       <div class="resume-page__upload-container">
@@ -103,11 +92,7 @@
     />
 
     <!-- Create From Scratch Modal -->
-    <ResumeModalCreateFromScratch
-      v-model:open="isCreateModalOpen"
-      :loading="loading"
-      @confirm="handleCreateEmpty"
-    />
+    <ResumeModalCreateFromScratch v-model:open="isCreateModalOpen" />
   </div>
 </template>
 
@@ -130,9 +115,10 @@
  * Related: T038 (US3), T053 (US5)
  */
 
-import type { Resume, ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type { Resume, ResumeContent, SpacingSettings } from '@int/schema';
 import type { ResumeEditorTabItem } from '@site/resume/app/types/editor';
 import type { PreviewType } from '@site/resume/app/types/preview';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 import { RESUME_EDITOR_TABS_MAP } from '@site/resume/app/constants';
 
 defineOptions({ name: 'ResumePage' });
@@ -153,8 +139,6 @@ const {
   hasResume,
   content,
   editingContent,
-  loading,
-  error,
   isDirty,
   previewType,
   currentSettings,
@@ -163,7 +147,7 @@ const {
   canUndo,
   canRedo,
   fetchResume,
-  createFromContent,
+  fetchSettings,
   updateContent,
   undo,
   redo,
@@ -187,9 +171,13 @@ const contentModel = computed<ResumeContent | null>({
     if (value) updateContent(value);
   }
 });
-const settingsModel = computed<ResumeFormatSettings>({
-  get: () => currentSettings.value,
-  set: value => updateSettings(value)
+const settingsModel = computed<SpacingSettings>({
+  get: () => currentSettings.value.spacing,
+  set: value => {
+    const key =
+      previewType.value === EXPORT_FORMAT_MAP.ATS ? EXPORT_FORMAT_MAP.ATS : EXPORT_FORMAT_MAP.HUMAN;
+    updateSettings({ [key]: { spacing: value } });
+  }
 });
 
 // Tab items
@@ -217,8 +205,35 @@ const tabItems = computed(
 // Photo URL from profile
 const photoUrl = computed(() => profile.value?.photoUrl ?? undefined);
 
-// Fetch resume on mount
-const { pending } = await useAsyncData('resume-page', fetchResume);
+const getErrorMessage = (error: unknown): string | undefined => {
+  return error instanceof Error && error.message ? error.message : undefined;
+};
+
+const showErrorToast = (title: string, error: unknown) => {
+  if (!import.meta.client) return;
+
+  toast.add({
+    title,
+    description: getErrorMessage(error),
+    color: 'error',
+    icon: 'i-lucide-alert-circle'
+  });
+};
+
+// Fetch resume and settings on mount
+const { pending } = await useAsyncData('resume-page', async () => {
+  const [resumeResult, settingsResult] = await Promise.allSettled([fetchResume(), fetchSettings()]);
+
+  if (resumeResult.status === 'rejected') {
+    showErrorToast(t('resume.error.fetchFailed'), resumeResult.reason);
+  }
+
+  if (settingsResult.status === 'rejected') {
+    showErrorToast(t('resume.error.settingsUpdateFailed'), settingsResult.reason);
+  }
+
+  return null;
+});
 const pageLoading = computed(() => !hasResume.value && pending.value);
 
 /**
@@ -251,42 +266,6 @@ const handleUploadError = (err: Error) => {
 const handleCreateFromScratch = () => {
   isUploadModalOpen.value = false;
   isCreateModalOpen.value = true;
-};
-
-/**
- * Create empty resume
- * Uses profile data when available, otherwise uses placeholder values that pass schema validation
- */
-const handleCreateEmpty = async () => {
-  // Build fullName from profile or use placeholder
-  const fullName = profile.value?.firstName
-    ? `${profile.value.firstName} ${profile.value.lastName ?? ''}`.trim()
-    : t('resume.placeholder.fullName');
-
-  // Use profile email or placeholder
-  const email = profile.value?.email || 'your.email@example.com';
-
-  const emptyContent: ResumeContent = {
-    personalInfo: {
-      fullName,
-      email
-    },
-    experience: [],
-    education: [],
-    skills: [{ type: t('resume.placeholder.skillType'), skills: [t('resume.placeholder.skill')] }]
-  };
-
-  try {
-    await createFromContent(emptyContent, 'My Resume');
-    isCreateModalOpen.value = false;
-    toast.add({
-      title: t('resume.success.created'),
-      color: 'success',
-      icon: 'i-lucide-check'
-    });
-  } catch {
-    // Error handled in composable
-  }
 };
 </script>
 

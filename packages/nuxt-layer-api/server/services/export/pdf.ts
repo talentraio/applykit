@@ -1,6 +1,7 @@
 import type { ExportFormat } from '@int/schema';
 import type { Buffer } from 'node:buffer';
 import type { Browser, Page } from 'playwright-core';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 import { chromium } from 'playwright-core';
 
 /**
@@ -119,7 +120,7 @@ export async function exportResumeToPDFPreview(
 
     const pdfBuffer = await page.pdf({
       format: 'A4',
-      printBackground: format !== 'ats',
+      printBackground: format !== EXPORT_FORMAT_MAP.ATS,
       preferCSSPageSize: true,
       margin: {
         top: margins.top ?? 0,

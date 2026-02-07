@@ -3,6 +3,8 @@
  *
  * Shared undo/redo history + auto-save for resume editing.
  * Uses a SINGLE debounced watcher for both snapshot creation and auto-save.
+ * History entries are tagged with what changed (content or settings) for
+ * type-dispatched save on undo/redo.
  *
  * Flow on content change:
  * 1. User edits content
@@ -13,26 +15,42 @@
  *    → prevents re-triggering the watcher
  *
  * Features:
- * - Unified history across all resume editing contexts
+ * - Unified tagged history: Ctrl+Z undoes most recent change regardless of type
  * - Max 10 entries per resume, max 100 total
- * - Debounced auto-save with Zod validation
- * - Single watcher eliminates race conditions
+ * - Debounced auto-save for content with Zod validation
+ * - Settings changes saved via throttled PATCH (handled by format settings store)
+ * - Undo/redo dispatches correct save handler based on entry tag
  */
 
-import type { ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type {
+  ResumeContent,
+  ResumeFormatSettingsAts,
+  ResumeFormatSettingsHuman
+} from '@int/schema';
 import { ResumeContentSchema } from '@int/schema';
 import { watchDebounced } from '@vueuse/core';
 
 /**
+ * Settings snapshot type used in history entries
+ */
+export type SettingsSnapshot = {
+  ats: ResumeFormatSettingsAts;
+  human: ResumeFormatSettingsHuman;
+};
+
+/**
  * History entry for a resume snapshot
+ * Tagged with what changed for type-dispatched save on undo/redo
  */
 export type HistoryEntry = {
   /** Resume/Generation ID */
   id: string;
+  /** What changed in this entry */
+  type: 'content' | 'settings';
   /** Resume content snapshot */
   content: ResumeContent;
-  /** Format settings snapshot */
-  settings: ResumeFormatSettings;
+  /** Format settings snapshot (both ats and human) */
+  settings: SettingsSnapshot;
   /** Timestamp of the snapshot */
   timestamp: number;
 };
@@ -53,8 +71,8 @@ type HistoryState = {
 export type AutoSaveConfig = {
   /** Save content function */
   save: () => Promise<unknown>;
-  /** Save settings function (optional, for separate settings persistence) */
-  saveSettings?: () => Promise<unknown>;
+  /** Save settings function (for separate settings persistence) */
+  saveSettings: () => Promise<unknown>;
   /** Getter for saving state (to prevent concurrent saves) */
   isSaving: () => boolean;
   /** Called when save fails */
@@ -69,17 +87,17 @@ export type UseResumeEditHistoryOptions = {
   resumeId: MaybeRefOrGetter<string | null>;
   /** Getter for current content */
   getContent: () => ResumeContent | null;
-  /** Getter for current settings */
-  getSettings: () => ResumeFormatSettings;
+  /** Getter for current settings (both ats and human) */
+  getSettings: () => SettingsSnapshot;
   /** Setter for content (called on undo/redo) */
   setContent: (content: ResumeContent) => void;
   /** Setter for settings (called on undo/redo) */
-  setSettings: (settings: ResumeFormatSettings) => void;
+  setSettings: (settings: SettingsSnapshot) => void;
   /** Debounce delay for auto-snapshot and auto-save (ms) */
   debounceDelay?: number;
   /** Enable auto-snapshot + auto-save on content changes */
   autoSnapshot?: boolean;
-  /** Auto-save configuration (optional, only triggers if provided) */
+  /** Auto-save configuration */
   autoSave?: AutoSaveConfig;
 };
 
@@ -115,12 +133,9 @@ const MAX_TOTAL_ENTRIES = 100;
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 /**
- * Compute content hash for comparison
+ * Compute combined hash for comparison
  */
-const contentHash = (
-  content: ResumeContent | null,
-  settings: ResumeFormatSettings
-): string | null => {
+const combinedHash = (content: ResumeContent | null, settings: SettingsSnapshot): string | null => {
   return content ? JSON.stringify({ content, settings }) : null;
 };
 
@@ -129,17 +144,19 @@ const contentHash = (
  *
  * Provides unified undo/redo history + optional auto-save for resume editing.
  * Uses a single debounced watcher to eliminate race conditions.
+ * History entries are tagged with what changed for type-dispatched save.
  *
  * @example
  * ```typescript
  * const history = useResumeEditHistory({
  *   resumeId: () => resume.value?.id ?? null,
  *   getContent: () => store.content,
- *   getSettings: () => store.settings,
+ *   getSettings: () => ({ ats: formatStore.ats, human: formatStore.human }),
  *   setContent: (content) => store.setContent(content),
- *   setSettings: (settings) => store.setSettings(settings),
+ *   setSettings: (settings) => formatStore.setFullSettings(settings),
  *   autoSave: {
  *     save: () => store.saveContent(),
+ *     saveSettings: () => formatStore.patchSettings(settingsDiff),
  *     isSaving: () => store.saving,
  *     onError: (err) => showToast(err)
  *   }
@@ -195,6 +212,7 @@ export function useResumeEditHistory(
 
   /**
    * Save current state to history.
+   * Tags entry based on what changed (content or settings).
    * Returns true if a new snapshot was actually created.
    */
   const saveSnapshot = (): boolean => {
@@ -204,28 +222,32 @@ export function useResumeEditHistory(
 
     if (!id || !content) return false;
 
-    const newEntry: HistoryEntry = {
-      id,
-      content: clone(content),
-      settings: clone(settings),
-      timestamp: Date.now()
-    };
-
     // Get current entries for this resume
     const resumeEntries = state.value.entries.filter(e => e.id === id);
     const otherEntries = state.value.entries.filter(e => e.id !== id);
     const currentIdx = state.value.indexes[id] ?? -1;
 
-    // Check if content is same as current snapshot
+    // Check if content is same as current snapshot — determine change type
+    let changeType: 'content' | 'settings' = 'content';
     if (currentIdx >= 0 && resumeEntries[currentIdx]) {
       const current = resumeEntries[currentIdx];
-      if (
-        JSON.stringify(current.content) === JSON.stringify(content) &&
-        JSON.stringify(current.settings) === JSON.stringify(settings)
-      ) {
+      const contentChanged = JSON.stringify(current.content) !== JSON.stringify(content);
+      const settingsChanged = JSON.stringify(current.settings) !== JSON.stringify(settings);
+
+      if (!contentChanged && !settingsChanged) {
         return false; // No change, skip
       }
+
+      changeType = contentChanged ? 'content' : 'settings';
     }
+
+    const newEntry: HistoryEntry = {
+      id,
+      type: changeType,
+      content: clone(content),
+      settings: clone(settings),
+      timestamp: Date.now()
+    };
 
     // Remove any future states (if we're not at the end)
     let newResumeEntries = currentIdx >= 0 ? resumeEntries.slice(0, currentIdx + 1) : [];
@@ -272,7 +294,8 @@ export function useResumeEditHistory(
   };
 
   /**
-   * Undo to previous state
+   * Undo to previous state.
+   * Dispatches correct save handler based on entry type tag.
    */
   const undo = (): void => {
     if (!canUndo.value) return;
@@ -283,6 +306,7 @@ export function useResumeEditHistory(
     const newIndex = currentIndex.value - 1;
     const entries = currentEntries.value;
     const snapshot = entries[newIndex];
+    const undoneEntry = entries[currentIndex.value];
 
     if (snapshot) {
       // Update index
@@ -297,11 +321,21 @@ export function useResumeEditHistory(
       // Apply snapshot to store
       setContent(clone(snapshot.content));
       setSettings(clone(snapshot.settings));
+
+      // Dispatch save based on what the undone entry changed
+      if (autoSave && undoneEntry) {
+        if (undoneEntry.type === 'content') {
+          autoSave.save().catch(error => autoSave.onError?.(error));
+        } else {
+          autoSave.saveSettings().catch(error => autoSave.onError?.(error));
+        }
+      }
     }
   };
 
   /**
-   * Redo to next state
+   * Redo to next state.
+   * Dispatches correct save handler based on entry type tag.
    */
   const redo = (): void => {
     if (!canRedo.value) return;
@@ -326,6 +360,15 @@ export function useResumeEditHistory(
       // Apply snapshot to store
       setContent(clone(snapshot.content));
       setSettings(clone(snapshot.settings));
+
+      // Dispatch save based on what this entry changed
+      if (autoSave) {
+        if (snapshot.type === 'content') {
+          autoSave.save().catch(error => autoSave.onError?.(error));
+        } else {
+          autoSave.saveSettings().catch(error => autoSave.onError?.(error));
+        }
+      }
     }
   };
 
@@ -360,9 +403,9 @@ export function useResumeEditHistory(
      * Compute and set initial hashes.
      * Called once when content first becomes available.
      */
-    const initHash = (content: ResumeContent | null, settings: ResumeFormatSettings): void => {
+    const initHash = (content: ResumeContent | null, settings: SettingsSnapshot): void => {
       if (content) {
-        lastHash = contentHash(content, settings);
+        lastHash = combinedHash(content, settings);
         lastSavedContentHash = JSON.stringify(content);
         lastSavedSettingsHash = JSON.stringify(settings);
       }
@@ -374,7 +417,7 @@ export function useResumeEditHistory(
     const updateSavedHashes = (): void => {
       lastSavedContentHash = JSON.stringify(getContent());
       lastSavedSettingsHash = JSON.stringify(getSettings());
-      lastHash = contentHash(getContent(), getSettings());
+      lastHash = combinedHash(getContent(), getSettings());
     };
 
     /**
@@ -387,7 +430,7 @@ export function useResumeEditHistory(
       saveSnapshot();
 
       // 2. Update lastHash to prevent re-triggering from the same content
-      lastHash = contentHash(getContent(), getSettings()) ?? currentHash;
+      lastHash = combinedHash(getContent(), getSettings()) ?? currentHash;
 
       // 3. Auto-save: determine what changed and call appropriate save function(s)
       if (!autoSave || autoSave.isSaving()) return;
@@ -401,23 +444,15 @@ export function useResumeEditHistory(
       if (!contentChanged && !settingsChanged) return;
 
       try {
-        if (autoSave.saveSettings) {
-          // Separate endpoints: save only what changed
-          if (contentChanged) {
-            const validation = ResumeContentSchema.safeParse(currentContent);
-            if (validation.success) {
-              await autoSave.save();
-            }
-          }
-          if (settingsChanged) {
-            await autoSave.saveSettings();
-          }
-        } else {
-          // Single save handles everything
+        // Save only what changed
+        if (contentChanged) {
           const validation = ResumeContentSchema.safeParse(currentContent);
           if (validation.success) {
             await autoSave.save();
           }
+        }
+        if (settingsChanged) {
+          await autoSave.saveSettings();
         }
         // Update saved hashes to post-server-response state
         updateSavedHashes();
@@ -428,7 +463,7 @@ export function useResumeEditHistory(
 
     // Single debounced watcher for content changes
     watchDebounced(
-      () => contentHash(getContent(), getSettings()),
+      () => combinedHash(getContent(), getSettings()),
       async currentHash => {
         if (!currentHash || !currentId.value || currentHash === lastHash) return;
         await onContentChanged(currentHash);
@@ -453,7 +488,7 @@ export function useResumeEditHistory(
             // Restore hash from existing entry
             const currentEntry = entries[state.value.indexes[newId] ?? entries.length - 1];
             if (currentEntry) {
-              lastHash = contentHash(currentEntry.content, currentEntry.settings);
+              lastHash = combinedHash(currentEntry.content, currentEntry.settings);
               lastSavedContentHash = JSON.stringify(currentEntry.content);
               lastSavedSettingsHash = JSON.stringify(currentEntry.settings);
             }

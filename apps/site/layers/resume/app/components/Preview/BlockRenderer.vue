@@ -13,6 +13,7 @@
  */
 
 import type { BlockModel, PreviewType } from '../../types/preview';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 import AtsBlockRenderer from './AtsView/BlockRenderer.vue';
 import HumanBlockRenderer from './HumanView/BlockRenderer.vue';
 
@@ -25,6 +26,6 @@ const props = defineProps<{
 }>();
 
 const blockComponent = computed(() => {
-  return props.type === 'ats' ? AtsBlockRenderer : HumanBlockRenderer;
+  return props.type === EXPORT_FORMAT_MAP.ATS ? AtsBlockRenderer : HumanBlockRenderer;
 });
 </script>

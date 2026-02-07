@@ -1,4 +1,10 @@
-import type { LanguageEntry, PhoneEntry, ResumeContent } from '@int/schema';
+import type {
+  LanguageEntry,
+  PhoneEntry,
+  ResumeContent,
+  ResumeFormatSettingsAts,
+  ResumeFormatSettingsHuman
+} from '@int/schema';
 import {
   LLM_PROVIDER_VALUES,
   OPERATION_VALUES,
@@ -125,6 +131,23 @@ export const profiles = pgTable('profiles', {
 });
 
 /**
+ * User Format Settings table
+ * Per-user resume formatting preferences (spacing, localization)
+ * One-to-one with users
+ */
+export const userFormatSettings = pgTable('user_format_settings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
+  ats: jsonb('ats').$type<ResumeFormatSettingsAts>().notNull(),
+  human: jsonb('human').$type<ResumeFormatSettingsHuman>().notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+});
+
+/**
  * Resumes table
  * Base resume uploaded by user (DOCX/PDF parsed to JSON)
  */
@@ -137,8 +160,6 @@ export const resumes = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     title: varchar('title', { length: 255 }).notNull(),
     content: jsonb('content').$type<ResumeContent>().notNull(),
-    atsSettings: jsonb('ats_settings'),
-    humanSettings: jsonb('human_settings'),
     sourceFileName: varchar('source_file_name', { length: 255 }).notNull(),
     sourceFileType: sourceFileTypeEnum('source_file_type').notNull(),
     createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
@@ -302,6 +323,9 @@ export type NewRoleSettings = typeof roleSettings.$inferInsert;
 
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
+
+export type UserFormatSettingsRow = typeof userFormatSettings.$inferSelect;
+export type NewUserFormatSettingsRow = typeof userFormatSettings.$inferInsert;
 
 export type Resume = typeof resumes.$inferSelect;
 export type NewResume = typeof resumes.$inferInsert;

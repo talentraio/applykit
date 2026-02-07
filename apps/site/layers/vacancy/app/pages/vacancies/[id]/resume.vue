@@ -32,6 +32,7 @@
       v-else
       v-model:preview-type="previewType"
       :preview-content="content"
+      :preview-settings="currentSettings"
       :photo-url="photoUrl"
     >
       <!-- No header slot - clean layout (T037) -->
@@ -49,7 +50,13 @@
 
       <!-- Right Actions: Download PDF -->
       <template #right-actions>
-        <BaseDownloadPdf v-if="content" :content="content" :photo-url="photoUrl" size="sm" />
+        <BaseDownloadPdf
+          v-if="content"
+          :content="content"
+          :settings="{ ats: atsSettings, human: humanSettings }"
+          :photo-url="photoUrl"
+          size="sm"
+        />
       </template>
 
       <!-- Footer: Undo/Redo + Saving Indicator (T038, T039) -->
@@ -85,6 +92,7 @@
           v-model:open="isMobilePreviewOpen"
           v-model:preview-type="previewType"
           :content="content"
+          :settings="{ ats: atsSettings, human: humanSettings }"
           :photo-url="photoUrl"
         />
       </template>
@@ -108,10 +116,10 @@
  * Related: T036-T039 (US4)
  */
 
-import type { ResumeContent, Vacancy } from '@int/schema';
+import type { ResumeContent, SpacingSettings, Vacancy } from '@int/schema';
 import type { ResumeEditorTabItem } from '@site/resume/app/types/editor';
 import type { PreviewType } from '@site/resume/app/types/preview';
-import { ResumeFormatSettingsSchema } from '@int/schema';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 
 defineOptions({ name: 'VacancyResumePage' });
 
@@ -145,10 +153,17 @@ const {
   saving,
   error,
   isDirty,
+  previewType: composablePreviewType,
+  currentSettings,
+  atsSettings,
+  humanSettings,
   canUndo,
   canRedo,
   fetchGeneration,
+  fetchSettings,
   updateContent,
+  updateSettings,
+  setPreviewType,
   undo,
   redo,
   discardChanges
@@ -156,9 +171,21 @@ const {
 
 // UI State
 const activeTab = ref('edit');
-const previewType = ref<PreviewType>('ats');
+const previewType = computed<PreviewType>({
+  get: () => composablePreviewType.value,
+  set: value => setPreviewType(value)
+});
 const isMobilePreviewOpen = ref(false);
-const settingsModel = ref(ResumeFormatSettingsSchema.parse({}));
+const settingsModel = computed<SpacingSettings>({
+  get: () => currentSettings.value.spacing,
+  set: value => {
+    const key =
+      composablePreviewType.value === EXPORT_FORMAT_MAP.ATS
+        ? EXPORT_FORMAT_MAP.ATS
+        : EXPORT_FORMAT_MAP.HUMAN;
+    updateSettings({ [key]: { spacing: value } });
+  }
+});
 
 // Tab items (only Edit, no Settings or AI for generation editing)
 const tabItems = computed(
@@ -183,9 +210,9 @@ const contentModel = computed<ResumeContent | null>({
   }
 });
 
-// Fetch generation on mount
+// Fetch generation and settings on mount
 await callOnce(`vacancy-resume-${vacancyId.value}`, async () => {
-  await fetchGeneration();
+  await Promise.all([fetchGeneration(), fetchSettings()]);
 });
 </script>
 

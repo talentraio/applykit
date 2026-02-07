@@ -1,4 +1,5 @@
 import type { PdfPayload } from '../../utils/pdf-store';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 import { exportResumeToPDFPreview } from '../../services/export/pdf';
 import { deletePdfPayload, getPdfPayload } from '../../utils/pdf-store';
 
@@ -55,7 +56,7 @@ export default defineEventHandler(async event => {
 
 function getDefaultFilename(payload: PdfPayload): string {
   const name = payload.content.personalInfo.fullName.replace(/[^a-z0-9]/gi, '_');
-  const suffix = payload.format === 'ats' ? 'ATS' : 'Human';
+  const suffix = payload.format === EXPORT_FORMAT_MAP.ATS ? 'ATS' : 'Human';
   return `${name}_Resume_${suffix}.pdf`;
 }
 

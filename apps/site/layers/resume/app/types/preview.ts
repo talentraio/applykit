@@ -12,6 +12,7 @@ import type {
   CustomSectionItem,
   EducationEntry,
   ExperienceEntry,
+  ExportFormat,
   PersonalInfo,
   ResumeLanguage,
   SkillGroup
@@ -117,7 +118,7 @@ export type MeasuredBlock = BlockModel & {
 /**
  * Preview type (ATS or Human readable)
  */
-export type PreviewType = 'ats' | 'human';
+export type PreviewType = ExportFormat;
 
 /**
  * Page dimensions and settings
