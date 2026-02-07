@@ -47,7 +47,7 @@ export function useResume(options: UseResumeOptions = {}) {
   const { setActiveTab, createFromContent, fetchResume } = store;
   const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
     storeToRefs(formatSettingsStore);
-  const { fetchSettings, updateSettings, setPreviewType } = formatSettingsStore;
+  const { fetchSettings, setPreviewType } = formatSettingsStore;
   const toast = useToast();
   const { t } = useI18n();
 
@@ -120,6 +120,12 @@ export function useResume(options: UseResumeOptions = {}) {
   const updateContent = (newContent: ResumeContent) => {
     if (!resumeId.value) return;
     store.updateContent(newContent, resumeId.value);
+    history.queueContentAutosave();
+  };
+
+  const updateSettings = (partial: PatchFormatSettingsBody) => {
+    formatSettingsStore.updateSettings(partial);
+    history.queueSettingsAutosave();
   };
 
   const updateField = <K extends keyof ResumeContent>(field: K, value: ResumeContent[K]) => {
@@ -166,6 +172,7 @@ export function useResume(options: UseResumeOptions = {}) {
 
   const discardChanges = async () => {
     try {
+      history.cancelPendingAutosave();
       await store.fetchResume();
       history.clearHistory();
       toast.add({

@@ -2,13 +2,13 @@
  * useResumeEditHistory Composable
  *
  * Shared undo/redo history + auto-save for resume editing.
- * Uses separate debounced watchers for content and settings.
+ * Uses centralized debounced queues for content and settings changes.
  * History entries are tagged with what changed (content or settings) for
  * type-dispatched save on undo/redo.
  *
  * Flow on content change:
  * 1. User edits content
- * 2. Content watcher fires after content debounce delay
+ * 2. Content autosave queue fires after content debounce delay
  * 3. Snapshot is created (if content differs from last snapshot)
  * 4. Auto-save is triggered (if content differs from last saved state)
  * 5. After save, content hash is updated to post-server-response content
@@ -18,6 +18,7 @@
  * - Max 10 entries per resume, max 100 total
  * - Debounced auto-save for content with Zod validation
  * - Debounced auto-save for settings with separate delay
+ * - Pending debounced saves are canceled on undo/redo to avoid race collisions
  * - Undo/redo dispatches correct save handler based on entry tag
  */
 
@@ -27,7 +28,6 @@ import type {
   ResumeFormatSettingsHuman
 } from '@int/schema';
 import { ResumeContentSchema } from '@int/schema';
-import { watchDebounced } from '@vueuse/core';
 
 /**
  * Settings snapshot type used in history entries
@@ -122,6 +122,12 @@ export type UseResumeEditHistoryReturn = {
   redo: () => void;
   /** Manually save a snapshot */
   saveSnapshot: () => void;
+  /** Queue debounced content snapshot + auto-save */
+  queueContentAutosave: () => void;
+  /** Queue debounced settings snapshot + auto-save */
+  queueSettingsAutosave: () => void;
+  /** Cancel all pending debounced auto-save calls */
+  cancelPendingAutosave: () => void;
   /** Clear history for current resume */
   clearHistory: () => void;
 };
@@ -135,11 +141,40 @@ const MAX_TOTAL_ENTRIES = 100;
  */
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
+type DebouncedRunner = {
+  run: () => void;
+  cancel: () => void;
+};
+
+const createDebouncedRunner = (
+  callback: () => void | Promise<void>,
+  delay: number
+): DebouncedRunner => {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  return {
+    run: () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(() => {
+        timer = null;
+        void callback();
+      }, delay);
+    },
+    cancel: () => {
+      if (!timer) return;
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+};
+
 /**
  * useResumeEditHistory composable
  *
  * Provides unified undo/redo history + optional auto-save for resume editing.
- * Uses separate debounced watchers for content and settings changes.
+ * Uses centralized debounced queues for content and settings changes.
  * History entries are tagged with what changed for type-dispatched save.
  *
  * @example
@@ -295,6 +330,125 @@ export function useResumeEditHistory(
     return true;
   };
 
+  // =========================================
+  // Centralized debounce controller
+  // =========================================
+
+  let lastContentHash: string | null = null;
+  let lastSettingsHash: string | null = null;
+  let lastSavedContentHash: string | null = null;
+  let lastSavedSettingsHash: string | null = null;
+
+  const resetHashes = (): void => {
+    lastContentHash = null;
+    lastSettingsHash = null;
+    lastSavedContentHash = null;
+    lastSavedSettingsHash = null;
+  };
+
+  const initHashes = (content: ResumeContent | null, settings: SettingsSnapshot): void => {
+    if (!content) return;
+    lastContentHash = JSON.stringify(content);
+    lastSettingsHash = JSON.stringify(settings);
+    lastSavedContentHash = JSON.stringify(content);
+    lastSavedSettingsHash = JSON.stringify(settings);
+  };
+
+  const isAutosaveEnabled = computed(() => autoSnapshot && import.meta.client);
+
+  async function onContentChanged(currentHash: string): Promise<void> {
+    const currentContent = getContent();
+    if (!currentContent) return;
+
+    saveSnapshot('content');
+    lastContentHash = currentHash;
+    lastSettingsHash = JSON.stringify(getSettings());
+
+    if (!autoSave) return;
+    if (autoSave.isSaving()) {
+      queueContentAutosave();
+      return;
+    }
+    if (currentHash === lastSavedContentHash) return;
+
+    try {
+      const validation = ResumeContentSchema.safeParse(currentContent);
+      if (!validation.success) return;
+
+      await autoSave.save();
+      const savedContent = getContent();
+      if (savedContent) {
+        lastSavedContentHash = JSON.stringify(savedContent);
+      }
+    } catch (error: unknown) {
+      autoSave.onError?.(error);
+    }
+  }
+
+  async function onSettingsChanged(currentHash: string): Promise<void> {
+    const currentContent = getContent();
+    if (!currentContent) return;
+
+    saveSnapshot('settings');
+    lastSettingsHash = currentHash;
+    lastContentHash = JSON.stringify(currentContent);
+
+    if (!autoSave) return;
+    if (autoSave.isSaving()) {
+      queueSettingsAutosave();
+      return;
+    }
+    if (currentHash === lastSavedSettingsHash) return;
+
+    try {
+      await autoSave.saveSettings();
+      lastSavedSettingsHash = JSON.stringify(getSettings());
+    } catch (error: unknown) {
+      autoSave.onError?.(error);
+    }
+  }
+
+  const runContentAutosave = createDebouncedRunner(async (): Promise<void> => {
+    const currentContent = getContent();
+    if (!currentContent || !currentId.value) return;
+
+    const currentHash = JSON.stringify(currentContent);
+    if (currentHash === lastContentHash && currentHash === lastSavedContentHash) return;
+    await onContentChanged(currentHash);
+  }, debounceDelay);
+
+  const runSettingsAutosave = createDebouncedRunner(async (): Promise<void> => {
+    const currentContent = getContent();
+    if (!currentContent || !currentId.value) return;
+
+    const currentHash = JSON.stringify(getSettings());
+    if (currentHash === lastSettingsHash && currentHash === lastSavedSettingsHash) return;
+    await onSettingsChanged(currentHash);
+  }, settingsDebounceDelay);
+
+  function queueContentAutosave(): void {
+    if (!isAutosaveEnabled.value) return;
+
+    const content = getContent();
+    if (!content || !currentId.value) return;
+
+    runContentAutosave.run();
+  }
+
+  function queueSettingsAutosave(): void {
+    if (!isAutosaveEnabled.value) return;
+
+    const content = getContent();
+    if (!content || !currentId.value) return;
+
+    runSettingsAutosave.run();
+  }
+
+  const cancelPendingAutosave = (): void => {
+    runContentAutosave.cancel();
+    runSettingsAutosave.cancel();
+  };
+
   /**
    * Undo to previous state.
    * Dispatches correct save handler based on entry type tag.
@@ -304,6 +458,8 @@ export function useResumeEditHistory(
 
     const id = currentId.value;
     if (!id) return;
+
+    cancelPendingAutosave();
 
     const newIndex = currentIndex.value - 1;
     const entries = currentEntries.value;
@@ -345,6 +501,8 @@ export function useResumeEditHistory(
     const id = currentId.value;
     if (!id) return;
 
+    cancelPendingAutosave();
+
     const newIndex = currentIndex.value + 1;
     const entries = currentEntries.value;
     const snapshot = entries[newIndex];
@@ -381,6 +539,8 @@ export function useResumeEditHistory(
     const id = currentId.value;
     if (!id) return;
 
+    cancelPendingAutosave();
+
     const otherEntries = state.value.entries.filter(e => e.id !== id);
     const newIndexes = { ...state.value.indexes };
     delete newIndexes[id];
@@ -391,128 +551,34 @@ export function useResumeEditHistory(
     };
   };
 
-  // =========================================
-  // Separate watchers: content + settings auto-save
-  // =========================================
+  // Initialize history and hash baselines when resumeId changes
+  watch(
+    currentId,
+    (newId, oldId) => {
+      if (newId === oldId) return;
 
-  if (autoSnapshot && import.meta.client) {
-    let lastContentHash: string | null = null;
-    let lastSettingsHash: string | null = null;
-    let lastSavedContentHash: string | null = null;
-    let lastSavedSettingsHash: string | null = null;
+      cancelPendingAutosave();
+      resetHashes();
 
-    const resetHashes = (): void => {
-      lastContentHash = null;
-      lastSettingsHash = null;
-      lastSavedContentHash = null;
-      lastSavedSettingsHash = null;
-    };
+      if (!isAutosaveEnabled.value || !newId) return;
 
-    const initHashes = (content: ResumeContent | null, settings: SettingsSnapshot): void => {
-      if (!content) return;
-      lastContentHash = JSON.stringify(content);
-      lastSettingsHash = JSON.stringify(settings);
-      lastSavedContentHash = JSON.stringify(content);
-      lastSavedSettingsHash = JSON.stringify(settings);
-    };
-
-    const onContentChanged = async (currentHash: string): Promise<void> => {
-      const currentContent = getContent();
-      if (!currentContent) return;
-
-      saveSnapshot('content');
-      lastContentHash = currentHash;
-      lastSettingsHash = JSON.stringify(getSettings());
-
-      if (!autoSave || autoSave.isSaving()) return;
-      if (currentHash === lastSavedContentHash) return;
-
-      try {
-        const validation = ResumeContentSchema.safeParse(currentContent);
-        if (validation.success) {
-          await autoSave.save();
-          const savedContent = getContent();
-          if (savedContent) {
-            lastSavedContentHash = JSON.stringify(savedContent);
-          }
+      const entries = state.value.entries.filter(e => e.id === newId);
+      if (entries.length === 0 && getContent()) {
+        saveSnapshot();
+        initHashes(getContent(), getSettings());
+      } else if (entries.length > 0) {
+        const currentEntry = entries[state.value.indexes[newId] ?? entries.length - 1];
+        if (currentEntry) {
+          initHashes(currentEntry.content, currentEntry.settings);
         }
-      } catch (error: unknown) {
-        autoSave.onError?.(error);
       }
-    };
+    },
+    { immediate: true }
+  );
 
-    const onSettingsChanged = async (currentHash: string): Promise<void> => {
-      const currentContent = getContent();
-      if (!currentContent) return;
-
-      saveSnapshot('settings');
-      lastSettingsHash = currentHash;
-      lastContentHash = JSON.stringify(currentContent);
-
-      if (!autoSave || autoSave.isSaving()) return;
-      if (currentHash === lastSavedSettingsHash) return;
-
-      try {
-        await autoSave.saveSettings();
-        lastSavedSettingsHash = JSON.stringify(getSettings());
-      } catch (error: unknown) {
-        autoSave.onError?.(error);
-      }
-    };
-
-    watchDebounced(
-      () => {
-        const content = getContent();
-        return content ? JSON.stringify(content) : null;
-      },
-      async currentHash => {
-        if (!currentHash || !currentId.value || currentHash === lastContentHash) return;
-        await onContentChanged(currentHash);
-      },
-      {
-        debounce: debounceDelay,
-        immediate: false
-      }
-    );
-
-    watchDebounced(
-      () => {
-        const content = getContent();
-        if (!content) return null;
-        return JSON.stringify(getSettings());
-      },
-      async currentHash => {
-        if (!currentHash || !currentId.value || currentHash === lastSettingsHash) return;
-        await onSettingsChanged(currentHash);
-      },
-      {
-        debounce: settingsDebounceDelay,
-        immediate: false
-      }
-    );
-
-    // Initialize history when resumeId changes
-    watch(
-      currentId,
-      (newId, oldId) => {
-        if (newId === oldId) return;
-        resetHashes();
-        if (!newId) return;
-
-        const entries = state.value.entries.filter(e => e.id === newId);
-        if (entries.length === 0 && getContent()) {
-          saveSnapshot();
-          initHashes(getContent(), getSettings());
-        } else if (entries.length > 0) {
-          const currentEntry = entries[state.value.indexes[newId] ?? entries.length - 1];
-          if (currentEntry) {
-            initHashes(currentEntry.content, currentEntry.settings);
-          }
-        }
-      },
-      { immediate: true }
-    );
-  }
+  onScopeDispose(() => {
+    cancelPendingAutosave();
+  });
 
   return {
     canUndo,
@@ -525,6 +591,9 @@ export function useResumeEditHistory(
     saveSnapshot: () => {
       saveSnapshot();
     },
+    queueContentAutosave,
+    queueSettingsAutosave,
+    cancelPendingAutosave,
     clearHistory
   };
 }

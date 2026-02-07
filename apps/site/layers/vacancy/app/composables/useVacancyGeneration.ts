@@ -82,6 +82,7 @@ export function useVacancyGeneration(
 ): UseVacancyGenerationReturn {
   const appConfig = useAppConfig();
   const { autoSave = true, autoSaveDelay = appConfig.resume.autosaveDelay } = options;
+  const settingsAutoSaveDelay = 200;
 
   const store = useVacancyStore();
   const { getCurrentGeneration, getDisplayGenerationContent, getSavingGeneration } =
@@ -90,7 +91,7 @@ export function useVacancyGeneration(
   const { saveGenerationContent, updateGenerationContent } = store;
   const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
     storeToRefs(formatSettingsStore);
-  const { fetchSettings, updateSettings, setPreviewType } = formatSettingsStore;
+  const { fetchSettings, setPreviewType } = formatSettingsStore;
 
   // =========================================
   // Undo/Redo + Auto-save via shared history
@@ -109,6 +110,7 @@ export function useVacancyGeneration(
     setContent: newContent => store.updateGenerationContent(newContent),
     setSettings: newSettings => formatSettingsStore.setFullSettings(newSettings),
     debounceDelay: autoSaveDelay,
+    settingsDebounceDelay: settingsAutoSaveDelay,
     autoSnapshot: autoSave,
     autoSave: autoSave
       ? {
@@ -152,10 +154,21 @@ export function useVacancyGeneration(
     return saveGenerationContent(vacancyId);
   }
 
+  const updateContent = (newContent: ResumeContent): void => {
+    updateGenerationContent(newContent);
+    history.queueContentAutosave();
+  };
+
+  const updateSettings = (partial: PatchFormatSettingsBody): void => {
+    formatSettingsStore.updateSettings(partial);
+    history.queueSettingsAutosave();
+  };
+
   /**
    * Discard unsaved changes
    */
   async function discardChanges(): Promise<void> {
+    history.cancelPendingAutosave();
     await store.discardGenerationChanges(vacancyId);
     history.clearHistory();
   }
@@ -180,7 +193,7 @@ export function useVacancyGeneration(
     // Actions
     fetchGeneration,
     fetchSettings,
-    updateContent: updateGenerationContent,
+    updateContent,
     updateSettings,
     setPreviewType,
     saveContent,
