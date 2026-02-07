@@ -1,27 +1,20 @@
 <template>
   <div class="vacancy-resume-page">
     <!-- Loading State -->
-    <div v-if="loading" class="vacancy-resume-page__loading">
+    <div v-if="pageLoading" class="vacancy-resume-page__loading">
       <UIcon name="i-lucide-loader-2" class="h-8 w-8 animate-spin text-primary" />
+
       <p class="mt-4 text-muted">{{ $t('common.loading') }}</p>
     </div>
-
-    <!-- Error State -->
-    <UAlert
-      v-else-if="error"
-      color="error"
-      variant="soft"
-      icon="i-lucide-alert-circle"
-      :title="$t('vacancy.resume.fetchFailed')"
-      :description="error.message"
-      class="m-4"
-    />
 
     <!-- No Generation -->
     <div v-else-if="!generation" class="vacancy-resume-page__empty">
       <UIcon name="i-lucide-file-text" class="h-16 w-16 text-muted" />
+
       <h2 class="mt-4 text-xl font-semibold">{{ $t('vacancy.resume.noGeneration') }}</h2>
+
       <p class="mt-2 text-muted">{{ $t('vacancy.resume.generateFirst') }}</p>
+
       <UButton class="mt-6" icon="i-lucide-arrow-left" :to="`/vacancies/${vacancyId}/overview`">
         {{ $t('vacancy.resume.backToOverview') }}
       </UButton>
@@ -33,10 +26,14 @@
       v-model:preview-type="previewType"
       :preview-content="content"
       :preview-settings="currentSettings"
-      :photo-url="photoUrl"
+      :export-settings="{ ats: atsSettings, human: humanSettings }"
+      :can-undo="canUndo"
+      :can-redo="canRedo"
+      :is-dirty="isDirty"
+      @undo="undo"
+      @redo="redo"
+      @discard="handleDiscardChanges"
     >
-      <!-- No header slot - clean layout (T037) -->
-
       <!-- Left: Editor Form -->
       <template #left>
         <ResumeEditorTools
@@ -45,55 +42,6 @@
           v-model:settings="settingsModel"
           :items="tabItems"
           :preview-type="previewType"
-        />
-      </template>
-
-      <!-- Right Actions: Download PDF -->
-      <template #right-actions>
-        <BaseDownloadPdf
-          v-if="content"
-          :content="content"
-          :settings="{ ats: atsSettings, human: humanSettings }"
-          :photo-url="photoUrl"
-          size="sm"
-        />
-      </template>
-
-      <!-- Footer: Undo/Redo + Saving Indicator (T038, T039) -->
-      <template #footer>
-        <div class="vacancy-resume-page__footer">
-          <BaseUndoRedoControls :can-undo="canUndo" :can-redo="canRedo" @undo="undo" @redo="redo" />
-
-          <div class="flex items-center gap-2">
-            <!-- Saving Indicator (T039) -->
-            <div v-if="saving" class="flex items-center gap-2 text-sm text-muted">
-              <UIcon name="i-lucide-loader-2" class="h-4 w-4 animate-spin" />
-              <span>{{ $t('vacancy.resume.saving') }}</span>
-            </div>
-
-            <!-- Discard Changes Button -->
-            <UButton
-              v-if="isDirty && !saving"
-              variant="ghost"
-              color="neutral"
-              size="sm"
-              @click="discardChanges"
-            >
-              {{ $t('common.cancel') }}
-            </UButton>
-          </div>
-        </div>
-      </template>
-
-      <!-- Mobile Preview -->
-      <template #mobile-preview>
-        <ResumePreviewFloatButton @click="isMobilePreviewOpen = true" />
-        <ResumePreviewOverlay
-          v-model:open="isMobilePreviewOpen"
-          v-model:preview-type="previewType"
-          :content="content"
-          :settings="{ ats: atsSettings, human: humanSettings }"
-          :photo-url="photoUrl"
         />
       </template>
     </ResumeEditorLayout>
@@ -137,7 +85,7 @@ definePageMeta({
 
 const route = useRoute();
 const { t } = useI18n();
-const { profile } = useProfile();
+const toast = useToast();
 
 // Extract vacancy ID
 const vacancyId = computed(() => {
@@ -149,9 +97,6 @@ const vacancyId = computed(() => {
 const {
   generation,
   content,
-  loading,
-  saving,
-  error,
   isDirty,
   previewType: composablePreviewType,
   currentSettings,
@@ -175,7 +120,6 @@ const previewType = computed<PreviewType>({
   get: () => composablePreviewType.value,
   set: value => setPreviewType(value)
 });
-const isMobilePreviewOpen = ref(false);
 const settingsModel = computed<SpacingSettings>({
   get: () => currentSettings.value.spacing,
   set: value => {
@@ -188,19 +132,38 @@ const settingsModel = computed<SpacingSettings>({
 });
 
 // Tab items (only Edit, no Settings or AI for generation editing)
-const tabItems = computed(
-  () =>
-    [
-      {
-        label: t('resume.tabs.edit'),
-        value: 'edit',
-        icon: 'i-lucide-pencil'
-      }
-    ] satisfies ResumeEditorTabItem[]
-);
+const tabItems = computed(() => {
+  return [
+    {
+      label: t('resume.tabs.edit'),
+      value: 'edit',
+      icon: 'i-lucide-pencil'
+    }
+  ] satisfies ResumeEditorTabItem[];
+});
 
-// Photo URL from profile
-const photoUrl = computed(() => profile.value?.photoUrl ?? undefined);
+const getErrorMessage = (error: unknown): string | undefined => {
+  return error instanceof Error && error.message ? error.message : undefined;
+};
+
+const showErrorToast = (title: string, error: unknown): void => {
+  if (!import.meta.client) return;
+
+  toast.add({
+    title,
+    description: getErrorMessage(error),
+    color: 'error',
+    icon: 'i-lucide-alert-circle'
+  });
+};
+
+const handleDiscardChanges = async (): Promise<void> => {
+  try {
+    await discardChanges();
+  } catch (error) {
+    showErrorToast(t('vacancy.resume.fetchFailed'), error);
+  }
+};
 
 // Content model for two-way binding with form
 const contentModel = computed<ResumeContent | null>({
@@ -211,15 +174,29 @@ const contentModel = computed<ResumeContent | null>({
 });
 
 // Fetch generation and settings on mount
-await callOnce(`vacancy-resume-${vacancyId.value}`, async () => {
-  await Promise.all([fetchGeneration(), fetchSettings()]);
+const { pending } = await useAsyncData(`vacancy-resume-${vacancyId.value}`, async () => {
+  const [generationResult, settingsResult] = await Promise.allSettled([
+    fetchGeneration(),
+    fetchSettings()
+  ]);
+
+  if (generationResult.status === 'rejected') {
+    showErrorToast(t('vacancy.resume.fetchFailed'), generationResult.reason);
+  }
+
+  if (settingsResult.status === 'rejected') {
+    showErrorToast(t('resume.error.settingsUpdateFailed'), settingsResult.reason);
+  }
+
+  return generationResult.status === 'fulfilled' && settingsResult.status === 'fulfilled';
 });
+const pageLoading = computed(() => !generation.value && pending.value);
 </script>
 
 <style lang="scss">
 .vacancy-resume-page {
-  // Full height minus header
-  height: calc(100vh - var(--layout-header-height, 64px));
+  height: 100%;
+  min-height: 0;
 
   &__loading,
   &__empty {
@@ -230,12 +207,6 @@ await callOnce(`vacancy-resume-${vacancyId.value}`, async () => {
     min-height: 400px;
     text-align: center;
     padding: 2rem;
-  }
-
-  &__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
   }
 }
 </style>

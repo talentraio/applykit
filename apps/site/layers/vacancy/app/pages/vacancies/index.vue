@@ -159,13 +159,9 @@ const { t } = useI18n();
 // Use vacancy store
 const vacancyStore = useVacancyStore();
 const vacancies = computed(() => vacancyStore.vacancies);
-const loading = computed(() => vacancyStore.loading);
-const error = computed(() => vacancyStore.error);
-
-// Fetch vacancies on page load (SSR-compatible)
-await callOnce(async () => {
-  await vacancyStore.fetchVacancies();
-});
+const { pending: loading, error } = await useAsyncData('vacancies-list', () =>
+  vacancyStore.fetchVacancies()
+);
 
 // Responsive detection using VueUse
 const isMobile = useMediaQuery('(max-width: 767px)');

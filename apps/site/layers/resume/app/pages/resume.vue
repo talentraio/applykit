@@ -3,6 +3,7 @@
     <!-- Loading State -->
     <div v-if="pageLoading" class="resume-page__loading">
       <UIcon name="i-lucide-loader-2" class="h-8 w-8 animate-spin text-primary" />
+
       <p class="mt-4 text-muted">{{ $t('common.loading') }}</p>
     </div>
 
@@ -10,6 +11,7 @@
     <div v-else-if="!hasResume" class="resume-page__upload">
       <div class="resume-page__upload-container">
         <h1 class="resume-page__title">{{ $t('resume.page.title') }}</h1>
+
         <p class="resume-page__description">{{ $t('resume.page.description') }}</p>
 
         <ResumeFormUpload
@@ -27,7 +29,13 @@
       v-model:preview-type="previewTypeModel"
       :preview-content="content"
       :preview-settings="currentSettings"
-      :photo-url="photoUrl"
+      :export-settings="{ ats: atsSettings, human: humanSettings }"
+      :can-undo="canUndo"
+      :can-redo="canRedo"
+      :is-dirty="isDirty"
+      @undo="undo"
+      @redo="redo"
+      @discard="discardChanges"
     >
       <!-- Left: Editor Tabs -->
       <template #left>
@@ -37,48 +45,8 @@
           v-model:settings="settingsModel"
           :items="tabItems"
           :preview-type="previewType"
+          :show-upload-new="true"
           @upload-new="isUploadModalOpen = true"
-        />
-      </template>
-
-      <template #right-actions>
-        <BaseDownloadPdf
-          v-if="content"
-          :content="content"
-          :settings="{ ats: atsSettings, human: humanSettings }"
-          :photo-url="photoUrl"
-          size="sm"
-        />
-      </template>
-
-      <!-- Footer: Undo/Redo -->
-      <template #footer>
-        <div class="resume-page__footer">
-          <BaseUndoRedoControls :can-undo="canUndo" :can-redo="canRedo" @undo="undo" @redo="redo" />
-
-          <div class="flex items-center gap-2">
-            <UButton
-              v-if="isDirty"
-              variant="ghost"
-              color="neutral"
-              size="sm"
-              @click="discardChanges"
-            >
-              {{ $t('common.cancel') }}
-            </UButton>
-          </div>
-        </div>
-      </template>
-
-      <!-- Mobile Preview (T053) -->
-      <template #mobile-preview>
-        <ResumePreviewFloatButton @click="isMobilePreviewOpen = true" />
-        <ResumePreviewOverlay
-          v-model:open="isMobilePreviewOpen"
-          v-model:preview-type="previewTypeModel"
-          :content="content"
-          :settings="{ ats: atsSettings, human: humanSettings }"
-          :photo-url="photoUrl"
         />
       </template>
     </ResumeEditorLayout>
@@ -132,7 +100,6 @@ definePageMeta({
 
 const { t } = useI18n();
 const toast = useToast();
-const { profile } = useProfile();
 
 // Resume composable with auto-save
 const {
@@ -159,7 +126,6 @@ const {
 // UI State
 const isUploadModalOpen = ref(false);
 const isCreateModalOpen = ref(false);
-const isMobilePreviewOpen = ref(false);
 const activeTab = ref(RESUME_EDITOR_TABS_MAP.EDIT);
 const previewTypeModel = computed<PreviewType>({
   get: () => previewType.value,
@@ -202,9 +168,6 @@ const tabItems = computed(
     ] satisfies ResumeEditorTabItem[]
 );
 
-// Photo URL from profile
-const photoUrl = computed(() => profile.value?.photoUrl ?? undefined);
-
 const getErrorMessage = (error: unknown): string | undefined => {
   return error instanceof Error && error.message ? error.message : undefined;
 };
@@ -232,7 +195,7 @@ const { pending } = await useAsyncData('resume-page', async () => {
     showErrorToast(t('resume.error.settingsUpdateFailed'), settingsResult.reason);
   }
 
-  return null;
+  return resumeResult.status === 'fulfilled' && settingsResult.status === 'fulfilled';
 });
 const pageLoading = computed(() => !hasResume.value && pending.value);
 
@@ -305,12 +268,6 @@ const handleCreateFromScratch = () => {
   &__description {
     font-size: 1rem;
     color: var(--color-neutral-500);
-  }
-
-  &__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
   }
 }
 </style>

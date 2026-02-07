@@ -44,9 +44,6 @@ export type UseVacancyGenerationReturn = {
   // State (from store)
   generation: ComputedRef<Generation | null>;
   content: ComputedRef<ResumeContent | null>;
-  loading: ComputedRef<boolean>;
-  saving: ComputedRef<boolean>;
-  error: ComputedRef<Error | null>;
   isDirty: ComputedRef<boolean>;
 
   // Settings (from format settings store)
@@ -87,20 +84,13 @@ export function useVacancyGeneration(
   const { autoSave = true, autoSaveDelay = appConfig.resume.autosaveDelay } = options;
 
   const store = useVacancyStore();
+  const { getCurrentGeneration, getDisplayGenerationContent, getSavingGeneration } =
+    storeToRefs(store);
   const formatSettingsStore = useFormatSettingsStore();
+  const { saveGenerationContent, updateGenerationContent } = store;
   const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
     storeToRefs(formatSettingsStore);
   const { fetchSettings, updateSettings, setPreviewType } = formatSettingsStore;
-
-  // =========================================
-  // Computed refs from store
-  // =========================================
-
-  const generation = computed(() => store.currentGeneration);
-  const content = computed(() => store.displayGenerationContent);
-  const loading = computed(() => store.generationLoading);
-  const saving = computed(() => store.savingGeneration);
-  const error = computed(() => store.error);
 
   // =========================================
   // Undo/Redo + Auto-save via shared history
@@ -108,10 +98,13 @@ export function useVacancyGeneration(
 
   const { t } = useI18n();
   const toast = useToast();
+  const getErrorMessage = (error: unknown): string | undefined => {
+    return error instanceof Error && error.message ? error.message : undefined;
+  };
 
   const history = useResumeEditHistory({
     resumeId: () => store.currentGenerationId,
-    getContent: () => store.displayGenerationContent,
+    getContent: () => store.getDisplayGenerationContent,
     getSettings: () => ({ ats: formatSettingsStore.ats, human: formatSettingsStore.human }),
     setContent: newContent => store.updateGenerationContent(newContent),
     setSettings: newSettings => formatSettingsStore.setFullSettings(newSettings),
@@ -125,11 +118,11 @@ export function useVacancyGeneration(
               ats: formatSettingsStore.ats,
               human: formatSettingsStore.human
             }),
-          isSaving: () => store.savingGeneration,
-          onError: () => {
+          isSaving: () => getSavingGeneration.value,
+          onError: error => {
             toast.add({
               title: t('vacancy.resume.saveFailed'),
-              description: store.error?.message,
+              description: getErrorMessage(error),
               color: 'error',
               icon: 'i-lucide-alert-circle'
             });
@@ -138,17 +131,9 @@ export function useVacancyGeneration(
       : undefined
   });
 
-  const canUndo = history.canUndo;
-  const canRedo = history.canRedo;
-  const historyLength = history.historyLength;
-
-  // isDirty is true if there are history entries (changes have been made)
-  const isDirty = computed(() => history.historyLength.value > 1);
-
   // =========================================
   // Actions
   // =========================================
-
   /**
    * Fetch generation from server and set as current
    */
@@ -161,31 +146,10 @@ export function useVacancyGeneration(
   }
 
   /**
-   * Update content (local state via store)
-   */
-  function updateContent(newContent: ResumeContent): void {
-    store.updateGenerationContent(newContent);
-  }
-
-  /**
    * Save content to server
    */
   async function saveContent(): Promise<Generation | null> {
-    return store.saveGenerationContent(vacancyId);
-  }
-
-  /**
-   * Undo last change
-   */
-  function undo(): void {
-    history.undo();
-  }
-
-  /**
-   * Redo undone change
-   */
-  function redo(): void {
-    history.redo();
+    return saveGenerationContent(vacancyId);
   }
 
   /**
@@ -198,12 +162,9 @@ export function useVacancyGeneration(
 
   return {
     // State (from store)
-    generation,
-    content,
-    loading,
-    saving,
-    error,
-    isDirty,
+    generation: getCurrentGeneration,
+    content: getDisplayGenerationContent,
+    isDirty: history.isDirty,
 
     // Settings (from format settings store)
     previewType: getPreviewType,
@@ -212,19 +173,19 @@ export function useVacancyGeneration(
     humanSettings: getHumanSettings,
 
     // Undo/Redo
-    canUndo,
-    canRedo,
-    historyLength,
+    canUndo: history.canUndo,
+    canRedo: history.canRedo,
+    historyLength: history.historyLength,
 
     // Actions
     fetchGeneration,
     fetchSettings,
-    updateContent,
+    updateContent: updateGenerationContent,
     updateSettings,
     setPreviewType,
     saveContent,
-    undo,
-    redo,
-    discardChanges
+    discardChanges,
+    undo: history.undo,
+    redo: history.redo
   };
 }

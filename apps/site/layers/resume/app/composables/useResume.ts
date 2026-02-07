@@ -39,6 +39,7 @@ export type UseResumeOptions = {
 export function useResume(options: UseResumeOptions = {}) {
   const appConfig = useAppConfig();
   const { autoSave = true, autoSaveDelay = appConfig.resume.autosaveDelay } = options;
+  const settingsAutoSaveDelay = 200;
 
   const store = useResumeStore();
   const formatSettingsStore = useFormatSettingsStore();
@@ -79,6 +80,7 @@ export function useResume(options: UseResumeOptions = {}) {
     },
     setSettings: newSettings => formatSettingsStore.setFullSettings(newSettings),
     debounceDelay: autoSaveDelay,
+    settingsDebounceDelay: settingsAutoSaveDelay,
     autoSnapshot: autoSave,
     autoSave: autoSave
       ? {
@@ -100,9 +102,6 @@ export function useResume(options: UseResumeOptions = {}) {
         }
       : undefined
   });
-
-  // isDirty is true if there are history entries (changes have been made)
-  const isDirty = computed(() => history.historyLength.value > 1);
 
   // =========================================
   // Actions
@@ -191,7 +190,7 @@ export function useResume(options: UseResumeOptions = {}) {
     hasResume,
     content,
     editingContent,
-    isDirty,
+    isDirty: history.isDirty,
 
     // Preview state (from format settings store)
     previewType: getPreviewType,

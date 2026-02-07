@@ -30,12 +30,10 @@ export const useVacancyStore = defineStore('VacancyStore', {
     vacancies: Vacancy[];
     currentVacancy: Vacancy | null;
     loading: boolean;
-    error: Error | null;
 
     // Generation state
     generations: Generation[];
     latestGeneration: Generation | null;
-    generationLoading: boolean;
     generating: boolean;
     savingGeneration: boolean;
 
@@ -49,12 +47,10 @@ export const useVacancyStore = defineStore('VacancyStore', {
     vacancies: [],
     currentVacancy: null,
     loading: false,
-    error: null,
 
     // Generation state
     generations: [],
     latestGeneration: null,
-    generationLoading: false,
     generating: false,
     savingGeneration: false,
 
@@ -70,12 +66,12 @@ export const useVacancyStore = defineStore('VacancyStore', {
     /**
      * Check if user has any vacancies
      */
-    hasVacancies: (state): boolean => state.vacancies.length > 0,
+    getHasVacancies: (state): boolean => state.vacancies.length > 0,
 
     /**
      * Get the latest (most recent) vacancy
      */
-    latestVacancy: (state): Vacancy | null => {
+    getLatestVacancy: (state): Vacancy | null => {
       if (state.vacancies.length === 0) return null;
       const sorted = [...state.vacancies].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -90,7 +86,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
     /**
      * Get current generation from cache
      */
-    currentGeneration: (state): Generation | null => {
+    getCurrentGeneration: (state): Generation | null => {
       if (!state.currentGenerationId) return null;
       const cached = state.cachedGenerations.find(c => c.id === state.currentGenerationId);
       return cached?.generation ?? null;
@@ -99,15 +95,20 @@ export const useVacancyStore = defineStore('VacancyStore', {
     /**
      * Check if generation has content to display
      */
-    hasGeneration(): boolean {
-      return this.currentGeneration !== null;
+    getHasGeneration(): boolean {
+      return this.getCurrentGeneration !== null;
     },
+
+    /**
+     * Get generation saving state
+     */
+    getSavingGeneration: (state): boolean => state.savingGeneration,
 
     /**
      * Get content for display from current generation
      */
-    displayGenerationContent(): ResumeContent | null {
-      return this.currentGeneration?.content ?? null;
+    getDisplayGenerationContent(): ResumeContent | null {
+      return this.getCurrentGeneration?.content ?? null;
     }
   },
 
@@ -117,15 +118,13 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     async fetchVacancies(): Promise<Vacancy[]> {
       this.loading = true;
-      this.error = null;
 
       try {
         const data = await vacancyApi.fetchAll();
         this.vacancies = data;
         return data;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch vacancies');
-        throw this.error;
+        throw err instanceof Error ? err : new Error('Failed to fetch vacancies');
       } finally {
         this.loading = false;
       }
@@ -136,16 +135,14 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     async fetchVacancy(id: string): Promise<Vacancy | null> {
       this.loading = true;
-      this.error = null;
 
       try {
         const vacancy = await vacancyApi.fetchById(id);
         this.currentVacancy = vacancy;
         return vacancy;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch vacancy');
         this.currentVacancy = null;
-        throw this.error;
+        throw err instanceof Error ? err : new Error('Failed to fetch vacancy');
       } finally {
         this.loading = false;
       }
@@ -156,7 +153,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     async createVacancy(data: VacancyInput): Promise<Vacancy> {
       this.loading = true;
-      this.error = null;
 
       try {
         const vacancy = await vacancyApi.create(data);
@@ -164,8 +160,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
         this.currentVacancy = vacancy;
         return vacancy;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to create vacancy');
-        throw this.error;
+        throw err instanceof Error ? err : new Error('Failed to create vacancy');
       } finally {
         this.loading = false;
       }
@@ -176,7 +171,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     async updateVacancy(id: string, data: Partial<VacancyInput>): Promise<Vacancy> {
       this.loading = true;
-      this.error = null;
 
       try {
         const vacancy = await vacancyApi.update(id, data);
@@ -192,8 +186,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
         return vacancy;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to update vacancy');
-        throw this.error;
+        throw err instanceof Error ? err : new Error('Failed to update vacancy');
       } finally {
         this.loading = false;
       }
@@ -212,7 +205,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     async deleteVacancy(id: string): Promise<void> {
       this.loading = true;
-      this.error = null;
 
       try {
         await vacancyApi.delete(id);
@@ -222,8 +214,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
           this.currentVacancy = null;
         }
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to delete vacancy');
-        throw this.error;
+        throw err instanceof Error ? err : new Error('Failed to delete vacancy');
       } finally {
         this.loading = false;
       }
@@ -238,7 +229,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     async generateResume(vacancyId: string, options?: GenerateOptions): Promise<Generation> {
       this.generating = true;
-      this.error = null;
 
       try {
         const generation = await generationApi.generate(vacancyId, options);
@@ -247,8 +237,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
         this._addToCache(generation);
         return generation;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to generate resume');
-        throw this.error;
+        throw err instanceof Error ? err : new Error('Failed to generate resume');
       } finally {
         this.generating = false;
       }
@@ -258,18 +247,12 @@ export const useVacancyStore = defineStore('VacancyStore', {
      * Fetch all generations for a vacancy
      */
     async fetchGenerations(vacancyId: string): Promise<Generation[]> {
-      this.generationLoading = true;
-      this.error = null;
-
       try {
         const data = await generationApi.fetchAll(vacancyId);
         this.generations = data;
         return data;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch generations');
-        throw this.error;
-      } finally {
-        this.generationLoading = false;
+        throw err instanceof Error ? err : new Error('Failed to fetch generations');
       }
     },
 
@@ -277,9 +260,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
      * Fetch the latest generation for a vacancy
      */
     async fetchLatestGeneration(vacancyId: string): Promise<VacanciesResumeGeneration> {
-      this.generationLoading = true;
-      this.error = null;
-
       try {
         const payload = await generationApi.fetchLatest(vacancyId);
         this.latestGeneration = payload.generation;
@@ -290,10 +270,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
         return payload;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch latest generation');
-        throw this.error;
-      } finally {
-        this.generationLoading = false;
+        throw err instanceof Error ? err : new Error('Failed to fetch latest generation');
       }
     },
 
@@ -306,7 +283,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
       content: ResumeContent
     ): Promise<Generation> {
       this.savingGeneration = true;
-      this.error = null;
 
       try {
         const updated = await generationApi.updateContent(vacancyId, generationId, content);
@@ -323,8 +299,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
         this._updateInCache(updated);
         return updated;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to update generation');
-        throw this.error;
+        throw err instanceof Error ? err : new Error('Failed to update generation');
       } finally {
         this.savingGeneration = false;
       }
@@ -383,7 +358,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
      * Save current generation content to server
      */
     async saveGenerationContent(vacancyId: string): Promise<Generation | null> {
-      const generation = this.currentGeneration;
+      const generation = this.getCurrentGeneration;
       if (!generation) return null;
 
       return this.persistGenerationContent(vacancyId, generation.id, generation.content);
@@ -466,11 +441,9 @@ export const useVacancyStore = defineStore('VacancyStore', {
       this.vacancies = [];
       this.currentVacancy = null;
       this.loading = false;
-      this.error = null;
 
       this.generations = [];
       this.latestGeneration = null;
-      this.generationLoading = false;
       this.generating = false;
       this.savingGeneration = false;
 

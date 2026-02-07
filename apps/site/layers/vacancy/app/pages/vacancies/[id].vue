@@ -84,10 +84,12 @@ useHead({
 .vacancy-detail-layout {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - var(--layout-header-height, 64px));
+  min-height: 0;
 
   &__content {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
   }
 }
