@@ -1,0 +1,16 @@
+{
+  "name": "@int/utils",
+  "type": "module",
+  "version": "0.0.1",
+  "main": "./nuxt.config.ts",
+  "scripts": {
+    "typecheck": "nuxt typecheck",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "nuxt": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

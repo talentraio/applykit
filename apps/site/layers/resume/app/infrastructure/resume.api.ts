@@ -1,4 +1,4 @@
-import type { Resume, ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type { Resume, ResumeContent } from '@int/schema';
 
 /**
  * Resume API
@@ -31,7 +31,7 @@ export const resumeApi = {
 
   /**
    * Upload and parse a resume file
-   * Creates the user's single resume (returns 400 if one already exists)
+   * Creates or replaces the user's single resume
    */
   async upload(file: File, title?: string): Promise<Resume> {
     const formData = new FormData();
@@ -57,15 +57,10 @@ export const resumeApi = {
   },
 
   /**
-   * Update resume content and/or settings
+   * Update resume content
    * Creates a version snapshot on content change
    */
-  async update(data: {
-    content?: ResumeContent;
-    title?: string;
-    atsSettings?: ResumeFormatSettings | null;
-    humanSettings?: ResumeFormatSettings | null;
-  }): Promise<Resume> {
+  async update(data: { content?: ResumeContent; title?: string }): Promise<Resume> {
     return await useApi('/api/resume', {
       method: 'PUT',
       body: data
@@ -77,16 +72,6 @@ export const resumeApi = {
    */
   async updateContent(content: ResumeContent): Promise<Resume> {
     return resumeApi.update({ content });
-  },
-
-  /**
-   * Update resume settings only
-   */
-  async updateSettings(settings: {
-    atsSettings?: ResumeFormatSettings | null;
-    humanSettings?: ResumeFormatSettings | null;
-  }): Promise<Resume> {
-    return resumeApi.update(settings);
   },
 
   // ============================================

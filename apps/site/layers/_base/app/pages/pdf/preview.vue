@@ -6,7 +6,7 @@
       <ResumePreview
         :content="payload.content"
         :type="previewType"
-        :settings="payload.settings"
+        :settings="previewSettings"
         :photo-url="payload.photoUrl"
       />
     </div>
@@ -14,7 +14,8 @@
 </template>
 
 <script setup lang="ts">
-import type { ExportFormat, ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type { ExportFormat, ResumeContent, SpacingSettings } from '@int/schema';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 
 defineOptions({ name: 'PdfPreviewPage' });
 
@@ -25,7 +26,7 @@ definePageMeta({
 type PdfPayload = {
   format: ExportFormat;
   content: ResumeContent;
-  settings?: Partial<ResumeFormatSettings>;
+  settings?: Partial<SpacingSettings>;
   photoUrl?: string;
   filename?: string;
 };
@@ -33,24 +34,40 @@ type PdfPayload = {
 const route = useRoute();
 const token = computed(() => (typeof route.query.token === 'string' ? route.query.token : ''));
 
-const { data: payload, pending } = await useAsyncData<PdfPayload | null>(
-  'pdf-preview',
-  async () => {
-    if (!token.value) return null;
-    try {
-      return await useApi<PdfPayload>('/api/pdf/payload', {
-        query: {
-          token: token.value
-        }
-      });
-    } catch {
-      return null;
-    }
-  }
-);
+const { data, pending } = await useAsyncData<PdfPayload | true>('pdf-preview', async () => {
+  if (!token.value) return true;
 
-const previewType = computed(() => (payload.value?.format === 'human' ? 'human' : 'ats'));
+  return await useApi('/api/pdf/payload', {
+    query: { token: token.value }
+  });
+});
+
+const payload = computed(() => {
+  return data.value !== true ? data.value : null;
+});
+
+const previewType = computed(() =>
+  payload.value?.format === EXPORT_FORMAT_MAP.HUMAN
+    ? EXPORT_FORMAT_MAP.HUMAN
+    : EXPORT_FORMAT_MAP.ATS
+);
 const isReady = computed(() => Boolean(payload.value?.content) && !pending.value);
+const defaults = useFormatSettingsDefaults();
+
+// Wrap spacing settings into the format expected by ResumePreview
+const previewSettings = computed(() => {
+  if (!payload.value) return undefined;
+
+  const baseSettings =
+    payload.value.format === EXPORT_FORMAT_MAP.HUMAN ? defaults.human : defaults.ats;
+
+  if (!payload.value.settings) return baseSettings;
+
+  return {
+    ...baseSettings,
+    spacing: { ...baseSettings.spacing, ...payload.value.settings }
+  };
+});
 
 useHead(() => ({
   title: payload.value?.content?.personalInfo?.fullName

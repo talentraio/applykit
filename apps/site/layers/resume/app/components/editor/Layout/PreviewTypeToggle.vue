@@ -1,16 +1,16 @@
 <template>
   <UFieldGroup :size="size">
     <UButton
-      :color="modelValue === 'ats' ? 'primary' : 'neutral'"
-      :variant="modelValue === 'ats' ? 'solid' : 'outline'"
-      @click="emit('update:modelValue', 'ats')"
+      :color="modelValue === atsFormat ? 'primary' : 'neutral'"
+      :variant="modelValue === atsFormat ? 'solid' : 'outline'"
+      @click="emit('update:modelValue', atsFormat)"
     >
       {{ $t('resume.settings.previewType.ats') }}
     </UButton>
     <UButton
-      :color="modelValue === 'human' ? 'primary' : 'neutral'"
-      :variant="modelValue === 'human' ? 'solid' : 'outline'"
-      @click="emit('update:modelValue', 'human')"
+      :color="modelValue === humanFormat ? 'primary' : 'neutral'"
+      :variant="modelValue === humanFormat ? 'solid' : 'outline'"
+      @click="emit('update:modelValue', humanFormat)"
     >
       {{ $t('resume.settings.previewType.human') }}
     </UButton>
@@ -18,7 +18,9 @@
 </template>
 
 <script setup lang="ts">
-type PreviewType = 'ats' | 'human';
+import type { PreviewType } from '../../../types/preview';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
+
 type ToggleSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 defineOptions({ name: 'BasePreviewTypeToggle' });
@@ -32,8 +34,9 @@ withDefaults(
     size: 'sm'
   }
 );
-
 const emit = defineEmits<{
   'update:modelValue': [value: PreviewType];
 }>();
+const atsFormat = EXPORT_FORMAT_MAP.ATS;
+const humanFormat = EXPORT_FORMAT_MAP.HUMAN;
 </script>

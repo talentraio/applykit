@@ -4,7 +4,12 @@
 
 - **User**
 - **Profile** (contact data, locales, job preferences)
-- **Base Resume** (strict JSON; derived from DOCX/PDF via LLM; editable by user)
+- **Base Resume** (strict JSON content only; derived from DOCX/PDF via LLM; editable by user)
+- **UserFormatSettings** (user-level formatting preferences; separate from resume; lazy-loaded)
+  - `ats: { spacing, localization }`
+  - `human: { spacing, localization }`
+  - Auto-seeded from `runtimeConfig.formatSettings.defaults` on user creation
+  - Persisted via `PATCH /api/user/format-settings` (immediate save, no debounce)
 - **Vacancy** (company required; optional jobPosition; description text; optional URL; notes)
 - **Generated Resume Versions** (array; keep only the latest in UI for MVP, but store as array to avoid refactor later)
 
@@ -43,7 +48,7 @@ We support:
 
 On server app start:
 
-- preload global “dictionary” data (countries, etc.)
+- preload global "dictionary" data (countries, etc.)
 - if user session exists, load user + profile + current resume list
 
 This runs in `app/plugins/store-init.ts` with:
@@ -51,3 +56,30 @@ This runs in `app/plugins/store-init.ts` with:
 - `enforce: 'pre'`
 - `parallel: false`
 - `dependsOn: ['pinia']`
+
+## Format settings lazy-loading flow
+
+**Initial load** (on `/resume` or `/vacancies/:id/resume` page):
+
+1. `useFormatSettingsStore.fetchSettings()` called
+2. Store checks `loaded` flag — skip if already fetched
+3. `GET /api/user/format-settings` fetches user's settings
+4. Server auto-seeds defaults if no row exists
+5. Store caches settings (`ats`, `human`, `loaded: true`)
+
+**Immediate save on change**:
+
+1. User adjusts slider in Settings panel
+2. Component emits new `SpacingSettings`
+3. Store's `updateSettings()` updates local state immediately (instant UI feedback)
+4. Store's `patchSettings()` throttled (150ms) PATCH to server
+5. Server deep-merges, validates, saves, returns full settings
+6. Store updates with server response (source of truth)
+
+**Undo/Redo with unified history**:
+
+1. History composable tracks tagged entries (`type: 'content' | 'settings'`)
+2. Ctrl+Z undoes most recent change (content or settings)
+3. Undo/Redo dispatches correct save handler based on entry tag:
+   - `type: 'content'` → immediate `PUT /api/resume` (cancel pending debounce)
+   - `type: 'settings'` → immediate `PATCH /api/user/format-settings` (bypass throttle)

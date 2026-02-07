@@ -156,13 +156,12 @@ defineOptions({ name: 'VacancyListPage' });
 const toast = useToast();
 const { t } = useI18n();
 
-// Use vacancy store via composable
-const { vacancies, loading, error, fetchVacancies, deleteVacancy } = useVacancies();
-
-// Fetch vacancies on page load (SSR-compatible)
-await callOnce(async () => {
-  await fetchVacancies();
-});
+// Use vacancy store
+const vacancyStore = useVacancyStore();
+const vacancies = computed(() => vacancyStore.vacancies);
+const { pending: loading, error } = await useAsyncData('vacancies-list', () =>
+  vacancyStore.fetchVacancies()
+);
 
 // Responsive detection using VueUse
 const isMobile = useMediaQuery('(max-width: 767px)');
@@ -240,7 +239,7 @@ const handleDelete = async () => {
   isDeleting.value = true;
 
   try {
-    await deleteVacancy(vacancyToDelete.value.id);
+    await vacancyStore.deleteVacancy(vacancyToDelete.value.id);
 
     toast.add({
       title: t('vacancy.delete.success'),

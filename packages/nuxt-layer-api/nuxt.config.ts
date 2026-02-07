@@ -1,10 +1,24 @@
+import type { ResumeFormatSettingsAts, ResumeFormatSettingsHuman } from '@int/schema';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+
+const createFormatSettingsDefaults = () =>
+  ({
+    ats: {
+      spacing: { marginX: 20, marginY: 15, fontSize: 12, lineHeight: 1.2, blockSpacing: 5 },
+      localization: { language: 'en-US', dateFormat: 'MMM yyyy', pageFormat: 'A4' }
+    },
+    human: {
+      spacing: { marginX: 20, marginY: 15, fontSize: 12, lineHeight: 1.2, blockSpacing: 5 },
+      localization: { language: 'en-US', dateFormat: 'MMM yyyy', pageFormat: 'A4' }
+    }
+  }) satisfies { ats: ResumeFormatSettingsAts; human: ResumeFormatSettingsHuman };
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
 
   modules: ['nuxt-auth-utils', '@pinia/nuxt'],
+  extends: ['@int/utils'],
 
   runtimeConfig: {
     databaseUrl:
@@ -57,7 +71,10 @@ export default defineNuxtConfig({
     },
     public: {
       apiCallTimeoutMs: 60000,
-      appUrl: 'http://localhost:3000'
+      appUrl: 'http://localhost:3000',
+      formatSettings: {
+        defaults: createFormatSettingsDefaults()
+      }
     }
   },
 

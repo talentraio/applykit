@@ -1,11 +1,11 @@
-import { ExportFormatSchema, ResumeContentSchema, ResumeFormatSettingsSchema } from '@int/schema';
+import { ExportFormatSchema, ResumeContentSchema, SpacingSettingsSchema } from '@int/schema';
 import { z } from 'zod';
 import { createPdfToken } from '../../utils/pdf-store';
 
 const PdfPrepareSchema = z.object({
   format: ExportFormatSchema,
   content: ResumeContentSchema,
-  settings: ResumeFormatSettingsSchema.partial().optional(),
+  settings: SpacingSettingsSchema.partial().optional(),
   photoUrl: z.string().optional(),
   filename: z.string().optional()
 });

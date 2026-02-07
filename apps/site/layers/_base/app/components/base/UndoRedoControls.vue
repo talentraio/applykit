@@ -23,10 +23,6 @@
         @click="emit('redo')"
       />
     </UTooltip>
-
-    <span v-if="showCount && historyLength > 0" class="undo-redo-controls__count">
-      {{ $t('resume.history.changes', { count: historyLength }) }}
-    </span>
   </div>
 </template>
 
@@ -42,30 +38,16 @@
 
 defineOptions({ name: 'BaseUndoRedoControls' });
 
-withDefaults(
-  defineProps<{
-    /**
-     * Whether undo is available
-     */
-    canUndo: boolean;
-    /**
-     * Whether redo is available
-     */
-    canRedo: boolean;
-    /**
-     * Number of history entries (for display)
-     */
-    historyLength?: number;
-    /**
-     * Show history count
-     */
-    showCount?: boolean;
-  }>(),
-  {
-    historyLength: 0,
-    showCount: false
-  }
-);
+defineProps<{
+  /**
+   * Whether undo is available
+   */
+  canUndo: boolean;
+  /**
+   * Whether redo is available
+   */
+  canRedo: boolean;
+}>();
 
 const emit = defineEmits<{
   /** Undo action */
@@ -80,11 +62,5 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   gap: 0.25rem;
-
-  &__count {
-    margin-left: 0.5rem;
-    font-size: 0.75rem;
-    color: var(--color-neutral-500);
-  }
 }
 </style>

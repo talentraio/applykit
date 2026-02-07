@@ -7,7 +7,7 @@
       </h3>
       <p class="resume-settings__description">
         {{
-          previewType === 'ats'
+          previewType === atsFormat
             ? $t('resume.settings.format.descriptionAts')
             : $t('resume.settings.format.descriptionHuman')
         }}
@@ -18,9 +18,9 @@
         <div class="resume-settings__control">
           <label class="resume-settings__label">
             {{ $t('resume.settings.marginX.label') }}
-            <span class="resume-settings__value">{{ localSettings.marginX }}mm</span>
+            <span class="resume-settings__value">{{ marginX }}mm</span>
           </label>
-          <USlider v-model="localSettings.marginX" :min="10" :max="26" :step="1" />
+          <USlider v-model="marginX" :min="10" :max="26" :step="1" />
           <p class="resume-settings__hint">
             {{ $t('resume.settings.marginX.hint') }}
           </p>
@@ -30,9 +30,9 @@
         <div class="resume-settings__control">
           <label class="resume-settings__label">
             {{ $t('resume.settings.marginY.label') }}
-            <span class="resume-settings__value">{{ localSettings.marginY }}mm</span>
+            <span class="resume-settings__value">{{ marginY }}mm</span>
           </label>
-          <USlider v-model="localSettings.marginY" :min="10" :max="26" :step="1" />
+          <USlider v-model="marginY" :min="10" :max="26" :step="1" />
           <p class="resume-settings__hint">
             {{ $t('resume.settings.marginY.hint') }}
           </p>
@@ -42,9 +42,9 @@
         <div class="resume-settings__control">
           <label class="resume-settings__label">
             {{ $t('resume.settings.fontSize.label') }}
-            <span class="resume-settings__value">{{ localSettings.fontSize }}pt</span>
+            <span class="resume-settings__value">{{ fontSize }}pt</span>
           </label>
-          <USlider v-model="localSettings.fontSize" :min="9" :max="13" :step="0.5" />
+          <USlider v-model="fontSize" :min="9" :max="13" :step="0.5" />
           <p class="resume-settings__hint">
             {{ $t('resume.settings.fontSize.hint') }}
           </p>
@@ -54,9 +54,9 @@
         <div class="resume-settings__control">
           <label class="resume-settings__label">
             {{ $t('resume.settings.lineHeight.label') }}
-            <span class="resume-settings__value">{{ localSettings.lineHeight.toFixed(1) }}</span>
+            <span class="resume-settings__value">{{ lineHeight.toFixed(1) }}</span>
           </label>
-          <USlider v-model="localSettings.lineHeight" :min="1.1" :max="1.5" :step="0.05" />
+          <USlider v-model="lineHeight" :min="1.1" :max="1.5" :step="0.05" />
           <p class="resume-settings__hint">
             {{ $t('resume.settings.lineHeight.hint') }}
           </p>
@@ -66,9 +66,9 @@
         <div class="resume-settings__control">
           <label class="resume-settings__label">
             {{ $t('resume.settings.blockSpacing.label') }}
-            <span class="resume-settings__value">{{ localSettings.blockSpacing }}</span>
+            <span class="resume-settings__value">{{ blockSpacing }}</span>
           </label>
-          <USlider v-model="localSettings.blockSpacing" :min="1" :max="9" :step="1" />
+          <USlider v-model="blockSpacing" :min="1" :max="9" :step="1" />
           <p class="resume-settings__hint">
             {{ $t('resume.settings.blockSpacing.hint') }}
           </p>
@@ -95,8 +95,9 @@
  * Related: T035 (US3)
  */
 
-import type { ResumeFormatSettings } from '@int/schema';
+import type { SpacingSettings } from '@int/schema';
 import type { PreviewType } from '../../types/preview';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 
 defineOptions({ name: 'ResumeSettings' });
 
@@ -106,45 +107,49 @@ const props = defineProps<{
    */
   previewType: PreviewType;
   /**
-   * Current format settings
+   * Current spacing settings
    */
-  settings: ResumeFormatSettings;
+  settings: SpacingSettings;
 }>();
 
 const emit = defineEmits<{
   /** Update settings (triggers auto-save in parent) */
-  'update:settings': [settings: ResumeFormatSettings];
+  'update:settings': [settings: SpacingSettings];
 }>();
 
-// Local copy of settings for editing
-const localSettings = reactive<ResumeFormatSettings>({
-  marginX: props.settings.marginX,
-  marginY: props.settings.marginY,
-  fontSize: props.settings.fontSize,
-  lineHeight: props.settings.lineHeight,
-  blockSpacing: props.settings.blockSpacing
+const atsFormat = EXPORT_FORMAT_MAP.ATS;
+
+const updateSpacing = (partial: Partial<SpacingSettings>) => {
+  emit('update:settings', {
+    ...props.settings,
+    ...partial
+  });
+};
+
+const marginX = computed({
+  get: (): number => props.settings.marginX,
+  set: (value: number) => updateSpacing({ marginX: value })
 });
 
-// Sync local settings when preview type changes (switching between ATS/Human)
-watch(
-  () => props.previewType,
-  () => {
-    localSettings.marginX = props.settings.marginX;
-    localSettings.marginY = props.settings.marginY;
-    localSettings.fontSize = props.settings.fontSize;
-    localSettings.lineHeight = props.settings.lineHeight;
-    localSettings.blockSpacing = props.settings.blockSpacing;
-  }
-);
+const marginY = computed({
+  get: (): number => props.settings.marginY,
+  set: (value: number) => updateSpacing({ marginY: value })
+});
 
-// Emit settings changes for live preview and auto-save
-watch(
-  localSettings,
-  newSettings => {
-    emit('update:settings', { ...newSettings });
-  },
-  { deep: true }
-);
+const fontSize = computed({
+  get: (): number => props.settings.fontSize,
+  set: (value: number) => updateSpacing({ fontSize: value })
+});
+
+const lineHeight = computed({
+  get: (): number => props.settings.lineHeight,
+  set: (value: number) => updateSpacing({ lineHeight: value })
+});
+
+const blockSpacing = computed({
+  get: (): number => props.settings.blockSpacing,
+  set: (value: number) => updateSpacing({ blockSpacing: value })
+});
 </script>
 
 <style lang="scss">

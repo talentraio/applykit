@@ -52,6 +52,24 @@ export type ParseResult = {
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 /**
+ * Normalize extracted text for better LLM parsing quality
+ * - Removes control characters
+ * - Normalizes repeated whitespace
+ */
+function normalizeExtractedText(text: string): string {
+  return text
+    .replace(/\r\n?/g, '\n')
+    .replace(/\p{Cc}/gu, char => (char === '\n' || char === '\t' ? char : ' '))
+    .replace(/\t/g, ' ')
+    .replace(/\u00A0/g, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/**
  * Parse DOCX file to plain text
  *
  * @param buffer - File buffer
@@ -60,15 +78,16 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 async function parseDocx(buffer: Buffer): Promise<ParseResult> {
   try {
     const result = await mammoth.extractRawText({ buffer });
+    const normalizedText = normalizeExtractedText(result.value || '');
 
-    if (!result.value || result.value.trim().length === 0) {
+    if (normalizedText.length === 0) {
       throw new ParseError('DOCX file contains no text', SOURCE_FILE_TYPE_MAP.DOCX, 'EMPTY_FILE');
     }
 
-    const wordCount = result.value.trim().split(/\s+/).length;
+    const wordCount = normalizedText.split(/\s+/).length;
 
     return {
-      text: result.value,
+      text: normalizedText,
       metadata: {
         wordCount
       }
@@ -100,15 +119,16 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
     parser = new PDFParse({ data: buffer });
     const result = await parser.getText();
     const info = await parser.getInfo();
+    const normalizedText = normalizeExtractedText(result.text || '');
 
-    if (!result.text || result.text.trim().length === 0) {
+    if (normalizedText.length === 0) {
       throw new ParseError('PDF file contains no text', SOURCE_FILE_TYPE_MAP.PDF, 'EMPTY_FILE');
     }
 
-    const wordCount = result.text.trim().split(/\s+/).length;
+    const wordCount = normalizedText.split(/\s+/).length;
 
     return {
-      text: result.text,
+      text: normalizedText,
       metadata: {
         pageCount: info.total,
         wordCount

@@ -155,7 +155,7 @@ Resume management, upload, and editing.
 // Import from resume layer
 import { useResumeStore } from '@site/resume/app/stores';
 
-const { resumes, uploadResume } = useResumes();
+const { resumes, uploadResume } = useResume();
 ```
 
 ### `landing` Layer

@@ -38,8 +38,8 @@ const router = useRouter();
 const toast = useToast();
 const { t } = useI18n();
 
-// Use vacancy store via composable
-const { createVacancy } = useVacancies();
+// Use vacancy store
+const vacancyStore = useVacancyStore();
 
 const isSaving = ref(false);
 
@@ -47,7 +47,7 @@ const handleSave = async (data: VacancyInput) => {
   isSaving.value = true;
 
   try {
-    const vacancy = await createVacancy(data);
+    const vacancy = await vacancyStore.createVacancy(data);
 
     toast.add({
       title: `${t('common.create')} ${t('common.success').toLowerCase()}`,

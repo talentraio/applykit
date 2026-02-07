@@ -1,5 +1,5 @@
-import { VacancyInputSchema } from '@int/schema';
-import { vacancyRepository } from '../../data/repositories';
+import { VACANCY_STATUS_MAP, VacancyInputSchema } from '@int/schema';
+import { generationRepository, vacancyRepository } from '../../data/repositories';
 
 /**
  * PUT /api/vacancies/:id
@@ -39,6 +39,26 @@ export default defineEventHandler(async event => {
       message: 'Invalid vacancy data',
       data: validationResult.error.format()
     });
+  }
+
+  // Validate status transition rules
+  if (validationResult.data.status !== undefined) {
+    const generationCount = await generationRepository.countByVacancyId(id);
+    const hasGeneration = generationCount > 0;
+
+    if (hasGeneration && validationResult.data.status === VACANCY_STATUS_MAP.CREATED) {
+      throw createError({
+        statusCode: 400,
+        message: 'Cannot revert status to "created" when generations exist'
+      });
+    }
+
+    if (!hasGeneration && validationResult.data.status === VACANCY_STATUS_MAP.GENERATED) {
+      throw createError({
+        statusCode: 400,
+        message: 'Cannot set status to "generated" without a generation'
+      });
+    }
   }
 
   // Update vacancy (with ownership check)

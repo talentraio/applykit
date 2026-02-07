@@ -10,35 +10,59 @@
         class="resume-form__sections"
       >
         <template #personal-info>
-          <ResumeFormSectionPersonalInfo v-model="formData.personalInfo" />
+          <ResumeFormSectionPersonalInfo
+            :model-value="formData.personalInfo"
+            @update:model-value="handleSectionUpdate('personalInfo', $event)"
+          />
         </template>
 
         <template #summary>
-          <ResumeFormSectionSummary v-model="formData.summary" />
+          <ResumeFormSectionSummary
+            :model-value="formData.summary"
+            @update:model-value="handleSectionUpdate('summary', $event)"
+          />
         </template>
 
         <template #skills>
-          <ResumeFormSectionSkills v-model="formData.skills" />
+          <ResumeFormSectionSkills
+            :model-value="formData.skills"
+            @update:model-value="handleSectionUpdate('skills', $event)"
+          />
         </template>
 
         <template #experience>
-          <ResumeFormSectionExperience v-model="formData.experience" />
+          <ResumeFormSectionExperience
+            :model-value="formData.experience"
+            @update:model-value="handleSectionUpdate('experience', $event)"
+          />
         </template>
 
         <template #education>
-          <ResumeFormSectionEducation v-model="formData.education" />
+          <ResumeFormSectionEducation
+            :model-value="formData.education"
+            @update:model-value="handleSectionUpdate('education', $event)"
+          />
         </template>
 
         <template #certifications>
-          <ResumeFormSectionCertifications v-model="formData.certifications" />
+          <ResumeFormSectionCertifications
+            :model-value="formData.certifications"
+            @update:model-value="handleSectionUpdate('certifications', $event)"
+          />
         </template>
 
         <template #additional>
-          <ResumeFormSectionCustomSections v-model="formData.customSections" />
+          <ResumeFormSectionCustomSections
+            :model-value="formData.customSections"
+            @update:model-value="handleSectionUpdate('customSections', $event)"
+          />
         </template>
 
         <template #languages>
-          <ResumeFormSectionLanguages v-model="formData.languages" />
+          <ResumeFormSectionLanguages
+            :model-value="formData.languages"
+            @update:model-value="handleSectionUpdate('languages', $event)"
+          />
         </template>
       </UAccordion>
 
@@ -138,7 +162,6 @@ const createFormData = (content: ResumeContent): ResumeFormData => ({
 const formData = reactive<ResumeFormData>(createFormData(props.modelValue));
 
 const validationError = ref<string | null>(null);
-const isSyncing = ref(false);
 const lastEmittedSnapshot = ref<string | null>(null);
 const activeSection = ref<string | undefined>(undefined);
 
@@ -185,20 +208,20 @@ const sectionItems = computed<AccordionItem[]>(() => [
   }
 ]);
 
-// Emit updates for auto-save + preview (skip sync updates)
-watch(
-  formData,
-  () => {
-    if (isSyncing.value) return;
-    validationError.value = null;
-    const nextContent = buildContent();
-    lastEmittedSnapshot.value = JSON.stringify(nextContent);
-    emit('update:modelValue', nextContent);
-  },
-  {
-    deep: true
-  }
-);
+const emitContentUpdate = () => {
+  validationError.value = null;
+  const nextContent = buildContent();
+  lastEmittedSnapshot.value = JSON.stringify(nextContent);
+  emit('update:modelValue', nextContent);
+};
+
+const handleSectionUpdate = <K extends keyof ResumeFormData>(
+  field: K,
+  value: ResumeFormData[K]
+) => {
+  formData[field] = value;
+  emitContentUpdate();
+};
 
 // Watch for external modelValue changes
 watch(
@@ -207,11 +230,7 @@ watch(
     const incomingSnapshot = JSON.stringify(newValue);
     if (incomingSnapshot === lastEmittedSnapshot.value) return;
 
-    isSyncing.value = true;
     Object.assign(formData, createFormData(newValue));
-    nextTick(() => {
-      isSyncing.value = false;
-    });
   },
   { deep: true }
 );
@@ -257,12 +276,11 @@ const validate = (): ResumeContent | null => {
   const result = ResumeContentSchema.safeParse(content);
 
   if (!result.success) {
-    const errors = result.error.errors
+    validationError.value = result.error.errors
       .map(
         (e: { path: (string | number)[]; message: string }) => `${e.path.join('.')}: ${e.message}`
       )
       .join('\n');
-    validationError.value = errors;
     return null;
   }
 
@@ -278,6 +296,7 @@ const handleSubmit = () => {
   const content = validate();
   if (!content) return;
 
+  lastEmittedSnapshot.value = JSON.stringify(content);
   emit('update:modelValue', content);
 };
 

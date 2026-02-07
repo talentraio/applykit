@@ -3,11 +3,11 @@ import { resumeRepository } from '../../data/repositories';
 /**
  * GET /api/resume
  *
- * Get the current user's single resume with all settings
+ * Get the current user's single resume
  * Single resume architecture: one resume per user
  *
  * Response:
- * - Resume object with content and settings (atsSettings, humanSettings)
+ * - Resume object with content
  * - Returns 404 if user has no resume yet
  *
  * Related: T010 (US1)

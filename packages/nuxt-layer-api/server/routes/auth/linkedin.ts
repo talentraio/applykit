@@ -1,7 +1,8 @@
+import type { FormatSettingsConfig } from '../../types/format-settings-config';
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '@int/schema';
 import { eventHandler, getQuery } from 'h3';
 import { decode, hasLeadingSlash, hasProtocol } from 'ufo';
-import { userRepository } from '../../data/repositories';
+import { formatSettingsRepository, userRepository } from '../../data/repositories';
 
 /**
  * LinkedIn OAuth Handler
@@ -59,6 +60,12 @@ const oauthHandler = defineOAuthLinkedInEventHandler({
             linkedInId
           });
           dbUser = activated ?? existingUser;
+
+          // Seed format settings for activated invited user
+          const activatedConfig = useRuntimeConfig(event);
+          const activatedDefaults = (activatedConfig.public.formatSettings as FormatSettingsConfig)
+            .defaults;
+          await formatSettingsRepository.seedDefaults(existingUser.id, activatedDefaults);
         } else if (!existingUser.linkedInId) {
           // Link LinkedIn account to existing user (account merging)
           const linked = await userRepository.linkOAuthProvider(
@@ -93,6 +100,12 @@ const oauthHandler = defineOAuthLinkedInEventHandler({
         linkedInId,
         role: USER_ROLE_MAP.PUBLIC
       });
+
+      // Seed format settings for new user
+      const newUserConfig = useRuntimeConfig(event);
+      const newUserDefaults = (newUserConfig.public.formatSettings as FormatSettingsConfig)
+        .defaults;
+      await formatSettingsRepository.seedDefaults(dbUser.id, newUserDefaults);
     }
 
     // Set session

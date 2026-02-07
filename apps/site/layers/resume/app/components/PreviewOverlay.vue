@@ -14,16 +14,16 @@
         <div class="preview-overlay__header">
           <UFieldGroup size="sm">
             <UButton
-              :color="previewType === 'ats' ? 'primary' : 'neutral'"
-              :variant="previewType === 'ats' ? 'solid' : 'outline'"
-              @click="$emit('update:preview-type', 'ats')"
+              :color="previewType === EXPORT_FORMAT_MAP.ATS ? 'primary' : 'neutral'"
+              :variant="previewType === EXPORT_FORMAT_MAP.ATS ? 'solid' : 'outline'"
+              @click="$emit('update:preview-type', EXPORT_FORMAT_MAP.ATS)"
             >
               {{ $t('resume.settings.previewType.ats') }}
             </UButton>
             <UButton
-              :color="previewType === 'human' ? 'primary' : 'neutral'"
-              :variant="previewType === 'human' ? 'solid' : 'outline'"
-              @click="$emit('update:preview-type', 'human')"
+              :color="previewType === EXPORT_FORMAT_MAP.HUMAN ? 'primary' : 'neutral'"
+              :variant="previewType === EXPORT_FORMAT_MAP.HUMAN ? 'solid' : 'outline'"
+              @click="$emit('update:preview-type', EXPORT_FORMAT_MAP.HUMAN)"
             >
               {{ $t('resume.settings.previewType.human') }}
             </UButton>
@@ -79,8 +79,13 @@
  * Related: T051 (US5)
  */
 
-import type { ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type {
+  ResumeContent,
+  ResumeFormatSettingsAts,
+  ResumeFormatSettingsHuman
+} from '@int/schema';
 import type { PreviewType } from '../types/preview';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 
 defineOptions({ name: 'ResumePreviewOverlay' });
 
@@ -96,13 +101,13 @@ const props = withDefaults(
     content: ResumeContent | null;
     /**
      * Current preview type
-     * @default 'ats'
+     * @default EXPORT_FORMAT_MAP.ATS
      */
     previewType?: PreviewType;
     /**
-     * Format settings (single or per-format)
+     * Format settings per-format
      */
-    settings?: FormatSettings;
+    settings?: FormatSettingsMap;
     /**
      * Profile photo URL for human view
      */
@@ -114,8 +119,8 @@ const props = withDefaults(
     showDownload?: boolean;
   }>(),
   {
-    previewType: 'ats',
-    settings: () => ({}),
+    previewType: EXPORT_FORMAT_MAP.ATS,
+    settings: undefined,
     showDownload: true
   }
 );
@@ -126,14 +131,8 @@ const emit = defineEmits<{
 }>();
 
 type FormatSettingsMap = {
-  ats: Partial<ResumeFormatSettings>;
-  human: Partial<ResumeFormatSettings>;
-};
-
-type FormatSettings = Partial<ResumeFormatSettings> | FormatSettingsMap;
-
-const isFormatSettingsMap = (value: FormatSettings): value is FormatSettingsMap => {
-  return typeof value === 'object' && value !== null && 'ats' in value && 'human' in value;
+  ats: ResumeFormatSettingsAts;
+  human: ResumeFormatSettingsHuman;
 };
 
 // Two-way binding for open state
@@ -142,13 +141,12 @@ const isOpen = computed({
   set: value => emit('update:open', value)
 });
 
-const resolvedSettings = computed<Partial<ResumeFormatSettings>>(() => {
-  if (!props.settings) return {};
-  if (isFormatSettingsMap(props.settings)) {
-    return props.previewType === 'ats' ? props.settings.ats : props.settings.human;
+const resolvedSettings = computed<ResumeFormatSettingsAts | ResumeFormatSettingsHuman | undefined>(
+  () => {
+    if (!props.settings) return undefined;
+    return props.previewType === EXPORT_FORMAT_MAP.ATS ? props.settings.ats : props.settings.human;
   }
-  return props.settings;
-});
+);
 </script>
 
 <style lang="scss">

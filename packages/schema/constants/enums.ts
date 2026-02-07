@@ -101,6 +101,24 @@ export const EXPORT_FORMAT_MAP = {
 
 export const EXPORT_FORMAT_VALUES = [EXPORT_FORMAT_MAP.ATS, EXPORT_FORMAT_MAP.HUMAN] as const;
 
+export const VACANCY_STATUS_MAP = {
+  CREATED: 'created',
+  GENERATED: 'generated',
+  SCREENING: 'screening',
+  REJECTED: 'rejected',
+  INTERVIEW: 'interview',
+  OFFER: 'offer'
+} as const;
+
+export const VACANCY_STATUS_VALUES = [
+  VACANCY_STATUS_MAP.CREATED,
+  VACANCY_STATUS_MAP.GENERATED,
+  VACANCY_STATUS_MAP.SCREENING,
+  VACANCY_STATUS_MAP.REJECTED,
+  VACANCY_STATUS_MAP.INTERVIEW,
+  VACANCY_STATUS_MAP.OFFER
+] as const;
+
 export const LANGUAGE_LEVEL_MAP = {
   NATIVE: 'Native',
   FLUENT: 'Fluent',

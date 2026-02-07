@@ -8,6 +8,8 @@ Use this guide when working with state.
 - Components should call **store actions**, not raw `$fetch` or `useApi` directly.
 - Actions **must return data**, even if they also store it.
   - This makes SSR/CSR usage predictable (works well with `useAsyncData` / `callOnce`).
+- All Pinia getters must use `get` prefix.
+  - Examples: `getCurrentUser`, `getHasVacancies`, `getDisplayGenerationContent`
 
 ## Architecture: Store → Infrastructure → API
 
@@ -81,7 +83,7 @@ Composables can wrap store access for convenience, but must NOT:
 - Use `onMounted` for data fetching (use `useAsyncData` / `callOnce`)
 
 ```typescript
-// composables/useResumes.ts — thin proxy
+// composables/useResume.ts — thin proxy
 export function useResumes() {
   const store = useResumeStore();
   return {

@@ -34,10 +34,21 @@
   - body: multipart file (DOCX or PDF)
   - returns: `ResumeJson`
 - `GET /api/resume`
-  - returns current base resume JSON
+  - returns current base resume (content only, no format settings)
 - `PUT /api/resume`
-  - body: `ResumeJson` (strict)
-  - returns saved resume
+  - body: `{ content?: ResumeContent, title?: string }`
+  - returns saved resume (content only, no format settings)
+
+## Format Settings (User-Level)
+
+- `GET /api/user/format-settings`
+  - returns: `{ ats: ResumeFormatSettingsAts, human: ResumeFormatSettingsHuman }`
+  - auto-seeds defaults if no settings exist
+- `PATCH /api/user/format-settings`
+  - body: deep partial of `{ ats?: { spacing?, localization? }, human?: { spacing?, localization? } }`
+  - returns: full settings after merge
+  - validates merged result with schemas
+  - requires at least one of `ats` or `human`
 
 ## Vacancies
 

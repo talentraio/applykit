@@ -1,6 +1,11 @@
+import type { FormatSettingsConfig } from '../../types/format-settings-config';
 import { WORK_FORMAT_MAP } from '@int/schema';
 import { z } from 'zod';
-import { profileRepository, userRepository } from '../../data/repositories';
+import {
+  formatSettingsRepository,
+  profileRepository,
+  userRepository
+} from '../../data/repositories';
 import { sendVerificationEmail } from '../../services/email';
 import {
   generateToken,
@@ -73,6 +78,11 @@ export default defineEventHandler(async event => {
     emailVerificationToken,
     emailVerificationExpires
   });
+
+  // Seed default format settings
+  const config = useRuntimeConfig(event);
+  const formatDefaults = (config.public.formatSettings as FormatSettingsConfig).defaults;
+  await formatSettingsRepository.seedDefaults(user.id, formatDefaults);
 
   // Create basic profile with registration data
   // This ensures firstName, lastName, and email are pre-filled in profile form

@@ -2,6 +2,9 @@ export * from './constants/enums';
 // Enums
 export * from './schemas/enums';
 
+// Format Settings
+export * from './schemas/format-settings';
+
 // Generation
 export * from './schemas/generation';
 

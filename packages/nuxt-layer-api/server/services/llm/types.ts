@@ -38,6 +38,13 @@ export type LLMRequest = {
    * Model to use (provider-specific)
    */
   model?: string;
+
+  /**
+   * Desired response format
+   * - text: regular free-form output
+   * - json: force JSON object output when provider supports it
+   */
+  responseFormat?: 'text' | 'json';
 };
 
 /**

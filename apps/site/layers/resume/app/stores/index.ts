@@ -1,143 +1,56 @@
-import type { Resume, ResumeContent, ResumeFormatSettings } from '@int/schema';
-import type { PreviewType } from '../types/preview';
+import type { Resume, ResumeContent } from '@int/schema';
 import { resumeApi } from '@site/resume/app/infrastructure/resume.api';
+import { RESUME_EDITOR_TABS_MAP } from '../constants';
 
 /**
  * Resume Store
  *
- * Manages user's single resume with editing state, undo/redo history,
- * preview settings, and auto-save functionality.
+ * Manages user's resume with editing state.
+ * Format settings are managed by useFormatSettingsStore in _base layer.
+ * Undo/redo history is managed by useResumeEditHistory composable.
  *
  * Single resume architecture: one resume per user.
- *
- * Related: T028, T029, T030 (US3)
  */
-
-/**
- * Serializable error type for SSR hydration compatibility.
- */
-type SerializableError = {
-  message: string;
-  statusCode?: number;
-} | null;
 
 /**
  * Editor tab types
  */
-export type EditorTab = 'edit' | 'settings' | 'ai';
+export type EditorTab = TValues<typeof RESUME_EDITOR_TABS_MAP>;
 
 /**
- * History snapshot for undo/redo
+ * Cached resume entry
  */
-type HistorySnapshot = {
-  content: ResumeContent;
-  timestamp: number;
+type CachedResume = {
+  id: string;
+  resume: Resume;
 };
-
-/**
- * Maximum history snapshots to keep
- */
-const MAX_HISTORY_SIZE = 50;
-
-/**
- * Default format settings
- */
-const DEFAULT_FORMAT_SETTINGS: ResumeFormatSettings = {
-  marginX: 20,
-  marginY: 15,
-  fontSize: 12,
-  lineHeight: 1.2,
-  blockSpacing: 5
-};
-
-const cloneResumeContent = (content: ResumeContent): ResumeContent => {
-  // JSON clone strips Vue proxies/refs so history stays serializable.
-  return JSON.parse(JSON.stringify(content)) as unknown as ResumeContent;
-};
-
-const serializeResumeContent = (content: ResumeContent): string => JSON.stringify(content);
 
 export const useResumeStore = defineStore('ResumeStore', {
   state: (): {
-    // Server state
-    resume: Resume | null;
-    loading: boolean;
-    saving: boolean;
-    error: SerializableError;
+    // Internal save guard for content persistence
+    isContentSaveInProgress: boolean;
+    contentSaveEpoch: number;
 
-    // Editing state
-    editingContent: ResumeContent | null;
-    isDirty: boolean;
-
-    // Preview state
-    previewType: PreviewType;
-    atsSettings: ResumeFormatSettings;
-    humanSettings: ResumeFormatSettings;
-
-    // History for undo/redo
-    history: HistorySnapshot[];
-    historyIndex: number;
+    // Cached resumes for editing (max 20)
+    cachedResumes: CachedResume[];
 
     // UI state
     activeTab: EditorTab;
   } => ({
-    // Server state
-    resume: null,
-    loading: false,
-    saving: false,
-    error: null,
+    // Internal save guard for content persistence
+    isContentSaveInProgress: false,
+    contentSaveEpoch: 0,
 
-    // Editing state
-    editingContent: null,
-    isDirty: false,
-
-    // Preview state
-    previewType: 'ats',
-    atsSettings: { ...DEFAULT_FORMAT_SETTINGS },
-    humanSettings: { ...DEFAULT_FORMAT_SETTINGS },
-
-    // History for undo/redo
-    history: [],
-    historyIndex: -1,
+    // Cached resumes for editing
+    cachedResumes: [],
 
     // UI state
-    activeTab: 'edit'
+    activeTab: RESUME_EDITOR_TABS_MAP.EDIT
   }),
 
   getters: {
-    /**
-     * Check if user has a resume
-     */
-    hasResume: (state): boolean => state.resume !== null,
-
-    /**
-     * Get content for display (editing or original)
-     */
-    displayContent: (state): ResumeContent | null => {
-      return state.editingContent ?? state.resume?.content ?? null;
-    },
-
-    /**
-     * Get current format settings based on preview type
-     */
-    currentSettings: (state): ResumeFormatSettings => {
-      return state.previewType === 'ats' ? state.atsSettings : state.humanSettings;
-    },
-
-    /**
-     * Check if undo is available
-     */
-    canUndo: (state): boolean => state.historyIndex > 0,
-
-    /**
-     * Check if redo is available
-     */
-    canRedo: (state): boolean => state.historyIndex < state.history.length - 1,
-
-    /**
-     * Get history length for display (exclude initial snapshot)
-     */
-    historyLength: (state): number => Math.max(0, state.history.length - 1)
+    cachedResumesList: (state): CachedResume[] => state.cachedResumes,
+    getActiveTab: (state): EditorTab => state.activeTab
   },
 
   actions: {
@@ -149,92 +62,31 @@ export const useResumeStore = defineStore('ResumeStore', {
      * Fetch user's single resume
      */
     async fetchResume(): Promise<Resume | null> {
-      this.loading = true;
-      this.error = null;
+      const resume = await resumeApi.fetch();
 
-      try {
-        const resume = await resumeApi.fetch();
-        this.resume = resume;
-
-        if (resume) {
-          // Initialize editing state from server data
-          this.editingContent = cloneResumeContent(resume.content);
-          this.atsSettings = resume.atsSettings ?? { ...DEFAULT_FORMAT_SETTINGS };
-          this.humanSettings = resume.humanSettings ?? { ...DEFAULT_FORMAT_SETTINGS };
-
-          // Initialize history with current state
-          this._initializeHistory(resume.content);
-        }
-
-        return resume;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to fetch resume';
-        const statusCode = (err as { statusCode?: number }).statusCode;
-        this.error = { message, statusCode };
-        throw err;
-      } finally {
-        this.loading = false;
+      if (resume) {
+        this._upsertCachedResume(resume);
       }
+
+      return resume;
     },
 
     /**
      * Upload and parse a resume file
      */
     async uploadResume(file: File, title?: string): Promise<Resume> {
-      this.loading = true;
-      this.error = null;
-
-      try {
-        const resume = await resumeApi.upload(file, title);
-        this.resume = resume;
-
-        // Initialize editing state
-        this.editingContent = cloneResumeContent(resume.content);
-        this.atsSettings = resume.atsSettings ?? { ...DEFAULT_FORMAT_SETTINGS };
-        this.humanSettings = resume.humanSettings ?? { ...DEFAULT_FORMAT_SETTINGS };
-        this.isDirty = false;
-
-        // Initialize history
-        this._initializeHistory(resume.content);
-
-        return resume;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to upload resume';
-        const statusCode = (err as { statusCode?: number }).statusCode;
-        this.error = { message, statusCode };
-        throw err;
-      } finally {
-        this.loading = false;
-      }
+      const resume = await resumeApi.upload(file, title);
+      this._upsertCachedResume(resume);
+      return resume;
     },
 
     /**
      * Create resume from content (manual creation)
      */
     async createFromContent(content: ResumeContent, title?: string): Promise<Resume> {
-      this.loading = true;
-      this.error = null;
-
-      try {
-        const resume = await resumeApi.createFromContent(content, title);
-        this.resume = resume;
-
-        // Initialize editing state
-        this.editingContent = cloneResumeContent(resume.content);
-        this.isDirty = false;
-
-        // Initialize history
-        this._initializeHistory(resume.content);
-
-        return resume;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to create resume';
-        const statusCode = (err as { statusCode?: number }).statusCode;
-        this.error = { message, statusCode };
-        throw err;
-      } finally {
-        this.loading = false;
-      }
+      const resume = await resumeApi.createFromContent(content, title);
+      this._upsertCachedResume(resume);
+      return resume;
     },
 
     // =========================================
@@ -242,174 +94,88 @@ export const useResumeStore = defineStore('ResumeStore', {
     // =========================================
 
     /**
-     * Update editing content (local state only)
-     * Call saveContent() to persist to server
+     * Update content of current resume in cache
      */
-    updateContent(content: ResumeContent): void {
-      this.editingContent = content;
-      this.isDirty = true;
+    updateContent(content: ResumeContent, resumeId: string): void {
+      const cached = this.cachedResumes.find(c => c.id === resumeId);
+      if (cached) {
+        cached.resume = {
+          ...cached.resume,
+          content
+        };
+      }
     },
 
     /**
-     * Update a specific field in editing content
+     * Update a specific field in resume content
      */
-    updateField<K extends keyof ResumeContent>(field: K, value: ResumeContent[K]): void {
-      if (!this.editingContent) return;
-
-      this.editingContent = {
-        ...this.editingContent,
-        [field]: value
-      };
-      this.isDirty = true;
+    updateField<K extends keyof ResumeContent>(
+      field: K,
+      value: ResumeContent[K],
+      resumeId: string
+    ): void {
+      const cached = this.cachedResumes.find(c => c.id === resumeId);
+      if (cached?.resume.content) {
+        cached.resume = {
+          ...cached.resume,
+          content: {
+            ...cached.resume.content,
+            [field]: value
+          }
+        };
+      }
     },
 
     /**
      * Save content to server
      */
-    async saveContent(): Promise<Resume | null> {
-      if (!this.editingContent || !this.isDirty) return this.resume;
+    async saveContent(resumeId: string): Promise<Resume | null> {
+      const cached = this.cachedResumes.find(entry => entry.id === resumeId);
+      const resume = cached?.resume;
+      if (!resume) return null;
 
-      this.saving = true;
-      this.error = null;
+      const saveEpoch = this.contentSaveEpoch + 1;
+      this.contentSaveEpoch = saveEpoch;
+      this.isContentSaveInProgress = true;
 
       try {
-        const resume = await resumeApi.updateContent(this.editingContent);
-        this.resume = resume;
-        this.editingContent = cloneResumeContent(resume.content);
-        this.isDirty = false;
-        const currentSnapshot = this.history[this.historyIndex];
-        const isSameAsCurrent =
-          currentSnapshot &&
-          serializeResumeContent(currentSnapshot.content) ===
-            serializeResumeContent(resume.content);
-        if (!isSameAsCurrent) {
-          this._pushToHistory(resume.content);
+        const updated = await resumeApi.updateContent(resume.content);
+        if (saveEpoch !== this.contentSaveEpoch) {
+          return null;
         }
-        return resume;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to save resume';
-        const statusCode = (err as { statusCode?: number }).statusCode;
-        this.error = { message, statusCode };
-        throw err;
+        this._upsertCachedResume(updated);
+        return updated;
       } finally {
-        this.saving = false;
+        if (saveEpoch === this.contentSaveEpoch) {
+          this.isContentSaveInProgress = false;
+        }
       }
+    },
+
+    /**
+     * Invalidate in-flight content save operations.
+     * Used by discard flow so stale autosave responses are ignored.
+     */
+    invalidateContentSaves(): void {
+      this.contentSaveEpoch += 1;
+      this.isContentSaveInProgress = false;
     },
 
     // =========================================
-    // Undo/Redo Actions (T029)
+    // Cache Management
     // =========================================
 
     /**
-     * Undo to previous state
+     * Upsert resume in cache
      */
-    undo(): void {
-      if (!this.canUndo) return;
-
-      this.historyIndex--;
-      const snapshot = this.history[this.historyIndex];
-      if (snapshot) {
-        this.editingContent = cloneResumeContent(snapshot.content);
-        this.isDirty = true;
-      }
-    },
-
-    /**
-     * Redo to next state
-     */
-    redo(): void {
-      if (!this.canRedo) return;
-
-      this.historyIndex++;
-      const snapshot = this.history[this.historyIndex];
-      if (snapshot) {
-        this.editingContent = cloneResumeContent(snapshot.content);
-        this.isDirty = true;
-      }
-    },
-
-    /**
-     * Initialize history with initial content
-     */
-    _initializeHistory(content: ResumeContent): void {
-      const snapshot = cloneResumeContent(content);
-      this.history = [{ content: snapshot, timestamp: Date.now() }];
-      this.historyIndex = 0;
-      this.isDirty = false;
-    },
-
-    /**
-     * Push new snapshot to history
-     */
-    _pushToHistory(content: ResumeContent): void {
-      // Remove any future states if we're not at the end
-      if (this.historyIndex < this.history.length - 1) {
-        this.history = this.history.slice(0, this.historyIndex + 1);
-      }
-
-      const snapshot = cloneResumeContent(content);
-
-      // Add new snapshot
-      this.history.push({
-        content: snapshot,
-        timestamp: Date.now()
-      });
-      this.historyIndex = this.history.length - 1;
-
-      // Trim history if too large
-      if (this.history.length > MAX_HISTORY_SIZE) {
-        const trimCount = this.history.length - MAX_HISTORY_SIZE;
-        this.history = this.history.slice(trimCount);
-        this.historyIndex = Math.max(0, this.historyIndex - trimCount);
-      }
-    },
-
-    // =========================================
-    // Settings Actions
-    // =========================================
-
-    /**
-     * Set preview type (ATS or Human)
-     */
-    setPreviewType(type: PreviewType): void {
-      this.previewType = type;
-    },
-
-    /**
-     * Update format settings for current preview type
-     */
-    updateSettings(settings: Partial<ResumeFormatSettings>): void {
-      if (this.previewType === 'ats') {
-        this.atsSettings = { ...this.atsSettings, ...settings };
-      } else {
-        this.humanSettings = { ...this.humanSettings, ...settings };
-      }
-    },
-
-    /**
-     * Save settings to server
-     */
-    async saveSettings(): Promise<Resume | null> {
-      if (!this.resume) return null;
-
-      this.saving = true;
-      this.error = null;
-
-      try {
-        const resume = await resumeApi.updateSettings({
-          atsSettings: this.atsSettings,
-          humanSettings: this.humanSettings
-        });
-        this.resume = resume;
-        return resume;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to save settings';
-        const statusCode = (err as { statusCode?: number }).statusCode;
-        this.error = { message, statusCode };
-        throw err;
-      } finally {
-        this.saving = false;
-      }
+    _upsertCachedResume(resume: Resume): void {
+      this.cachedResumes = this.cachedResumes.filter(c => c.id !== resume.id);
+      this.cachedResumes = [
+        {
+          id: resume.id,
+          resume: structuredClone(resume)
+        }
+      ];
     },
 
     // =========================================
@@ -424,32 +190,13 @@ export const useResumeStore = defineStore('ResumeStore', {
     },
 
     /**
-     * Discard unsaved changes
-     */
-    discardChanges(): void {
-      if (!this.resume) return;
-
-      this.editingContent = cloneResumeContent(this.resume.content);
-      this._initializeHistory(this.resume.content);
-      this.isDirty = false;
-    },
-
-    /**
      * Reset store state
      */
     $reset(): void {
-      this.resume = null;
-      this.editingContent = null;
-      this.loading = false;
-      this.saving = false;
-      this.error = null;
-      this.isDirty = false;
-      this.previewType = 'ats';
-      this.atsSettings = { ...DEFAULT_FORMAT_SETTINGS };
-      this.humanSettings = { ...DEFAULT_FORMAT_SETTINGS };
-      this.history = [];
-      this.historyIndex = -1;
-      this.activeTab = 'edit';
+      this.cachedResumes = [];
+      this.isContentSaveInProgress = false;
+      this.contentSaveEpoch = 0;
+      this.activeTab = RESUME_EDITOR_TABS_MAP.EDIT;
     }
   }
 });

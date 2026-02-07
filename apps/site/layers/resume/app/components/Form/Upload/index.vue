@@ -131,14 +131,13 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const { uploadResume, loading } = useResumes();
+const { uploadResume } = useResume();
 
 const fileInput = ref<HTMLInputElement | null>(null);
+const isUploading = ref(false);
 const isDragging = ref(false);
 const selectedFile = ref<File | null>(null);
 const error = ref<string | null>(null);
-
-const isUploading = computed(() => loading.value);
 
 /**
  * Validate file type and size
@@ -182,6 +181,7 @@ async function processFile(file: File) {
   emit('upload', file);
 
   try {
+    isUploading.value = true;
     const resume = await uploadResume(file);
     emit('success', resume);
     selectedFile.value = null;
@@ -194,6 +194,8 @@ async function processFile(file: File) {
     error.value = message;
     emit('error', err instanceof Error ? err : new Error(message));
     selectedFile.value = null;
+  } finally {
+    isUploading.value = false;
   }
 }
 

@@ -23,7 +23,7 @@ import { logUsage } from '../../utils/usage';
  * Create user's single resume by uploading and parsing a file
  * Or by providing JSON resume content directly
  *
- * Single resume per user: Returns 400 if resume already exists
+ * Single resume per user: if resume already exists, replaces base resume data
  *
  * Request (file upload):
  * - Content-Type: multipart/form-data
@@ -41,13 +41,20 @@ import { logUsage } from '../../utils/usage';
  *
  * Response:
  * - Resume object with parsed content
- * - 400: Resume already exists for this user
  * - 422: Parsing failed
  *
  * Rate limiting: Enforces daily parse limits per role (only for file upload)
  *
  * Related: T011 (US1)
  */
+const hasStatusCode = (value: unknown): value is { statusCode: number } => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof Reflect.get(value, 'statusCode') === 'number'
+  );
+};
+
 export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event);
@@ -57,12 +64,6 @@ export default defineEventHandler(async event => {
 
   // Check if user already has a resume (single resume per user)
   const existingResume = await resumeRepository.findLatestByUserId(userId);
-  if (existingResume) {
-    throw createError({
-      statusCode: 400,
-      message: 'User already has a resume. Use PUT to update or DELETE to remove it first.'
-    });
-  }
 
   const contentType = getHeader(event, 'content-type');
 
@@ -132,14 +133,29 @@ export default defineEventHandler(async event => {
         file.originalFilename?.replace(/\.(docx|pdf)$/i, '') ||
         'My Resume';
 
-      // Create resume in database
-      const resume = await resumeRepository.create({
-        userId,
-        title,
-        content: llmResult.content,
-        sourceFileName: file.originalFilename || 'unknown',
-        sourceFileType: fileType
-      });
+      const sourceFileName = file.originalFilename || 'unknown';
+
+      const resume = existingResume
+        ? await resumeRepository.replaceBaseData(existingResume.id, userId, {
+            title,
+            content: llmResult.content,
+            sourceFileName,
+            sourceFileType: fileType
+          })
+        : await resumeRepository.create({
+            userId,
+            title,
+            content: llmResult.content,
+            sourceFileName,
+            sourceFileType: fileType
+          });
+
+      if (!resume) {
+        throw createError({
+          statusCode: 404,
+          message: 'Resume not found for replacement'
+        });
+      }
 
       // Log usage
       await logUsage(
@@ -153,6 +169,10 @@ export default defineEventHandler(async event => {
 
       return resume;
     } catch (error) {
+      if (hasStatusCode(error)) {
+        throw error;
+      }
+
       // Handle parsing errors
       if (error instanceof Error) {
         throw createError({
@@ -193,14 +213,30 @@ export default defineEventHandler(async event => {
       });
     }
 
-    // Create resume in database
-    const resume = await resumeRepository.create({
-      userId,
-      title: body.title,
-      content: contentValidation.data,
-      sourceFileName: body.sourceFileName || 'import.json',
-      sourceFileType: body.sourceFileType || SOURCE_FILE_TYPE_MAP.PDF
-    });
+    const sourceFileName = body.sourceFileName || 'import.json';
+    const sourceFileType = body.sourceFileType || SOURCE_FILE_TYPE_MAP.PDF;
+
+    const resume = existingResume
+      ? await resumeRepository.replaceBaseData(existingResume.id, userId, {
+          title: body.title,
+          content: contentValidation.data,
+          sourceFileName,
+          sourceFileType
+        })
+      : await resumeRepository.create({
+          userId,
+          title: body.title,
+          content: contentValidation.data,
+          sourceFileName,
+          sourceFileType
+        });
+
+    if (!resume) {
+      throw createError({
+        statusCode: 404,
+        message: 'Resume not found for replacement'
+      });
+    }
 
     return resume;
   }

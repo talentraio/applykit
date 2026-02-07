@@ -60,8 +60,14 @@
  * Related: T025 (US2)
  */
 
-import type { ResumeContent, ResumeFormatSettings } from '@int/schema';
+import type {
+  ResumeContent,
+  ResumeFormatSettingsAts,
+  ResumeFormatSettingsHuman,
+  SpacingSettings
+} from '@int/schema';
 import type { PreviewType } from '../../types/preview';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 import { useBlockMeasurer } from '../../composables/useBlockMeasurer';
 import { usePageScale } from '../../composables/usePageScale';
 import { usePaginator } from '../../composables/usePaginator';
@@ -78,32 +84,34 @@ const props = withDefaults(
      */
     content: ResumeContent;
     /**
-     * Preview type: 'ats' or 'human'
-     * @default 'ats'
+     * Preview type: ATS or Human
+     * @default EXPORT_FORMAT_MAP.ATS
      */
     type?: PreviewType;
     /**
-     * Format settings (margins, fontSize, lineHeight, blockSpacing)
+     * Format settings (spacing + localization per format type)
      */
-    settings?: Partial<ResumeFormatSettings>;
+    settings?: ResumeFormatSettingsAts | ResumeFormatSettingsHuman;
     /**
      * Profile photo URL for human view
      */
     photoUrl?: string;
   }>(),
   {
-    type: 'ats',
-    settings: () => ({})
+    type: EXPORT_FORMAT_MAP.ATS,
+    settings: undefined
   }
 );
 
-// Merge with defaults
-const settings = computed<ResumeFormatSettings>(() => ({
-  marginX: props.settings?.marginX ?? 20,
-  marginY: props.settings?.marginY ?? 15,
-  fontSize: props.settings?.fontSize ?? 12,
-  lineHeight: props.settings?.lineHeight ?? 1.2,
-  blockSpacing: props.settings?.blockSpacing ?? 5
+const defaults = useFormatSettingsDefaults();
+const defaultSpacing = computed<SpacingSettings>(() =>
+  props.type === EXPORT_FORMAT_MAP.HUMAN ? defaults.human.spacing : defaults.ats.spacing
+);
+
+// Extract spacing from format settings, with defaults
+const settings = computed<SpacingSettings>(() => ({
+  ...defaultSpacing.value,
+  ...props.settings?.spacing
 }));
 
 // Convert padding to pixels (separate X and Y)

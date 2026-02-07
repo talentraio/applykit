@@ -9,6 +9,7 @@ import {
   USAGE_CONTEXT_MAP,
   USER_ROLE_MAP,
   USER_STATUS_MAP,
+  VACANCY_STATUS_MAP,
   WORK_FORMAT_MAP
 } from '../constants/enums';
 
@@ -51,3 +52,7 @@ export type PlatformProvider = z.infer<typeof PlatformProviderSchema>;
 // Export format types
 export const ExportFormatSchema = z.nativeEnum(EXPORT_FORMAT_MAP);
 export type ExportFormat = z.infer<typeof ExportFormatSchema>;
+
+// Vacancy application status
+export const VacancyStatusSchema = z.nativeEnum(VACANCY_STATUS_MAP);
+export type VacancyStatus = z.infer<typeof VacancyStatusSchema>;

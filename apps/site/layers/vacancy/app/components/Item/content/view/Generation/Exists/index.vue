@@ -13,7 +13,7 @@
       <UButton
         variant="outline"
         icon="i-lucide-file-text"
-        :to="`/vacancies/${vacancyId}/ats`"
+        :to="{ path: `/vacancies/${vacancyId}/resume`, query: { preview: atsFormat } }"
         :disabled="isGenerating"
       >
         {{ $t('vacancy.detail.actions.viewAts') }}
@@ -21,7 +21,7 @@
       <UButton
         variant="outline"
         icon="i-lucide-layout-template"
-        :to="`/vacancies/${vacancyId}/human`"
+        :to="{ path: `/vacancies/${vacancyId}/resume`, query: { preview: humanFormat } }"
         :disabled="isGenerating"
       >
         {{ $t('vacancy.detail.actions.viewHuman') }}
@@ -47,6 +47,7 @@
  * Related: T112, T113 (US5)
  */
 import type { Generation } from '@int/schema';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 import GenerateButton from '../GenerateButton.vue';
 import LifetimeIndicator from './LifetimeIndicator.vue';
 import MatchScoreDisplay from './MatchScoreDisplay.vue';
@@ -76,12 +77,16 @@ const emit = defineEmits<{
    */
   generate: [];
 }>();
-const vacancyStore = useVacancyStore();
+
+const atsFormat = EXPORT_FORMAT_MAP.ATS;
+const humanFormat = EXPORT_FORMAT_MAP.HUMAN;
+
+const formatSettingsStore = useFormatSettingsStore();
 const { profile } = useProfile();
 
 const exportSettings = computed(() => ({
-  ats: vacancyStore.atsSettings,
-  human: vacancyStore.humanSettings
+  ats: formatSettingsStore.ats,
+  human: formatSettingsStore.human
 }));
 
 const photoUrl = computed(() => profile.value?.photoUrl);

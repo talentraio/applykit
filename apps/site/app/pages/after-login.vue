@@ -19,10 +19,10 @@ definePageMeta({
   layout: false
 });
 
-const { fetchVacancies } = useVacancies();
+const vacancyStore = useVacancyStore();
 
 try {
-  const vacancies = await fetchVacancies();
+  const vacancies = await vacancyStore.fetchVacancies();
   await navigateTo(vacancies.length > 0 ? '/vacancies' : '/resume', { replace: true });
 } catch {
   await navigateTo('/resume', { replace: true });

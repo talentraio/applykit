@@ -87,6 +87,15 @@ export class OpenAIProvider implements ILLMProvider {
   ): Promise<LLMResponse> {
     const client = new OpenAI({ apiKey });
     const model = request.model || DEFAULT_MODEL;
+    const responseFormat =
+      request.responseFormat === 'json' ? ({ type: 'json_object' } as const) : undefined;
+    const tokenLimitField =
+      model.startsWith('gpt-5') && request.maxTokens !== undefined
+        ? { max_completion_tokens: request.maxTokens }
+        : { max_tokens: request.maxTokens };
+    const temperatureField = model.startsWith('gpt-5')
+      ? {}
+      : { temperature: request.temperature ?? 0.7 };
 
     try {
       const completion = await client.chat.completions.create({
@@ -97,8 +106,9 @@ export class OpenAIProvider implements ILLMProvider {
             : []),
           { role: 'user', content: request.prompt }
         ],
-        temperature: request.temperature ?? 0.7,
-        max_tokens: request.maxTokens
+        ...temperatureField,
+        ...tokenLimitField,
+        response_format: responseFormat
       });
 
       const content = completion.choices[0]?.message?.content || '';
