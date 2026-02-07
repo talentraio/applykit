@@ -12,56 +12,56 @@
         <template #personal-info>
           <ResumeFormSectionPersonalInfo
             :model-value="formData.personalInfo"
-            @update:model-value="handlePersonalInfoUpdate"
+            @update:model-value="handleSectionUpdate('personalInfo', $event)"
           />
         </template>
 
         <template #summary>
           <ResumeFormSectionSummary
             :model-value="formData.summary"
-            @update:model-value="handleSummaryUpdate"
+            @update:model-value="handleSectionUpdate('summary', $event)"
           />
         </template>
 
         <template #skills>
           <ResumeFormSectionSkills
             :model-value="formData.skills"
-            @update:model-value="handleSkillsUpdate"
+            @update:model-value="handleSectionUpdate('skills', $event)"
           />
         </template>
 
         <template #experience>
           <ResumeFormSectionExperience
             :model-value="formData.experience"
-            @update:model-value="handleExperienceUpdate"
+            @update:model-value="handleSectionUpdate('experience', $event)"
           />
         </template>
 
         <template #education>
           <ResumeFormSectionEducation
             :model-value="formData.education"
-            @update:model-value="handleEducationUpdate"
+            @update:model-value="handleSectionUpdate('education', $event)"
           />
         </template>
 
         <template #certifications>
           <ResumeFormSectionCertifications
             :model-value="formData.certifications"
-            @update:model-value="handleCertificationsUpdate"
+            @update:model-value="handleSectionUpdate('certifications', $event)"
           />
         </template>
 
         <template #additional>
           <ResumeFormSectionCustomSections
             :model-value="formData.customSections"
-            @update:model-value="handleCustomSectionsUpdate"
+            @update:model-value="handleSectionUpdate('customSections', $event)"
           />
         </template>
 
         <template #languages>
           <ResumeFormSectionLanguages
             :model-value="formData.languages"
-            @update:model-value="handleLanguagesUpdate"
+            @update:model-value="handleSectionUpdate('languages', $event)"
           />
         </template>
       </UAccordion>
@@ -215,43 +215,11 @@ const emitContentUpdate = () => {
   emit('update:modelValue', nextContent);
 };
 
-const handlePersonalInfoUpdate = (value: PersonalInfo) => {
-  formData.personalInfo = value;
-  emitContentUpdate();
-};
-
-const handleSummaryUpdate = (value: string | undefined) => {
-  formData.summary = value;
-  emitContentUpdate();
-};
-
-const handleSkillsUpdate = (value: SkillGroup[]) => {
-  formData.skills = value;
-  emitContentUpdate();
-};
-
-const handleExperienceUpdate = (value: ExperienceEntry[]) => {
-  formData.experience = value;
-  emitContentUpdate();
-};
-
-const handleEducationUpdate = (value: EducationEntry[]) => {
-  formData.education = value;
-  emitContentUpdate();
-};
-
-const handleCertificationsUpdate = (value: CertificationEntry[] | undefined) => {
-  formData.certifications = value;
-  emitContentUpdate();
-};
-
-const handleCustomSectionsUpdate = (value: CustomSection[] | undefined) => {
-  formData.customSections = value;
-  emitContentUpdate();
-};
-
-const handleLanguagesUpdate = (value: ResumeLanguage[] | undefined) => {
-  formData.languages = value;
+const handleSectionUpdate = <K extends keyof ResumeFormData>(
+  field: K,
+  value: ResumeFormData[K]
+) => {
+  formData[field] = value;
   emitContentUpdate();
 };
 
@@ -308,12 +276,11 @@ const validate = (): ResumeContent | null => {
   const result = ResumeContentSchema.safeParse(content);
 
   if (!result.success) {
-    const errors = result.error.errors
+    validationError.value = result.error.errors
       .map(
         (e: { path: (string | number)[]; message: string }) => `${e.path.join('.')}: ${e.message}`
       )
       .join('\n');
-    validationError.value = errors;
     return null;
   }
 
