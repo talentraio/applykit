@@ -1,6 +1,7 @@
 import type {
   ExportFormat,
   PatchFormatSettingsBody,
+  PutFormatSettingsBody,
   ResumeFormatSettingsAts,
   ResumeFormatSettingsHuman
 } from '@int/schema';
@@ -102,7 +103,7 @@ export const useFormatSettingsStore = defineStore('FormatSettingsStore', {
 
     /**
      * Persist settings to server via PATCH
-     * Called by throttled wrapper or directly on undo/redo
+     * Called by throttled wrapper for incremental settings changes
      */
     async patchSettings(partial: PatchFormatSettingsBody): Promise<void> {
       try {
@@ -118,6 +119,32 @@ export const useFormatSettingsStore = defineStore('FormatSettingsStore', {
         this.human = data.human;
       } catch (error) {
         console.error('Failed to save format settings:', error);
+        throw error;
+      }
+    },
+
+    /**
+     * Fully replace settings on server via PUT
+     * Used by history restore/undo/redo flows.
+     */
+    async putSettings(settings?: PutFormatSettingsBody): Promise<void> {
+      const payload = settings ?? {
+        ats: this.ats,
+        human: this.human
+      };
+
+      try {
+        const data = await useApi<{
+          ats: ResumeFormatSettingsAts;
+          human: ResumeFormatSettingsHuman;
+        }>('/api/user/format-settings', {
+          method: 'PUT',
+          body: payload
+        });
+        this.ats = data.ats;
+        this.human = data.human;
+      } catch (error) {
+        console.error('Failed to replace format settings:', error);
         throw error;
       }
     },

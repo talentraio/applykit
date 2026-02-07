@@ -23,6 +23,7 @@
  */
 
 import type {
+  PatchFormatSettingsBody,
   ResumeContent,
   ResumeFormatSettingsAts,
   ResumeFormatSettingsHuman
@@ -70,8 +71,10 @@ type HistoryState = {
 export type AutoSaveConfig = {
   /** Save content function */
   save: () => Promise<unknown>;
-  /** Save settings function (for separate settings persistence) */
-  saveSettings: () => Promise<unknown>;
+  /** Save partial settings changes */
+  saveSettingsPatch: (partial: PatchFormatSettingsBody) => Promise<unknown>;
+  /** Save full settings snapshot */
+  saveSettingsFull: () => Promise<unknown>;
   /** Getter for saving state (to prevent concurrent saves) */
   isSaving: () => boolean;
   /** Called when save fails */
@@ -125,7 +128,7 @@ export type UseResumeEditHistoryReturn = {
   /** Queue debounced content snapshot + auto-save */
   queueContentAutosave: () => void;
   /** Queue debounced settings snapshot + auto-save */
-  queueSettingsAutosave: () => void;
+  queueSettingsAutosave: (partial?: PatchFormatSettingsBody) => void;
   /** Cancel all pending debounced auto-save calls */
   cancelPendingAutosave: () => void;
   /** Restore content/settings to the initial snapshot for current resume */
@@ -142,6 +145,63 @@ const MAX_TOTAL_ENTRIES = 100;
  * Deep clone helper
  */
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+
+type FormatSidePatch = NonNullable<PatchFormatSettingsBody['ats']>;
+
+const hasEntries = (value?: object): boolean => Boolean(value && Object.keys(value).length > 0);
+
+const hasSidePatch = (value?: FormatSidePatch): boolean =>
+  Boolean(value && (hasEntries(value.spacing) || hasEntries(value.localization)));
+
+const hasSettingsPatch = (
+  patch: PatchFormatSettingsBody | null
+): patch is PatchFormatSettingsBody =>
+  Boolean(patch && (hasSidePatch(patch.ats) || hasSidePatch(patch.human)));
+
+const mergeSidePatch = (
+  current: FormatSidePatch | undefined,
+  incoming: FormatSidePatch | undefined
+): FormatSidePatch | undefined => {
+  if (!current && !incoming) return undefined;
+
+  const spacing = {
+    ...(current?.spacing ?? {}),
+    ...(incoming?.spacing ?? {})
+  };
+  const localization = {
+    ...(current?.localization ?? {}),
+    ...(incoming?.localization ?? {})
+  };
+
+  const merged: FormatSidePatch = {};
+  if (hasEntries(spacing)) {
+    merged.spacing = spacing;
+  }
+  if (hasEntries(localization)) {
+    merged.localization = localization;
+  }
+
+  return hasSidePatch(merged) ? merged : undefined;
+};
+
+const mergeSettingsPatch = (
+  current: PatchFormatSettingsBody | null,
+  incoming: PatchFormatSettingsBody
+): PatchFormatSettingsBody => {
+  const merged: PatchFormatSettingsBody = {};
+
+  const ats = mergeSidePatch(current?.ats, incoming.ats);
+  const human = mergeSidePatch(current?.human, incoming.human);
+
+  if (ats) {
+    merged.ats = ats;
+  }
+  if (human) {
+    merged.human = human;
+  }
+
+  return merged;
+};
 
 type DebouncedRunner = {
   run: () => void;
@@ -189,7 +249,8 @@ const createDebouncedRunner = (
  *   setSettings: (settings) => formatStore.setFullSettings(settings),
  *   autoSave: {
  *     save: () => store.saveContent(),
- *     saveSettings: () => formatStore.patchSettings(settingsDiff),
+ *     saveSettingsPatch: (partial) => formatStore.patchSettings(partial),
+ *     saveSettingsFull: () => formatStore.putSettings(),
  *     isSaving: () => store.saving,
  *     onError: (err) => showToast(err)
  *   }
@@ -340,12 +401,14 @@ export function useResumeEditHistory(
   let lastSettingsHash: string | null = null;
   let lastSavedContentHash: string | null = null;
   let lastSavedSettingsHash: string | null = null;
+  let pendingSettingsPatch: PatchFormatSettingsBody | null = null;
 
   const resetHashes = (): void => {
     lastContentHash = null;
     lastSettingsHash = null;
     lastSavedContentHash = null;
     lastSavedSettingsHash = null;
+    pendingSettingsPatch = null;
   };
 
   const initHashes = (content: ResumeContent | null, settings: SettingsSnapshot): void => {
@@ -400,10 +463,23 @@ export function useResumeEditHistory(
       queueSettingsAutosave();
       return;
     }
-    if (currentHash === lastSavedSettingsHash) return;
+    if (currentHash === lastSavedSettingsHash) {
+      pendingSettingsPatch = null;
+      return;
+    }
 
     try {
-      await autoSave.saveSettings();
+      const patchToPersist = hasSettingsPatch(pendingSettingsPatch) ? pendingSettingsPatch : null;
+
+      if (patchToPersist) {
+        await autoSave.saveSettingsPatch(patchToPersist);
+        if (pendingSettingsPatch === patchToPersist) {
+          pendingSettingsPatch = null;
+        }
+      } else {
+        await autoSave.saveSettingsFull();
+      }
+
       lastSavedSettingsHash = JSON.stringify(getSettings());
     } catch (error: unknown) {
       autoSave.onError?.(error);
@@ -424,7 +500,13 @@ export function useResumeEditHistory(
     if (!currentContent || !currentId.value) return;
 
     const currentHash = JSON.stringify(getSettings());
-    if (currentHash === lastSettingsHash && currentHash === lastSavedSettingsHash) return;
+    if (
+      currentHash === lastSettingsHash &&
+      currentHash === lastSavedSettingsHash &&
+      !hasSettingsPatch(pendingSettingsPatch)
+    ) {
+      return;
+    }
     await onSettingsChanged(currentHash);
   }, settingsDebounceDelay);
 
@@ -437,11 +519,18 @@ export function useResumeEditHistory(
     runContentAutosave.run();
   }
 
-  function queueSettingsAutosave(): void {
+  function queueSettingsAutosave(partial?: PatchFormatSettingsBody): void {
     if (!isAutosaveEnabled.value) return;
 
     const content = getContent();
     if (!content || !currentId.value) return;
+
+    if (partial) {
+      pendingSettingsPatch = mergeSettingsPatch(pendingSettingsPatch, partial);
+      if (!hasSettingsPatch(pendingSettingsPatch)) {
+        pendingSettingsPatch = null;
+      }
+    }
 
     runSettingsAutosave.run();
   }
@@ -449,6 +538,7 @@ export function useResumeEditHistory(
   const cancelPendingAutosave = (): void => {
     runContentAutosave.cancel();
     runSettingsAutosave.cancel();
+    pendingSettingsPatch = null;
   };
 
   /**
@@ -518,7 +608,7 @@ export function useResumeEditHistory(
         if (undoneEntry.type === 'content') {
           autoSave.save().catch(error => autoSave.onError?.(error));
         } else {
-          autoSave.saveSettings().catch(error => autoSave.onError?.(error));
+          autoSave.saveSettingsFull().catch(error => autoSave.onError?.(error));
         }
       }
     }
@@ -559,7 +649,7 @@ export function useResumeEditHistory(
         if (snapshot.type === 'content') {
           autoSave.save().catch(error => autoSave.onError?.(error));
         } else {
-          autoSave.saveSettings().catch(error => autoSave.onError?.(error));
+          autoSave.saveSettingsFull().catch(error => autoSave.onError?.(error));
         }
       }
     }

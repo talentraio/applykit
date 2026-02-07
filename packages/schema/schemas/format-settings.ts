@@ -56,3 +56,9 @@ export const PatchFormatSettingsBodySchema = z.object({
     .optional()
 });
 export type PatchFormatSettingsBody = z.infer<typeof PatchFormatSettingsBodySchema>;
+
+export const PutFormatSettingsBodySchema = z.object({
+  ats: ResumeFormatSettingsAtsSchema,
+  human: ResumeFormatSettingsHumanSchema
+});
+export type PutFormatSettingsBody = z.infer<typeof PutFormatSettingsBodySchema>;
