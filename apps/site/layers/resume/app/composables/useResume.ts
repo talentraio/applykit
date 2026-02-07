@@ -131,6 +131,7 @@ export function useResume(options: UseResumeOptions = {}) {
   const updateField = <K extends keyof ResumeContent>(field: K, value: ResumeContent[K]) => {
     if (!resumeId.value) return;
     store.updateField(field, value, resumeId.value);
+    history.queueContentAutosave();
   };
 
   const saveContent = async () => {
