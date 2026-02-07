@@ -44,7 +44,7 @@ export function useResume(options: UseResumeOptions = {}) {
   const store = useResumeStore();
   const formatSettingsStore = useFormatSettingsStore();
   const { getActiveTab } = storeToRefs(store);
-  const { setActiveTab, createFromContent, fetchResume } = store;
+  const { setActiveTab, createFromContent, fetchResume, invalidateContentSaves } = store;
   const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
     storeToRefs(formatSettingsStore);
   const { fetchSettings, setPreviewType } = formatSettingsStore;
@@ -172,9 +172,31 @@ export function useResume(options: UseResumeOptions = {}) {
   };
 
   const discardChanges = async () => {
+    const id = resumeId.value;
     try {
       history.cancelPendingAutosave();
-      await store.fetchResume();
+      invalidateContentSaves();
+
+      const restored = history.restoreInitialSnapshot();
+      if (restored && id) {
+        const results = await Promise.allSettled([
+          store.saveContent(id),
+          formatSettingsStore.patchSettings({
+            ats: formatSettingsStore.ats,
+            human: formatSettingsStore.human
+          })
+        ]);
+
+        const rejectedResult = results.find(
+          (result): result is PromiseRejectedResult => result.status === 'rejected'
+        );
+        if (rejectedResult) {
+          throw rejectedResult.reason;
+        }
+      } else {
+        await store.fetchResume();
+      }
+
       history.clearHistory();
       toast.add({
         title: t('resume.editor.changesDiscarded'),

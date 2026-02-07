@@ -36,6 +36,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
     latestGeneration: Generation | null;
     generating: boolean;
     savingGeneration: boolean;
+    generationSaveEpoch: number;
 
     // Cached generations for editing (max 20)
     cachedGenerations: CachedGeneration[];
@@ -53,6 +54,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
     latestGeneration: null,
     generating: false,
     savingGeneration: false,
+    generationSaveEpoch: 0,
 
     // Cached generations for editing
     cachedGenerations: [],
@@ -281,11 +283,16 @@ export const useVacancyStore = defineStore('VacancyStore', {
       vacancyId: string,
       generationId: string,
       content: ResumeContent
-    ): Promise<Generation> {
+    ): Promise<Generation | null> {
+      const saveEpoch = this.generationSaveEpoch + 1;
+      this.generationSaveEpoch = saveEpoch;
       this.savingGeneration = true;
 
       try {
         const updated = await generationApi.updateContent(vacancyId, generationId, content);
+        if (saveEpoch !== this.generationSaveEpoch) {
+          return null;
+        }
 
         const index = this.generations.findIndex(g => g.id === generationId);
         if (index !== -1) {
@@ -301,8 +308,19 @@ export const useVacancyStore = defineStore('VacancyStore', {
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to update generation');
       } finally {
-        this.savingGeneration = false;
+        if (saveEpoch === this.generationSaveEpoch) {
+          this.savingGeneration = false;
+        }
       }
+    },
+
+    /**
+     * Invalidate in-flight generation save operations.
+     * Used by discard flow so stale autosave responses are ignored.
+     */
+    invalidateGenerationSaves(): void {
+      this.generationSaveEpoch += 1;
+      this.savingGeneration = false;
     },
 
     // =========================================
@@ -369,10 +387,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     async discardGenerationChanges(vacancyId: string): Promise<void> {
       if (!this.currentGenerationId) return;
-
-      this.cachedGenerations = this.cachedGenerations.filter(
-        c => c.id !== this.currentGenerationId
-      );
 
       const payload = await this.fetchLatestGeneration(vacancyId);
       if (payload.generation) {
@@ -446,6 +460,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
       this.latestGeneration = null;
       this.generating = false;
       this.savingGeneration = false;
+      this.generationSaveEpoch = 0;
 
       this.cachedGenerations = [];
       this.currentGenerationId = null;

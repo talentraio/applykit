@@ -128,6 +128,8 @@ export type UseResumeEditHistoryReturn = {
   queueSettingsAutosave: () => void;
   /** Cancel all pending debounced auto-save calls */
   cancelPendingAutosave: () => void;
+  /** Restore content/settings to the initial snapshot for current resume */
+  restoreInitialSnapshot: () => boolean;
   /** Clear history for current resume */
   clearHistory: () => void;
 };
@@ -450,6 +452,37 @@ export function useResumeEditHistory(
   };
 
   /**
+   * Restore to the first snapshot for current resume.
+   * Used by "Cancel" flow to rollback current edit session.
+   */
+  const restoreInitialSnapshot = (): boolean => {
+    const id = currentId.value;
+    if (!id) return false;
+
+    const entries = currentEntries.value;
+    const initialSnapshot = entries[0];
+    if (!initialSnapshot) return false;
+
+    cancelPendingAutosave();
+
+    state.value = {
+      ...state.value,
+      indexes: {
+        ...state.value.indexes,
+        [id]: 0
+      }
+    };
+
+    setContent(clone(initialSnapshot.content));
+    setSettings(clone(initialSnapshot.settings));
+
+    lastContentHash = JSON.stringify(initialSnapshot.content);
+    lastSettingsHash = JSON.stringify(initialSnapshot.settings);
+
+    return true;
+  };
+
+  /**
    * Undo to previous state.
    * Dispatches correct save handler based on entry type tag.
    */
@@ -549,6 +582,15 @@ export function useResumeEditHistory(
       entries: otherEntries,
       indexes: newIndexes
     };
+
+    const content = getContent();
+    if (!content) {
+      resetHashes();
+      return;
+    }
+
+    saveSnapshot();
+    initHashes(content, getSettings());
   };
 
   // Initialize history and hash baselines when resumeId changes
@@ -588,12 +630,11 @@ export function useResumeEditHistory(
     currentIndex,
     undo,
     redo,
-    saveSnapshot: () => {
-      saveSnapshot();
-    },
+    saveSnapshot,
     queueContentAutosave,
     queueSettingsAutosave,
     cancelPendingAutosave,
+    restoreInitialSnapshot,
     clearHistory
   };
 }

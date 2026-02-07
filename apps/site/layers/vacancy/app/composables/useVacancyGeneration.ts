@@ -88,7 +88,7 @@ export function useVacancyGeneration(
   const { getCurrentGeneration, getDisplayGenerationContent, getSavingGeneration } =
     storeToRefs(store);
   const formatSettingsStore = useFormatSettingsStore();
-  const { saveGenerationContent, updateGenerationContent } = store;
+  const { saveGenerationContent, updateGenerationContent, invalidateGenerationSaves } = store;
   const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
     storeToRefs(formatSettingsStore);
   const { fetchSettings, setPreviewType } = formatSettingsStore;
@@ -169,7 +169,29 @@ export function useVacancyGeneration(
    */
   async function discardChanges(): Promise<void> {
     history.cancelPendingAutosave();
-    await store.discardGenerationChanges(vacancyId);
+
+    invalidateGenerationSaves();
+
+    const restored = history.restoreInitialSnapshot();
+    if (restored) {
+      const results = await Promise.allSettled([
+        store.saveGenerationContent(vacancyId),
+        formatSettingsStore.patchSettings({
+          ats: formatSettingsStore.ats,
+          human: formatSettingsStore.human
+        })
+      ]);
+
+      const rejectedResult = results.find(
+        (result): result is PromiseRejectedResult => result.status === 'rejected'
+      );
+      if (rejectedResult) {
+        throw rejectedResult.reason;
+      }
+    } else {
+      await store.discardGenerationChanges(vacancyId);
+    }
+
     history.clearHistory();
   }
 

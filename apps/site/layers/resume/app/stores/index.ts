@@ -29,6 +29,7 @@ export const useResumeStore = defineStore('ResumeStore', {
   state: (): {
     // Internal save guard for content persistence
     isContentSaveInProgress: boolean;
+    contentSaveEpoch: number;
 
     // Cached resumes for editing (max 20)
     cachedResumes: CachedResume[];
@@ -38,6 +39,7 @@ export const useResumeStore = defineStore('ResumeStore', {
   } => ({
     // Internal save guard for content persistence
     isContentSaveInProgress: false,
+    contentSaveEpoch: 0,
 
     // Cached resumes for editing
     cachedResumes: [],
@@ -132,15 +134,31 @@ export const useResumeStore = defineStore('ResumeStore', {
       const resume = cached?.resume;
       if (!resume) return null;
 
+      const saveEpoch = this.contentSaveEpoch + 1;
+      this.contentSaveEpoch = saveEpoch;
       this.isContentSaveInProgress = true;
 
       try {
         const updated = await resumeApi.updateContent(resume.content);
+        if (saveEpoch !== this.contentSaveEpoch) {
+          return null;
+        }
         this._upsertCachedResume(updated);
         return updated;
       } finally {
-        this.isContentSaveInProgress = false;
+        if (saveEpoch === this.contentSaveEpoch) {
+          this.isContentSaveInProgress = false;
+        }
       }
+    },
+
+    /**
+     * Invalidate in-flight content save operations.
+     * Used by discard flow so stale autosave responses are ignored.
+     */
+    invalidateContentSaves(): void {
+      this.contentSaveEpoch += 1;
+      this.isContentSaveInProgress = false;
     },
 
     // =========================================
@@ -177,6 +195,7 @@ export const useResumeStore = defineStore('ResumeStore', {
     $reset(): void {
       this.cachedResumes = [];
       this.isContentSaveInProgress = false;
+      this.contentSaveEpoch = 0;
       this.activeTab = RESUME_EDITOR_TABS_MAP.EDIT;
     }
   }
