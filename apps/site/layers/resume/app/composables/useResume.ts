@@ -85,11 +85,8 @@ export function useResume(options: UseResumeOptions = {}) {
     autoSave: autoSave
       ? {
           save: () => (resumeId.value ? store.saveContent(resumeId.value) : Promise.resolve(null)),
-          saveSettings: () =>
-            formatSettingsStore.patchSettings({
-              ats: formatSettingsStore.ats,
-              human: formatSettingsStore.human
-            }),
+          saveSettingsPatch: partial => formatSettingsStore.patchSettings(partial),
+          saveSettingsFull: () => formatSettingsStore.putSettings(),
           isSaving: () => store.isContentSaveInProgress,
           onError: error => {
             toast.add({
@@ -125,7 +122,7 @@ export function useResume(options: UseResumeOptions = {}) {
 
   const updateSettings = (partial: PatchFormatSettingsBody) => {
     formatSettingsStore.updateSettings(partial);
-    history.queueSettingsAutosave();
+    history.queueSettingsAutosave(partial);
   };
 
   const updateField = <K extends keyof ResumeContent>(field: K, value: ResumeContent[K]) => {
@@ -181,10 +178,7 @@ export function useResume(options: UseResumeOptions = {}) {
       if (restored && id) {
         const results = await Promise.allSettled([
           store.saveContent(id),
-          formatSettingsStore.patchSettings({
-            ats: formatSettingsStore.ats,
-            human: formatSettingsStore.human
-          })
+          formatSettingsStore.putSettings()
         ]);
 
         const rejectedResult = results.find(

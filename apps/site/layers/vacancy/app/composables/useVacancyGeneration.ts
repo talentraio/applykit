@@ -115,11 +115,8 @@ export function useVacancyGeneration(
     autoSave: autoSave
       ? {
           save: () => store.saveGenerationContent(vacancyId),
-          saveSettings: () =>
-            formatSettingsStore.patchSettings({
-              ats: formatSettingsStore.ats,
-              human: formatSettingsStore.human
-            }),
+          saveSettingsPatch: partial => formatSettingsStore.patchSettings(partial),
+          saveSettingsFull: () => formatSettingsStore.putSettings(),
           isSaving: () => getSavingGeneration.value,
           onError: error => {
             toast.add({
@@ -161,7 +158,7 @@ export function useVacancyGeneration(
 
   const updateSettings = (partial: PatchFormatSettingsBody): void => {
     formatSettingsStore.updateSettings(partial);
-    history.queueSettingsAutosave();
+    history.queueSettingsAutosave(partial);
   };
 
   /**
@@ -176,10 +173,7 @@ export function useVacancyGeneration(
     if (restored) {
       const results = await Promise.allSettled([
         store.saveGenerationContent(vacancyId),
-        formatSettingsStore.patchSettings({
-          ats: formatSettingsStore.ats,
-          human: formatSettingsStore.human
-        })
+        formatSettingsStore.putSettings()
       ]);
 
       const rejectedResult = results.find(
