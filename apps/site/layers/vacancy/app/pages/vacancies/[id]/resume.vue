@@ -57,7 +57,7 @@
  *
  * Features:
  * - Clean layout (no header with Back/Cancel/Save)
- * - Auto-save via watchDebounced (2000ms)
+ * - Debounced auto-save via useResumeEditHistory
  * - Undo/redo controls in footer
  * - Toast feedback for save status
  *
