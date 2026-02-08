@@ -56,15 +56,32 @@
   - body: `{ company: string, jobPosition?: string, description: string, url?: string, notes?: string }`
   - returns: vacancy
 - `GET /api/vacancies`
-  - returns list (title rendered as `company (jobPosition)` when position exists)
+  - query: `{ currentPage?, pageSize?, sortBy?, sortOrder?, status?, search? }`
+  - returns: `{ items: Vacancy[], pagination: { totalItems, totalPages }, columnVisibility: Record<string, boolean> }`
+  - supports server-side pagination, sorting (updatedAt, createdAt), status filter (array), ILIKE search on company+jobPosition
+  - default sort: status-group ordering + updatedAt DESC
 - `GET /api/vacancies/:id`
   - returns vacancy details + latest generated version (MVP)
 - `PUT /api/vacancies/:id`
   - update vacancy fields
+- `DELETE /api/vacancies/:id`
+  - delete single vacancy (cascade deletes generations)
+  - returns: 204 No Content
+- `DELETE /api/vacancies/bulk`
+  - body: `{ ids: string[] }` (1-100 UUIDs)
+  - verifies all IDs belong to current user (403 if not)
+  - returns: 204 No Content
 - `POST /api/vacancies/:id/generate`
   - generates a new adapted version from current base resume + vacancy
   - appends to `generatedVersions[]`
   - returns latest version
+
+## Vacancy List Preferences
+
+- `PATCH /api/user/preferences/vacancy-list`
+  - body: `{ columnVisibility: Record<string, boolean> }`
+  - returns: `{ columnVisibility }`
+  - upserts column visibility preferences for the current user
 
 ## Export
 

@@ -11,6 +11,9 @@ export * from './schemas/generation';
 // LLM Key
 export * from './schemas/llm-key';
 
+// Pagination
+export * from './schemas/pagination';
+
 // Profile
 export * from './schemas/profile';
 
@@ -31,3 +34,6 @@ export * from './schemas/user';
 
 // Vacancy
 export * from './schemas/vacancy';
+
+// Vacancy List
+export * from './schemas/vacancy-list';

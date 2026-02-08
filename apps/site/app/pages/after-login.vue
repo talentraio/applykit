@@ -22,8 +22,10 @@ definePageMeta({
 const vacancyStore = useVacancyStore();
 
 try {
-  const vacancies = await vacancyStore.fetchVacancies();
-  await navigateTo(vacancies.length > 0 ? '/vacancies' : '/resume', { replace: true });
+  const response = await vacancyStore.fetchVacanciesPaginated({ currentPage: 1, pageSize: 1 });
+  await navigateTo(response.pagination.totalItems > 0 ? '/vacancies' : '/resume', {
+    replace: true
+  });
 } catch {
   await navigateTo('/resume', { replace: true });
 }

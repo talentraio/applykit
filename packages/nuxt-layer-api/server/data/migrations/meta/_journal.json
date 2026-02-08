@@ -50,6 +50,13 @@
       "when": 1770404934411,
       "tag": "0006_greedy_the_executioner",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1770502116104,
+      "tag": "0007_lame_kate_bishop",
+      "breakpoints": true
     }
   ]
 }

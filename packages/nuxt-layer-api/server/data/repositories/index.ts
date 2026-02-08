@@ -14,3 +14,4 @@ export { systemConfigRepository } from './system-config';
 export { usageLogRepository } from './usage-log';
 export { userRepository } from './user';
 export { vacancyRepository } from './vacancy';
+export { vacancyListPreferencesRepository } from './vacancy-list-preferences';
