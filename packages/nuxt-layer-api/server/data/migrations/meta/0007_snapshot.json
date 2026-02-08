@@ -1,6 +1,6 @@
 {
-  "id": "cf3b0052-1225-4219-a6fe-cce95abce1c1",
-  "prevId": "de2e95fb-4abb-41c5-a182-ad547f02f366",
+  "id": "c97afa42-04e9-48fd-a2c1-87de81c22530",
+  "prevId": "f96db92f-3b80-4348-ac6e-3b2c5f78ad22",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -800,6 +800,69 @@
       "uniqueConstraints": {
         "user_format_settings_user_id_unique": {
           "name": "user_format_settings_user_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["user_id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_vacancy_list_preferences": {
+      "name": "user_vacancy_list_preferences",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "column_visibility": {
+          "name": "column_visibility",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_vacancy_list_preferences_user_id_users_id_fk": {
+          "name": "user_vacancy_list_preferences_user_id_users_id_fk",
+          "tableFrom": "user_vacancy_list_preferences",
+          "tableTo": "users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_vacancy_list_preferences_user_id_unique": {
+          "name": "user_vacancy_list_preferences_user_id_unique",
           "nullsNotDistinct": false,
           "columns": ["user_id"]
         }

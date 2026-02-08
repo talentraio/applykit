@@ -1,4 +1,13 @@
-import type { Generation, ResumeContent, Vacancy, VacancyInput, VacancyStatus } from '@int/schema';
+import type {
+  Generation,
+  ResumeContent,
+  Vacancy,
+  VacancyInput,
+  VacancyListColumnVisibility,
+  VacancyListQuery,
+  VacancyListResponse,
+  VacancyStatus
+} from '@int/schema';
 import type { VacanciesResumeGeneration } from '@layer/api/types/vacancies';
 import type { GenerateOptions } from '@site/vacancy/app/infrastructure/generation.api';
 import { generationApi } from '@site/vacancy/app/infrastructure/generation.api';
@@ -27,7 +36,7 @@ const MAX_CACHED_GENERATIONS = 20;
 
 export const useVacancyStore = defineStore('VacancyStore', {
   state: (): {
-    vacancies: Vacancy[];
+    vacancyListResponse: VacancyListResponse | null;
     currentVacancy: Vacancy | null;
     loading: boolean;
 
@@ -45,7 +54,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
     // UI state
     isEditingGeneration: boolean;
   } => ({
-    vacancies: [],
+    vacancyListResponse: null,
     currentVacancy: null,
     loading: false,
 
@@ -66,16 +75,23 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
   getters: {
     /**
+     * Get vacancies from list response
+     */
+    vacancies: (state): Vacancy[] => state.vacancyListResponse?.items ?? [],
+
+    /**
      * Check if user has any vacancies
      */
-    getHasVacancies: (state): boolean => state.vacancies.length > 0,
+    getHasVacancies(): boolean {
+      return this.vacancies.length > 0;
+    },
 
     /**
      * Get the latest (most recent) vacancy
      */
-    getLatestVacancy: (state): Vacancy | null => {
-      if (state.vacancies.length === 0) return null;
-      const sorted = [...state.vacancies].sort(
+    getLatestVacancy(): Vacancy | null {
+      if (this.vacancies.length === 0) return null;
+      const sorted = [...this.vacancies].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
       return sorted[0] ?? null;
@@ -116,14 +132,14 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
   actions: {
     /**
-     * Fetch all vacancies for current user
+     * Fetch paginated vacancies with sorting, filtering, and search
      */
-    async fetchVacancies(): Promise<Vacancy[]> {
+    async fetchVacanciesPaginated(query: VacancyListQuery): Promise<VacancyListResponse> {
       this.loading = true;
 
       try {
-        const data = await vacancyApi.fetchAll();
-        this.vacancies = data;
+        const data = await vacancyApi.fetchPaginated(query);
+        this.vacancyListResponse = data;
         return data;
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to fetch vacancies');
@@ -158,7 +174,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
       try {
         const vacancy = await vacancyApi.create(data);
-        this.vacancies.unshift(vacancy);
         this.currentVacancy = vacancy;
         return vacancy;
       } catch (err) {
@@ -176,11 +191,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
       try {
         const vacancy = await vacancyApi.update(id, data);
-
-        const index = this.vacancies.findIndex(v => v.id === id);
-        if (index !== -1) {
-          this.vacancies[index] = vacancy;
-        }
 
         if (this.currentVacancy?.id === id) {
           this.currentVacancy = vacancy;
@@ -210,7 +220,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
       try {
         await vacancyApi.delete(id);
-        this.vacancies = this.vacancies.filter(v => v.id !== id);
 
         if (this.currentVacancy?.id === id) {
           this.currentVacancy = null;
@@ -219,6 +228,36 @@ export const useVacancyStore = defineStore('VacancyStore', {
         throw err instanceof Error ? err : new Error('Failed to delete vacancy');
       } finally {
         this.loading = false;
+      }
+    },
+
+    /**
+     * Bulk delete vacancies by IDs
+     */
+    async bulkDeleteVacancies(ids: string[]): Promise<void> {
+      this.loading = true;
+
+      try {
+        await vacancyApi.bulkDelete(ids);
+      } catch (err) {
+        throw err instanceof Error ? err : new Error('Failed to bulk delete vacancies');
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * Update column visibility preferences
+     */
+    async updateColumnVisibility(columnVisibility: VacancyListColumnVisibility): Promise<void> {
+      try {
+        const result = await vacancyApi.updateColumnVisibility(columnVisibility);
+
+        if (this.vacancyListResponse) {
+          this.vacancyListResponse.columnVisibility = result.columnVisibility;
+        }
+      } catch (err) {
+        throw err instanceof Error ? err : new Error('Failed to update column visibility');
       }
     },
 
@@ -452,7 +491,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
      * Reset store state
      */
     $reset() {
-      this.vacancies = [];
+      this.vacancyListResponse = null;
       this.currentVacancy = null;
       this.loading = false;
 

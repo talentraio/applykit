@@ -1,6 +1,6 @@
-import type { VacancyInput } from '@int/schema';
+import type { VacancyInput, VacancyListQuery } from '@int/schema';
 import type { Vacancy } from '../schema';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { vacancies } from '../schema';
 
@@ -114,5 +114,98 @@ export const vacancyRepository = {
    */
   async deleteByUserId(userId: string): Promise<void> {
     await db.delete(vacancies).where(eq(vacancies.userId, userId));
+  },
+
+  /**
+   * Find vacancies with server-side pagination, sorting, filtering, and search
+   * Returns items for the requested page plus totalItems for pagination metadata
+   */
+  async findPaginated(
+    userId: string,
+    params: Omit<VacancyListQuery, 'currentPage' | 'pageSize'> & {
+      currentPage: number;
+      pageSize: number;
+    }
+  ): Promise<{ items: Vacancy[]; totalItems: number }> {
+    const { currentPage, pageSize, sortBy, sortOrder, status, search } = params;
+    const offset = (currentPage - 1) * pageSize;
+
+    // Build filter conditions
+    const filters = [eq(vacancies.userId, userId)];
+
+    if (status && status.length > 0) {
+      filters.push(inArray(vacancies.status, status));
+    }
+
+    if (search) {
+      const searchPattern = `%${search}%`;
+      filters.push(
+        or(ilike(vacancies.company, searchPattern), ilike(vacancies.jobPosition, searchPattern))!
+      );
+    }
+
+    const whereClause = and(...filters);
+
+    // Build order clause
+    const orderClause = sortBy
+      ? [sortOrder === 'asc' ? asc(vacancies[sortBy]) : desc(vacancies[sortBy])]
+      : [
+          // Default: status-group ordering + updatedAt DESC
+          sql`CASE ${vacancies.status}
+            WHEN 'created' THEN 1
+            WHEN 'generated' THEN 2
+            WHEN 'screening' THEN 3
+            WHEN 'interview' THEN 4
+            WHEN 'offer' THEN 5
+            WHEN 'rejected' THEN 6
+          END`,
+          desc(vacancies.updatedAt)
+        ];
+
+    // Execute data + count queries
+    const [items, countResult] = await Promise.all([
+      db
+        .select()
+        .from(vacancies)
+        .where(whereClause)
+        .orderBy(...orderClause)
+        .limit(pageSize)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(vacancies)
+        .where(whereClause)
+    ]);
+
+    const totalItems = Number(countResult[0]?.count ?? 0);
+
+    return { items, totalItems };
+  },
+
+  /**
+   * Bulk delete vacancies by IDs
+   * Verifies all IDs belong to the user before deleting
+   * Uses a transaction for atomicity
+   */
+  async bulkDelete(ids: string[], userId: string): Promise<void> {
+    await db.transaction(async tx => {
+      // Verify all IDs belong to the user
+      const owned = await tx
+        .select({ id: vacancies.id })
+        .from(vacancies)
+        .where(and(inArray(vacancies.id, ids), eq(vacancies.userId, userId)));
+
+      if (owned.length !== ids.length) {
+        throw createError({
+          statusCode: 403,
+          statusMessage: 'Forbidden: some vacancy IDs do not belong to the current user'
+        });
+      }
+
+      // Delete all (cascade will handle generations)
+      await tx
+        .delete(vacancies)
+        .where(and(inArray(vacancies.id, ids), eq(vacancies.userId, userId)));
+    });
   }
 };

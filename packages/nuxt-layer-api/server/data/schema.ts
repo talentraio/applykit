@@ -3,7 +3,8 @@ import type {
   PhoneEntry,
   ResumeContent,
   ResumeFormatSettingsAts,
-  ResumeFormatSettingsHuman
+  ResumeFormatSettingsHuman,
+  VacancyListColumnVisibility
 } from '@int/schema';
 import {
   LLM_PROVIDER_VALUES,
@@ -143,6 +144,25 @@ export const userFormatSettings = pgTable('user_format_settings', {
     .unique(),
   ats: jsonb('ats').$type<ResumeFormatSettingsAts>().notNull(),
   human: jsonb('human').$type<ResumeFormatSettingsHuman>().notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+});
+
+/**
+ * User Vacancy List Preferences table
+ * Per-user vacancy list UI preferences (column visibility)
+ * One-to-one with users
+ */
+export const userVacancyListPreferences = pgTable('user_vacancy_list_preferences', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
+  columnVisibility: jsonb('column_visibility')
+    .$type<VacancyListColumnVisibility>()
+    .notNull()
+    .default({}),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
 });
@@ -326,6 +346,9 @@ export type NewProfile = typeof profiles.$inferInsert;
 
 export type UserFormatSettingsRow = typeof userFormatSettings.$inferSelect;
 export type NewUserFormatSettingsRow = typeof userFormatSettings.$inferInsert;
+
+export type UserVacancyListPreferencesRow = typeof userVacancyListPreferences.$inferSelect;
+export type NewUserVacancyListPreferencesRow = typeof userVacancyListPreferences.$inferInsert;
 
 export type Resume = typeof resumes.$inferSelect;
 export type NewResume = typeof resumes.$inferInsert;

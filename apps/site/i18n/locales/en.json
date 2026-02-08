@@ -432,7 +432,35 @@
       "createButton": "Add Vacancy",
       "count": "{count} vacancy(ies)",
       "perPage": "Per page:",
-      "allLoaded": "All vacancies loaded"
+      "allLoaded": "All vacancies loaded",
+      "noPosition": "Position not specified",
+      "columns": {
+        "company": "Company / Position",
+        "status": "Status",
+        "updatedAt": "Updated",
+        "createdAt": "Created",
+        "actions": "Actions"
+      },
+      "search": {
+        "placeholder": "Search by company or position...",
+        "minChars": "Enter at least 3 characters"
+      },
+      "filter": {
+        "status": "Status",
+        "statusPlaceholder": "Filter by status...",
+        "clearAll": "Clear filters"
+      },
+      "bulkActions": {
+        "selected": "{count} selected",
+        "deleteSelected": "Delete selected",
+        "confirmTitle": "Delete {count} vacancies?",
+        "confirmDescription": "This action cannot be undone. All associated tailored resumes will also be deleted.",
+        "success": "{count} vacancies deleted"
+      },
+      "columnVisibility": {
+        "label": "Columns",
+        "toggle": "Toggle columns"
+      }
     },
     "form": {
       "title": "Vacancy Details",

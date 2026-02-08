@@ -21,6 +21,20 @@ Dates:
 
 - Use `YYYY-MM` format
 
+## Pagination (Base)
+
+Reusable schemas for any paginated endpoint.
+
+**Request** (`PaginationQuery`):
+
+- `currentPage: number` (default 1, min 1)
+- `pageSize: number` (default 10, min 1, max 100)
+
+**Response** (`PaginationResponse`):
+
+- `totalItems: number`
+- `totalPages: number`
+
 ## Vacancy
 
 - company: required
@@ -28,7 +42,29 @@ Dates:
 - description: string (MVP)
 - url: optional
 - notes: optional
+- status: VacancyStatus enum (created, generated, screening, rejected, interview, offer)
 - generatedVersions: array (store as array even if UI shows only latest)
+
+## VacancyList
+
+**Query** (`VacancyListQuery` extends `PaginationQuery`):
+
+- `sortBy?: 'updatedAt' | 'createdAt'`
+- `sortOrder?: 'asc' | 'desc'`
+- `status?: VacancyStatus[]` (accepts string or array, transforms to array)
+- `search?: string` (min 3, max 255)
+
+**Response** (`VacancyListResponse`):
+
+- `items: Vacancy[]`
+- `pagination: PaginationResponse`
+- `columnVisibility: VacancyListColumnVisibility` (Record<string, boolean>)
+
+**Column Visibility** (`VacancyListColumnVisibility`): `Record<string, boolean>`
+
+**Preferences Patch** (`VacancyListPreferencesPatch`): `{ columnVisibility }`
+
+**Bulk Delete** (`VacancyBulkDelete`): `{ ids: string[] }` (1-100 UUIDs)
 
 ## Relevance metrics (store now, visualize later)
 
