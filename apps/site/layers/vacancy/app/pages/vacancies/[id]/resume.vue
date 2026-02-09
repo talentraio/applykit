@@ -1,11 +1,7 @@
 <template>
   <div class="vacancy-resume-page">
     <!-- Loading State -->
-    <div v-if="pageLoading" class="vacancy-resume-page__loading">
-      <UIcon name="i-lucide-loader-2" class="h-8 w-8 animate-spin text-primary" />
-
-      <p class="mt-4 text-muted">{{ $t('common.loading') }}</p>
-    </div>
+    <BasePageLoading v-if="pageLoading" show-text wrapper-class="vacancy-resume-page__loading" />
 
     <!-- No Generation -->
     <div v-else-if="!generation" class="vacancy-resume-page__empty">

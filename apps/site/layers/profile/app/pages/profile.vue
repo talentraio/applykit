@@ -1,9 +1,7 @@
 <template>
   <div class="profile-page container mx-auto max-w-4xl p-4 py-8">
     <!-- Loading State -->
-    <div v-if="loading && !profile" class="flex items-center justify-center py-12">
-      <UIcon name="i-lucide-loader-2" class="h-8 w-8 animate-spin text-primary" />
-    </div>
+    <BasePageLoading v-if="loading && !profile" />
 
     <!-- Content -->
     <div v-else class="space-y-6">

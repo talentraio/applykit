@@ -1,11 +1,7 @@
 <template>
   <div class="resume-page">
     <!-- Loading State -->
-    <div v-if="pageLoading" class="resume-page__loading">
-      <UIcon name="i-lucide-loader-2" class="h-8 w-8 animate-spin text-primary" />
-
-      <p class="mt-4 text-muted">{{ $t('common.loading') }}</p>
-    </div>
+    <BasePageLoading v-if="pageLoading" show-text wrapper-class="resume-page__loading" />
 
     <!-- No Resume: Show Upload Form -->
     <div v-else-if="!hasResume" class="resume-page__upload">
@@ -147,26 +143,25 @@ const settingsModel = computed<SpacingSettings>({
 });
 
 // Tab items
-const tabItems = computed(
-  () =>
-    [
-      {
-        label: t('resume.tabs.edit'),
-        value: RESUME_EDITOR_TABS_MAP.EDIT,
-        icon: 'i-lucide-pencil'
-      },
-      {
-        label: t('resume.tabs.settings'),
-        value: RESUME_EDITOR_TABS_MAP.SETTINGS,
-        icon: 'i-lucide-settings'
-      },
-      {
-        label: t('resume.tabs.ai'),
-        value: RESUME_EDITOR_TABS_MAP.AI,
-        icon: 'i-lucide-sparkles'
-      }
-    ] satisfies ResumeEditorTabItem[]
-);
+const tabItems = computed(() => {
+  return [
+    {
+      label: t('resume.tabs.edit'),
+      value: RESUME_EDITOR_TABS_MAP.EDIT,
+      icon: 'i-lucide-pencil'
+    },
+    {
+      label: t('resume.tabs.settings'),
+      value: RESUME_EDITOR_TABS_MAP.SETTINGS,
+      icon: 'i-lucide-settings'
+    },
+    {
+      label: t('resume.tabs.ai'),
+      value: RESUME_EDITOR_TABS_MAP.AI,
+      icon: 'i-lucide-sparkles'
+    }
+  ] satisfies ResumeEditorTabItem[];
+});
 
 const getErrorMessage = (error: unknown): string | undefined => {
   return error instanceof Error && error.message ? error.message : undefined;

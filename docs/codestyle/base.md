@@ -12,6 +12,12 @@ We format via **Prettier** (repo `.prettierrc`) and keep formatting discussions 
 - Push business logic out of UI components into **stores** and **composables**.
 - Prefer **computed / derived getters** over duplicating state.
 
+### Events over watchers
+
+- Prefer **event-driven** flows in components and composables (`emit`, explicit handlers, action calls).
+- Avoid `watch` / `watchEffect` by default.
+- Use watchers only when an event-driven solution is not feasible.
+
 ### Component decomposition
 
 Large components should be split into smaller, focused sub-components. Use a folder structure:

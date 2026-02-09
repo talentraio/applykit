@@ -430,9 +430,15 @@
       "empty": "No vacancies yet",
       "emptyDescription": "Add your first job vacancy to start tailoring resumes",
       "createButton": "Add Vacancy",
-      "count": "{count} vacancy(ies)",
+      "count": "{count} vacancy | {count} vacancies",
       "perPage": "Per page:",
       "allLoaded": "All vacancies loaded",
+      "loadMoreHint": "Swipe up at the bottom to load more",
+      "loadingMore": "Loading more vacancies...",
+      "mobileSwipeHint": {
+        "title": "Swipe left to delete and swipe right to select a vacancy.",
+        "dismiss": "Don't show again"
+      },
       "noPosition": "Position not specified",
       "columns": {
         "company": "Company / Position",
@@ -444,6 +450,14 @@
       "search": {
         "placeholder": "Search by company or position...",
         "minChars": "Enter at least 3 characters"
+      },
+      "sort": {
+        "placeholder": "Sort vacancies...",
+        "none": "Default order",
+        "updatedAtDesc": "Last updated (newest first)",
+        "updatedAtAsc": "Last updated (oldest first)",
+        "createdAtDesc": "Created (newest first)",
+        "createdAtAsc": "Created (oldest first)"
       },
       "filter": {
         "status": "Status",

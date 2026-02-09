@@ -7,13 +7,13 @@
             <div class="flex items-center gap-3">
               <UIcon name="i-lucide-alert-triangle" class="h-6 w-6 text-error" />
               <h3 class="text-lg font-semibold">
-                {{ $t('vacancy.delete.confirm') }}
+                {{ $t('vacancy.list.bulkActions.confirmTitle', { count: selectedCount }) }}
               </h3>
             </div>
           </template>
 
           <p class="text-muted">
-            {{ $t('vacancy.delete.description') }}
+            {{ $t('vacancy.list.bulkActions.confirmDescription') }}
           </p>
 
           <template #footer>
@@ -24,10 +24,10 @@
               <UButton
                 color="error"
                 :loading="isDeleting"
-                :disabled="!props.vacancyId || isDeleting"
+                :disabled="isDeleteDisabled"
                 @click="handleConfirm"
               >
-                {{ isDeleting ? $t('vacancy.delete.deleting') : $t('vacancy.delete.button') }}
+                {{ $t('vacancy.list.bulkActions.deleteSelected') }}
               </UButton>
             </div>
           </template>
@@ -39,15 +39,12 @@
 
 <script setup lang="ts">
 /**
- * Delete Confirmation Modal
+ * Bulk Delete Confirmation Modal
  *
- * Reusable modal for confirming vacancy deletion.
- * Uses i18n keys from vacancy namespace.
- *
- * Related: T103 (US4)
+ * Reusable modal for confirming bulk vacancy deletion.
  */
 
-defineOptions({ name: 'VacancyModalDeleteConfirmation' });
+defineOptions({ name: 'VacancyModalBulkDeleteConfirmation' });
 
 const props = defineProps<Props>();
 
@@ -60,9 +57,9 @@ type Props = {
   open: boolean;
 
   /**
-   * Vacancy id to delete
+   * Selected vacancy ids for deletion
    */
-  vacancyId: string | null;
+  vacancyIds: string[];
 };
 
 type Emits = {
@@ -72,14 +69,9 @@ type Emits = {
   'update:open': [value: boolean];
 
   /**
-   * Emitted when vacancy is deleted successfully
+   * Emitted when vacancies are deleted successfully
    */
-  success: [vacancyId: string];
-
-  /**
-   * Emitted when user cancels deletion
-   */
-  cancel: [];
+  success: [vacancyIds: string[]];
 };
 
 const { t } = useI18n();
@@ -87,6 +79,8 @@ const toast = useToast();
 const vacancyStore = useVacancyStore();
 
 const isDeleting = ref(false);
+const selectedCount = computed(() => props.vacancyIds.length);
+const isDeleteDisabled = computed(() => selectedCount.value === 0 || isDeleting.value);
 
 const handleUpdateOpen = (value: boolean) => {
   emit('update:open', value);
@@ -94,23 +88,23 @@ const handleUpdateOpen = (value: boolean) => {
 
 const handleCancel = () => {
   emit('update:open', false);
-  emit('cancel');
 };
 
 const handleConfirm = async () => {
-  if (!props.vacancyId) {
+  if (props.vacancyIds.length === 0) {
     return;
   }
 
   isDeleting.value = true;
+  const idsToDelete = [...props.vacancyIds];
 
   try {
-    await vacancyStore.deleteVacancy(props.vacancyId);
+    await vacancyStore.bulkDeleteVacancies(idsToDelete);
     emit('update:open', false);
-    emit('success', props.vacancyId);
+    emit('success', idsToDelete);
 
     toast.add({
-      title: t('vacancy.delete.success'),
+      title: t('vacancy.list.bulkActions.success', { count: idsToDelete.length }),
       color: 'success'
     });
   } catch (err) {

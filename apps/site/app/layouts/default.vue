@@ -4,7 +4,7 @@
     <LayoutHeader v-model:open="isMobileMenuOpen" :app-title="appTitle" class="h-16" />
 
     <!-- Main Content -->
-    <main class="flex-1">
+    <main class="flex-1 min-h-0">
       <slot />
     </main>
 
