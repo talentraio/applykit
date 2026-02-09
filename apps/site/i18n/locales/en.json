@@ -558,6 +558,7 @@
     },
     "overview": {
       "generateResume": "Generate Tailored Resume",
+      "regenerateResume": "Regenerate Tailored Resume",
       "viewResume": "View Resume",
       "generateCoverLetter": "Generate Cover Letter",
       "lastUpdated": "Last Updated"

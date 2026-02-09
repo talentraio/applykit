@@ -109,17 +109,20 @@ const mobileSwipeHintDismissed = useLocalStorage<boolean>(
   false
 );
 const selectedCount = computed(() => Object.keys(rowSelectionModel.value).length);
-const showMobileSwipeHint = computed(
-  () =>
+const showMobileSwipeHint = computed(() => {
+  return (
     isHydrated.value &&
     isMobile &&
     mobileVacancies.value.length > 0 &&
     !mobileSwipeHintDismissed.value
-);
+  );
+});
 
-const canLoadMoreMobile = computed(
-  () => queryParamsModel.value.currentPage < vacancyStore.totalPages && vacancyStore.totalPages > 0
-);
+const canLoadMoreMobile = computed(() => {
+  return (
+    queryParamsModel.value.currentPage < vacancyStore.totalPages && vacancyStore.totalPages > 0
+  );
+});
 
 const normalizeMobileQuery = (query: VacancyListQuery): VacancyListQuery => ({
   ...query,

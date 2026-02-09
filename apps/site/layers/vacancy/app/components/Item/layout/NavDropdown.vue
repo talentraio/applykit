@@ -1,6 +1,18 @@
 <template>
-  <UDropdownMenu :items="items">
-    <UButton color="neutral" variant="ghost" trailing-icon="i-lucide-chevron-down">
+  <UDropdownMenu
+    :items="items"
+    :ui="{
+      content:
+        'w-[var(--reka-dropdown-menu-trigger-width)] min-w-[var(--reka-dropdown-menu-trigger-width)] md:w-auto md:min-w-32'
+    }"
+    class="vacancy-detail-nav-dropdown w-full md:w-auto"
+  >
+    <UButton
+      class="w-full justify-between md:w-auto"
+      color="neutral"
+      variant="outline"
+      trailing-icon="i-lucide-chevron-down"
+    >
       {{ currentLabel }}
     </UButton>
   </UDropdownMenu>
@@ -8,7 +20,7 @@
 
 <script setup lang="ts">
 /**
- * VacancyDetailNavDropdown
+ * VacancyItemLayoutNavDropdown
  *
  * Dropdown menu for navigating between vacancy sub-pages:
  * Overview, Resume, Cover Letter, Preparation.
@@ -18,7 +30,7 @@
  */
 import type { DropdownMenuItem } from '#ui/types';
 
-defineOptions({ name: 'VacancyDetailNavDropdown' });
+defineOptions({ name: 'VacancyItemLayoutNavDropdown' });
 
 const props = defineProps<{
   vacancyId: string;

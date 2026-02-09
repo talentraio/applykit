@@ -112,8 +112,6 @@ const photoUrl = computed(() => profile.value?.photoUrl ?? undefined);
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  max-width: 1920px;
-  margin: 0 auto;
 
   &__header {
     flex-shrink: 0;

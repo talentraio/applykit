@@ -1,5 +1,5 @@
 <template>
-  <UPageCard class="vacancy-match-score-display">
+  <UPageCard class="vacancy-item-overview-content-generation-match-score">
     <template #header>
       <h3 class="text-lg font-semibold">
         {{ $t('generation.matchScore.title') }}
@@ -50,7 +50,7 @@
  * Related: T112 (US5)
  */
 
-defineOptions({ name: 'VacancyItemContentViewGenerationExistsMatchScoreDisplay' });
+defineOptions({ name: 'VacancyItemOverviewContentGenerationMatchScore' });
 
 const props = defineProps<{
   /**
@@ -77,7 +77,7 @@ const scoreColor = computed(() => {
 </script>
 
 <style lang="scss">
-.vacancy-match-score-display {
+.vacancy-item-overview-content-generation-match-score {
   // Component-specific styling if needed
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="vacancy-new-page container mx-auto max-w-3xl p-4 py-8">
+  <div class="vacancy-new-page p-4 py-8">
     <!-- Header -->
     <div class="mb-8">
       <div class="mb-4">
@@ -14,7 +14,7 @@
 
     <!-- Form Card -->
     <UPageCard>
-      <VacancyForm :saving="isSaving" show-cancel @save="handleSave" @cancel="goBack" />
+      <VacancyItemOverviewForm :saving="isSaving" show-cancel @save="handleSave" @cancel="goBack" />
     </UPageCard>
   </div>
 </template>

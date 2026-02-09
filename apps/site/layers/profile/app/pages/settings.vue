@@ -1,5 +1,5 @@
 <template>
-  <div class="settings-page container mx-auto max-w-4xl p-4 py-8">
+  <div class="settings-page p-4 py-8">
     <div class="space-y-6">
       <UiPageHeader :title="$t('settings.title')" :description="$t('settings.description')" />
 

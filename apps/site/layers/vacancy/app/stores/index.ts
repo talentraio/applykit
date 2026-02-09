@@ -8,7 +8,11 @@ import type {
   VacancyListResponse,
   VacancyStatus
 } from '@int/schema';
-import type { VacanciesResumeGeneration } from '@layer/api/types/vacancies';
+import type {
+  VacanciesResumeGeneration,
+  VacancyOverview,
+  VacancyOverviewGeneration
+} from '@layer/api/types/vacancies';
 import type { GenerateOptions } from '@site/vacancy/app/infrastructure/generation.api';
 import { generationApi } from '@site/vacancy/app/infrastructure/generation.api';
 import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
@@ -34,10 +38,23 @@ type CachedGeneration = {
  */
 const MAX_CACHED_GENERATIONS = 20;
 
+const toOverviewGeneration = (generation: Generation | null): VacancyOverviewGeneration | null => {
+  if (!generation) return null;
+
+  return {
+    id: generation.id,
+    matchScoreBefore: generation.matchScoreBefore,
+    matchScoreAfter: generation.matchScoreAfter,
+    expiresAt: generation.expiresAt
+  };
+};
+
 export const useVacancyStore = defineStore('VacancyStore', {
   state: (): {
     vacancyListResponse: VacancyListResponse | null;
     currentVacancy: Vacancy | null;
+    overviewLatestGeneration: VacancyOverviewGeneration | null;
+    overviewCanGenerateResume: boolean;
     loading: boolean;
 
     // Generation state
@@ -56,6 +73,8 @@ export const useVacancyStore = defineStore('VacancyStore', {
   } => ({
     vacancyListResponse: null,
     currentVacancy: null,
+    overviewLatestGeneration: null,
+    overviewCanGenerateResume: false,
     loading: false,
 
     // Generation state
@@ -159,18 +178,22 @@ export const useVacancyStore = defineStore('VacancyStore', {
     },
 
     /**
-     * Fetch a single vacancy by ID
+     * Fetch overview data for a single vacancy by ID
      */
-    async fetchVacancy(id: string): Promise<Vacancy | null> {
+    async fetchVacancyOverview(id: string): Promise<VacancyOverview | null> {
       this.loading = true;
 
       try {
-        const vacancy = await vacancyApi.fetchById(id);
-        this.currentVacancy = vacancy;
-        return vacancy;
+        const overview = await vacancyApi.fetchOverview(id);
+        this.currentVacancy = overview.vacancy;
+        this.overviewLatestGeneration = overview.latestGeneration;
+        this.overviewCanGenerateResume = overview.canGenerateResume;
+        return overview;
       } catch (err) {
         this.currentVacancy = null;
-        throw err instanceof Error ? err : new Error('Failed to fetch vacancy');
+        this.overviewLatestGeneration = null;
+        this.overviewCanGenerateResume = false;
+        throw err instanceof Error ? err : new Error('Failed to fetch vacancy overview');
       } finally {
         this.loading = false;
       }
@@ -185,6 +208,8 @@ export const useVacancyStore = defineStore('VacancyStore', {
       try {
         const vacancy = await vacancyApi.create(data);
         this.currentVacancy = vacancy;
+        this.overviewLatestGeneration = null;
+        this.overviewCanGenerateResume = true;
         return vacancy;
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to create vacancy');
@@ -203,7 +228,21 @@ export const useVacancyStore = defineStore('VacancyStore', {
         const vacancy = await vacancyApi.update(id, data);
 
         if (this.currentVacancy?.id === id) {
+          const hasCompanyChanged =
+            data.company !== undefined && data.company !== this.currentVacancy.company;
+          const hasJobPositionChanged =
+            data.jobPosition !== undefined &&
+            (data.jobPosition ?? null) !== (this.currentVacancy.jobPosition ?? null);
+          const hasDescriptionChanged =
+            data.description !== undefined && data.description !== this.currentVacancy.description;
+          const shouldUnlockGeneration =
+            hasCompanyChanged || hasJobPositionChanged || hasDescriptionChanged;
+
           this.currentVacancy = vacancy;
+
+          if (shouldUnlockGeneration) {
+            this.overviewCanGenerateResume = true;
+          }
         }
 
         return vacancy;
@@ -233,6 +272,8 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
         if (this.currentVacancy?.id === id) {
           this.currentVacancy = null;
+          this.overviewLatestGeneration = null;
+          this.overviewCanGenerateResume = false;
         }
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to delete vacancy');
@@ -284,6 +325,8 @@ export const useVacancyStore = defineStore('VacancyStore', {
       try {
         const generation = await generationApi.generate(vacancyId, options);
         this.latestGeneration = generation;
+        this.overviewLatestGeneration = toOverviewGeneration(generation);
+        this.overviewCanGenerateResume = false;
         this.generations.unshift(generation);
         this._addToCache(generation);
         return generation;
@@ -314,6 +357,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
       try {
         const payload = await generationApi.fetchLatest(vacancyId);
         this.latestGeneration = payload.generation;
+        this.overviewLatestGeneration = toOverviewGeneration(payload.generation);
 
         if (payload.generation) {
           this._addToCache(payload.generation);
@@ -503,6 +547,8 @@ export const useVacancyStore = defineStore('VacancyStore', {
     $reset() {
       this.vacancyListResponse = null;
       this.currentVacancy = null;
+      this.overviewLatestGeneration = null;
+      this.overviewCanGenerateResume = false;
       this.loading = false;
 
       this.generations = [];

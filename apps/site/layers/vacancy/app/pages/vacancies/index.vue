@@ -1,6 +1,6 @@
 <template>
   <div
-    class="vacancy-list-page container mx-auto flex max-w-5xl flex-col p-4 py-6 md:h-[calc(100dvh-169px)] md:min-h-[calc(100dvh-169px)] md:max-h-[calc(100dvh-169px)] md:overflow-hidden"
+    class="vacancy-list-page flex flex-col p-4 py-6 md:h-[calc(100dvh-169px)] md:min-h-[calc(100dvh-169px)] md:max-h-[calc(100dvh-169px)] md:overflow-hidden"
   >
     <!-- Header -->
     <div

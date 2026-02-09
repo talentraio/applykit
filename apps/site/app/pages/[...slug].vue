@@ -1,5 +1,5 @@
 <template>
-  <div class="site-not-found-page container mx-auto flex min-h-[70vh] max-w-4xl items-center p-6">
+  <div class="site-not-found-page flex min-h-[70vh] items-center p-6">
     <UPageCard class="w-full text-center">
       <div class="flex justify-center">
         <div

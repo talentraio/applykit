@@ -1,11 +1,13 @@
 <template>
-  <div class="site-default-layout flex min-h-screen flex-col">
+  <div class="site-default-layout">
     <!-- Navbar -->
     <LayoutHeader v-model:open="isMobileMenuOpen" :app-title="appTitle" class="h-16" />
 
     <!-- Main Content -->
-    <main class="flex-1 min-h-0">
-      <slot />
+    <main class="site-default-layout__main">
+      <div class="site-default-layout__content">
+        <slot />
+      </div>
     </main>
 
     <!-- Footer -->
@@ -36,3 +38,22 @@ defineOptions({ name: 'SiteDefaultLayout' });
 const appTitle = 'ApplyKit';
 const isMobileMenuOpen = ref(false);
 </script>
+
+<style lang="scss">
+.site-default-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  &__main {
+    flex: 1;
+    min-height: 0;
+  }
+
+  &__content {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+</style>

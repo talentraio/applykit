@@ -1,21 +1,22 @@
 <template>
   <header class="vacancy-detail-header">
     <div class="vacancy-detail-header__breadcrumbs">
-      <VacancyDetailBreadcrumbs
+      <VacancyItemLayoutBreadcrumbs
         :vacancy-id="vacancyId"
         :company="company"
         :job-position="jobPosition"
       />
     </div>
+
     <div class="vacancy-detail-header__nav">
-      <VacancyDetailNavDropdown :vacancy-id="vacancyId" />
+      <VacancyItemLayoutNavDropdown :vacancy-id="vacancyId" />
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
 /**
- * VacancyDetailHeader
+ * VacancyItemLayoutHeader
  *
  * Thin header for vacancy detail sub-pages.
  * Contains breadcrumbs (left) and nav dropdown (right).
@@ -23,7 +24,7 @@
  * Related: T016 (US1)
  */
 
-defineOptions({ name: 'VacancyDetailHeader' });
+defineOptions({ name: 'VacancyItemLayoutHeader' });
 
 defineProps<{
   vacancyId: string;
@@ -54,6 +55,10 @@ defineProps<{
   @media (width <= 640px) {
     flex-wrap: wrap;
     align-items: flex-start;
+
+    &__nav {
+      width: 100%;
+    }
   }
 }
 </style>

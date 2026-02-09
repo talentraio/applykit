@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 /**
- * VacancyForm Component
+ * Vacancy Item Overview Form Component
  *
  * Form for creating or editing a job vacancy.
  * Uses Nuxt UI form components with validation.
@@ -98,7 +98,7 @@
 
 import type { Vacancy, VacancyInput } from '@int/schema';
 
-defineOptions({ name: 'VacancyForm' });
+defineOptions({ name: 'VacancyItemOverviewForm' });
 
 const props = withDefaults(
   defineProps<{
@@ -138,11 +138,20 @@ const formData = reactive({
   notes: props.vacancy?.notes || ''
 });
 
+const normalizeDescriptionLineBreaks = (value: string): string => {
+  return value
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\n{4,}/g, '\n\n\n');
+};
+
 const handleSubmit = () => {
+  const normalizedDescription = normalizeDescriptionLineBreaks(formData.description);
+
   emit('save', {
     company: formData.company,
     jobPosition: formData.jobPosition || null,
-    description: formData.description,
+    description: normalizedDescription,
     url: formData.url || null,
     notes: formData.notes || null,
     status: props.vacancy?.status ?? 'created'

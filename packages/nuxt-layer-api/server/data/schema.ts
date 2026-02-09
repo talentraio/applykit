@@ -229,6 +229,7 @@ export const vacancies = pgTable(
     description: text('description').notNull(),
     url: varchar('url', { length: 2048 }),
     notes: text('notes'),
+    canGenerateResume: boolean('can_generate_resume').notNull().default(true),
     status: vacancyStatusEnum('status').notNull().default('created'),
     createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()

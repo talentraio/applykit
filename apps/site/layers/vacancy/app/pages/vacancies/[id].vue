@@ -1,35 +1,14 @@
 <template>
   <div class="vacancy-detail-layout">
-    <!-- Loading State -->
-    <BasePageLoading v-if="pending" />
+    <VacancyItemLayoutHeader
+      :vacancy-id="vacancyId"
+      :company="vacancyMeta?.company ?? ''"
+      :job-position="vacancyMeta?.jobPosition"
+    />
 
-    <!-- Error State -->
-    <UAlert
-      v-else-if="error"
-      color="error"
-      variant="soft"
-      icon="i-lucide-alert-circle"
-      :title="t('vacancy.error.fetchDetailFailed')"
-      :description="error.message"
-      class="m-4"
-    >
-      <template #actions>
-        <UButton variant="ghost" to="/vacancies">{{ t('common.back') }}</UButton>
-      </template>
-    </UAlert>
-
-    <!-- Content -->
-    <template v-else-if="vacancy">
-      <VacancyDetailHeader
-        :vacancy-id="vacancyId"
-        :company="vacancy.company"
-        :job-position="vacancy.jobPosition"
-      />
-
-      <main class="vacancy-detail-layout__content">
-        <NuxtPage :vacancy="vacancy" />
-      </main>
-    </template>
+    <main class="vacancy-detail-layout__content">
+      <NuxtPage />
+    </main>
   </div>
 </template>
 
@@ -48,6 +27,8 @@
  *
  * Related: T017 (US1)
  */
+import type { VacancyMeta } from '@layer/api/types/vacancies';
+import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
 
 defineOptions({ name: 'VacancyDetailLayout' });
 
@@ -60,21 +41,29 @@ const vacancyId = computed(() => {
   return id ?? '';
 });
 
-// Fetch vacancy data at layout level so all child pages have access
-const vacancyStore = useVacancyStore();
-const vacancy = computed(() => vacancyStore.currentVacancy);
+// Fetch vacancy meta at layout level for title and detail header
+const { data: vacancyMeta, error: vacancyMetaError } = await useAsyncData<VacancyMeta>(
+  `vacancy-layout-meta-${vacancyId.value}`,
+  () => {
+    return vacancyApi.fetchMeta(vacancyId.value);
+  }
+);
 
-const { pending, error } = await useAsyncData(`vacancy-layout-${vacancyId.value}`, () => {
-  return vacancyStore.fetchVacancy(vacancyId.value);
-});
+if (vacancyMetaError.value || !vacancyMeta.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: t('vacancy.error.fetchDetailFailed')
+  });
+}
 
 // Page meta
 useHead({
-  title: computed(() =>
-    vacancy.value
-      ? `${vacancy.value.company}${vacancy.value.jobPosition ? ` – ${vacancy.value.jobPosition}` : ''}`
-      : t('vacancy.detail.title')
-  )
+  title: computed(() => {
+    const baseTitle = vacancyMeta.value ? vacancyMeta.value.company : t('vacancy.detail.title');
+    return vacancyMeta.value?.jobPosition
+      ? `${baseTitle} – ${vacancyMeta.value.jobPosition}`
+      : baseTitle;
+  })
 });
 </script>
 

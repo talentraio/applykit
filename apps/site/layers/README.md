@@ -203,7 +203,6 @@ Job vacancy management and resume generation.
 - `app/pages/vacancies/index.vue` - Vacancy list
 - `app/pages/vacancies/[id].vue` - Vacancy detail
 - `app/pages/vacancies/new.vue` - Create vacancy
-- `app/components/VacancyCard.vue` - Vacancy card component
 
 **Usage**:
 
