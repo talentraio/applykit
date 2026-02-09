@@ -3,6 +3,12 @@
     <UiPageHeader :title="$t('admin.nav.dashboard')">
       <template #actions>
         <div class="flex flex-wrap gap-2">
+          <UButton color="neutral" variant="soft" size="sm" @click="goTo('/llm/models')">
+            {{ $t('admin.nav.llmModels') }}
+          </UButton>
+          <UButton color="neutral" variant="soft" size="sm" @click="goTo('/llm/routing')">
+            {{ $t('admin.nav.llmRouting') }}
+          </UButton>
           <UButton color="neutral" variant="soft" size="sm" @click="goTo('/system')">
             {{ $t('admin.nav.system') }}
           </UButton>

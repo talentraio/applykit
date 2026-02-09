@@ -344,35 +344,8 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Manage your API keys and preferences",
-    "keys": {
-      "title": "API Keys",
-      "description": "Bring your own key for higher limits and faster iterations.",
-      "provider": "Provider",
-      "key": "API Key",
-      "keyPlaceholder": "Paste your API key",
-      "keyHint": "Stored as **** {hint}",
-      "localNote": "Keys are stored only in this browser and sent per request.",
-      "localStatus": "Stored in this browser",
-      "save": "Save Key",
-      "saving": "Saving...",
-      "delete": "Remove",
-      "empty": "No keys saved yet",
-      "providers": {
-        "openai": "OpenAI",
-        "gemini": "Gemini"
-      },
-      "success": {
-        "saved": "Key saved",
-        "deleted": "Key removed"
-      },
-      "error": {
-        "invalidKey": "Enter a valid API key",
-        "fetchFailed": "Failed to load keys",
-        "saveFailed": "Failed to save key",
-        "deleteFailed": "Failed to remove key"
-      }
-    }
+    "description": "Manage account-level preferences.",
+    "platformOnlyNotice": "LLM execution is platform-managed. Personal API keys are no longer supported."
   },
   "generation": {
     "button": "Generate Tailored Resume",
@@ -394,7 +367,7 @@
     },
     "error": {
       "generationFailed": "Failed to generate tailored resume",
-      "rateLimitExceeded": "Daily generation limit exceeded. Please try again tomorrow or use your own API key.",
+      "rateLimitExceeded": "Daily generation limit exceeded. Please try again tomorrow.",
       "profileIncomplete": "Please complete your profile before generating resumes",
       "noResume": "No resume found. Please upload a resume first.",
       "invalidVacancy": "Vacancy not found or access denied",

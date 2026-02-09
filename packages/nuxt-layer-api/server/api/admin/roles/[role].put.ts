@@ -10,7 +10,6 @@ import { roleSettingsRepository } from '../../../data/repositories';
 
 const RoleSettingsInputSchema = z.object({
   platformLlmEnabled: z.boolean().optional(),
-  byokEnabled: z.boolean().optional(),
   platformProvider: PlatformProviderSchema.optional(),
   dailyBudgetCap: z.number().min(0).optional()
 });
@@ -47,7 +46,6 @@ export default defineEventHandler(async event => {
   const merged = {
     role,
     platformLlmEnabled: current.platformLlmEnabled,
-    byokEnabled: current.byokEnabled,
     platformProvider: current.platformProvider,
     dailyBudgetCap: current.dailyBudgetCap
   };
@@ -59,10 +57,6 @@ export default defineEventHandler(async event => {
   } else {
     if (typeof updates.platformLlmEnabled === 'boolean') {
       merged.platformLlmEnabled = updates.platformLlmEnabled;
-    }
-
-    if (typeof updates.byokEnabled === 'boolean') {
-      merged.byokEnabled = updates.byokEnabled;
     }
 
     if (updates.platformProvider) {

@@ -7,7 +7,10 @@ import type {
   VacancyListColumnVisibility
 } from '@int/schema';
 import {
+  LLM_MODEL_STATUS_VALUES,
   LLM_PROVIDER_VALUES,
+  LLM_RESPONSE_FORMAT_VALUES,
+  LLM_SCENARIO_KEY_VALUES,
   OPERATION_VALUES,
   PLATFORM_PROVIDER_VALUES,
   PROVIDER_TYPE_VALUES,
@@ -49,6 +52,9 @@ export const roleEnum = pgEnum('role', USER_ROLE_VALUES);
 export const workFormatEnum = pgEnum('work_format', WORK_FORMAT_VALUES);
 export const sourceFileTypeEnum = pgEnum('source_file_type', SOURCE_FILE_TYPE_VALUES);
 export const llmProviderEnum = pgEnum('llm_provider', LLM_PROVIDER_VALUES);
+export const llmModelStatusEnum = pgEnum('llm_model_status', LLM_MODEL_STATUS_VALUES);
+export const llmScenarioKeyEnum = pgEnum('llm_scenario_key', LLM_SCENARIO_KEY_VALUES);
+export const llmResponseFormatEnum = pgEnum('llm_response_format', LLM_RESPONSE_FORMAT_VALUES);
 export const operationEnum = pgEnum('operation', OPERATION_VALUES);
 export const providerTypeEnum = pgEnum('provider_type', PROVIDER_TYPE_VALUES);
 export const platformProviderEnum = pgEnum('platform_provider', PLATFORM_PROVIDER_VALUES);
@@ -101,7 +107,6 @@ export const users = pgTable('users', {
 export const roleSettings = pgTable('role_settings', {
   role: roleEnum('role').primaryKey(),
   platformLlmEnabled: boolean('platform_llm_enabled').notNull().default(false),
-  byokEnabled: boolean('byok_enabled').notNull().default(false),
   platformProvider: platformProviderEnum('platform_provider').notNull(),
   dailyBudgetCap: decimal('daily_budget_cap', { precision: 10, scale: 2 }).notNull().default('0'),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
@@ -270,25 +275,104 @@ export const generations = pgTable(
 );
 
 /**
- * LLM Keys table
- * Metadata for user's BYOK (Bring Your Own Key) API keys
- * CRITICAL: Only stores last 4 characters as hint
- * Full keys stored in browser localStorage only
+ * LLM Models table
+ * Source of truth for provider models, capabilities, and pricing metadata.
  */
-export const llmKeys = pgTable(
-  'llm_keys',
+export const llmModels = pgTable(
+  'llm_models',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
     provider: llmProviderEnum('provider').notNull(),
-    keyHint: varchar('key_hint', { length: 4 }).notNull(),
-    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow()
+    modelKey: varchar('model_key', { length: 255 }).notNull(),
+    displayName: varchar('display_name', { length: 255 }).notNull(),
+    status: llmModelStatusEnum('status').notNull().default('active'),
+    inputPricePer1mUsd: decimal('input_price_per_1m_usd', { precision: 10, scale: 6 }).notNull(),
+    outputPricePer1mUsd: decimal('output_price_per_1m_usd', { precision: 10, scale: 6 }).notNull(),
+    cachedInputPricePer1mUsd: decimal('cached_input_price_per_1m_usd', {
+      precision: 10,
+      scale: 6
+    }),
+    maxContextTokens: integer('max_context_tokens'),
+    maxOutputTokens: integer('max_output_tokens'),
+    supportsJson: boolean('supports_json').notNull().default(false),
+    supportsTools: boolean('supports_tools').notNull().default(false),
+    supportsStreaming: boolean('supports_streaming').notNull().default(false),
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
   },
   table => ({
-    userIdIdx: index('idx_llm_keys_user_id').on(table.userId),
-    userProviderUnique: unique('llm_keys_user_provider_unique').on(table.userId, table.provider)
+    providerModelKeyUnique: unique('llm_models_provider_model_key_unique').on(
+      table.provider,
+      table.modelKey
+    ),
+    statusIdx: index('idx_llm_models_status').on(table.status),
+    providerStatusIdx: index('idx_llm_models_provider_status').on(table.provider, table.status)
+  })
+);
+
+/**
+ * LLM Scenarios table
+ * Fixed list of supported runtime scenarios.
+ */
+export const llmScenarios = pgTable('llm_scenarios', {
+  key: llmScenarioKeyEnum('key').primaryKey(),
+  label: varchar('label', { length: 255 }).notNull(),
+  description: text('description'),
+  enabled: boolean('enabled').notNull().default(true),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+});
+
+/**
+ * LLM Scenario Models table
+ * Default model assignment per scenario.
+ */
+export const llmScenarioModels = pgTable(
+  'llm_scenario_models',
+  {
+    scenarioKey: llmScenarioKeyEnum('scenario_key')
+      .primaryKey()
+      .references(() => llmScenarios.key, { onDelete: 'cascade' }),
+    modelId: uuid('model_id')
+      .notNull()
+      .references(() => llmModels.id),
+    temperature: decimal('temperature', { precision: 3, scale: 2 }),
+    maxTokens: integer('max_tokens'),
+    responseFormat: llmResponseFormatEnum('response_format'),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => ({
+    modelIdx: index('idx_llm_scenario_models_model_id').on(table.modelId)
+  })
+);
+
+/**
+ * LLM Role Scenario Overrides table
+ * Optional role-level override per scenario.
+ */
+export const llmRoleScenarioOverrides = pgTable(
+  'llm_role_scenario_overrides',
+  {
+    role: roleEnum('role').notNull(),
+    scenarioKey: llmScenarioKeyEnum('scenario_key')
+      .notNull()
+      .references(() => llmScenarios.key, { onDelete: 'cascade' }),
+    modelId: uuid('model_id')
+      .notNull()
+      .references(() => llmModels.id),
+    temperature: decimal('temperature', { precision: 3, scale: 2 }),
+    maxTokens: integer('max_tokens'),
+    responseFormat: llmResponseFormatEnum('response_format'),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => ({
+    roleScenarioUnique: unique('llm_role_scenario_overrides_role_scenario_unique').on(
+      table.role,
+      table.scenarioKey
+    ),
+    scenarioIdx: index('idx_llm_role_scenario_overrides_scenario_key').on(table.scenarioKey),
+    modelIdx: index('idx_llm_role_scenario_overrides_model_id').on(table.modelId)
   })
 );
 
@@ -363,8 +447,17 @@ export type NewVacancy = typeof vacancies.$inferInsert;
 export type Generation = typeof generations.$inferSelect;
 export type NewGeneration = typeof generations.$inferInsert;
 
-export type LLMKey = typeof llmKeys.$inferSelect;
-export type NewLLMKey = typeof llmKeys.$inferInsert;
+export type LlmModel = typeof llmModels.$inferSelect;
+export type NewLlmModel = typeof llmModels.$inferInsert;
+
+export type LlmScenario = typeof llmScenarios.$inferSelect;
+export type NewLlmScenario = typeof llmScenarios.$inferInsert;
+
+export type LlmScenarioModel = typeof llmScenarioModels.$inferSelect;
+export type NewLlmScenarioModel = typeof llmScenarioModels.$inferInsert;
+
+export type LlmRoleScenarioOverride = typeof llmRoleScenarioOverrides.$inferSelect;
+export type NewLlmRoleScenarioOverride = typeof llmRoleScenarioOverrides.$inferInsert;
 
 export type UsageLog = typeof usageLogs.$inferSelect;
 export type NewUsageLog = typeof usageLogs.$inferInsert;

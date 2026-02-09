@@ -33,7 +33,6 @@ const parseOperation = OPERATION_MAP.PARSE;
 const generateOperation = OPERATION_MAP.GENERATE;
 const exportOperation = OPERATION_MAP.EXPORT;
 const platformProvider = PROVIDER_TYPE_MAP.PLATFORM;
-const byokProvider = PROVIDER_TYPE_MAP.BYOK;
 
 describe.skip('limits Service Integration Tests', () => {
   let limitsService: LimitsService;
@@ -185,13 +184,12 @@ describe.skip('limits Service Integration Tests', () => {
       expect(dailyCount).toBe(1);
     });
 
-    it('should track BYOK vs platform usage separately', async () => {
-      const userId = 'test-user-byok';
+    it('should track platform usage for repeated calls', async () => {
+      const userId = 'test-user-platform';
 
       await usageTracker.log(userId, generateOperation, platformProvider);
-      await usageTracker.log(userId, generateOperation, byokProvider);
+      await usageTracker.log(userId, generateOperation, platformProvider);
 
-      // Both should count toward daily limit
       const dailyCount = await usageTracker.getDailyCount(userId, generateOperation);
       expect(dailyCount).toBe(2);
     });

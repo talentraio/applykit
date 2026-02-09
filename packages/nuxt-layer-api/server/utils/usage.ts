@@ -7,7 +7,7 @@ import { usageLogRepository } from '../data/repositories';
  * Usage Tracking Utility
  *
  * Logs operations to usage_logs table for analytics and rate limiting
- * Tracks tokens used, cost, and provider type (platform vs BYOK)
+ * Tracks tokens used, cost, and provider source
  *
  * Related: T045, TX020
  */
@@ -17,7 +17,7 @@ import { usageLogRepository } from '../data/repositories';
  *
  * @param userId - User performing the operation
  * @param operation - Type of operation (parse, generate, export)
- * @param providerType - Platform or BYOK
+ * @param providerType - Provider source
  * @param usageContext - Optional usage context
  * @param tokensUsed - Optional token count
  * @param cost - Optional cost in USD

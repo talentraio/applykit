@@ -1,5 +1,5 @@
 import type { LLMProvider, ResumeContent, Role } from '@int/schema';
-import { ResumeContentSchema } from '@int/schema';
+import { LLM_SCENARIO_KEY_MAP, ResumeContentSchema } from '@int/schema';
 import { z } from 'zod';
 import { callLLM, LLMError } from './index';
 import { createGenerateUserPrompt, GENERATE_SYSTEM_PROMPT } from './prompts/generate';
@@ -35,11 +35,6 @@ export type GenerateOptions = {
    * User role (required for role-based checks)
    */
   role?: Role;
-
-  /**
-   * User-provided API key (BYOK)
-   */
-  userApiKey?: string;
 
   /**
    * Preferred provider
@@ -143,7 +138,7 @@ export async function generateResumeWithLLM(
   },
   options: GenerateOptions = {}
 ): Promise<GenerateLLMResult> {
-  const { userId, role, userApiKey, provider, maxRetries = 2, temperature = 0.3 } = options;
+  const { userId, role, provider, maxRetries = 2, temperature = 0.3 } = options;
 
   let attempts = 0;
   let totalCost = 0;
@@ -166,8 +161,8 @@ export async function generateResumeWithLLM(
         {
           userId,
           role,
-          userApiKey,
-          provider
+          provider,
+          scenario: LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION
         }
       );
 

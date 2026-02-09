@@ -5,6 +5,8 @@
       "users": "Users",
       "roles": "Roles",
       "system": "System",
+      "llmModels": "LLM Models",
+      "llmRouting": "LLM Routing",
       "admin": "Admin"
     },
     "users": {
@@ -105,7 +107,6 @@
       "superAdminHint": "Super Admin can only change platform provider.",
       "fields": {
         "platformLlm": "Platform LLM",
-        "byok": "BYOK",
         "provider": "Platform provider",
         "dailyBudget": "Daily budget per user"
       },
@@ -118,7 +119,6 @@
     "system": {
       "title": "System",
       "platformLlm": "Platform LLM",
-      "byok": "BYOK",
       "platformProvider": "Platform provider",
       "budget": "Budget",
       "budgetHelper": "Set the platform LLM budget cap in USD.",
@@ -160,12 +160,40 @@
           "export": "Export"
         },
         "providers": {
-          "platform": "Platform",
-          "byok": "BYOK"
+          "platform": "Platform"
         }
       },
       "currency": "{amount} USD",
       "percent": "{value}%"
+    },
+    "llm": {
+      "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading..."
+      },
+      "models": {
+        "title": "LLM Models",
+        "description": "Manage provider models, pricing, and capabilities.",
+        "empty": "No models yet",
+        "create": "Add model",
+        "edit": "Edit model",
+        "deactivate": "Deactivate",
+        "archive": "Archive"
+      },
+      "routing": {
+        "title": "LLM Routing",
+        "description": "Configure scenario defaults and role overrides.",
+        "empty": "No routing configuration",
+        "defaultLabel": "Scenario default",
+        "overrideLabel": "Role override",
+        "removeOverride": "Remove override",
+        "scenarios": {
+          "resume_parse": "Resume Parse",
+          "resume_adaptation": "Resume Adaptation",
+          "cover_letter_generation": "Cover Letter Generation"
+        }
+      }
     }
   },
   "profile": {

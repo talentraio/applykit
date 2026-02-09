@@ -30,9 +30,11 @@
 
 ## Resume
 
-- `POST /api/resume/parse`
-  - body: multipart file (DOCX or PDF)
-  - returns: `ResumeJson`
+- `POST /api/resume`
+  - supports multipart upload (DOCX/PDF) and JSON payload
+  - parses uploaded resume content via platform-managed LLM
+  - returns current base resume
+- `POST /api/resumes` (deprecated alias for upload+parse flow)
 - `GET /api/resume`
   - returns current base resume (content only, no format settings)
 - `PUT /api/resume`
@@ -61,7 +63,11 @@
   - supports server-side pagination, sorting (updatedAt, createdAt), status filter (array), ILIKE search on company+jobPosition
   - default sort: status-group ordering + updatedAt DESC
 - `GET /api/vacancies/:id`
-  - returns vacancy details + latest generated version (MVP)
+  - returns vacancy details
+- `GET /api/vacancies/:id/meta`
+  - returns minimal vacancy metadata for layout/header
+- `GET /api/vacancies/:id/overview`
+  - returns overview payload: vacancy + latest generation summary + canGenerateResume flag
 - `PUT /api/vacancies/:id`
   - update vacancy fields
 - `DELETE /api/vacancies/:id`
@@ -73,8 +79,8 @@
   - returns: 204 No Content
 - `POST /api/vacancies/:id/generate`
   - generates a new adapted version from current base resume + vacancy
-  - appends to `generatedVersions[]`
-  - returns latest version
+  - platform-managed execution path only (no BYOK header contract)
+  - returns created generation
 
 ## Vacancy List Preferences
 
@@ -103,8 +109,17 @@
 - `GET /api/admin/system` (budget + usage)
 - `PUT /api/admin/system`
 - `GET /api/admin/usage`
+- `GET /api/admin/llm/models`
+- `POST /api/admin/llm/models`
+- `PUT /api/admin/llm/models/:id`
+- `DELETE /api/admin/llm/models/:id`
+- `GET /api/admin/llm/routing`
+- `PUT /api/admin/llm/routing/:scenarioKey/default`
+- `PUT /api/admin/llm/routing/:scenarioKey/roles/:role`
+- `DELETE /api/admin/llm/routing/:scenarioKey/roles/:role`
 
 Notes:
 
 - All admin endpoints require `super_admin`
 - Blocked users receive `403` on protected endpoints
+- BYOK endpoints (`/api/keys/*`) were removed; runtime is platform-only

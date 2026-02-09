@@ -11,7 +11,6 @@ const normalizeRoleSettingsRow = (row: RoleSettings): RoleSettingsInput & { upda
   return {
     role: row.role,
     platformLlmEnabled: row.platformLlmEnabled,
-    byokEnabled: row.byokEnabled,
     platformProvider: row.platformProvider,
     dailyBudgetCap: Number(row.dailyBudgetCap),
     updatedAt: row.updatedAt
@@ -24,7 +23,6 @@ const buildUpsertValues = (
 ): {
   role: Role;
   platformLlmEnabled: boolean;
-  byokEnabled: boolean;
   platformProvider: RoleSettingsInput['platformProvider'];
   dailyBudgetCap: string;
   updatedAt: Date;
@@ -32,7 +30,6 @@ const buildUpsertValues = (
   return {
     role: input.role,
     platformLlmEnabled: input.platformLlmEnabled,
-    byokEnabled: input.byokEnabled,
     platformProvider: input.platformProvider,
     dailyBudgetCap: input.dailyBudgetCap.toString(),
     updatedAt
@@ -43,7 +40,6 @@ function getDefaults(role: Role): RoleSettingsInput & { updatedAt: Date } {
   const base = {
     role,
     platformLlmEnabled: false,
-    byokEnabled: false,
     platformProvider: defaultPlatformProvider,
     dailyBudgetCap: 0,
     updatedAt: new Date()
@@ -52,8 +48,7 @@ function getDefaults(role: Role): RoleSettingsInput & { updatedAt: Date } {
   if (role === USER_ROLE_MAP.SUPER_ADMIN) {
     return {
       ...base,
-      platformLlmEnabled: true,
-      byokEnabled: true
+      platformLlmEnabled: true
     };
   }
 

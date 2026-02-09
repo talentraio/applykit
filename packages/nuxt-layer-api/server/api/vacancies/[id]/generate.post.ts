@@ -24,9 +24,6 @@ import { logGenerate } from '../../../utils/usage';
  * - resumeId?: string (if not provided, uses user's most recent resume)
  * - provider?: 'openai' | 'gemini' (preferred LLM provider)
  *
- * Request headers:
- * - x-api-key?: string (BYOK key for LLM provider)
- *
  * Response: Created Generation object
  *
  * Related: T106 (US5)
@@ -114,9 +111,6 @@ export default defineEventHandler(async event => {
     });
   }
 
-  // Get BYOK key from header (if provided)
-  const userApiKey = getHeader(event, 'x-api-key');
-
   try {
     // Generate tailored resume
     // Note: Profile context (preferredJobTitle, etc.) will be added in a future iteration
@@ -131,7 +125,6 @@ export default defineEventHandler(async event => {
       {
         userId,
         role: userRole,
-        userApiKey,
         provider
       }
     );
@@ -148,7 +141,7 @@ export default defineEventHandler(async event => {
     // Log usage
     await logGenerate(
       userId,
-      userApiKey ? PROVIDER_TYPE_MAP.BYOK : PROVIDER_TYPE_MAP.PLATFORM,
+      PROVIDER_TYPE_MAP.PLATFORM,
       USAGE_CONTEXT_MAP.RESUME_ADAPTATION,
       result.tokensUsed,
       result.cost

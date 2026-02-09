@@ -6,7 +6,6 @@ export { type PlatformProvider, PlatformProviderSchema, type Role, RoleSchema } 
 export const RoleSettingsSchema = z.object({
   role: RoleSchema,
   platformLlmEnabled: z.boolean(),
-  byokEnabled: z.boolean(),
   platformProvider: PlatformProviderSchema,
   dailyBudgetCap: z.number().min(0),
   updatedAt: z.date()

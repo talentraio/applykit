@@ -22,12 +22,6 @@
         </UBadge>
       </div>
       <div class="flex items-center justify-between">
-        <span class="text-muted">{{ $t('admin.roles.fields.byok') }}</span>
-        <UBadge class="w-20 flex justify-center" :color="statusColor(role.byokEnabled)">
-          {{ statusLabel(role.byokEnabled) }}
-        </UBadge>
-      </div>
-      <div class="flex items-center justify-between">
         <span class="text-muted">{{ $t('admin.roles.fields.provider') }}</span>
         <span class="font-medium">{{ providerLabel }}</span>
       </div>

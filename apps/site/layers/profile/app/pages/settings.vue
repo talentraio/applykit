@@ -4,7 +4,9 @@
       <UiPageHeader :title="$t('settings.title')" :description="$t('settings.description')" />
 
       <UPageCard>
-        <ProfileKeyManager />
+        <p class="text-sm text-muted">
+          {{ $t('settings.platformOnlyNotice') }}
+        </p>
       </UPageCard>
     </div>
   </div>
@@ -14,18 +16,10 @@
 /**
  * Settings Page
  *
- * Manages BYOK key metadata and local storage.
- *
- * Related: T131 (US7)
+ * Platform-managed settings only.
  */
 
 defineOptions({ name: 'SettingsPage' });
-
-const { fetchKeys } = useKeys();
-
-await callOnce(async () => {
-  await fetchKeys();
-});
 </script>
 
 <style lang="scss">

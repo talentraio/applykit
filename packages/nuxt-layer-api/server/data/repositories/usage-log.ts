@@ -20,7 +20,9 @@ const buildDateLt = (value: Date): ReturnType<typeof lt> => {
 export type SystemUsageStats = {
   totalOperations: number;
   byOperation: Record<Operation, number>;
-  byProvider: Record<ProviderType, number>;
+  byProvider: {
+    platform: number;
+  };
   totalCost: number;
   uniqueUsers: number;
 };
@@ -277,13 +279,12 @@ export const usageLogRepository = {
       byOperation[row.operation] = Number(row.count);
     });
 
-    const byProvider: Record<ProviderType, number> = {
-      platform: 0,
-      byok: 0
+    const byProvider = {
+      platform: 0
     };
 
     providerResult.forEach(row => {
-      byProvider[row.providerType] = Number(row.count);
+      byProvider.platform += Number(row.count);
     });
 
     return {

@@ -63,18 +63,6 @@
                 :disabled="isRestricted || isDisabled"
               />
             </UFormField>
-
-            <UFormField :label="$t('admin.roles.fields.byok')">
-              <USelectMenu
-                v-model="byokEnabled"
-                :items="toggleOptions"
-                value-key="value"
-                size="sm"
-                class="min-w-40 md:min-w-48"
-                :search-input="false"
-                :disabled="isRestricted || isDisabled"
-              />
-            </UFormField>
           </div>
 
           <UFormField :label="$t('admin.roles.fields.provider')">
@@ -155,7 +143,6 @@ if (!roleValidation.success) {
 const role = ref(roleValidation.data);
 
 const platformLlmEnabled = ref(false);
-const byokEnabled = ref(false);
 const platformProvider = ref<PlatformProvider>(PLATFORM_PROVIDER_MAP.OPENAI);
 const dailyBudgetCap = ref('0');
 const localError = ref<string | null>(null);
@@ -197,7 +184,6 @@ const hasChanges = computed(() => {
 
   return (
     platformLlmEnabled.value !== current.value.platformLlmEnabled ||
-    byokEnabled.value !== current.value.byokEnabled ||
     platformProvider.value !== current.value.platformProvider ||
     parsedBudget.value !== current.value.dailyBudgetCap
   );
@@ -209,7 +195,6 @@ const resetForm = () => {
   if (!current.value) return;
 
   platformLlmEnabled.value = current.value.platformLlmEnabled;
-  byokEnabled.value = current.value.byokEnabled;
   platformProvider.value = current.value.platformProvider;
   dailyBudgetCap.value = current.value.dailyBudgetCap.toString();
   localError.value = null;
@@ -220,7 +205,6 @@ watch(
   value => {
     if (!value) return;
     platformLlmEnabled.value = value.platformLlmEnabled;
-    byokEnabled.value = value.byokEnabled;
     platformProvider.value = value.platformProvider;
     dailyBudgetCap.value = value.dailyBudgetCap.toString();
   },
@@ -239,7 +223,6 @@ const handleSave = async () => {
   try {
     await updateRole(role.value, {
       platformLlmEnabled: platformLlmEnabled.value,
-      byokEnabled: byokEnabled.value,
       platformProvider: platformProvider.value,
       dailyBudgetCap: parsedBudget.value
     });

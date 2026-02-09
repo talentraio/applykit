@@ -102,6 +102,16 @@ const navLinks = computed<NavigationMenuItem[]>(() => [
     icon: 'i-lucide-shield'
   },
   {
+    label: t('admin.nav.llmModels'),
+    to: '/llm/models',
+    icon: 'i-lucide-brain-circuit'
+  },
+  {
+    label: t('admin.nav.llmRouting'),
+    to: '/llm/routing',
+    icon: 'i-lucide-route'
+  },
+  {
     label: t('admin.nav.system'),
     to: '/system',
     icon: 'i-lucide-settings'

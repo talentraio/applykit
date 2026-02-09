@@ -8,8 +8,11 @@ export * from './schemas/format-settings';
 // Generation
 export * from './schemas/generation';
 
-// LLM Key
-export * from './schemas/llm-key';
+// LLM Model
+export * from './schemas/llm-model';
+
+// LLM Routing
+export * from './schemas/llm-routing';
 
 // Pagination
 export * from './schemas/pagination';

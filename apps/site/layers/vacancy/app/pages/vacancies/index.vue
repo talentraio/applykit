@@ -103,9 +103,9 @@ const queryParams = ref<VacancyListQuery>({
   currentPage: 1,
   pageSize: 25
 });
-const vacancyCountLabel = computed(() =>
-  t('vacancy.list.count', { count: vacancyStore.totalItems }, vacancyStore.totalItems)
-);
+const vacancyCountLabel = computed(() => {
+  return t('vacancy.list.count', { count: vacancyStore.totalItems }, vacancyStore.totalItems);
+});
 
 // Track if filters/search are active for empty state distinction
 const hasActiveFilters = computed(
@@ -116,8 +116,10 @@ const hasActiveFilters = computed(
 // Query Params & Data Fetching
 // =========================================
 
-const { data, pending, error, refresh } = await useAsyncData('vacancies-list', () =>
-  vacancyStore.fetchVacanciesPaginated(queryParams.value)
+const fetchVacanciesPaginated = () => vacancyStore.fetchVacanciesPaginated(queryParams.value);
+const { data, pending, error, refresh } = await useAsyncData(
+  'vacancies-list',
+  fetchVacanciesPaginated
 );
 const pageLoading = computed(() => !data.value && pending.value);
 
