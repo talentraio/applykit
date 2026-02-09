@@ -80,6 +80,16 @@ export const useVacancyStore = defineStore('VacancyStore', {
     vacancies: (state): Vacancy[] => state.vacancyListResponse?.items ?? [],
 
     /**
+     * Get total items count from list response
+     */
+    totalItems: (state): number => state.vacancyListResponse?.pagination.totalItems ?? 0,
+
+    /**
+     * Get total pages count from list response
+     */
+    totalPages: (state): number => state.vacancyListResponse?.pagination.totalPages ?? 0,
+
+    /**
      * Check if user has any vacancies
      */
     getHasVacancies(): boolean {

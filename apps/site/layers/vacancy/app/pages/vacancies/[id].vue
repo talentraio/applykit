@@ -1,9 +1,7 @@
 <template>
   <div class="vacancy-detail-layout">
     <!-- Loading State -->
-    <div v-if="pending" class="flex items-center justify-center py-12">
-      <UIcon name="i-lucide-loader-2" class="h-8 w-8 animate-spin text-primary" />
-    </div>
+    <BasePageLoading v-if="pending" />
 
     <!-- Error State -->
     <UAlert

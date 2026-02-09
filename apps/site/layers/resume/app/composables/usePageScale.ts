@@ -7,7 +7,6 @@
  * Related: T020 (US2)
  */
 
-import { useResizeObserver } from '@vueuse/core';
 import { A4_WIDTH_PX } from '../types/preview';
 
 /**

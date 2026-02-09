@@ -22,7 +22,7 @@ export default defineNuxtConfig({
     './layers/static'
   ],
 
-  modules: ['@pinia/nuxt', '@nuxtjs/i18n'],
+  modules: ['@pinia/nuxt', '@nuxtjs/i18n', '@nuxtjs/device', '@vueuse/nuxt'],
 
   runtimeConfig: {
     redirects: {

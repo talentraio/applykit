@@ -17,13 +17,14 @@ catalog:
   '@iconify-json/lucide': ^1.2.87
   '@nuxt/image': ^2.0.0
   '@nuxt/ui': ^4.0.1
+  '@nuxtjs/device': ^4.0.0
   '@nuxtjs/i18n': ^10.2.1
   '@pinia/nuxt': ^0.11.3
   '@playwright/test': ^1.49.1
   '@types/bcryptjs': ^3.0.0
   '@vercel/blob': ^2.0.0
   '@vitest/coverage-v8': ^2.1.8
-  '@vueuse/core': ^14.1.0
+  '@vueuse/nuxt': ^14.2.0
   bcryptjs: ^3.0.3
   date-fns: ^4.1.0
   drizzle-kit: ^0.30.2

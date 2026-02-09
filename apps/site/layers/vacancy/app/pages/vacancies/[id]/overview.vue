@@ -106,9 +106,7 @@
       />
 
       <!-- Loading Generation -->
-      <div v-if="generationPending" class="flex items-center justify-center py-8">
-        <UIcon name="i-lucide-loader-2" class="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <BasePageLoading v-if="generationPending" wrapper-class="py-8" />
 
       <!-- Match Score Block (T024) - Only if generation exists -->
       <template v-else-if="latestGeneration">
@@ -151,8 +149,8 @@
     <!-- Delete Confirmation Modal -->
     <VacancyModalDeleteConfirmation
       v-model:open="showDeleteModal"
-      :loading="isDeleting"
-      @confirm="handleDeleteConfirm"
+      :vacancy-id="props.vacancy.id"
+      @success="handleDeleteSuccess"
     />
   </div>
 </template>
@@ -196,7 +194,6 @@ const vacancyStore = useVacancyStore();
 // --- State ---
 const isEditMode = ref(false);
 const isSaving = ref(false);
-const isDeleting = ref(false);
 const isGenerating = ref(false);
 const isUpdatingStatus = ref(false);
 const generationError = ref<string | null>(null);
@@ -292,31 +289,11 @@ const handleDeleteClick = () => {
 };
 
 /**
- * Confirm and delete vacancy
+ * Handle successful vacancy delete
  */
-const handleDeleteConfirm = async () => {
-  isDeleting.value = true;
-
-  try {
-    await vacancyStore.deleteVacancy(props.vacancy.id);
-    showDeleteModal.value = false;
-
-    toast.add({
-      title: t('vacancy.delete.success'),
-      color: 'success'
-    });
-
-    // Navigate back to vacancies list
-    await router.push('/vacancies');
-  } catch (err) {
-    toast.add({
-      title: t('vacancy.error.deleteFailed'),
-      description: err instanceof Error ? err.message : undefined,
-      color: 'error'
-    });
-  } finally {
-    isDeleting.value = false;
-  }
+const handleDeleteSuccess = async () => {
+  // Navigate back to vacancies list
+  await router.push('/vacancies');
 };
 
 /**
