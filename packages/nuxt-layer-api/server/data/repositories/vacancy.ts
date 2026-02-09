@@ -4,6 +4,11 @@ import { and, asc, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { vacancies } from '../schema';
 
+type VacancyMeta = Pick<Vacancy, 'id' | 'company' | 'jobPosition'>;
+type VacancyUpdatePayload = Partial<VacancyInput> & {
+  canGenerateResume?: boolean;
+};
+
 /**
  * Vacancy Repository
  *
@@ -25,6 +30,22 @@ export const vacancyRepository = {
   async findByIdAndUserId(id: string, userId: string): Promise<Vacancy | null> {
     const result = await db
       .select()
+      .from(vacancies)
+      .where(and(eq(vacancies.id, id), eq(vacancies.userId, userId)))
+      .limit(1);
+    return result[0] ?? null;
+  },
+
+  /**
+   * Find vacancy meta by ID and user ID (ownership check)
+   */
+  async findMetaByIdAndUserId(id: string, userId: string): Promise<VacancyMeta | null> {
+    const result = await db
+      .select({
+        id: vacancies.id,
+        company: vacancies.company,
+        jobPosition: vacancies.jobPosition
+      })
       .from(vacancies)
       .where(and(eq(vacancies.id, id), eq(vacancies.userId, userId)))
       .limit(1);
@@ -55,7 +76,8 @@ export const vacancyRepository = {
         jobPosition: data.jobPosition ?? null,
         description: data.description,
         url: data.url ?? null,
-        notes: data.notes ?? null
+        notes: data.notes ?? null,
+        canGenerateResume: true
       })
       .returning();
     return result[0]!;
@@ -64,7 +86,7 @@ export const vacancyRepository = {
   /**
    * Update vacancy
    */
-  async update(id: string, userId: string, data: Partial<VacancyInput>): Promise<Vacancy | null> {
+  async update(id: string, userId: string, data: VacancyUpdatePayload): Promise<Vacancy | null> {
     const result = await db
       .update(vacancies)
       .set({

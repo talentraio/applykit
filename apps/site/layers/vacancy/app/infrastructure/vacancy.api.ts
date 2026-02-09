@@ -5,6 +5,7 @@ import type {
   VacancyListQuery,
   VacancyListResponse
 } from '@int/schema';
+import type { VacancyMeta, VacancyOverview } from '@layer/api/types/vacancies';
 
 const vacancyUrl = '/api/vacancies';
 
@@ -27,10 +28,19 @@ export const vacancyApi = {
   },
 
   /**
-   * Fetch a single vacancy by ID
+   * Fetch vacancy overview data by ID
    */
-  async fetchById(id: string): Promise<Vacancy> {
-    return await useApi(`${vacancyUrl}/${id}`, {
+  async fetchOverview(id: string): Promise<VacancyOverview> {
+    return await useApi(`${vacancyUrl}/${id}/overview`, {
+      method: 'GET'
+    });
+  },
+
+  /**
+   * Fetch vacancy meta by ID
+   */
+  async fetchMeta(id: string): Promise<VacancyMeta> {
+    return await useApi(`${vacancyUrl}/${id}/meta`, {
       method: 'GET'
     });
   },

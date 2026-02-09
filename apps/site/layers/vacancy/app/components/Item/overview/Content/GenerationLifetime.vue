@@ -1,5 +1,5 @@
 <template>
-  <div class="vacancy-lifetime-indicator">
+  <div class="vacancy-item-overview-content-generation-lifetime">
     <!-- Expired State -->
     <UAlert
       v-if="isExpired"
@@ -40,13 +40,13 @@
 import type { Generation } from '@int/schema';
 import { differenceInDays, format, parseISO } from 'date-fns';
 
-defineOptions({ name: 'VacancyItemContentViewGenerationExistsLifetimeIndicator' });
+defineOptions({ name: 'VacancyItemOverviewContentGenerationLifetime' });
 
 const props = defineProps<{
   /**
    * Generation object with expiration date
    */
-  generation: Generation;
+  generation: Pick<Generation, 'expiresAt'>;
 }>();
 
 const expirationDate = computed(() => {
@@ -91,7 +91,7 @@ const iconClass = computed(() => {
 </script>
 
 <style lang="scss">
-.vacancy-lifetime-indicator {
+.vacancy-item-overview-content-generation-lifetime {
   // Component-specific styling if needed
 }
 </style>

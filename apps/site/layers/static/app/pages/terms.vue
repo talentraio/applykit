@@ -1,5 +1,5 @@
 <template>
-  <div class="static-terms-page container mx-auto max-w-4xl p-4 py-8">
+  <div class="static-terms-page p-4 py-8">
     <UiPageHeader :title="$t('static.terms.title')" />
 
     <UPageCard class="mt-6">

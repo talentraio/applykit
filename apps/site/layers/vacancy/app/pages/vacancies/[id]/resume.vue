@@ -60,19 +60,12 @@
  * Related: T036-T039 (US4)
  */
 
-import type { ResumeContent, SpacingSettings, Vacancy } from '@int/schema';
+import type { ResumeContent, SpacingSettings } from '@int/schema';
 import type { ResumeEditorTabItem } from '@site/resume/app/types/editor';
 import type { PreviewType } from '@site/resume/app/types/preview';
 import { EXPORT_FORMAT_MAP } from '@int/schema';
 
 defineOptions({ name: 'VacancyResumePage' });
-
-defineProps<{
-  /**
-   * Vacancy data passed from parent layout
-   */
-  vacancy: Vacancy;
-}>();
 
 // Use editor layout for full-screen editing experience (no footer)
 definePageMeta({

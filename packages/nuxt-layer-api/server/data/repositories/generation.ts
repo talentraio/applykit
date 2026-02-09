@@ -5,6 +5,11 @@ import { desc, eq, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { generations, vacancies } from '../schema';
 
+type VacancyOverviewGeneration = Pick<
+  Generation,
+  'id' | 'matchScoreBefore' | 'matchScoreAfter' | 'expiresAt'
+>;
+
 /**
  * Generation Repository
  *
@@ -40,6 +45,36 @@ export const generationRepository = {
     const now = new Date();
     const result = await db
       .select()
+      .from(generations)
+      .where(eq(generations.vacancyId, vacancyId))
+      .orderBy(desc(generations.generatedAt))
+      .limit(1);
+
+    const generation = result[0];
+    if (!generation) return null;
+
+    if (generation.expiresAt < now) {
+      return null;
+    }
+
+    return generation;
+  },
+
+  /**
+   * Find latest generation summary for vacancy overview
+   * Returns only fields required by vacancy overview page
+   */
+  async findLatestOverviewByVacancyId(
+    vacancyId: string
+  ): Promise<VacancyOverviewGeneration | null> {
+    const now = new Date();
+    const result = await db
+      .select({
+        id: generations.id,
+        matchScoreBefore: generations.matchScoreBefore,
+        matchScoreAfter: generations.matchScoreAfter,
+        expiresAt: generations.expiresAt
+      })
       .from(generations)
       .where(eq(generations.vacancyId, vacancyId))
       .orderBy(desc(generations.generatedAt))

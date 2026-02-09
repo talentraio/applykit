@@ -9,7 +9,9 @@
 
     <!-- Main Content (no footer for full-screen editor) -->
     <main class="site-editor-layout__main">
-      <slot />
+      <div class="site-editor-layout__content">
+        <slot />
+      </div>
     </main>
 
     <!-- Mobile Navigation Drawer -->
@@ -46,6 +48,15 @@ const isMobileMenuOpen = ref(false);
   &__main {
     flex: 1;
     min-height: 0;
+    overflow: hidden;
+  }
+
+  &__content {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-width: 1600px;
+    margin: 0 auto;
     overflow: hidden;
   }
 }

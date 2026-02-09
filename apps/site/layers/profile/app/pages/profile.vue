@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-page container mx-auto max-w-4xl p-4 py-8">
+  <div class="profile-page p-4 py-8">
     <!-- Loading State -->
     <BasePageLoading v-if="loading && !profile" />
 

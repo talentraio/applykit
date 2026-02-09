@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 /**
- * VacancyDetailBreadcrumbs
+ * VacancyItemLayoutBreadcrumbs
  *
  * Displays breadcrumb navigation: Vacancies > Company – Position > Section
  * Uses UBreadcrumb from NuxtUI v4.
@@ -13,7 +13,7 @@
  */
 import type { BreadcrumbItem } from '#ui/types';
 
-defineOptions({ name: 'VacancyDetailBreadcrumbs' });
+defineOptions({ name: 'VacancyItemLayoutBreadcrumbs' });
 
 const props = defineProps<{
   vacancyId: string;
@@ -44,11 +44,13 @@ const items = computed<BreadcrumbItem[]>(() => {
   return [
     {
       label: t('vacancy.breadcrumbs.vacancies'),
-      icon: 'i-lucide-briefcase',
       to: '/vacancies'
     },
     {
       label: vacancyLabel,
+      ui: {
+        linkLabel: 'inline-block max-w-[15ch] truncate align-bottom md:max-w-[40ch]'
+      },
       to: `/vacancies/${props.vacancyId}/overview`
     },
     {

@@ -3,7 +3,7 @@
     <UBadge
       :color="currentColor"
       variant="soft"
-      size="md"
+      size="xl"
       class="cursor-pointer transition-opacity hover:opacity-80"
       :class="{ 'opacity-50': loading }"
     >

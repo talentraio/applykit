@@ -1,5 +1,22 @@
+import type { VacancyInput } from '@int/schema';
+import type { Vacancy } from '../../data/schema';
 import { VACANCY_STATUS_MAP, VacancyInputSchema } from '@int/schema';
 import { generationRepository, vacancyRepository } from '../../data/repositories';
+
+const hasGenerationUnlockingChange = (
+  currentVacancy: Vacancy,
+  payload: Partial<VacancyInput>
+): boolean => {
+  const hasCompanyChanged =
+    payload.company !== undefined && payload.company !== currentVacancy.company;
+  const hasJobPositionChanged =
+    payload.jobPosition !== undefined &&
+    (payload.jobPosition ?? null) !== (currentVacancy.jobPosition ?? null);
+  const hasDescriptionChanged =
+    payload.description !== undefined && payload.description !== currentVacancy.description;
+
+  return hasCompanyChanged || hasJobPositionChanged || hasDescriptionChanged;
+};
 
 /**
  * PUT /api/vacancies/:id
@@ -25,6 +42,15 @@ export default defineEventHandler(async event => {
     throw createError({
       statusCode: 400,
       message: 'Vacancy ID is required'
+    });
+  }
+
+  // Check if vacancy exists and belongs to current user
+  const currentVacancy = await vacancyRepository.findByIdAndUserId(id, userId);
+  if (!currentVacancy) {
+    throw createError({
+      statusCode: 404,
+      message: 'Vacancy not found'
     });
   }
 
@@ -61,8 +87,16 @@ export default defineEventHandler(async event => {
     }
   }
 
+  const shouldUnlockGeneration = hasGenerationUnlockingChange(
+    currentVacancy,
+    validationResult.data
+  );
+
   // Update vacancy (with ownership check)
-  const vacancy = await vacancyRepository.update(id, userId, validationResult.data);
+  const vacancy = await vacancyRepository.update(id, userId, {
+    ...validationResult.data,
+    ...(shouldUnlockGeneration ? { canGenerateResume: true } : {})
+  });
 
   if (!vacancy) {
     throw createError({

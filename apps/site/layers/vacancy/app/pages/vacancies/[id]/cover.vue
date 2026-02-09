@@ -9,11 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Vacancy } from '@int/schema';
-
 defineOptions({ name: 'VacancyCoverPage' });
-
-defineProps<{ vacancy: Vacancy }>();
 
 const { t } = useI18n();
 </script>

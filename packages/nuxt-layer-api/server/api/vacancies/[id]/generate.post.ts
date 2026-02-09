@@ -46,9 +46,6 @@ export default defineEventHandler(async event => {
     });
   }
 
-  // Check rate limit for generate operation
-  await requireLimit(userId, OPERATION_MAP.GENERATE, userRole);
-
   // Verify vacancy belongs to user
   const vacancy = await vacancyRepository.findById(vacancyId);
   if (!vacancy) {
@@ -64,6 +61,16 @@ export default defineEventHandler(async event => {
       message: 'Access denied'
     });
   }
+
+  if (!vacancy.canGenerateResume) {
+    throw createError({
+      statusCode: 409,
+      message: 'Resume generation is currently unavailable for this vacancy'
+    });
+  }
+
+  // Check rate limit for generate operation
+  await requireLimit(userId, OPERATION_MAP.GENERATE, userRole);
 
   // Read request body
   const body = await readBody(event).catch(() => ({}));
@@ -147,9 +154,17 @@ export default defineEventHandler(async event => {
       result.cost
     );
 
-    // Auto-advance status from 'created' to 'generated' on first generation
-    if (vacancy.status === VACANCY_STATUS_MAP.CREATED) {
-      await vacancyRepository.update(vacancyId, userId, { status: VACANCY_STATUS_MAP.GENERATED });
+    // Lock further generation until explicit unlock conditions are met.
+    // Also auto-advance status from 'created' to 'generated' on first generation.
+    const updatedVacancy = await vacancyRepository.update(vacancyId, userId, {
+      canGenerateResume: false,
+      ...(vacancy.status === VACANCY_STATUS_MAP.CREATED
+        ? { status: VACANCY_STATUS_MAP.GENERATED }
+        : {})
+    });
+
+    if (!updatedVacancy) {
+      throw new Error('Failed to update vacancy generation availability');
     }
 
     return generation;
