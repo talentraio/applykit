@@ -30,12 +30,12 @@
       </div>
 
       <UAlert
-        v-else-if="listError"
+        v-else-if="listErrorMessage"
         color="error"
         variant="soft"
         icon="i-lucide-alert-circle"
         :title="$t('common.error.generic')"
-        :description="listError.message"
+        :description="listErrorMessage"
       />
 
       <UPageCard v-else-if="users.length === 0" class="text-center">
@@ -115,7 +115,7 @@
           v-model:page="page"
           :total="total"
           :items-per-page="pageSize"
-          :disabled="loading"
+          :disabled="pending"
           color="neutral"
           variant="outline"
         />
@@ -142,7 +142,7 @@ import { format, parseISO } from 'date-fns';
 
 defineOptions({ name: 'AdminUsersPage' });
 
-const { users, total, loading, error, fetchUsers, inviteUser } = useAdminUsers();
+const { users, total, fetchUsers, inviteUser } = useAdminUsers();
 const { t, te } = useI18n();
 const toast = useToast();
 
@@ -154,9 +154,6 @@ const page = ref(1);
 const isInviteOpen = ref(false);
 const isInviting = ref(false);
 
-const isInitialLoading = computed(() => loading.value && users.value.length === 0);
-const listError = computed(() => (users.value.length === 0 ? error.value : null));
-
 const query = computed(() => ({
   search: searchQuery.value.trim() || undefined,
   role: roleFilter.value === 'all' ? undefined : roleFilter.value,
@@ -164,24 +161,30 @@ const query = computed(() => ({
   offset: (page.value - 1) * pageSize.value
 }));
 
-const loadUsers = async () => {
-  await fetchUsers(query.value);
-};
+const {
+  pending,
+  error: usersError,
+  refresh
+} = await useAsyncData('admin-users', () => fetchUsers(query.value), {
+  watch: [query]
+});
 
-await callOnce('admin-users', async () => {
-  await loadUsers();
+const isInitialLoading = computed(() => pending.value && users.value.length === 0);
+const listErrorMessage = computed(() => {
+  if (users.value.length > 0) {
+    return '';
+  }
+
+  const errorValue = usersError.value;
+  if (!errorValue) {
+    return '';
+  }
+
+  return errorValue instanceof Error ? errorValue.message : t('common.error.generic');
 });
 
 watch([searchQuery, roleFilter, pageSize], () => {
   page.value = 1;
-});
-
-watch(query, async () => {
-  try {
-    await loadUsers();
-  } catch {
-    // Error is already exposed via store state
-  }
 });
 
 watch([total, pageSize], () => {
@@ -240,7 +243,7 @@ const handleInvite = async (payload: { email: string; role: Role }) => {
   try {
     await inviteUser(payload);
     isInviteOpen.value = false;
-    await loadUsers();
+    await refresh();
     toast.add({
       title: t('admin.users.invite.success'),
       color: 'success'

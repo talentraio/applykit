@@ -12,7 +12,6 @@ import {
   LLM_RESPONSE_FORMAT_VALUES,
   LLM_SCENARIO_KEY_VALUES,
   OPERATION_VALUES,
-  PLATFORM_PROVIDER_VALUES,
   PROVIDER_TYPE_VALUES,
   SOURCE_FILE_TYPE_VALUES,
   USAGE_CONTEXT_VALUES,
@@ -57,10 +56,10 @@ export const llmScenarioKeyEnum = pgEnum('llm_scenario_key', LLM_SCENARIO_KEY_VA
 export const llmResponseFormatEnum = pgEnum('llm_response_format', LLM_RESPONSE_FORMAT_VALUES);
 export const operationEnum = pgEnum('operation', OPERATION_VALUES);
 export const providerTypeEnum = pgEnum('provider_type', PROVIDER_TYPE_VALUES);
-export const platformProviderEnum = pgEnum('platform_provider', PLATFORM_PROVIDER_VALUES);
 export const userStatusEnum = pgEnum('user_status', USER_STATUS_VALUES);
 export const usageContextEnum = pgEnum('usage_context', USAGE_CONTEXT_VALUES);
 export const vacancyStatusEnum = pgEnum('vacancy_status', VACANCY_STATUS_VALUES);
+export const budgetPeriodEnum = pgEnum('budget_period', ['weekly', 'monthly']);
 
 // ============================================================================
 // Tables
@@ -107,10 +106,42 @@ export const users = pgTable('users', {
 export const roleSettings = pgTable('role_settings', {
   role: roleEnum('role').primaryKey(),
   platformLlmEnabled: boolean('platform_llm_enabled').notNull().default(false),
-  platformProvider: platformProviderEnum('platform_provider').notNull(),
   dailyBudgetCap: decimal('daily_budget_cap', { precision: 10, scale: 2 }).notNull().default('0'),
+  weeklyBudgetCap: decimal('weekly_budget_cap', { precision: 10, scale: 2 }).notNull().default('0'),
+  monthlyBudgetCap: decimal('monthly_budget_cap', { precision: 10, scale: 2 })
+    .notNull()
+    .default('0'),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
 });
+
+/**
+ * Role Budget Windows table
+ * Tracks per-user weekly/monthly budget reset windows
+ */
+export const roleBudgetWindows = pgTable(
+  'role_budget_windows',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: roleEnum('role').notNull(),
+    period: budgetPeriodEnum('period').notNull(),
+    windowStartAt: timestamp('window_start_at', { mode: 'date' }).notNull(),
+    nextResetAt: timestamp('next_reset_at', { mode: 'date' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => ({
+    userIdIdx: index('idx_role_budget_windows_user_id').on(table.userId),
+    nextResetAtIdx: index('idx_role_budget_windows_next_reset_at').on(table.nextResetAt),
+    uniqueUserRolePeriod: unique('unique_role_budget_windows_user_role_period').on(
+      table.userId,
+      table.role,
+      table.period
+    )
+  })
+);
 
 /**
  * Profiles table
@@ -337,13 +368,15 @@ export const llmScenarioModels = pgTable(
     modelId: uuid('model_id')
       .notNull()
       .references(() => llmModels.id),
+    retryModelId: uuid('retry_model_id').references(() => llmModels.id),
     temperature: decimal('temperature', { precision: 3, scale: 2 }),
     maxTokens: integer('max_tokens'),
     responseFormat: llmResponseFormatEnum('response_format'),
     updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
   },
   table => ({
-    modelIdx: index('idx_llm_scenario_models_model_id').on(table.modelId)
+    modelIdx: index('idx_llm_scenario_models_model_id').on(table.modelId),
+    retryModelIdx: index('idx_llm_scenario_models_retry_model_id').on(table.retryModelId)
   })
 );
 
@@ -361,6 +394,7 @@ export const llmRoleScenarioOverrides = pgTable(
     modelId: uuid('model_id')
       .notNull()
       .references(() => llmModels.id),
+    retryModelId: uuid('retry_model_id').references(() => llmModels.id),
     temperature: decimal('temperature', { precision: 3, scale: 2 }),
     maxTokens: integer('max_tokens'),
     responseFormat: llmResponseFormatEnum('response_format'),
@@ -372,7 +406,8 @@ export const llmRoleScenarioOverrides = pgTable(
       table.scenarioKey
     ),
     scenarioIdx: index('idx_llm_role_scenario_overrides_scenario_key').on(table.scenarioKey),
-    modelIdx: index('idx_llm_role_scenario_overrides_model_id').on(table.modelId)
+    modelIdx: index('idx_llm_role_scenario_overrides_model_id').on(table.modelId),
+    retryModelIdx: index('idx_llm_role_scenario_overrides_retry_model_id').on(table.retryModelId)
   })
 );
 
@@ -425,6 +460,9 @@ export type NewUser = typeof users.$inferInsert;
 
 export type RoleSettings = typeof roleSettings.$inferSelect;
 export type NewRoleSettings = typeof roleSettings.$inferInsert;
+
+export type RoleBudgetWindow = typeof roleBudgetWindows.$inferSelect;
+export type NewRoleBudgetWindow = typeof roleBudgetWindows.$inferInsert;
 
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;

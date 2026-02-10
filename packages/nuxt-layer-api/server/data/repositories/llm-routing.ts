@@ -21,6 +21,7 @@ const toNullableNumber = (value: string | null): number | null => {
 
 type RoutingAssignment = {
   modelId: string;
+  retryModelId: string | null;
   temperature: number | null;
   maxTokens: number | null;
   responseFormat: 'text' | 'json' | null;
@@ -31,6 +32,7 @@ const toAssignment = (
   row: LlmScenarioModelRow | LlmRoleScenarioOverrideRow
 ): RoutingAssignment => ({
   modelId: row.modelId,
+  retryModelId: row.retryModelId ?? null,
   temperature: toNullableNumber(row.temperature),
   maxTokens: row.maxTokens,
   responseFormat: row.responseFormat,
@@ -63,10 +65,11 @@ const toDbPatch = (
   input: RoutingAssignmentInput
 ): Pick<
   typeof llmScenarioModels.$inferInsert,
-  'modelId' | 'temperature' | 'maxTokens' | 'responseFormat'
+  'modelId' | 'retryModelId' | 'temperature' | 'maxTokens' | 'responseFormat'
 > => {
   return {
     modelId: input.modelId,
+    retryModelId: input.retryModelId ?? null,
     temperature:
       input.temperature === undefined
         ? null
@@ -82,6 +85,7 @@ export type RuntimeResolvedModel = {
   source: 'role_override' | 'scenario_default';
   assignment: RoutingAssignment;
   model: LlmModel;
+  retryModel: LlmModel | null;
 };
 
 export const llmRoutingRepository = {
@@ -103,6 +107,16 @@ export const llmRoutingRepository = {
       .limit(1);
 
     return rows.length > 0;
+  },
+
+  async findActiveModelById(modelId: string): Promise<LlmModel | null> {
+    const [row] = await db
+      .select()
+      .from(llmModels)
+      .where(and(eq(llmModels.id, modelId), eq(llmModels.status, 'active')))
+      .limit(1);
+
+    return row ? toModel(row) : null;
   },
 
   async getRoutingItems(): Promise<LlmRoutingItem[]> {
@@ -222,17 +236,17 @@ export const llmRoutingRepository = {
       .limit(1);
 
     if (override) {
-      const [modelRow] = await db
-        .select()
-        .from(llmModels)
-        .where(and(eq(llmModels.id, override.modelId), eq(llmModels.status, 'active')))
-        .limit(1);
+      const model = await this.findActiveModelById(override.modelId);
+      if (model) {
+        const retryModel = override.retryModelId
+          ? await this.findActiveModelById(override.retryModelId)
+          : null;
 
-      if (modelRow) {
         return {
           source: 'role_override',
           assignment: toAssignment(override),
-          model: toModel(modelRow)
+          model,
+          retryModel
         };
       }
     }
@@ -247,20 +261,20 @@ export const llmRoutingRepository = {
       return null;
     }
 
-    const [modelRow] = await db
-      .select()
-      .from(llmModels)
-      .where(and(eq(llmModels.id, scenarioDefault.modelId), eq(llmModels.status, 'active')))
-      .limit(1);
-
-    if (!modelRow) {
+    const model = await this.findActiveModelById(scenarioDefault.modelId);
+    if (!model) {
       return null;
     }
+
+    const retryModel = scenarioDefault.retryModelId
+      ? await this.findActiveModelById(scenarioDefault.retryModelId)
+      : null;
 
     return {
       source: 'scenario_default',
       assignment: toAssignment(scenarioDefault),
-      model: toModel(modelRow)
+      model,
+      retryModel
     };
   }
 };

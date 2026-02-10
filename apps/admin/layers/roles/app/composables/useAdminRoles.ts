@@ -8,9 +8,7 @@ import { useAdminRolesStore } from '../stores/admin-roles';
 export type UseAdminRolesReturn = {
   roles: ComputedRef<AdminRoleSettings[]>;
   current: ComputedRef<AdminRoleSettings | null>;
-  loading: ComputedRef<boolean>;
   saving: ComputedRef<boolean>;
-  error: ComputedRef<Error | null>;
   hasRoles: ComputedRef<boolean>;
   fetchRoles: () => Promise<AdminRolesResponse>;
   fetchRole: (role: AdminRoleSettings['role']) => Promise<AdminRoleSettings>;
@@ -26,9 +24,7 @@ export function useAdminRoles(): UseAdminRolesReturn {
   return {
     roles: computed(() => store.roles),
     current: computed(() => store.current),
-    loading: computed(() => store.loading),
     saving: computed(() => store.saving),
-    error: computed(() => store.error),
     hasRoles: computed(() => store.hasRoles),
     fetchRoles: () => store.fetchRoles(),
     fetchRole: (role: AdminRoleSettings['role']) => store.fetchRole(role),

@@ -2,11 +2,13 @@ import type { LLMProvider, LlmScenarioKey, Role } from '@int/schema';
 import type { ILLMProvider, LLMRequest, LLMResponse } from './types';
 import {
   LLM_PROVIDER_MAP,
-  PLATFORM_PROVIDER_MAP,
+  LLM_PROVIDER_VALUES,
   PROVIDER_TYPE_MAP,
   USER_ROLE_MAP
 } from '@int/schema';
+import { startOfDay } from 'date-fns';
 import {
+  roleBudgetWindowRepository,
   roleSettingsRepository,
   systemConfigRepository,
   usageLogRepository
@@ -30,6 +32,76 @@ const initProviders = (): void => {
     providers.set(LLM_PROVIDER_MAP.OPENAI, createOpenAIProvider());
     providers.set(LLM_PROVIDER_MAP.GEMINI, createGeminiProvider());
   }
+};
+
+type RuntimeFallbackLlmModel = {
+  provider: LLMProvider;
+  model: string;
+  price: {
+    input: number;
+    output: number;
+    cache: number;
+  };
+};
+
+const DEFAULT_FALLBACK_LLM_MODEL: RuntimeFallbackLlmModel = {
+  provider: LLM_PROVIDER_MAP.OPENAI,
+  model: 'gpt-4.1-mini',
+  price: {
+    input: 0.4,
+    output: 1.6,
+    cache: 0
+  }
+};
+
+const toNonNegativeNumber = (value: unknown, fallback: number): number => {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+
+  return fallback;
+};
+
+const getFallbackLlmModel = (): RuntimeFallbackLlmModel => {
+  const runtimeConfig = useRuntimeConfig();
+  const fallbackConfig = runtimeConfig.llm?.fallbackLlmModel;
+  const providerCandidate = fallbackConfig?.provider;
+  const isProviderSupported =
+    typeof providerCandidate === 'string' &&
+    (LLM_PROVIDER_VALUES as readonly string[]).includes(providerCandidate);
+  const modelCandidate = fallbackConfig?.model;
+  const model =
+    typeof modelCandidate === 'string' && modelCandidate.trim().length > 0
+      ? modelCandidate.trim()
+      : DEFAULT_FALLBACK_LLM_MODEL.model;
+
+  return {
+    provider: isProviderSupported
+      ? (providerCandidate as LLMProvider)
+      : DEFAULT_FALLBACK_LLM_MODEL.provider,
+    model,
+    price: {
+      input: toNonNegativeNumber(
+        fallbackConfig?.price?.input,
+        DEFAULT_FALLBACK_LLM_MODEL.price.input
+      ),
+      output: toNonNegativeNumber(
+        fallbackConfig?.price?.output,
+        DEFAULT_FALLBACK_LLM_MODEL.price.output
+      ),
+      cache: toNonNegativeNumber(
+        fallbackConfig?.price?.cache,
+        DEFAULT_FALLBACK_LLM_MODEL.price.cache
+      )
+    }
+  };
 };
 
 export function getProvider(provider: LLMProvider): ILLMProvider {
@@ -57,14 +129,6 @@ function getPlatformKey(provider: LLMProvider): string | undefined {
   return undefined;
 }
 
-function mapPlatformProviderToLlmProvider(
-  platformProvider: 'openai' | 'gemini_flash'
-): LLMProvider {
-  return platformProvider === PLATFORM_PROVIDER_MAP.GEMINI_FLASH
-    ? LLM_PROVIDER_MAP.GEMINI
-    : LLM_PROVIDER_MAP.OPENAI;
-}
-
 /**
  * Estimate cost from model catalog rates using a simple 50/50 input/output split.
  */
@@ -88,7 +152,7 @@ export async function validateKey(provider: LLMProvider, apiKey: string): Promis
 }
 
 /**
- * Call LLM with automatic platform provider selection.
+ * Call LLM with automatic scenario model/provider resolution.
  */
 export async function callLLM(
   request: LLMRequest,
@@ -97,10 +161,12 @@ export async function callLLM(
     role?: Role;
     provider?: LLMProvider;
     scenario?: LlmScenarioKey;
+    scenarioPhase?: 'primary' | 'retry';
   }
 ): Promise<LLMResponse> {
   const userRole = options?.role ?? USER_ROLE_MAP.PUBLIC;
   const userId = options?.userId;
+  const fallbackLlmModel = getFallbackLlmModel();
   const isSuperAdmin = userRole === USER_ROLE_MAP.SUPER_ADMIN;
   const roleSettings = await roleSettingsRepository.getByRole(userRole);
 
@@ -114,25 +180,70 @@ export async function callLLM(
   }
 
   if (!isSuperAdmin && userId) {
-    const budgetCap = roleSettings.dailyBudgetCap;
-    if (budgetCap <= 0) {
+    const now = new Date();
+    const budgetChecks: Array<{
+      cap: number;
+      exceededCode: string;
+      exceededMessage: string;
+      getWindowStartAt: () => Promise<Date>;
+    }> = [
+      {
+        cap: roleSettings.dailyBudgetCap,
+        exceededCode: 'DAILY_BUDGET_EXCEEDED',
+        exceededMessage: 'Daily budget cap reached',
+        getWindowStartAt: async () => startOfDay(now)
+      },
+      {
+        cap: roleSettings.weeklyBudgetCap,
+        exceededCode: 'WEEKLY_BUDGET_EXCEEDED',
+        exceededMessage: 'Weekly budget cap reached',
+        getWindowStartAt: async () => {
+          const weeklyWindow = await roleBudgetWindowRepository.getActiveWindow(
+            userId,
+            userRole,
+            'weekly',
+            now
+          );
+
+          return weeklyWindow.windowStartAt;
+        }
+      },
+      {
+        cap: roleSettings.monthlyBudgetCap,
+        exceededCode: 'MONTHLY_BUDGET_EXCEEDED',
+        exceededMessage: 'Monthly budget cap reached',
+        getWindowStartAt: async () => {
+          const monthlyWindow = await roleBudgetWindowRepository.getActiveWindow(
+            userId,
+            userRole,
+            'monthly',
+            now
+          );
+
+          return monthlyWindow.windowStartAt;
+        }
+      }
+    ].filter(item => item.cap > 0);
+
+    if (budgetChecks.length === 0) {
       throw new LLMError(
-        'Daily budget cap is not configured',
+        'Role budget caps are not configured',
         LLM_PROVIDER_MAP.OPENAI,
-        'DAILY_BUDGET_DISABLED'
+        'ROLE_BUDGET_DISABLED'
       );
     }
 
-    const usedToday = await usageLogRepository.getDailyCostByProvider(
-      userId,
-      PROVIDER_TYPE_MAP.PLATFORM
-    );
-    if (usedToday >= budgetCap) {
-      throw new LLMError(
-        'Daily budget cap reached',
-        LLM_PROVIDER_MAP.OPENAI,
-        'DAILY_BUDGET_EXCEEDED'
+    for (const check of budgetChecks) {
+      const windowStartAt = await check.getWindowStartAt();
+      const periodUsage = await usageLogRepository.getCostByProviderSince(
+        userId,
+        PROVIDER_TYPE_MAP.PLATFORM,
+        windowStartAt
       );
+
+      if (periodUsage >= check.cap) {
+        throw new LLMError(check.exceededMessage, LLM_PROVIDER_MAP.OPENAI, check.exceededCode);
+      }
     }
   }
 
@@ -145,12 +256,32 @@ export async function callLLM(
     );
   }
 
-  const scenarioModel = options?.scenario
-    ? await resolveScenarioModel(userRole, options.scenario)
-    : null;
+  let scenarioModel: Awaited<ReturnType<typeof resolveScenarioModel>> = null;
 
-  const defaultProvider = mapPlatformProviderToLlmProvider(roleSettings.platformProvider);
-  const provider = scenarioModel?.provider ?? options?.provider ?? defaultProvider;
+  if (options?.scenario) {
+    try {
+      scenarioModel = await resolveScenarioModel(userRole, options.scenario);
+    } catch (error) {
+      console.warn(
+        `Failed to resolve scenario model (${options.scenario}), using runtime fallback model:`,
+        error instanceof Error ? error.message : error
+      );
+      scenarioModel = null;
+    }
+  }
+
+  const scenarioPhase = options?.scenarioPhase ?? 'primary';
+  const scenarioPhaseModel = scenarioModel
+    ? scenarioPhase === 'retry'
+      ? (scenarioModel.retry ?? scenarioModel.primary)
+      : scenarioModel.primary
+    : null;
+  const useFallbackModel = Boolean(options?.scenario) && !scenarioPhaseModel;
+  const provider = useFallbackModel
+    ? fallbackLlmModel.provider
+    : (scenarioPhaseModel?.provider ?? options?.provider ?? fallbackLlmModel.provider);
+  const modelFromFallbackProvider =
+    provider === fallbackLlmModel.provider ? fallbackLlmModel.model : undefined;
 
   const apiKey = getPlatformKey(provider);
   if (!apiKey) {
@@ -161,7 +292,9 @@ export async function callLLM(
 
   const mergedRequest: LLMRequest = {
     ...request,
-    model: scenarioModel?.model ?? request.model,
+    model: useFallbackModel
+      ? fallbackLlmModel.model
+      : (scenarioPhaseModel?.model ?? request.model ?? modelFromFallbackProvider),
     temperature: scenarioModel?.temperature ?? request.temperature,
     maxTokens: scenarioModel?.maxTokens ?? request.maxTokens,
     responseFormat: scenarioModel?.responseFormat ?? request.responseFormat
@@ -170,13 +303,19 @@ export async function callLLM(
   try {
     const response = await providerInstance.call(mergedRequest, apiKey, PROVIDER_TYPE_MAP.PLATFORM);
 
-    const resolvedCost = scenarioModel
+    const resolvedCost = scenarioPhaseModel
       ? calculateCatalogCost(
           response.tokensUsed,
-          scenarioModel.inputPricePer1mUsd,
-          scenarioModel.outputPricePer1mUsd
+          scenarioPhaseModel.inputPricePer1mUsd,
+          scenarioPhaseModel.outputPricePer1mUsd
         )
-      : response.cost;
+      : useFallbackModel
+        ? calculateCatalogCost(
+            response.tokensUsed,
+            fallbackLlmModel.price.input,
+            fallbackLlmModel.price.output
+          )
+        : response.cost;
 
     await systemConfigRepository.incrementBudgetUsed(resolvedCost);
 

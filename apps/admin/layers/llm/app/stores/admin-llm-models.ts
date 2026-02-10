@@ -4,14 +4,10 @@ import { adminLlmModelsApi } from '../infrastructure/admin-llm-models.api';
 export const useAdminLlmModelsStore = defineStore('AdminLlmModelsStore', {
   state: (): {
     items: LlmModel[];
-    loading: boolean;
     saving: boolean;
-    error: Error | null;
   } => ({
     items: [],
-    loading: false,
-    saving: false,
-    error: null
+    saving: false
   }),
 
   getters: {
@@ -20,33 +16,29 @@ export const useAdminLlmModelsStore = defineStore('AdminLlmModelsStore', {
   },
 
   actions: {
-    async fetchAll(): Promise<LlmModel[]> {
-      this.loading = true;
-      this.error = null;
+    toError(error: unknown, fallback: string): Error {
+      return error instanceof Error ? error : new Error(fallback);
+    },
 
+    async fetchAll(): Promise<LlmModel[]> {
       try {
         const response = await adminLlmModelsApi.fetchAll();
         this.items = response.items;
         return response.items;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch models');
-        throw this.error;
-      } finally {
-        this.loading = false;
+        throw this.toError(err, 'Failed to fetch models');
       }
     },
 
     async create(input: LlmModelCreateInput): Promise<LlmModel> {
       this.saving = true;
-      this.error = null;
 
       try {
         const created = await adminLlmModelsApi.create(input);
         this.items.unshift(created);
         return created;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to create model');
-        throw this.error;
+        throw this.toError(err, 'Failed to create model');
       } finally {
         this.saving = false;
       }
@@ -54,7 +46,6 @@ export const useAdminLlmModelsStore = defineStore('AdminLlmModelsStore', {
 
     async update(id: string, input: LlmModelUpdateInput): Promise<LlmModel> {
       this.saving = true;
-      this.error = null;
 
       try {
         const updated = await adminLlmModelsApi.update(id, input);
@@ -64,8 +55,7 @@ export const useAdminLlmModelsStore = defineStore('AdminLlmModelsStore', {
         }
         return updated;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to update model');
-        throw this.error;
+        throw this.toError(err, 'Failed to update model');
       } finally {
         this.saving = false;
       }
@@ -73,14 +63,12 @@ export const useAdminLlmModelsStore = defineStore('AdminLlmModelsStore', {
 
     async delete(id: string): Promise<void> {
       this.saving = true;
-      this.error = null;
 
       try {
         await adminLlmModelsApi.delete(id);
         this.items = this.items.filter(item => item.id !== id);
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to delete model');
-        throw this.error;
+        throw this.toError(err, 'Failed to delete model');
       } finally {
         this.saving = false;
       }
@@ -88,9 +76,7 @@ export const useAdminLlmModelsStore = defineStore('AdminLlmModelsStore', {
 
     $reset() {
       this.items = [];
-      this.loading = false;
       this.saving = false;
-      this.error = null;
     }
   }
 });

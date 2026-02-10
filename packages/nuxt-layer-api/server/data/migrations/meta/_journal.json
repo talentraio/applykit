@@ -71,6 +71,27 @@
       "when": 1770675637000,
       "tag": "0009_admin_llm_routing",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1770762000000,
+      "tag": "0010_resume_parse_retry_models",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1770787200000,
+      "tag": "0011_remove_role_platform_provider",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1770873600000,
+      "tag": "0012_role_budget_windows",
+      "breakpoints": true
     }
   ]
 }

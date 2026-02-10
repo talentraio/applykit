@@ -26,7 +26,16 @@ export default defineNuxtConfig({
       'postgresql://postgres:postgres@localhost:5432/resume_editor',
     llm: {
       openaiApiKey: '',
-      geminiApiKey: ''
+      geminiApiKey: '',
+      fallbackLlmModel: {
+        provider: process.env.NUXT_LLM_FALLBACK_PROVIDER ?? 'openai',
+        model: process.env.NUXT_LLM_FALLBACK_MODEL ?? 'gpt-4.1-mini',
+        price: {
+          input: Number(process.env.NUXT_LLM_FALLBACK_PRICE_INPUT ?? '0.4'),
+          output: Number(process.env.NUXT_LLM_FALLBACK_PRICE_OUTPUT ?? '1.6'),
+          cache: Number(process.env.NUXT_LLM_FALLBACK_PRICE_CACHE ?? '0')
+        }
+      }
     },
     resume: {
       // Maximum number of versions to keep per resume

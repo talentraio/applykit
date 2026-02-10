@@ -18,14 +18,10 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
     users: AdminUser[];
     total: number;
     detail: AdminUserDetail | null;
-    loading: boolean;
-    error: Error | null;
   } => ({
     users: [],
     total: 0,
-    detail: null,
-    loading: false,
-    error: null
+    detail: null
   }),
 
   getters: {
@@ -33,23 +29,21 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
   },
 
   actions: {
+    toError(error: unknown, fallback: string): Error {
+      return error instanceof Error ? error : new Error(fallback);
+    },
+
     /**
      * Fetch users list
      */
     async fetchUsers(params: AdminUsersQuery = {}): Promise<AdminUsersResponse> {
-      this.loading = true;
-      this.error = null;
-
       try {
         const response = await adminUsersApi.fetchAll(params);
         this.users = response.users;
         this.total = response.total;
         return response;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch users');
-        throw this.error;
-      } finally {
-        this.loading = false;
+        throw this.toError(err, 'Failed to fetch users');
       }
     },
 
@@ -57,18 +51,12 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
      * Fetch user detail
      */
     async fetchUserDetail(id: string): Promise<AdminUserDetail> {
-      this.loading = true;
-      this.error = null;
-
       try {
         const detail = await adminUsersApi.fetchById(id);
         this.detail = detail;
         return detail;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch user detail');
-        throw this.error;
-      } finally {
-        this.loading = false;
+        throw this.toError(err, 'Failed to fetch user detail');
       }
     },
 
@@ -76,9 +64,6 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
      * Update user role
      */
     async updateRole(id: string, role: AdminUser['role']): Promise<AdminUser> {
-      this.loading = true;
-      this.error = null;
-
       try {
         const updated = await adminUsersApi.updateRole(id, role);
         const index = this.users.findIndex(user => user.id === updated.id);
@@ -97,10 +82,7 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
 
         return updated;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to update user role');
-        throw this.error;
-      } finally {
-        this.loading = false;
+        throw this.toError(err, 'Failed to update user role');
       }
     },
 
@@ -108,17 +90,11 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
      * Invite a new user
      */
     async inviteUser(input: AdminUserInviteInput): Promise<AdminUser> {
-      this.loading = true;
-      this.error = null;
-
       try {
         const created = await adminUsersApi.inviteUser(input);
         return created;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to invite user');
-        throw this.error;
-      } finally {
-        this.loading = false;
+        throw this.toError(err, 'Failed to invite user');
       }
     },
 
@@ -126,9 +102,6 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
      * Delete user (mark as deleted)
      */
     async deleteUser(id: string): Promise<AdminUser> {
-      this.loading = true;
-      this.error = null;
-
       try {
         const deleted = await adminUsersApi.deleteUser(id);
         this.users = this.users.filter(user => user.id !== deleted.id);
@@ -143,10 +116,7 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
 
         return deleted;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to delete user');
-        throw this.error;
-      } finally {
-        this.loading = false;
+        throw this.toError(err, 'Failed to delete user');
       }
     },
 
@@ -154,9 +124,6 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
      * Update user status
      */
     async updateStatus(id: string, input: AdminUserStatusInput): Promise<AdminUser> {
-      this.loading = true;
-      this.error = null;
-
       try {
         const updated = await adminUsersApi.updateStatus(id, input);
         const index = this.users.findIndex(user => user.id === updated.id);
@@ -175,10 +142,7 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
 
         return updated;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to update user status');
-        throw this.error;
-      } finally {
-        this.loading = false;
+        throw this.toError(err, 'Failed to update user status');
       }
     },
 
@@ -189,8 +153,6 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
       this.users = [];
       this.total = 0;
       this.detail = null;
-      this.loading = false;
-      this.error = null;
     }
   }
 });

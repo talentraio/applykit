@@ -13,9 +13,11 @@ export {
 const nullableTemperature = z.number().min(0).max(2).nullable().optional();
 const nullableMaxTokens = z.number().int().positive().nullable().optional();
 const nullableResponseFormat = LlmResponseFormatSchema.nullable().optional();
+const nullableModelId = z.string().uuid().nullable().optional();
 
 export const RoutingAssignmentInputSchema = z.object({
   modelId: z.string().uuid(),
+  retryModelId: nullableModelId,
   temperature: nullableTemperature,
   maxTokens: nullableMaxTokens,
   responseFormat: nullableResponseFormat

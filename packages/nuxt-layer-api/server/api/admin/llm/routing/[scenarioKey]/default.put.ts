@@ -1,10 +1,10 @@
-import { LlmScenarioKeySchema, RoleSchema, RoutingAssignmentInputSchema } from '@int/schema';
-import { llmRoutingRepository } from '../../../../../../../data/repositories';
+import { LlmScenarioKeySchema, RoutingAssignmentInputSchema } from '@int/schema';
+import { llmRoutingRepository } from '../../../../../data/repositories';
 
 /**
- * PUT /api/admin/llm/routing/:scenarioKey/roles/:role
+ * PUT /api/admin/llm/routing/:scenarioKey/default
  *
- * Upsert role-level override for scenario.
+ * Upsert default model assignment for scenario.
  */
 export default defineEventHandler(async event => {
   await requireSuperAdmin(event);
@@ -15,15 +15,6 @@ export default defineEventHandler(async event => {
     throw createError({
       statusCode: 400,
       message: 'Invalid scenario key'
-    });
-  }
-
-  const roleParam = getRouterParam(event, 'role');
-  const roleValidation = RoleSchema.safeParse(roleParam);
-  if (!roleValidation.success) {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid role'
     });
   }
 
@@ -54,11 +45,17 @@ export default defineEventHandler(async event => {
     });
   }
 
-  const item = await llmRoutingRepository.upsertRoleOverride(
-    scenarioKey,
-    roleValidation.data,
-    validation.data
-  );
+  if (validation.data.retryModelId) {
+    const retryModelActive = await llmRoutingRepository.isModelActive(validation.data.retryModelId);
+    if (!retryModelActive) {
+      throw createError({
+        statusCode: 409,
+        message: 'Retry model is inactive or does not exist'
+      });
+    }
+  }
+
+  const item = await llmRoutingRepository.upsertScenarioDefault(scenarioKey, validation.data);
   if (!item) {
     throw createError({
       statusCode: 404,

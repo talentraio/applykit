@@ -118,16 +118,6 @@ export const PROVIDER_TYPE_MAP = {
 
 export const PROVIDER_TYPE_VALUES = [PROVIDER_TYPE_MAP.PLATFORM, PROVIDER_TYPE_MAP.BYOK] as const;
 
-export const PLATFORM_PROVIDER_MAP = {
-  OPENAI: 'openai',
-  GEMINI_FLASH: 'gemini_flash'
-} as const;
-
-export const PLATFORM_PROVIDER_VALUES = [
-  PLATFORM_PROVIDER_MAP.OPENAI,
-  PLATFORM_PROVIDER_MAP.GEMINI_FLASH
-] as const;
-
 export const EXPORT_FORMAT_MAP = {
   ATS: 'ats',
   HUMAN: 'human'

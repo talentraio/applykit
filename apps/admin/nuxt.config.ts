@@ -15,6 +15,7 @@ export default defineNuxtConfig({
     './layers/_base',
     './layers/auth',
     './layers/users',
+    './layers/llm',
     './layers/system',
     './layers/roles'
   ],

@@ -1,5 +1,5 @@
 import { LlmScenarioKeySchema, RoleSchema } from '@int/schema';
-import { llmRoutingRepository } from '../../../../../../../data/repositories';
+import { llmRoutingRepository } from '../../../../../../data/repositories';
 
 /**
  * DELETE /api/admin/llm/routing/:scenarioKey/roles/:role

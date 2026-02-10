@@ -14,12 +14,12 @@
       </div>
 
       <UAlert
-        v-else-if="detailError"
+        v-else-if="detailErrorMessage"
         color="error"
         variant="soft"
         icon="i-lucide-alert-circle"
         :title="$t('common.error.generic')"
-        :description="detailError.message"
+        :description="detailErrorMessage"
       />
 
       <template v-else>
@@ -86,8 +86,7 @@ const route = useRoute();
 const { t, te } = useI18n();
 const toast = useToast();
 
-const { detail, loading, error, fetchUserDetail, updateRole, updateStatus, deleteUser } =
-  useAdminUsers();
+const { detail, fetchUserDetail, updateRole, updateStatus, deleteUser } = useAdminUsers();
 
 const userId = computed(() => String(route.params.id));
 
@@ -98,23 +97,33 @@ const updatingStatus = ref(false);
 const isDeleteOpen = ref(false);
 const isDeleting = ref(false);
 
-const isInitialLoading = computed(() => loading.value && !detail.value);
-const detailError = computed(() => (!detail.value ? error.value : null));
+const { pending, error: detailFetchError } = await useAsyncData(
+  'admin-user-detail',
+  () => fetchUserDetail(userId.value),
+  {
+    watch: [userId]
+  }
+);
 
-await callOnce(`admin-user-${userId.value}`, async () => {
-  await fetchUserDetail(userId.value);
+const isInitialLoading = computed(() => pending.value && !detail.value);
+const detailErrorMessage = computed(() => {
+  if (detail.value) {
+    return '';
+  }
+
+  const errorValue = detailFetchError.value;
+  if (!errorValue) {
+    return '';
+  }
+
+  return errorValue instanceof Error ? errorValue.message : t('common.error.generic');
 });
 
-watch(userId, async value => {
+watch(userId, () => {
   pendingRole.value = null;
   updatingRole.value = false;
   pendingBlocked.value = null;
   updatingStatus.value = false;
-  try {
-    await fetchUserDetail(value);
-  } catch {
-    // Error is already exposed via store state
-  }
 });
 
 const user = computed(() => {

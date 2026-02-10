@@ -17,6 +17,7 @@ export default defineEventHandler(async event => {
   if (!idValidation.success) {
     throw createError({
       statusCode: 400,
+      statusMessage: 'Bad Request',
       message: 'Invalid model id'
     });
   }
@@ -26,6 +27,7 @@ export default defineEventHandler(async event => {
   if (result === 'not_found') {
     throw createError({
       statusCode: 404,
+      statusMessage: 'Not Found',
       message: 'Model not found'
     });
   }
@@ -33,6 +35,7 @@ export default defineEventHandler(async event => {
   if (result === 'referenced') {
     throw createError({
       statusCode: 409,
+      statusMessage: 'Conflict',
       message: 'Model is currently used in routing configuration'
     });
   }

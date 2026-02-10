@@ -14,15 +14,11 @@ export const useAdminRolesStore = defineStore('AdminRolesStore', {
   state: (): {
     roles: AdminRoleSettings[];
     current: AdminRoleSettings | null;
-    loading: boolean;
     saving: boolean;
-    error: Error | null;
   } => ({
     roles: [],
     current: null,
-    loading: false,
-    saving: false,
-    error: null
+    saving: false
   }),
 
   getters: {
@@ -30,35 +26,27 @@ export const useAdminRolesStore = defineStore('AdminRolesStore', {
   },
 
   actions: {
-    async fetchRoles(): Promise<AdminRolesResponse> {
-      this.loading = true;
-      this.error = null;
+    toError(error: unknown, fallback: string): Error {
+      return error instanceof Error ? error : new Error(fallback);
+    },
 
+    async fetchRoles(): Promise<AdminRolesResponse> {
       try {
         const response = await adminRolesApi.fetchAll();
         this.roles = response.roles;
         return response;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch roles');
-        throw this.error;
-      } finally {
-        this.loading = false;
+        throw this.toError(err, 'Failed to fetch roles');
       }
     },
 
     async fetchRole(role: AdminRoleSettings['role']): Promise<AdminRoleSettings> {
-      this.loading = true;
-      this.error = null;
-
       try {
         const roleSettings = await adminRolesApi.fetchByRole(role);
         this.current = roleSettings;
         return roleSettings;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch role');
-        throw this.error;
-      } finally {
-        this.loading = false;
+        throw this.toError(err, 'Failed to fetch role');
       }
     },
 
@@ -67,7 +55,6 @@ export const useAdminRolesStore = defineStore('AdminRolesStore', {
       input: AdminRoleSettingsInput
     ): Promise<AdminRoleSettings> {
       this.saving = true;
-      this.error = null;
 
       try {
         const updated = await adminRolesApi.updateRole(role, input);
@@ -83,8 +70,7 @@ export const useAdminRolesStore = defineStore('AdminRolesStore', {
 
         return updated;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to update role');
-        throw this.error;
+        throw this.toError(err, 'Failed to update role');
       } finally {
         this.saving = false;
       }
@@ -93,9 +79,7 @@ export const useAdminRolesStore = defineStore('AdminRolesStore', {
     $reset() {
       this.roles = [];
       this.current = null;
-      this.loading = false;
       this.saving = false;
-      this.error = null;
     }
   }
 });

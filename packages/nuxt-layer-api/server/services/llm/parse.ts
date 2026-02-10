@@ -967,7 +967,8 @@ export async function parseResumeWithLLM(
           userId,
           role,
           provider,
-          scenario: LLM_SCENARIO_KEY_MAP.RESUME_PARSE
+          scenario: LLM_SCENARIO_KEY_MAP.RESUME_PARSE,
+          scenarioPhase: attempts > 1 ? 'retry' : 'primary'
         }
       );
 

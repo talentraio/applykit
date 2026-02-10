@@ -34,16 +34,6 @@ export type UseAdminUsersReturn = {
   detail: ComputedRef<AdminUserDetail | null>;
 
   /**
-   * Loading state
-   */
-  loading: ComputedRef<boolean>;
-
-  /**
-   * Error state
-   */
-  error: ComputedRef<Error | null>;
-
-  /**
    * Whether list has users
    */
   hasUsers: ComputedRef<boolean>;
@@ -86,8 +76,6 @@ export function useAdminUsers(): UseAdminUsersReturn {
     users: computed(() => store.users),
     total: computed(() => store.total),
     detail: computed(() => store.detail),
-    loading: computed(() => store.loading),
-    error: computed(() => store.error),
     hasUsers: computed(() => store.hasUsers),
     fetchUsers: (params?: AdminUsersQuery) => store.fetchUsers(params),
     fetchUserDetail: (id: string) => store.fetchUserDetail(id),

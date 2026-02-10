@@ -6,7 +6,6 @@ import {
   LLM_RESPONSE_FORMAT_MAP,
   LLM_SCENARIO_KEY_MAP,
   OPERATION_MAP,
-  PLATFORM_PROVIDER_MAP,
   PROVIDER_TYPE_MAP,
   SOURCE_FILE_TYPE_MAP,
   USAGE_CONTEXT_MAP,
@@ -59,10 +58,6 @@ export type UsageContext = z.infer<typeof UsageContextSchema>;
 // Provider types for usage tracking
 export const ProviderTypeSchema = z.nativeEnum(PROVIDER_TYPE_MAP);
 export type ProviderType = z.infer<typeof ProviderTypeSchema>;
-
-// Platform providers (specific LLM models for platform use)
-export const PlatformProviderSchema = z.nativeEnum(PLATFORM_PROVIDER_MAP);
-export type PlatformProvider = z.infer<typeof PlatformProviderSchema>;
 
 // Export format types
 export const ExportFormatSchema = z.nativeEnum(EXPORT_FORMAT_MAP);

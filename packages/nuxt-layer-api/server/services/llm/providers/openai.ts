@@ -5,44 +5,82 @@ import OpenAI from 'openai';
 import { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from '../types';
 
 /**
- * OpenAI Provider
+ * OpenAI provider.
  *
- * Implements LLM provider interface for OpenAI API
- * Supports GPT-4.1, GPT-4o, GPT-4o mini models
+ * Model resolution order:
+ * 1) Explicit `request.model`
+ * 2) `runtimeConfig.llm.fallbackLlmModel` when provider is `openai`
  *
- * Pricing (as of early 2026, standard input/output rates):
- * - gpt-4.1: $2.00/1M input tokens, $8.00/1M output tokens
- * - gpt-4.1-mini: $0.40/1M input tokens, $1.60/1M output tokens
- * - gpt-4.1-nano: $0.10/1M input tokens, $0.40/1M output tokens
- * - gpt-4o: $2.50/1M input tokens, $10.00/1M output tokens
- * - gpt-4o-mini: $0.15/1M input tokens, $0.60/1M output tokens
- *
- * Related: T047, TX021
+ * Cost estimation uses fallback model input/output prices from runtime config.
  */
 
-/**
- * OpenAI model pricing (per 1M tokens, standard rates)
- * Note: cached input and Batch API discounts are not accounted for here.
- */
-const PRICING: Record<string, { input: number; output: number }> = {
-  'gpt-4.1': { input: 2.0, output: 8.0 },
-  'gpt-4.1-2025-04-14': { input: 2.0, output: 8.0 },
-  'gpt-4.1-mini': { input: 0.4, output: 1.6 },
-  'gpt-4.1-mini-2025-04-14': { input: 0.4, output: 1.6 },
-  'gpt-4.1-nano': { input: 0.1, output: 0.4 },
-  'gpt-4.1-nano-2025-04-14': { input: 0.1, output: 0.4 },
-  'gpt-4o': { input: 2.5, output: 10.0 },
-  'gpt-4o-2024-11-20': { input: 2.5, output: 10.0 },
-  'gpt-4o-2024-08-06': { input: 2.5, output: 10.0 },
-  'gpt-4o-2024-05-13': { input: 2.5, output: 10.0 },
-  'gpt-4o-mini': { input: 0.15, output: 0.6 },
-  'gpt-4o-mini-2024-07-18': { input: 0.15, output: 0.6 }
+type FallbackModelConfig = {
+  model: string;
+  price: {
+    input: number;
+    output: number;
+  };
 };
 
-/**
- * Default model to use
- */
-const DEFAULT_MODEL = 'gpt-4.1-mini';
+const toNonNegativeNumber = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+
+  return null;
+};
+
+const getFallbackModelConfig = (): FallbackModelConfig | null => {
+  const runtimeConfig = useRuntimeConfig();
+  const fallbackConfig = runtimeConfig.llm?.fallbackLlmModel;
+
+  if (fallbackConfig?.provider !== LLM_PROVIDER_MAP.OPENAI) {
+    return null;
+  }
+
+  if (typeof fallbackConfig.model !== 'string' || fallbackConfig.model.trim().length === 0) {
+    return null;
+  }
+
+  const input = toNonNegativeNumber(fallbackConfig.price?.input);
+  const output = toNonNegativeNumber(fallbackConfig.price?.output);
+
+  if (input === null || output === null) {
+    return null;
+  }
+
+  return {
+    model: fallbackConfig.model.trim(),
+    price: {
+      input,
+      output
+    }
+  };
+};
+
+const resolveModel = (requestedModel?: string): string => {
+  if (typeof requestedModel === 'string' && requestedModel.trim().length > 0) {
+    return requestedModel.trim();
+  }
+
+  const fallbackModel = getFallbackModelConfig();
+  if (fallbackModel) {
+    return fallbackModel.model;
+  }
+
+  throw new LLMError(
+    'No OpenAI model configured. Set llm.fallbackLlmModel or pass request.model.',
+    LLM_PROVIDER_MAP.OPENAI,
+    'NO_MODEL_CONFIGURED'
+  );
+};
 
 /**
  * OpenAI LLM Provider Implementation
@@ -52,15 +90,16 @@ export class OpenAIProvider implements ILLMProvider {
 
   /**
    * Validate OpenAI API key
-   * Makes a minimal API call to verify the key works
+   * Makes a minimal API call with resolved model to verify the key works.
    */
   async validateKey(apiKey: string): Promise<boolean> {
     try {
       const client = new OpenAI({ apiKey });
+      const model = resolveModel();
 
       // Make minimal API call to verify key
       await client.chat.completions.create({
-        model: DEFAULT_MODEL,
+        model,
         messages: [{ role: 'user', content: 'test' }],
         max_tokens: 1
       });
@@ -78,7 +117,7 @@ export class OpenAIProvider implements ILLMProvider {
   }
 
   /**
-   * Call OpenAI API
+   * Call OpenAI chat completions API.
    */
   async call(
     request: LLMRequest,
@@ -86,7 +125,7 @@ export class OpenAIProvider implements ILLMProvider {
     providerType: ProviderType
   ): Promise<LLMResponse> {
     const client = new OpenAI({ apiKey });
-    const model = request.model || DEFAULT_MODEL;
+    const model = resolveModel(request.model);
     const responseFormat =
       request.responseFormat === 'json' ? ({ type: 'json_object' } as const) : undefined;
     const tokenLimitField =
@@ -147,23 +186,23 @@ export class OpenAIProvider implements ILLMProvider {
   }
 
   /**
-   * Get default model
+   * Get default model resolved from runtime config.
    */
   getDefaultModel(): string {
-    return DEFAULT_MODEL;
+    return resolveModel();
   }
 
   /**
-   * Calculate cost based on token usage
-   * Note: This is a simplified calculation assuming 50/50 split between input/output
-   * In reality, you'd track input and output tokens separately
+   * Calculate approximate cost based on token usage.
+   * Uses fallback model pricing from runtime config.
    */
-  calculateCost(tokensUsed: number, model: string): number {
-    const pricing = PRICING[model] || PRICING[DEFAULT_MODEL];
-
-    if (!pricing) {
+  calculateCost(tokensUsed: number, _model: string): number {
+    const fallbackModel = getFallbackModelConfig();
+    if (!fallbackModel) {
       return 0;
     }
+
+    const pricing = fallbackModel.price;
 
     // Estimate: assume 50% input, 50% output tokens
     const inputTokens = tokensUsed * 0.5;
