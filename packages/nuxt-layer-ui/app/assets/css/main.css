@@ -1,6 +1,39 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
+@layer base {
+  :where(
+    button:not(:disabled),
+    a[href]:not([aria-disabled='true']),
+    [role='button']:not([aria-disabled='true'])
+  ) {
+    cursor: pointer !important;
+  }
+
+  :where(
+    button:not(:disabled),
+    a[href]:not([aria-disabled='true']),
+    [role='button']:not([aria-disabled='true'])
+  )::before,
+  :where(
+    button:not(:disabled),
+    a[href]:not([aria-disabled='true']),
+    [role='button']:not([aria-disabled='true'])
+  )::after,
+  :where(
+      button:not(:disabled),
+      a[href]:not([aria-disabled='true']),
+      [role='button']:not([aria-disabled='true'])
+    )
+    * {
+    cursor: pointer !important;
+  }
+
+  :where(button:disabled, [aria-disabled='true']) {
+    cursor: not-allowed;
+  }
+}
+
 /* Layout dimensions - used across app for consistent spacing */
 :root {
   --layout-header-height: 64px; /* h-16 in Tailwind */

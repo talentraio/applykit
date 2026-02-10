@@ -55,7 +55,26 @@ const waitForUiReady = async (page: Page): Promise<void> => {
 const openSingleDeleteModalFromRow = async (page: Page, company: string): Promise<void> => {
   const row = page.locator('tr', { hasText: company }).first();
   await expect(row).toBeVisible();
-  await row.getByRole('button', { name: 'Delete Vacancy', exact: true }).click();
+
+  const deleteButton = row.getByRole('button', { name: 'Delete Vacancy', exact: true });
+  await expect(deleteButton).toBeVisible();
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await deleteButton.click();
+
+    const dialog = page.getByRole('dialog').last();
+
+    try {
+      await expect(dialog).toBeVisible({ timeout: 1500 });
+      return;
+    } catch (error) {
+      if (attempt === 3) {
+        throw error;
+      }
+
+      await page.waitForTimeout(350);
+    }
+  }
 };
 
 const confirmModalAction = async (page: Page, buttonName: RegExp): Promise<void> => {

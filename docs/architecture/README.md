@@ -19,7 +19,7 @@ This folder documents product + system architecture decisions for ApplyKit.
 
 1. **Monorepo layout & internal layers/packages** → `monorepo.md`
 2. **End-to-end data flow** (auth → resume → vacancy → generation → export) → `data-flow.md`
-3. **Security & privacy model** (BYOK, roles, rate limits, caching) → `security-privacy.md`
+3. **Security & privacy model** (platform-managed keys, roles, rate limits, caching) → `security-privacy.md`
 4. **Homepage structure (marketing-first)** → `homepage.md`
 
 ## Where new decisions go

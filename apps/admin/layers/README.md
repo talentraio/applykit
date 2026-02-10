@@ -9,6 +9,8 @@ apps/admin/layers/
 ├── _base/          # Shared foundation (must load first)
 ├── auth/           # Admin authentication & authorization
 ├── users/          # User management (list, edit roles, view usage)
+├── roles/          # Role settings and budget controls
+├── llm/            # LLM model catalog and scenario routing
 └── system/         # System settings & platform controls
 ```
 
@@ -24,7 +26,9 @@ export default defineNuxtConfig({
     './layers/_base', // 1. Base layer (shared utilities)
     './layers/auth', // 2. Auth layer (admin login, logout)
     './layers/users', // 3. Users layer (user management)
-    './layers/system' // 4. System layer (platform settings)
+    './layers/llm', // 4. LLM layer (models + routing)
+    './layers/system', // 5. System layer (platform settings)
+    './layers/roles' // 6. Roles layer
   ]
 });
 ```
@@ -151,6 +155,25 @@ System settings and platform controls.
 import { useSystemStore } from '@admin/system/stores/useSystemStore';
 ```
 
+### `llm` Layer
+
+**Alias**: `@admin/llm`
+
+LLM management for platform administrators.
+
+**Responsibilities**:
+
+- LLM model catalog CRUD (`/llm/models`)
+- LLM scenario routing configuration (`/llm/routing`)
+- Role-level model overrides per scenario
+
+**Usage**:
+
+```typescript
+// Import from llm layer
+import { useAdminLlmModels } from '@admin/llm/app/composables/useAdminLlmModels';
+```
+
 ## Nuxt Layer Conventions
 
 ### Auto-Imports
@@ -191,7 +214,7 @@ Each layer is isolated and can:
 
 1. External packages (`@int/ui`, `@int/api`)
 2. `_base` layer (shared foundation)
-3. Feature layers (auth, users, system)
+3. Feature layers (auth, users, llm, system, roles)
 
 ## Development Workflow
 

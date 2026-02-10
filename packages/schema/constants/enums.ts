@@ -53,6 +53,40 @@ export const LLM_PROVIDER_MAP = {
 
 export const LLM_PROVIDER_VALUES = [LLM_PROVIDER_MAP.OPENAI, LLM_PROVIDER_MAP.GEMINI] as const;
 
+export const LLM_MODEL_STATUS_MAP = {
+  ACTIVE: 'active',
+  DISABLED: 'disabled',
+  ARCHIVED: 'archived'
+} as const;
+
+export const LLM_MODEL_STATUS_VALUES = [
+  LLM_MODEL_STATUS_MAP.ACTIVE,
+  LLM_MODEL_STATUS_MAP.DISABLED,
+  LLM_MODEL_STATUS_MAP.ARCHIVED
+] as const;
+
+export const LLM_SCENARIO_KEY_MAP = {
+  RESUME_PARSE: 'resume_parse',
+  RESUME_ADAPTATION: 'resume_adaptation',
+  COVER_LETTER_GENERATION: 'cover_letter_generation'
+} as const;
+
+export const LLM_SCENARIO_KEY_VALUES = [
+  LLM_SCENARIO_KEY_MAP.RESUME_PARSE,
+  LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION,
+  LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION
+] as const;
+
+export const LLM_RESPONSE_FORMAT_MAP = {
+  TEXT: 'text',
+  JSON: 'json'
+} as const;
+
+export const LLM_RESPONSE_FORMAT_VALUES = [
+  LLM_RESPONSE_FORMAT_MAP.TEXT,
+  LLM_RESPONSE_FORMAT_MAP.JSON
+] as const;
+
 export const OPERATION_MAP = {
   PARSE: 'parse',
   GENERATE: 'generate',
@@ -83,16 +117,6 @@ export const PROVIDER_TYPE_MAP = {
 } as const;
 
 export const PROVIDER_TYPE_VALUES = [PROVIDER_TYPE_MAP.PLATFORM, PROVIDER_TYPE_MAP.BYOK] as const;
-
-export const PLATFORM_PROVIDER_MAP = {
-  OPENAI: 'openai',
-  GEMINI_FLASH: 'gemini_flash'
-} as const;
-
-export const PLATFORM_PROVIDER_VALUES = [
-  PLATFORM_PROVIDER_MAP.OPENAI,
-  PLATFORM_PROVIDER_MAP.GEMINI_FLASH
-] as const;
 
 export const EXPORT_FORMAT_MAP = {
   ATS: 'ats',

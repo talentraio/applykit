@@ -16,11 +16,6 @@ export type GenerateOptions = {
    * Preferred LLM provider
    */
   provider?: LLMProvider;
-
-  /**
-   * BYOK API key (if using bring-your-own-key)
-   */
-  apiKey?: string;
 };
 
 /**
@@ -37,13 +32,6 @@ export const generationApi = {
    * Generate a tailored resume for a vacancy
    */
   async generate(vacancyId: string, options: GenerateOptions = {}): Promise<Generation> {
-    const headers: Record<string, string> = {};
-
-    // Add BYOK key to headers if provided
-    if (options.apiKey) {
-      headers['x-api-key'] = options.apiKey;
-    }
-
     const body: Record<string, unknown> = {};
     if (options.resumeId) {
       body.resumeId = options.resumeId;
@@ -54,7 +42,6 @@ export const generationApi = {
 
     return await useApi(`${baseUrl}/${vacancyId}/generate`, {
       method: 'POST',
-      headers,
       body
     });
   },

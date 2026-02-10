@@ -22,16 +22,6 @@
         </UBadge>
       </div>
       <div class="flex items-center justify-between">
-        <span class="text-muted">{{ $t('admin.roles.fields.byok') }}</span>
-        <UBadge class="w-20 flex justify-center" :color="statusColor(role.byokEnabled)">
-          {{ statusLabel(role.byokEnabled) }}
-        </UBadge>
-      </div>
-      <div class="flex items-center justify-between">
-        <span class="text-muted">{{ $t('admin.roles.fields.provider') }}</span>
-        <span class="font-medium">{{ providerLabel }}</span>
-      </div>
-      <div class="flex items-center justify-between">
         <span class="text-muted">{{ $t('admin.roles.fields.dailyBudget') }}</span>
         <span class="font-medium">{{ budgetLabel }}</span>
       </div>
@@ -47,7 +37,7 @@
  */
 
 import type { RoleSettings } from '@int/schema';
-import { PLATFORM_PROVIDER_MAP, USER_ROLE_MAP } from '@int/schema';
+import { USER_ROLE_MAP } from '@int/schema';
 
 defineOptions({ name: 'RolesRoleCard' });
 
@@ -60,14 +50,6 @@ const { t, te } = useI18n();
 const roleLabel = computed(() => {
   const key = `admin.roles.names.${props.role.role}`;
   return te(key) ? t(key) : props.role.role;
-});
-
-const providerLabel = computed(() => {
-  if (props.role.platformProvider === PLATFORM_PROVIDER_MAP.GEMINI_FLASH) {
-    return t('admin.system.providers.gemini_flash');
-  }
-
-  return t('admin.system.providers.openai');
 });
 
 const statusLabel = (enabled: boolean) =>

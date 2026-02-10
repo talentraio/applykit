@@ -4,7 +4,7 @@ import type { LLMProvider, ProviderType } from '@int/schema';
  * LLM Service Types
  *
  * Defines interfaces for LLM providers and service configuration
- * Supports OpenAI and Gemini with platform keys and BYOK
+ * Supports OpenAI and Gemini with platform-managed keys
  *
  * Related: T046-T049, TX021
  */
@@ -77,7 +77,7 @@ export type LLMResponse = {
   provider: LLMProvider;
 
   /**
-   * Whether platform key or BYOK was used
+   * Provider type used for execution (platform-managed path)
    */
   providerType: ProviderType;
 };
@@ -106,8 +106,8 @@ export type ILLMProvider = {
    * Call the LLM with a request
    *
    * @param request - LLM request configuration
-   * @param apiKey - API key (platform or BYOK)
-   * @param providerType - Whether using platform or BYOK
+   * @param apiKey - Platform API key
+   * @param providerType - Provider source marker for usage logs
    * @returns LLM response with content and usage
    */
   call: (request: LLMRequest, apiKey: string, providerType: ProviderType) => Promise<LLMResponse>;

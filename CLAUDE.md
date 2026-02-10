@@ -44,6 +44,9 @@ other docs/\* relevant to the task.
 
 ## Active Technologies
 
+- TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, NuxtUI v4, Pinia, Zod, Drizzle ORM, date-fns (008-admin-llm-models-management)
+- PostgreSQL (Drizzle schema in `packages/nuxt-layer-api/server/data/`) (008-admin-llm-models-management)
+
 - TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, NuxtUI v4, Pinia, VueUse (`useThrottleFn`), Zod, Drizzle ORM (006-resume-settings-refactoring)
 - PostgreSQL (via Drizzle ORM in `@int/api` layer) (006-resume-settings-refactoring)
 

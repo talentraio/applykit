@@ -24,7 +24,6 @@ type AdminUsageStats = {
   };
   byProvider: {
     platform: number;
-    byok: number;
   };
   totalCost: number;
   uniqueUsers: number;

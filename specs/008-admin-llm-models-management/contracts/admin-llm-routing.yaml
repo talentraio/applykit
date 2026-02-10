@@ -1,0 +1,485 @@
+openapi: 3.0.3
+info:
+  title: Admin LLM Catalog and Routing API
+  version: 1.0.0
+  description: Admin endpoints for LLM model catalog CRUD and scenario routing configuration.
+
+servers:
+  - url: /
+
+paths:
+  /api/admin/llm/models:
+    get:
+      summary: List LLM models
+      tags: [Admin LLM]
+      responses:
+        '200':
+          description: Model list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LlmModel'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Create model
+      tags: [Admin LLM]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LlmModelCreateInput'
+      responses:
+        '201':
+          description: Model created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmModel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Duplicate provider+modelKey conflict
+
+  /api/admin/llm/models/{id}:
+    put:
+      summary: Update model
+      tags: [Admin LLM]
+      parameters:
+        - $ref: '#/components/parameters/ModelId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LlmModelUpdateInput'
+      responses:
+        '200':
+          description: Updated model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmModel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete or archive model
+      tags: [Admin LLM]
+      parameters:
+        - $ref: '#/components/parameters/ModelId'
+      responses:
+        '204':
+          description: Deleted or archived
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Model is referenced by routing
+
+  /api/admin/llm/routing:
+    get:
+      summary: Get routing configuration
+      tags: [Admin LLM]
+      responses:
+        '200':
+          description: Scenario routing configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LlmRoutingItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/admin/llm/routing/{scenarioKey}/default:
+    put:
+      summary: Set default model for scenario
+      tags: [Admin LLM]
+      parameters:
+        - $ref: '#/components/parameters/ScenarioKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutingAssignmentInput'
+      responses:
+        '200':
+          description: Default routing updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmRoutingItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Model invalid/inactive for assignment
+
+  /api/admin/llm/routing/{scenarioKey}/roles/{role}:
+    put:
+      summary: Upsert role override for scenario
+      tags: [Admin LLM]
+      parameters:
+        - $ref: '#/components/parameters/ScenarioKey'
+        - $ref: '#/components/parameters/Role'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutingAssignmentInput'
+      responses:
+        '200':
+          description: Override updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmRoutingItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Model invalid/inactive for assignment
+    delete:
+      summary: Delete role override for scenario
+      tags: [Admin LLM]
+      parameters:
+        - $ref: '#/components/parameters/ScenarioKey'
+        - $ref: '#/components/parameters/Role'
+      responses:
+        '204':
+          description: Override removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    ModelId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ScenarioKey:
+      name: scenarioKey
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/LlmScenarioKey'
+    Role:
+      name: role
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Role'
+
+  schemas:
+    LlmProvider:
+      type: string
+      enum: [openai, gemini]
+
+    Role:
+      type: string
+      enum: [super_admin, friend, public]
+
+    LlmScenarioKey:
+      type: string
+      enum: [resume_parse, resume_adaptation, cover_letter_generation]
+
+    LlmModelStatus:
+      type: string
+      enum: [active, disabled, archived]
+
+    LlmModel:
+      type: object
+      required:
+        - id
+        - provider
+        - modelKey
+        - displayName
+        - status
+        - inputPricePer1mUsd
+        - outputPricePer1mUsd
+        - supportsJson
+        - supportsTools
+        - supportsStreaming
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        provider:
+          $ref: '#/components/schemas/LlmProvider'
+        modelKey:
+          type: string
+        displayName:
+          type: string
+        status:
+          $ref: '#/components/schemas/LlmModelStatus'
+        inputPricePer1mUsd:
+          type: number
+          minimum: 0
+        outputPricePer1mUsd:
+          type: number
+          minimum: 0
+        cachedInputPricePer1mUsd:
+          type: number
+          minimum: 0
+          nullable: true
+        maxContextTokens:
+          type: integer
+          minimum: 1
+          nullable: true
+        maxOutputTokens:
+          type: integer
+          minimum: 1
+          nullable: true
+        supportsJson:
+          type: boolean
+        supportsTools:
+          type: boolean
+        supportsStreaming:
+          type: boolean
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    LlmModelCreateInput:
+      type: object
+      required:
+        - provider
+        - modelKey
+        - displayName
+        - inputPricePer1mUsd
+        - outputPricePer1mUsd
+      properties:
+        provider:
+          $ref: '#/components/schemas/LlmProvider'
+        modelKey:
+          type: string
+        displayName:
+          type: string
+        status:
+          $ref: '#/components/schemas/LlmModelStatus'
+        inputPricePer1mUsd:
+          type: number
+          minimum: 0
+        outputPricePer1mUsd:
+          type: number
+          minimum: 0
+        cachedInputPricePer1mUsd:
+          type: number
+          minimum: 0
+          nullable: true
+        maxContextTokens:
+          type: integer
+          minimum: 1
+          nullable: true
+        maxOutputTokens:
+          type: integer
+          minimum: 1
+          nullable: true
+        supportsJson:
+          type: boolean
+        supportsTools:
+          type: boolean
+        supportsStreaming:
+          type: boolean
+        notes:
+          type: string
+          nullable: true
+
+    LlmModelUpdateInput:
+      type: object
+      additionalProperties: false
+      properties:
+        displayName:
+          type: string
+        status:
+          $ref: '#/components/schemas/LlmModelStatus'
+        inputPricePer1mUsd:
+          type: number
+          minimum: 0
+        outputPricePer1mUsd:
+          type: number
+          minimum: 0
+        cachedInputPricePer1mUsd:
+          type: number
+          minimum: 0
+          nullable: true
+        maxContextTokens:
+          type: integer
+          minimum: 1
+          nullable: true
+        maxOutputTokens:
+          type: integer
+          minimum: 1
+          nullable: true
+        supportsJson:
+          type: boolean
+        supportsTools:
+          type: boolean
+        supportsStreaming:
+          type: boolean
+        notes:
+          type: string
+          nullable: true
+
+    RoutingAssignmentInput:
+      type: object
+      required: [modelId]
+      properties:
+        modelId:
+          type: string
+          format: uuid
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          nullable: true
+        maxTokens:
+          type: integer
+          minimum: 1
+          nullable: true
+        responseFormat:
+          type: string
+          enum: [text, json]
+          nullable: true
+
+    LlmRoutingOverride:
+      type: object
+      required: [role, modelId]
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+        modelId:
+          type: string
+          format: uuid
+        temperature:
+          type: number
+          nullable: true
+        maxTokens:
+          type: integer
+          nullable: true
+        responseFormat:
+          type: string
+          enum: [text, json]
+          nullable: true
+
+    LlmRoutingItem:
+      type: object
+      required: [scenarioKey]
+      properties:
+        scenarioKey:
+          $ref: '#/components/schemas/LlmScenarioKey'
+        default:
+          type: object
+          nullable: true
+          properties:
+            modelId:
+              type: string
+              format: uuid
+            temperature:
+              type: number
+              nullable: true
+            maxTokens:
+              type: integer
+              nullable: true
+            responseFormat:
+              type: string
+              enum: [text, json]
+              nullable: true
+        overrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/LlmRoutingOverride'
+
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        data:
+          type: object
+          nullable: true
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Super admin role required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

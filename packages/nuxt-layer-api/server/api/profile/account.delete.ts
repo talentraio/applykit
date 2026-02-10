@@ -1,5 +1,4 @@
 import {
-  llmKeyRepository,
   profileRepository,
   resumeRepository,
   usageLogRepository,
@@ -18,7 +17,6 @@ import { getStorage } from '../../storage';
  * - Profile (including photo)
  * - Resumes
  * - Vacancies (cascades to generations)
- * - LLM keys
  * - Usage logs
  *
  * Response:
@@ -39,7 +37,6 @@ export default defineEventHandler(async event => {
     // Note: generations are deleted via cascade when vacancies are deleted
     await vacancyRepository.deleteByUserId(userId);
     await resumeRepository.deleteByUserId(userId);
-    await llmKeyRepository.deleteByUserId(userId);
     await usageLogRepository.deleteByUserId(userId);
     await profileRepository.delete(userId);
 

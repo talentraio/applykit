@@ -3,18 +3,9 @@
     <UiPageHeader :title="$t('admin.roles.title')" />
 
     <div class="mt-6 space-y-4">
-      <div v-if="isInitialLoading" class="flex items-center justify-center py-12">
+      <div v-if="pageLoading" class="flex items-center justify-center py-12">
         <UIcon name="i-lucide-loader-2" class="h-6 w-6 animate-spin text-primary" />
       </div>
-
-      <UAlert
-        v-else-if="listError"
-        color="error"
-        variant="soft"
-        icon="i-lucide-alert-circle"
-        :title="$t('common.error.generic')"
-        :description="listError.message"
-      />
 
       <UPageCard v-else-if="roles.length === 0" class="text-center">
         <div class="py-10 text-sm text-muted">
@@ -22,9 +13,7 @@
         </div>
       </UPageCard>
 
-      <div v-else class="grid gap-4 lg:grid-cols-2">
-        <RolesRoleCard v-for="role in roles" :key="role.role" :role="role" />
-      </div>
+      <RolesListTable v-else :roles="roles" />
     </div>
   </div>
 </template>
@@ -38,21 +27,33 @@
 
 defineOptions({ name: 'AdminRolesPage' });
 
-const { roles, loading, error, fetchRoles } = useAdminRoles();
-const isInitialLoading = computed(() => loading.value && roles.value.length === 0);
-const listError = computed(() => (roles.value.length === 0 ? error.value : null));
+const { roles, fetchRoles } = useAdminRoles();
+const { t } = useI18n();
+const toast = useToast();
 
-await callOnce('admin-roles', async () => {
+const notifyError = (error: unknown) => {
+  if (!import.meta.client) return;
+
+  toast.add({
+    title: t('common.error.generic'),
+    description: error instanceof Error ? error.message : undefined,
+    color: 'error'
+  });
+};
+
+const pageLoading = ref(true);
+
+try {
   await fetchRoles();
-});
-
-// Reserved for future helper functions.
+} catch (error) {
+  notifyError(error);
+} finally {
+  pageLoading.value = false;
+}
 </script>
 
 <style lang="scss">
 .admin-roles-page {
-  &__card {
-    // Reserved for card-specific styling
-  }
+  // Reserved for page-specific styling.
 }
 </style>

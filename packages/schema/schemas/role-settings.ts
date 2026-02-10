@@ -1,14 +1,14 @@
 import { z } from 'zod';
-import { PlatformProviderSchema, RoleSchema } from './enums';
+import { RoleSchema } from './enums';
 
-export { type PlatformProvider, PlatformProviderSchema, type Role, RoleSchema } from './enums';
+export { type Role, RoleSchema } from './enums';
 
 export const RoleSettingsSchema = z.object({
   role: RoleSchema,
   platformLlmEnabled: z.boolean(),
-  byokEnabled: z.boolean(),
-  platformProvider: PlatformProviderSchema,
   dailyBudgetCap: z.number().min(0),
+  weeklyBudgetCap: z.number().min(0),
+  monthlyBudgetCap: z.number().min(0),
   updatedAt: z.date()
 });
 

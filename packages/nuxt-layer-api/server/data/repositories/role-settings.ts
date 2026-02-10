@@ -1,19 +1,17 @@
 import type { Role, RoleSettingsInput } from '@int/schema';
 import type { RoleSettings } from '../schema';
-import { PLATFORM_PROVIDER_VALUES, USER_ROLE_MAP } from '@int/schema';
+import { USER_ROLE_MAP } from '@int/schema';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { roleSettings } from '../schema';
-
-const defaultPlatformProvider = PLATFORM_PROVIDER_VALUES[0];
 
 const normalizeRoleSettingsRow = (row: RoleSettings): RoleSettingsInput & { updatedAt: Date } => {
   return {
     role: row.role,
     platformLlmEnabled: row.platformLlmEnabled,
-    byokEnabled: row.byokEnabled,
-    platformProvider: row.platformProvider,
     dailyBudgetCap: Number(row.dailyBudgetCap),
+    weeklyBudgetCap: Number(row.weeklyBudgetCap),
+    monthlyBudgetCap: Number(row.monthlyBudgetCap),
     updatedAt: row.updatedAt
   };
 };
@@ -24,17 +22,17 @@ const buildUpsertValues = (
 ): {
   role: Role;
   platformLlmEnabled: boolean;
-  byokEnabled: boolean;
-  platformProvider: RoleSettingsInput['platformProvider'];
   dailyBudgetCap: string;
+  weeklyBudgetCap: string;
+  monthlyBudgetCap: string;
   updatedAt: Date;
 } => {
   return {
     role: input.role,
     platformLlmEnabled: input.platformLlmEnabled,
-    byokEnabled: input.byokEnabled,
-    platformProvider: input.platformProvider,
     dailyBudgetCap: input.dailyBudgetCap.toString(),
+    weeklyBudgetCap: input.weeklyBudgetCap.toString(),
+    monthlyBudgetCap: input.monthlyBudgetCap.toString(),
     updatedAt
   };
 };
@@ -43,17 +41,16 @@ function getDefaults(role: Role): RoleSettingsInput & { updatedAt: Date } {
   const base = {
     role,
     platformLlmEnabled: false,
-    byokEnabled: false,
-    platformProvider: defaultPlatformProvider,
     dailyBudgetCap: 0,
+    weeklyBudgetCap: 0,
+    monthlyBudgetCap: 0,
     updatedAt: new Date()
   };
 
   if (role === USER_ROLE_MAP.SUPER_ADMIN) {
     return {
       ...base,
-      platformLlmEnabled: true,
-      byokEnabled: true
+      platformLlmEnabled: true
     };
   }
 

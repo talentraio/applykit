@@ -106,3 +106,59 @@ Separate from Resume. Persisted per-user in `user_format_settings` table.
 - Auto-seeded on user creation
 - Managed by `useFormatSettingsStore` in `_base` layer
 - Lazy-loaded on first access to `/resume` or `/vacancies/:id/resume`
+
+## RoleSettings (Admin)
+
+Role-level platform controls stored in `role_settings`:
+
+- `role: Role`
+- `platformLlmEnabled: boolean`
+- `platformProvider: 'openai' | 'gemini_flash'`
+- `dailyBudgetCap: number`
+- `updatedAt: Date`
+
+`byokEnabled` was removed from schema/API.
+
+## LLM Model Catalog
+
+`LlmModel` (admin-managed source of truth for model metadata/pricing):
+
+- `id: uuid`
+- `provider: 'openai' | 'gemini'`
+- `modelKey: string`
+- `displayName: string`
+- `status: 'active' | 'disabled' | 'archived'`
+- `inputPricePer1mUsd: number`
+- `outputPricePer1mUsd: number`
+- `cachedInputPricePer1mUsd?: number | null`
+- `maxContextTokens?: number | null`
+- `maxOutputTokens?: number | null`
+- `supportsJson: boolean`
+- `supportsTools: boolean`
+- `supportsStreaming: boolean`
+- `notes?: string | null`
+- `createdAt`, `updatedAt`
+
+## LLM Scenario Routing
+
+`LlmScenarioKey` enum:
+
+- `resume_parse`
+- `resume_adaptation`
+- `cover_letter_generation`
+
+Routing schemas:
+
+- `RoutingAssignmentInput`:
+  - `modelId: uuid`
+  - `temperature?: number | null`
+  - `maxTokens?: number | null`
+  - `responseFormat?: 'text' | 'json' | null`
+- `LlmRoutingItem`:
+  - `scenarioKey`
+  - `default?: RoutingAssignmentInput & { updatedAt } | null`
+  - `overrides: Array<RoutingAssignmentInput & { role, updatedAt }>`
+
+## Usage Provider Type
+
+Runtime now writes platform-only usage records. Legacy `byok` rows can remain historically in DB.

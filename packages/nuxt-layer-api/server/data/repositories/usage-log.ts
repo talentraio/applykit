@@ -20,7 +20,9 @@ const buildDateLt = (value: Date): ReturnType<typeof lt> => {
 export type SystemUsageStats = {
   totalOperations: number;
   byOperation: Record<Operation, number>;
-  byProvider: Record<ProviderType, number>;
+  byProvider: {
+    platform: number;
+  };
   totalCost: number;
   uniqueUsers: number;
 };
@@ -121,6 +123,17 @@ export const usageLogRepository = {
   async getDailyCostByProvider(userId: string, providerType: ProviderType): Promise<number> {
     const today = startOfDay(new Date());
 
+    return await this.getCostByProviderSince(userId, providerType, today);
+  },
+
+  /**
+   * Get total cost for user by provider type since a date
+   */
+  async getCostByProviderSince(
+    userId: string,
+    providerType: ProviderType,
+    since: Date
+  ): Promise<number> {
     const result = await db
       .select({ total: sql<string>`sum(${usageLogs.cost})` })
       .from(usageLogs)
@@ -128,7 +141,31 @@ export const usageLogRepository = {
         and(
           eq(usageLogs.userId, userId),
           eq(usageLogs.providerType, providerType),
-          buildDateGte(today)
+          buildDateGte(since)
+        )
+      );
+
+    return Number(result[0]?.total ?? 0);
+  },
+
+  /**
+   * Get total cost for user by provider type in date range
+   */
+  async getCostByProviderRange(
+    userId: string,
+    providerType: ProviderType,
+    startDate: Date,
+    endDate: Date
+  ): Promise<number> {
+    const result = await db
+      .select({ total: sql<string>`sum(${usageLogs.cost})` })
+      .from(usageLogs)
+      .where(
+        and(
+          eq(usageLogs.userId, userId),
+          eq(usageLogs.providerType, providerType),
+          buildDateGte(startDate),
+          buildDateLt(endDate)
         )
       );
 
@@ -277,13 +314,12 @@ export const usageLogRepository = {
       byOperation[row.operation] = Number(row.count);
     });
 
-    const byProvider: Record<ProviderType, number> = {
-      platform: 0,
-      byok: 0
+    const byProvider = {
+      platform: 0
     };
 
     providerResult.forEach(row => {
-      byProvider[row.providerType] = Number(row.count);
+      byProvider.platform += Number(row.count);
     });
 
     return {

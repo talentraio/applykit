@@ -4,7 +4,10 @@
       "dashboard": "Dashboard",
       "users": "Users",
       "roles": "Roles",
+      "llm": "LLM",
       "system": "System",
+      "llmModels": "LLM Models",
+      "llmRouting": "LLM Routing",
       "admin": "Admin"
     },
     "users": {
@@ -99,15 +102,34 @@
       "title": "Roles",
       "empty": "No roles found",
       "manage": "Manage",
+      "edit": "Edit",
+      "columns": {
+        "name": "Name",
+        "platformLlm": "Platform LLM",
+        "monthlyBudget": "Budget per user / month",
+        "dailyBudget": "Budget per user / day",
+        "actions": "Actions"
+      },
       "settingsTitle": "Role settings",
       "settingsDescription": "Configure LLM access and budgets for this role.",
       "detailTitle": "Role: {role}",
-      "superAdminHint": "Super Admin can only change platform provider.",
+      "superAdminHint": "Super Admin settings are managed automatically.",
       "fields": {
         "platformLlm": "Platform LLM",
-        "byok": "BYOK",
-        "provider": "Platform provider",
-        "dailyBudget": "Daily budget per user"
+        "dailyBudget": "Daily budget per user",
+        "weeklyBudget": "Weekly budget per user",
+        "monthlyBudget": "Monthly budget per user"
+      },
+      "routing": {
+        "title": "LLM Scenario Overrides",
+        "description": "Override scenario defaults for this role when needed.",
+        "overrideLabel": "Role override",
+        "retryOverrideLabel": "Retry override",
+        "inheritDefault": "Inherit scenario default",
+        "defaultModel": "Default: {model}",
+        "defaultRetryModel": "Retry default: {model}",
+        "notConfigured": "Not configured",
+        "modelUnavailable": "Model unavailable"
       },
       "names": {
         "super_admin": "Super Admin",
@@ -118,8 +140,6 @@
     "system": {
       "title": "System",
       "platformLlm": "Platform LLM",
-      "byok": "BYOK",
-      "platformProvider": "Platform provider",
       "budget": "Budget",
       "budgetHelper": "Set the platform LLM budget cap in USD.",
       "budgetUsage": "Budget usage",
@@ -160,12 +180,41 @@
           "export": "Export"
         },
         "providers": {
-          "platform": "Platform",
-          "byok": "BYOK"
+          "platform": "Platform"
         }
       },
       "currency": "{amount} USD",
       "percent": "{value}%"
+    },
+    "llm": {
+      "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading..."
+      },
+      "models": {
+        "title": "LLM Models",
+        "description": "Manage provider models, pricing, and capabilities.",
+        "empty": "No models yet",
+        "create": "Add model",
+        "edit": "Edit model",
+        "deactivate": "Deactivate",
+        "archive": "Archive"
+      },
+      "routing": {
+        "title": "LLM Routing",
+        "description": "Configure scenario defaults. Role overrides are managed per role.",
+        "empty": "No routing configuration",
+        "defaultLabel": "Scenario default",
+        "retryLabel": "Retry model",
+        "overrideLabel": "Role override",
+        "removeOverride": "Remove override",
+        "scenarios": {
+          "resume_parse": "Resume Parse",
+          "resume_adaptation": "Resume Adaptation",
+          "cover_letter_generation": "Cover Letter Generation"
+        }
+      }
     }
   },
   "profile": {

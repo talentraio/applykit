@@ -109,10 +109,6 @@
               <span>{{ $t('admin.system.usage.providers.platform') }}</span>
               <span class="font-medium">{{ displayStats.byProvider.platform }}</span>
             </div>
-            <div class="flex items-center justify-between">
-              <span>{{ $t('admin.system.usage.providers.byok') }}</span>
-              <span class="font-medium">{{ displayStats.byProvider.byok }}</span>
-            </div>
           </div>
         </div>
       </div>
@@ -155,7 +151,6 @@ type AdminUsageStats = {
   };
   byProvider: {
     platform: number;
-    byok: number;
   };
   totalCost: number;
   uniqueUsers: number;
@@ -182,8 +177,7 @@ const emptyStats = computed<AdminUsageStats>(() => ({
     export: 0
   },
   byProvider: {
-    platform: 0,
-    byok: 0
+    platform: 0
   },
   totalCost: 0,
   uniqueUsers: 0

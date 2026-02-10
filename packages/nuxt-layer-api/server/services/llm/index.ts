@@ -1,42 +1,32 @@
-import type { LLMProvider, ProviderType, Role } from '@int/schema';
+import type { LLMProvider, LlmScenarioKey, Role } from '@int/schema';
 import type { ILLMProvider, LLMRequest, LLMResponse } from './types';
 import {
   LLM_PROVIDER_MAP,
-  PLATFORM_PROVIDER_MAP,
+  LLM_PROVIDER_VALUES,
   PROVIDER_TYPE_MAP,
   USER_ROLE_MAP
 } from '@int/schema';
+import { startOfDay } from 'date-fns';
 import {
+  roleBudgetWindowRepository,
   roleSettingsRepository,
   systemConfigRepository,
   usageLogRepository
 } from '../../data/repositories';
 import { createGeminiProvider } from './providers/gemini';
 import { createOpenAIProvider } from './providers/openai';
+import { resolveScenarioModel } from './routing';
 import { getKeyHint, LLMError, sanitizeApiKey } from './types';
 
 /**
  * LLM Service Factory
  *
- * Manages LLM providers and handles provider selection logic
- * Supports both platform keys (from environment) and BYOK (user-provided keys)
- *
- * Provider Selection:
- * 1. If user provides BYOK key, use that provider
- * 2. If platform LLM is enabled, use configured platform provider
- * 3. Fall back to system default
- *
- * Related: T049, TX021
+ * Manages provider selection and platform budget checks.
+ * Execution path is platform-only (BYOK removed).
  */
 
-/**
- * Provider registry
- */
 const providers: Map<LLMProvider, ILLMProvider> = new Map();
 
-/**
- * Initialize provider registry
- */
 const initProviders = (): void => {
   if (providers.size === 0) {
     providers.set(LLM_PROVIDER_MAP.OPENAI, createOpenAIProvider());
@@ -44,9 +34,76 @@ const initProviders = (): void => {
   }
 };
 
-/**
- * Get provider instance
- */
+type RuntimeFallbackLlmModel = {
+  provider: LLMProvider;
+  model: string;
+  price: {
+    input: number;
+    output: number;
+    cache: number;
+  };
+};
+
+const DEFAULT_FALLBACK_LLM_MODEL: RuntimeFallbackLlmModel = {
+  provider: LLM_PROVIDER_MAP.OPENAI,
+  model: 'gpt-4.1-mini',
+  price: {
+    input: 0.4,
+    output: 1.6,
+    cache: 0
+  }
+};
+
+const toNonNegativeNumber = (value: unknown, fallback: number): number => {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+
+  return fallback;
+};
+
+const getFallbackLlmModel = (): RuntimeFallbackLlmModel => {
+  const runtimeConfig = useRuntimeConfig();
+  const fallbackConfig = runtimeConfig.llm?.fallbackLlmModel;
+  const providerCandidate = fallbackConfig?.provider;
+  const isProviderSupported =
+    typeof providerCandidate === 'string' &&
+    (LLM_PROVIDER_VALUES as readonly string[]).includes(providerCandidate);
+  const modelCandidate = fallbackConfig?.model;
+  const model =
+    typeof modelCandidate === 'string' && modelCandidate.trim().length > 0
+      ? modelCandidate.trim()
+      : DEFAULT_FALLBACK_LLM_MODEL.model;
+
+  return {
+    provider: isProviderSupported
+      ? (providerCandidate as LLMProvider)
+      : DEFAULT_FALLBACK_LLM_MODEL.provider,
+    model,
+    price: {
+      input: toNonNegativeNumber(
+        fallbackConfig?.price?.input,
+        DEFAULT_FALLBACK_LLM_MODEL.price.input
+      ),
+      output: toNonNegativeNumber(
+        fallbackConfig?.price?.output,
+        DEFAULT_FALLBACK_LLM_MODEL.price.output
+      ),
+      cache: toNonNegativeNumber(
+        fallbackConfig?.price?.cache,
+        DEFAULT_FALLBACK_LLM_MODEL.price.cache
+      )
+    }
+  };
+};
+
 export function getProvider(provider: LLMProvider): ILLMProvider {
   initProviders();
 
@@ -58,221 +115,241 @@ export function getProvider(provider: LLMProvider): ILLMProvider {
   return instance;
 }
 
-/**
- * Get platform API key for provider from runtime config
- */
 function getPlatformKey(provider: LLMProvider): string | undefined {
   const runtimeConfig = useRuntimeConfig();
 
   if (provider === LLM_PROVIDER_MAP.OPENAI) {
     return runtimeConfig.llm?.openaiApiKey;
-  } else if (provider === LLM_PROVIDER_MAP.GEMINI) {
+  }
+
+  if (provider === LLM_PROVIDER_MAP.GEMINI) {
     return runtimeConfig.llm?.geminiApiKey;
   }
+
   return undefined;
 }
 
 /**
- * Validate API key for a provider
- *
- * @param provider - LLM provider (openai, gemini)
- * @param apiKey - API key to validate
- * @returns true if valid, false otherwise
+ * Estimate cost from model catalog rates using a simple 50/50 input/output split.
  */
+export function calculateCatalogCost(
+  tokensUsed: number,
+  inputPricePer1mUsd: number,
+  outputPricePer1mUsd: number
+): number {
+  const inputTokens = tokensUsed * 0.5;
+  const outputTokens = tokensUsed * 0.5;
+
+  const inputCost = (inputTokens / 1_000_000) * inputPricePer1mUsd;
+  const outputCost = (outputTokens / 1_000_000) * outputPricePer1mUsd;
+
+  return inputCost + outputCost;
+}
+
 export async function validateKey(provider: LLMProvider, apiKey: string): Promise<boolean> {
   const providerInstance = getProvider(provider);
   return await providerInstance.validateKey(apiKey);
 }
 
 /**
- * Call LLM with automatic provider selection
- *
- * @param request - LLM request configuration
- * @param options - Service options
- * @param options.userId - User ID (required for role-based checks)
- * @param options.role - User role (required for role-based checks)
- * @param options.userApiKey - User-provided API key (BYOK)
- * @param options.provider - Preferred provider
- * @param options.forcePlatform - Force platform key usage (for testing)
- * @returns LLM response
+ * Call LLM with automatic scenario model/provider resolution.
  */
 export async function callLLM(
   request: LLMRequest,
   options?: {
-    /**
-     * User ID (required for role-based checks)
-     */
     userId?: string;
-
-    /**
-     * User role (required for role-based checks)
-     */
     role?: Role;
-
-    /**
-     * User-provided API key (BYOK)
-     */
-    userApiKey?: string;
-
-    /**
-     * Preferred provider
-     */
     provider?: LLMProvider;
-
-    /**
-     * Force platform key usage (for testing)
-     */
-    forcePlatform?: boolean;
+    scenario?: LlmScenarioKey;
+    scenarioPhase?: 'primary' | 'retry';
   }
 ): Promise<LLMResponse> {
-  // Determine provider and key
-  let provider: LLMProvider;
-  let apiKey: string;
-  let providerType: ProviderType;
-
-  const userRole = options?.role;
+  const userRole = options?.role ?? USER_ROLE_MAP.PUBLIC;
   const userId = options?.userId;
+  const fallbackLlmModel = getFallbackLlmModel();
   const isSuperAdmin = userRole === USER_ROLE_MAP.SUPER_ADMIN;
-  const roleSettings = userRole ? await roleSettingsRepository.getByRole(userRole) : null;
+  const roleSettings = await roleSettingsRepository.getByRole(userRole);
 
-  if (options?.userApiKey && !options?.forcePlatform) {
-    // BYOK: User provided their own key
-    const resolvedProvider = options.provider || LLM_PROVIDER_MAP.OPENAI;
-    const byokEnabled = isSuperAdmin || roleSettings?.byokEnabled;
-
-    if (!byokEnabled) {
-      throw new LLMError('BYOK is disabled', resolvedProvider, 'BYOK_DISABLED');
-    }
-
-    provider = resolvedProvider;
-    apiKey = options.userApiKey;
-    providerType = PROVIDER_TYPE_MAP.BYOK;
-  } else {
-    // Platform: Use system configuration
-    const platformEnabled = isSuperAdmin || roleSettings?.platformLlmEnabled;
-
-    if (!platformEnabled) {
-      throw new LLMError(
-        'Platform LLM is disabled for this role',
-        LLM_PROVIDER_MAP.OPENAI,
-        'PLATFORM_DISABLED'
-      );
-    }
-
-    if (!isSuperAdmin && userId) {
-      const budgetCap = roleSettings?.dailyBudgetCap ?? 0;
-      if (budgetCap <= 0) {
-        throw new LLMError(
-          'Daily budget cap is not configured',
-          LLM_PROVIDER_MAP.OPENAI,
-          'DAILY_BUDGET_DISABLED'
-        );
-      }
-
-      const usedToday = await usageLogRepository.getDailyCostByProvider(
-        userId,
-        PROVIDER_TYPE_MAP.PLATFORM
-      );
-
-      if (usedToday >= budgetCap) {
-        throw new LLMError(
-          'Daily budget cap reached',
-          LLM_PROVIDER_MAP.OPENAI,
-          'DAILY_BUDGET_EXCEEDED'
-        );
-      }
-    }
-
-    const globalBudget = await systemConfigRepository.canUseGlobalBudget();
-
-    if (!globalBudget.allowed) {
-      throw new LLMError(
-        globalBudget.reason || 'Global budget cap reached',
-        LLM_PROVIDER_MAP.OPENAI,
-        'GLOBAL_BUDGET_EXCEEDED'
-      );
-    }
-
-    // Get platform provider preference (role-based)
-    const preferredProvider = roleSettings?.platformProvider ?? PLATFORM_PROVIDER_MAP.OPENAI;
-    // Map gemini_flash to gemini for LLM provider type
-    const mappedProvider: LLMProvider =
-      preferredProvider === PLATFORM_PROVIDER_MAP.GEMINI_FLASH
-        ? LLM_PROVIDER_MAP.GEMINI
-        : preferredProvider;
-    provider = options?.provider || mappedProvider;
-
-    // Get platform key
-    const platformKey = getPlatformKey(provider);
-    if (!platformKey) {
-      throw new LLMError(
-        `Platform key not configured for ${provider}`,
-        provider,
-        'NO_PLATFORM_KEY'
-      );
-    }
-
-    apiKey = platformKey;
-    providerType = PROVIDER_TYPE_MAP.PLATFORM;
+  const platformEnabled = isSuperAdmin || roleSettings.platformLlmEnabled;
+  if (!platformEnabled) {
+    throw new LLMError(
+      'Platform LLM is disabled for this role',
+      LLM_PROVIDER_MAP.OPENAI,
+      'PLATFORM_DISABLED'
+    );
   }
 
-  // Get provider instance and call
-  const providerInstance = getProvider(provider);
+  if (!isSuperAdmin && userId) {
+    const now = new Date();
+    const budgetChecks: Array<{
+      cap: number;
+      exceededCode: string;
+      exceededMessage: string;
+      getWindowStartAt: () => Promise<Date>;
+    }> = [
+      {
+        cap: roleSettings.dailyBudgetCap,
+        exceededCode: 'DAILY_BUDGET_EXCEEDED',
+        exceededMessage: 'Daily budget cap reached',
+        getWindowStartAt: async () => startOfDay(now)
+      },
+      {
+        cap: roleSettings.weeklyBudgetCap,
+        exceededCode: 'WEEKLY_BUDGET_EXCEEDED',
+        exceededMessage: 'Weekly budget cap reached',
+        getWindowStartAt: async () => {
+          const weeklyWindow = await roleBudgetWindowRepository.getActiveWindow(
+            userId,
+            userRole,
+            'weekly',
+            now
+          );
 
-  try {
-    const response = await providerInstance.call(request, apiKey, providerType);
+          return weeklyWindow.windowStartAt;
+        }
+      },
+      {
+        cap: roleSettings.monthlyBudgetCap,
+        exceededCode: 'MONTHLY_BUDGET_EXCEEDED',
+        exceededMessage: 'Monthly budget cap reached',
+        getWindowStartAt: async () => {
+          const monthlyWindow = await roleBudgetWindowRepository.getActiveWindow(
+            userId,
+            userRole,
+            'monthly',
+            now
+          );
 
-    // If using platform LLM, increment budget
-    if (providerType === PROVIDER_TYPE_MAP.PLATFORM) {
-      await systemConfigRepository.incrementBudgetUsed(response.cost);
+          return monthlyWindow.windowStartAt;
+        }
+      }
+    ].filter(item => item.cap > 0);
+
+    if (budgetChecks.length === 0) {
+      throw new LLMError(
+        'Role budget caps are not configured',
+        LLM_PROVIDER_MAP.OPENAI,
+        'ROLE_BUDGET_DISABLED'
+      );
     }
 
-    return response;
+    for (const check of budgetChecks) {
+      const windowStartAt = await check.getWindowStartAt();
+      const periodUsage = await usageLogRepository.getCostByProviderSince(
+        userId,
+        PROVIDER_TYPE_MAP.PLATFORM,
+        windowStartAt
+      );
+
+      if (periodUsage >= check.cap) {
+        throw new LLMError(check.exceededMessage, LLM_PROVIDER_MAP.OPENAI, check.exceededCode);
+      }
+    }
+  }
+
+  const globalBudget = await systemConfigRepository.canUseGlobalBudget();
+  if (!globalBudget.allowed) {
+    throw new LLMError(
+      globalBudget.reason || 'Global budget cap reached',
+      LLM_PROVIDER_MAP.OPENAI,
+      'GLOBAL_BUDGET_EXCEEDED'
+    );
+  }
+
+  let scenarioModel: Awaited<ReturnType<typeof resolveScenarioModel>> = null;
+
+  if (options?.scenario) {
+    try {
+      scenarioModel = await resolveScenarioModel(userRole, options.scenario);
+    } catch (error) {
+      console.warn(
+        `Failed to resolve scenario model (${options.scenario}), using runtime fallback model:`,
+        error instanceof Error ? error.message : error
+      );
+      scenarioModel = null;
+    }
+  }
+
+  const scenarioPhase = options?.scenarioPhase ?? 'primary';
+  const scenarioPhaseModel = scenarioModel
+    ? scenarioPhase === 'retry'
+      ? (scenarioModel.retry ?? scenarioModel.primary)
+      : scenarioModel.primary
+    : null;
+  const useFallbackModel = Boolean(options?.scenario) && !scenarioPhaseModel;
+  const provider = useFallbackModel
+    ? fallbackLlmModel.provider
+    : (scenarioPhaseModel?.provider ?? options?.provider ?? fallbackLlmModel.provider);
+  const modelFromFallbackProvider =
+    provider === fallbackLlmModel.provider ? fallbackLlmModel.model : undefined;
+
+  const apiKey = getPlatformKey(provider);
+  if (!apiKey) {
+    throw new LLMError(`Platform key not configured for ${provider}`, provider, 'NO_PLATFORM_KEY');
+  }
+
+  const providerInstance = getProvider(provider);
+
+  const mergedRequest: LLMRequest = {
+    ...request,
+    model: useFallbackModel
+      ? fallbackLlmModel.model
+      : (scenarioPhaseModel?.model ?? request.model ?? modelFromFallbackProvider),
+    temperature: scenarioModel?.temperature ?? request.temperature,
+    maxTokens: scenarioModel?.maxTokens ?? request.maxTokens,
+    responseFormat: scenarioModel?.responseFormat ?? request.responseFormat
+  };
+
+  try {
+    const response = await providerInstance.call(mergedRequest, apiKey, PROVIDER_TYPE_MAP.PLATFORM);
+
+    const resolvedCost = scenarioPhaseModel
+      ? calculateCatalogCost(
+          response.tokensUsed,
+          scenarioPhaseModel.inputPricePer1mUsd,
+          scenarioPhaseModel.outputPricePer1mUsd
+        )
+      : useFallbackModel
+        ? calculateCatalogCost(
+            response.tokensUsed,
+            fallbackLlmModel.price.input,
+            fallbackLlmModel.price.output
+          )
+        : response.cost;
+
+    await systemConfigRepository.incrementBudgetUsed(resolvedCost);
+
+    return {
+      ...response,
+      cost: resolvedCost,
+      providerType: PROVIDER_TYPE_MAP.PLATFORM
+    };
   } catch (error) {
-    // Log error with sanitized key
     console.error(
-      `LLM call failed [${provider}, ${providerType}, key: ${sanitizeApiKey(apiKey)}]:`,
+      `LLM call failed [${provider}, ${PROVIDER_TYPE_MAP.PLATFORM}, key: ${sanitizeApiKey(apiKey)}]:`,
       error instanceof Error ? error.message : error
     );
     throw error;
   }
 }
 
-/**
- * Get default model for a provider
- */
 export function getDefaultModel(provider: LLMProvider): string {
   const providerInstance = getProvider(provider);
   return providerInstance.getDefaultModel();
 }
 
-/**
- * Calculate estimated cost for a request
- *
- * @param provider - LLM provider
- * @param tokensUsed - Total tokens used
- * @param model - Model used (optional, uses default if not provided)
- * @returns Estimated cost in USD
- */
 export function calculateCost(provider: LLMProvider, tokensUsed: number, model?: string): number {
   const providerInstance = getProvider(provider);
   const modelToUse = model || providerInstance.getDefaultModel();
   return providerInstance.calculateCost(tokensUsed, modelToUse);
 }
 
-/**
- * Get key hint from full API key
- * Used for storing in database (last 4 characters only)
- */
 export { getKeyHint };
 
-/**
- * Sanitize API key for logging
- * Shows only last 4 characters
- */
 export { sanitizeApiKey };
 
-// Re-export types
+export { resolveScenarioModel } from './routing';
+
 export type { ILLMProvider, LLMRequest, LLMResponse, LLMServiceConfig } from './types';
 
 export { LLMAuthError, LLMError, LLMQuotaError, LLMRateLimitError } from './types';

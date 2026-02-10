@@ -33,12 +33,12 @@ Supported auth methods:
 - Cookie-based sessions (7-day expiry)
 - HttpOnly, Secure (in production), SameSite=Lax
 
-## API keys (BYOK)
+## Platform-managed LLM keys
 
-- Do NOT store user LLM keys in cookies.
-  - Cookies are attached to every request, increase exposure, and can leak via logs/misconfig.
-- MVP: store keys only in the browser (localStorage / IndexedDB) and send as `x-api-key` header to our server.
-- Still apply minimal rate limits even with BYOK.
+- User-provided BYOK keys are removed from runtime/API/UI surface.
+- Platform secrets stay server-side in runtime config (`NUXT_LLM_*`), never in client storage.
+- Do NOT expose platform keys in logs, responses, or client bundles.
+- Continue enforcing role limits, per-user daily caps, and global budget caps for all LLM operations.
 
 ## User data (EU / GDPR shape)
 

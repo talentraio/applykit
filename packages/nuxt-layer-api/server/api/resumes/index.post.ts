@@ -96,14 +96,10 @@ export default defineEventHandler(async event => {
     // Parse document to plain text
     const parseResult = await parseDocument(buffer, fileType);
 
-    // Get BYOK key from header if present
-    const userApiKey = getHeader(event, 'x-api-key');
-
     // Parse with LLM
     const llmResult = await parseResumeWithLLM(parseResult.text, {
       userId,
-      role: userRole,
-      userApiKey: userApiKey || undefined
+      role: userRole
     });
 
     // Determine title (use provided or default to filename without extension)
@@ -122,7 +118,7 @@ export default defineEventHandler(async event => {
     await logUsage(
       userId,
       OPERATION_MAP.PARSE,
-      userApiKey ? PROVIDER_TYPE_MAP.BYOK : PROVIDER_TYPE_MAP.PLATFORM,
+      PROVIDER_TYPE_MAP.PLATFORM,
       USAGE_CONTEXT_MAP.RESUME_BASE,
       llmResult.tokensUsed,
       llmResult.cost

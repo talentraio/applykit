@@ -1,4 +1,4 @@
-import { PlatformProviderSchema, RoleSchema, USER_ROLE_MAP } from '@int/schema';
+import { RoleSchema, USER_ROLE_MAP } from '@int/schema';
 import { z } from 'zod';
 import { roleSettingsRepository } from '../../../data/repositories';
 
@@ -10,9 +10,9 @@ import { roleSettingsRepository } from '../../../data/repositories';
 
 const RoleSettingsInputSchema = z.object({
   platformLlmEnabled: z.boolean().optional(),
-  byokEnabled: z.boolean().optional(),
-  platformProvider: PlatformProviderSchema.optional(),
-  dailyBudgetCap: z.number().min(0).optional()
+  dailyBudgetCap: z.number().min(0).optional(),
+  weeklyBudgetCap: z.number().min(0).optional(),
+  monthlyBudgetCap: z.number().min(0).optional()
 });
 
 export default defineEventHandler(async event => {
@@ -47,30 +47,26 @@ export default defineEventHandler(async event => {
   const merged = {
     role,
     platformLlmEnabled: current.platformLlmEnabled,
-    byokEnabled: current.byokEnabled,
-    platformProvider: current.platformProvider,
-    dailyBudgetCap: current.dailyBudgetCap
+    dailyBudgetCap: current.dailyBudgetCap,
+    weeklyBudgetCap: current.weeklyBudgetCap,
+    monthlyBudgetCap: current.monthlyBudgetCap
   };
 
-  if (role === USER_ROLE_MAP.SUPER_ADMIN) {
-    if (updates.platformProvider) {
-      merged.platformProvider = updates.platformProvider;
-    }
-  } else {
+  if (role !== USER_ROLE_MAP.SUPER_ADMIN) {
     if (typeof updates.platformLlmEnabled === 'boolean') {
       merged.platformLlmEnabled = updates.platformLlmEnabled;
     }
 
-    if (typeof updates.byokEnabled === 'boolean') {
-      merged.byokEnabled = updates.byokEnabled;
-    }
-
-    if (updates.platformProvider) {
-      merged.platformProvider = updates.platformProvider;
-    }
-
     if (typeof updates.dailyBudgetCap === 'number') {
       merged.dailyBudgetCap = updates.dailyBudgetCap;
+    }
+
+    if (typeof updates.weeklyBudgetCap === 'number') {
+      merged.weeklyBudgetCap = updates.weeklyBudgetCap;
+    }
+
+    if (typeof updates.monthlyBudgetCap === 'number') {
+      merged.monthlyBudgetCap = updates.monthlyBudgetCap;
     }
   }
 
