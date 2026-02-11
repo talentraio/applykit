@@ -13,6 +13,11 @@ const SHARED_CONTEXT_SYSTEM_PROMPT =
 
 const DEFAULT_SHARED_CONTEXT_PREFIX = 'Shared context for resume adaptation and scoring';
 const DEFAULT_GEMINI_CACHE_TTL_SECONDS = 300;
+const DEFAULT_OPENAI_PROMPT_CACHE_MIN_PREFIX_TOKENS = 1024;
+const DEFAULT_OPENAI_PROMPT_CACHE_SAFETY_BUFFER_TOKENS = 256;
+const OPENAI_CACHE_PADDING_SEGMENT_START = 'OPENAI_CACHE_PADDING_START';
+const OPENAI_CACHE_PADDING_SEGMENT_END = 'OPENAI_CACHE_PADDING_END';
+const OPENAI_CACHE_PADDING_ESTIMATED_TOKENS_PER_LINE = 12;
 
 type SharedResumeContextInput = {
   baseResume: ResumeContent;
@@ -31,6 +36,91 @@ type SharedResumeContextInput = {
 export type SharedResumeContext = {
   prompt: string;
   cacheTokenEstimate: number;
+};
+
+type OpenAiPromptCacheConfig = {
+  enabled: boolean;
+  minPrefixTokens: number;
+  safetyBufferTokens: number;
+};
+
+const toPositiveInteger = (value: unknown, fallback: number): number => {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return Math.floor(value);
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.floor(parsed);
+    }
+  }
+
+  return fallback;
+};
+
+const getOpenAiPromptCacheConfig = (): OpenAiPromptCacheConfig => {
+  const runtimeConfig = useRuntimeConfig();
+
+  return {
+    enabled: runtimeConfig.llm?.openaiPromptCache?.enabled !== false,
+    minPrefixTokens: toPositiveInteger(
+      runtimeConfig.llm?.openaiPromptCache?.minPrefixTokens,
+      DEFAULT_OPENAI_PROMPT_CACHE_MIN_PREFIX_TOKENS
+    ),
+    safetyBufferTokens: toPositiveInteger(
+      runtimeConfig.llm?.openaiPromptCache?.safetyBufferTokens,
+      DEFAULT_OPENAI_PROMPT_CACHE_SAFETY_BUFFER_TOKENS
+    )
+  };
+};
+
+const buildOpenAiPromptCachePadding = (missingTokens: number): string => {
+  const linesCount = Math.max(
+    1,
+    Math.ceil(missingTokens / OPENAI_CACHE_PADDING_ESTIMATED_TOKENS_PER_LINE)
+  );
+  const body = Array.from(
+    { length: linesCount },
+    (_, index) =>
+      `cache-padding-line-${index + 1}: stable prefix token block for openai prompt caching`
+  ).join('\n');
+
+  return `${OPENAI_CACHE_PADDING_SEGMENT_START}
+${body}
+${OPENAI_CACHE_PADDING_SEGMENT_END}`;
+};
+
+const ensureOpenAiCacheEligiblePrefix = (
+  context: SharedResumeContext,
+  provider: LLMProvider
+): SharedResumeContext => {
+  if (provider !== LLM_PROVIDER_MAP.OPENAI) {
+    return context;
+  }
+
+  const config = getOpenAiPromptCacheConfig();
+  if (!config.enabled) {
+    return context;
+  }
+
+  const requiredPrefixTokens =
+    Math.max(config.minPrefixTokens, DEFAULT_OPENAI_PROMPT_CACHE_MIN_PREFIX_TOKENS) +
+    config.safetyBufferTokens;
+
+  if (context.cacheTokenEstimate >= requiredPrefixTokens) {
+    return context;
+  }
+
+  const missingTokens = requiredPrefixTokens - context.cacheTokenEstimate;
+  const padding = buildOpenAiPromptCachePadding(missingTokens);
+  const paddedPrompt = `${context.prompt}\n\n${padding}`;
+  const paddingTokenEstimate = Math.ceil(padding.length / 4);
+
+  return {
+    prompt: paddedPrompt,
+    cacheTokenEstimate: context.cacheTokenEstimate + paddingTokenEstimate
+  };
 };
 
 const toMullionProvider = (provider: LLMProvider): MullionProvider => {
@@ -95,17 +185,19 @@ export const buildSharedResumeContext = (
       .map(segment => segment.content)
       .join('\n\n');
 
-    return {
+    const context = {
       prompt,
       cacheTokenEstimate: cacheManager.getTotalTokens()
     };
+
+    return ensureOpenAiCacheEligiblePrefix(context, options.provider);
   } catch (error) {
     console.warn(
       'Failed to build Mullion shared context, using fallback prompt payload:',
       error instanceof Error ? error.message : error
     );
 
-    return buildFallbackSharedPrompt(payload);
+    return ensureOpenAiCacheEligiblePrefix(buildFallbackSharedPrompt(payload), options.provider);
   }
 };
 

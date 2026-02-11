@@ -15,61 +15,50 @@
         :description="pageErrorMessage"
       />
 
-      <div v-if="isInitialLoading" class="flex items-center justify-center py-8">
-        <UIcon name="i-lucide-loader-2" class="h-6 w-6 animate-spin text-primary" />
-      </div>
-
-      <UPageCard v-else-if="routingItems.length === 0">
-        <div class="py-10 text-center text-sm text-muted">
-          {{ $t('admin.llm.routing.empty') }}
-        </div>
-      </UPageCard>
-
-      <UPageCard v-else>
-        <LlmRoutingCard
-          v-for="group in routingGroups"
-          :key="group.key"
-          :item="group.primary"
-          :scenario-label="groupScenarioLabel(group)"
-          :primary-model-id="
-            selectedPrimaryModelId(group.key, group.primary.default?.modelId ?? '')
-          "
-          :secondary-model-id="selectedSecondaryModelIdForGroup(group)"
-          :saved-primary-model-id="group.primary.default?.modelId ?? ''"
-          :saved-secondary-model-id="savedSecondaryModelIdForGroup(group)"
-          :tertiary-model-id="selectedTertiaryModelIdForGroup(group)"
-          :saved-tertiary-model-id="savedTertiaryModelIdForGroup(group)"
-          :strategy-key="selectedStrategyKeyForGroup(group)"
-          :saved-strategy-key="savedStrategyKeyForGroup(group)"
-          :strategy-options="strategyOptions"
-          :model-options="modelOptions"
-          :saving="routingSaving"
-          :show-secondary="showSecondaryForGroup(group)"
-          :show-tertiary="showTertiaryForGroup(group)"
-          :show-strategy="showStrategyForGroup(group)"
-          :secondary-label="secondaryLabelForGroup(group)"
-          :tertiary-label="tertiaryLabelForGroup()"
-          :strategy-label="$t('admin.llm.routing.strategyLabel')"
-          :require-tertiary="false"
-          :require-strategy="showStrategyForGroup(group)"
-          :require-secondary="showSecondaryForGroup(group)"
-          :disable-secondary-when-primary-empty="group.secondary !== null"
-          @update:primary-model-id="setPrimarySelection(group.key, $event)"
-          @update:secondary-model-id="setSecondarySelection(group.key, $event)"
-          @update:tertiary-model-id="setTertiarySelection(group.key, $event)"
-          @update:strategy-key="setStrategySelection(group.key, $event)"
-          @save="saveDefault"
-        />
-      </UPageCard>
+      <LlmRoutingScenarios
+        :title="$t('admin.llm.routing.title')"
+        :description="$t('admin.llm.routing.description')"
+        :loading="isInitialLoading"
+        :is-empty="routingItems.length === 0"
+        :empty-label="$t('admin.llm.routing.empty')"
+        :scenario-cards="scenarioCards"
+        @edit="openScenarioEditor"
+      />
     </div>
+
+    <LlmRoutingScenariosEditModal
+      v-model:open="modalOpen"
+      v-model:draft="modalDraft"
+      :title="modalTitle"
+      :description="modalDescription"
+      :form-component="activeFormComponent"
+      :form-props="activeFormProps"
+      :loading="routingSaving"
+      :can-save="modalCanSave"
+      @cancel="closeScenarioEditor"
+      @save="saveScenario"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { LlmScenarioKey, LlmStrategyKey } from '@int/schema';
+import type { LlmRoutingItem, LlmScenarioKey, LlmStrategyKey } from '@int/schema';
+import type {
+  EditableScenarioKey,
+  RoutingScenarioCardsConfig,
+  RoutingScenarioDraft,
+  RoutingSelectOption
+} from '../../components/routing/Scenarios/types';
 import { LLM_SCENARIO_KEY_MAP, LLM_STRATEGY_KEY_MAP } from '@int/schema';
+import { useRoutingScenarioEditor } from '../../composables/useRoutingScenarioEditor';
 
 defineOptions({ name: 'AdminLlmRoutingPage' });
+
+type ApiErrorWithMessage = {
+  data?: {
+    message?: string;
+  };
+};
 
 const {
   items: routingItems,
@@ -80,33 +69,59 @@ const {
   updateDefault
 } = useAdminLlmRouting();
 
-const { activeItems: activeModels, fetchAll: fetchModels } = useAdminLlmModels();
+const { items: allModels, activeItems: activeModels, fetchAll: fetchModels } = useAdminLlmModels();
 
 const { t } = useI18n();
 const toast = useToast();
 
-const {
-  setPrimarySelection,
-  setSecondarySelection,
-  setTertiarySelection,
-  setStrategySelection,
-  selectedPrimaryModelId,
-  selectedSecondaryModelId,
-  selectedTertiaryModelId,
-  selectedStrategyKey,
-  clearScenarioSelections
-} = useLlmRoutingSelection();
+const { pending: initialPending, error: initialLoadError } = await useAsyncData(
+  'admin-llm-routing-page',
+  async () => {
+    await Promise.all([fetchRouting(), fetchModels()]);
+    return true;
+  }
+);
 
-const routingGroups = computed(() => buildLlmRoutingGroups(routingItems.value));
+const routingByScenario = computed(() => {
+  const map = new Map<LlmScenarioKey, LlmRoutingItem>();
+  routingItems.value.forEach(item => {
+    map.set(item.scenarioKey, item);
+  });
+  return map;
+});
 
-const modelOptions = computed<Array<{ label: string; value: string }>>(() =>
+const resumeParseItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.RESUME_PARSE) ?? null;
+});
+
+const resumeAdaptationItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) ?? null;
+});
+
+const resumeScoringItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING) ?? null;
+});
+
+const coverLetterItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION) ?? null;
+});
+
+const hasAdaptationCard = computed(() => {
+  return Boolean(resumeAdaptationItem.value || resumeScoringItem.value);
+});
+
+const canEditAdaptation = computed(() => {
+  return Boolean(resumeAdaptationItem.value && resumeScoringItem.value);
+});
+
+const modelOptions = computed<RoutingSelectOption[]>(() =>
   activeModels.value.map(model => ({
     label: `${model.displayName} (${model.provider})`,
     value: model.id
   }))
 );
 
-const strategyOptions = computed<Array<{ label: string; value: LlmStrategyKey }>>(() => [
+const strategyOptions = computed<RoutingSelectOption[]>(() => [
   {
     label: t('admin.llm.routing.strategy.economy'),
     value: LLM_STRATEGY_KEY_MAP.ECONOMY
@@ -117,13 +132,100 @@ const strategyOptions = computed<Array<{ label: string; value: LlmStrategyKey }>
   }
 ]);
 
-const { pending: initialPending, error: initialLoadError } = await useAsyncData(
-  'admin-llm-routing-page',
-  async () => {
-    await Promise.all([fetchRouting(), fetchModels()]);
-    return true;
+const resolveModelLabel = (modelId: string | null): string => {
+  if (!modelId) {
+    return t('admin.roles.routing.notConfigured');
   }
-);
+
+  const model = allModels.value.find(item => item.id === modelId);
+  if (!model) {
+    return t('admin.roles.routing.modelUnavailable');
+  }
+
+  return `${model.displayName} (${model.provider})`;
+};
+
+const resolveStrategyLabel = (strategyKey: string | null): string => {
+  if (strategyKey === LLM_STRATEGY_KEY_MAP.QUALITY) {
+    return t('admin.llm.routing.strategy.quality');
+  }
+
+  return t('admin.llm.routing.strategy.economy');
+};
+
+const resumeParseCapabilities = computed<string[]>(() => {
+  const item = resumeParseItem.value;
+  if (!item) return [];
+
+  return [
+    t('admin.llm.routing.capability.defaultModel', {
+      model: resolveModelLabel(item.default?.modelId ?? null)
+    }),
+    t('admin.llm.routing.capability.retryModel', {
+      model: resolveModelLabel(item.default?.retryModelId ?? null)
+    })
+  ];
+});
+
+const resumeAdaptationCapabilities = computed<string[]>(() => {
+  const adaptation = resumeAdaptationItem.value;
+  const scoring = resumeScoringItem.value;
+
+  return [
+    t('admin.llm.routing.capability.defaultModel', {
+      model: resolveModelLabel(adaptation?.default?.modelId ?? null)
+    }),
+    t('admin.llm.routing.capability.scoringModel', {
+      model: resolveModelLabel(scoring?.default?.modelId ?? null)
+    }),
+    t('admin.llm.routing.capability.retryModel', {
+      model: resolveModelLabel(adaptation?.default?.retryModelId ?? null)
+    }),
+    t('admin.llm.routing.capability.strategy', {
+      strategy: resolveStrategyLabel(
+        adaptation?.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY
+      )
+    })
+  ];
+});
+
+const coverLetterCapabilities = computed<string[]>(() => {
+  const item = coverLetterItem.value;
+  if (!item) return [];
+
+  return [
+    t('admin.llm.routing.capability.defaultModel', {
+      model: resolveModelLabel(item.default?.modelId ?? null)
+    })
+  ];
+});
+
+const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
+  const cards: RoutingScenarioCardsConfig = {};
+
+  if (resumeParseItem.value) {
+    cards[LLM_SCENARIO_KEY_MAP.RESUME_PARSE] = {
+      capabilities: resumeParseCapabilities.value,
+      editDisabled: routingSaving.value
+    };
+  }
+
+  if (hasAdaptationCard.value) {
+    cards[LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION] = {
+      capabilities: resumeAdaptationCapabilities.value,
+      editDisabled: routingSaving.value || !canEditAdaptation.value
+    };
+  }
+
+  if (coverLetterItem.value) {
+    cards[LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION] = {
+      capabilities: coverLetterCapabilities.value,
+      editDisabled: routingSaving.value
+    };
+  }
+
+  return cards;
+});
 
 const isInitialLoading = computed(() => {
   return initialPending.value || routingLoading.value;
@@ -142,84 +244,72 @@ const pageErrorMessage = computed(() => {
   return errorValue instanceof Error ? errorValue.message : t('common.error.generic');
 });
 
-const showSecondaryForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): boolean => {
-  return group.isResumeParse || group.secondary !== null;
-};
-
-const isAdaptationGroup = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): boolean => {
-  return group.primary.scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
-};
-
-const showTertiaryForGroup = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): boolean => {
-  return isAdaptationGroup(group);
-};
-
-const showStrategyForGroup = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): boolean => {
-  return isAdaptationGroup(group);
-};
-
-const savedSecondaryModelIdForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  if (group.isResumeParse) {
-    return group.primary.default?.retryModelId ?? '';
+const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScenarioDraft => {
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
+    return {
+      primaryModelId: resumeParseItem.value?.default?.modelId ?? '',
+      secondaryModelId: resumeParseItem.value?.default?.retryModelId ?? '',
+      tertiaryModelId: '',
+      strategyKey: ''
+    };
   }
 
-  return group.secondary?.default?.modelId ?? '';
-};
-
-const savedTertiaryModelIdForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  if (isAdaptationGroup(group)) {
-    return group.primary.default?.retryModelId ?? '';
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
+    return {
+      primaryModelId: resumeAdaptationItem.value?.default?.modelId ?? '',
+      secondaryModelId: resumeScoringItem.value?.default?.modelId ?? '',
+      tertiaryModelId: resumeAdaptationItem.value?.default?.retryModelId ?? '',
+      strategyKey: resumeAdaptationItem.value?.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY
+    };
   }
 
-  return '';
+  return {
+    primaryModelId: coverLetterItem.value?.default?.modelId ?? '',
+    secondaryModelId: '',
+    tertiaryModelId: '',
+    strategyKey: ''
+  };
 };
 
-const savedStrategyKeyForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  if (!isAdaptationGroup(group)) {
-    return '';
+const getModalDescriptionByScenario = (scenarioKey: EditableScenarioKey): string => {
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
+    return resumeParseItem.value?.description ?? '';
   }
 
-  return group.primary.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY;
-};
-
-const selectedSecondaryModelIdForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return selectedSecondaryModelId(group.key, savedSecondaryModelIdForGroup(group));
-};
-
-const selectedTertiaryModelIdForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return selectedTertiaryModelId(group.key, savedTertiaryModelIdForGroup(group));
-};
-
-const selectedStrategyKeyForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return selectedStrategyKey(group.key, savedStrategyKeyForGroup(group));
-};
-
-const secondaryLabelForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  if (group.isResumeParse) {
-    return t('admin.llm.routing.retryLabel');
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
+    return resumeAdaptationItem.value?.description ?? '';
   }
 
-  return t('admin.llm.routing.scoringLabel');
+  return coverLetterItem.value?.description ?? '';
 };
 
-const tertiaryLabelForGroup = (): string => {
-  return t('admin.llm.routing.retryLabel');
+const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<string, unknown> => {
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
+    return {
+      modelOptions: modelOptions.value,
+      primaryLabel: t('admin.llm.routing.defaultLabel'),
+      retryLabel: t('admin.llm.routing.retryLabel'),
+      disabled: routingSaving.value
+    };
+  }
+
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
+    return {
+      modelOptions: modelOptions.value,
+      strategyOptions: strategyOptions.value,
+      primaryLabel: t('admin.llm.routing.defaultLabel'),
+      scoringLabel: t('admin.llm.routing.scoringLabel'),
+      retryLabel: t('admin.llm.routing.retryLabel'),
+      strategyLabel: t('admin.llm.routing.strategyLabel'),
+      disabled: routingSaving.value
+    };
+  }
+
+  return {
+    modelOptions: modelOptions.value,
+    primaryLabel: t('admin.llm.routing.defaultLabel'),
+    disabled: routingSaving.value
+  };
 };
 
 const normalizeStrategyKey = (value: string): LlmStrategyKey => {
@@ -230,59 +320,92 @@ const normalizeStrategyKey = (value: string): LlmStrategyKey => {
   return LLM_STRATEGY_KEY_MAP.ECONOMY;
 };
 
-const groupScenarioLabel = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): string => {
-  if (group.secondary) {
-    return t('admin.llm.routing.scenarios.resume_adaptation_with_scoring');
+const hasRequiredValuesForScenario = (
+  scenarioKey: EditableScenarioKey,
+  draft: RoutingScenarioDraft
+): boolean => {
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
+    return Boolean(draft.primaryModelId && draft.secondaryModelId);
   }
 
-  const key = `admin.llm.routing.scenarios.${group.primary.scenarioKey}`;
-  return t(key);
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
+    return Boolean(draft.primaryModelId && draft.secondaryModelId && draft.strategyKey);
+  }
+
+  return Boolean(draft.primaryModelId);
 };
 
-const saveDefault = async (scenarioKey: LlmScenarioKey) => {
-  const group = routingGroups.value.find(entry => entry.key === scenarioKey);
-  if (!group) return;
+const {
+  modalOpen,
+  modalScenarioKey,
+  modalDraft,
+  modalTitle,
+  modalDescription,
+  activeFormComponent,
+  activeFormProps,
+  modalCanSave,
+  openScenarioEditor,
+  closeScenarioEditor
+} = useRoutingScenarioEditor({
+  getSavedDraft: getSavedDraftForScenario,
+  getDescription: getModalDescriptionByScenario,
+  getFormProps: getModalFormPropsByScenario,
+  hasRequiredValues: hasRequiredValuesForScenario
+});
 
-  const primaryModelId = selectedPrimaryModelId(group.key, group.primary.default?.modelId ?? '');
-  if (!primaryModelId) return;
+const errorMessage = (error: unknown): string => {
+  const apiError = error as ApiErrorWithMessage;
+  if (typeof apiError?.data?.message === 'string' && apiError.data.message.length > 0) {
+    return apiError.data.message;
+  }
 
-  const secondaryModelId = selectedSecondaryModelIdForGroup(group);
-  if (showSecondaryForGroup(group) && !secondaryModelId) return;
-  const tertiaryModelId = selectedTertiaryModelIdForGroup(group);
-  const strategyKeyValue = selectedStrategyKeyForGroup(group);
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return t('common.error.generic');
+};
+
+const saveScenario = async () => {
+  const scenarioKey = modalScenarioKey.value;
+  if (!scenarioKey || !modalCanSave.value) return;
 
   try {
-    if (group.isResumeParse) {
-      await updateDefault(group.primary.scenarioKey, {
-        modelId: primaryModelId,
-        retryModelId: secondaryModelId || null,
+    if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
+      await updateDefault(LLM_SCENARIO_KEY_MAP.RESUME_PARSE, {
+        modelId: modalDraft.value.primaryModelId,
+        retryModelId: modalDraft.value.secondaryModelId,
         strategyKey: null
       });
-    } else if (group.secondary) {
+    } else if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
       await Promise.all([
-        updateDefault(group.primary.scenarioKey, {
-          modelId: primaryModelId,
-          retryModelId: tertiaryModelId || null,
-          strategyKey: normalizeStrategyKey(strategyKeyValue)
+        updateDefault(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION, {
+          modelId: modalDraft.value.primaryModelId,
+          retryModelId: modalDraft.value.tertiaryModelId || null,
+          strategyKey: normalizeStrategyKey(modalDraft.value.strategyKey)
         }),
-        updateDefault(group.secondary.scenarioKey, {
-          modelId: secondaryModelId,
+        updateDefault(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING, {
+          modelId: modalDraft.value.secondaryModelId,
           retryModelId: null,
           strategyKey: null
         })
       ]);
     } else {
-      await updateDefault(group.primary.scenarioKey, {
-        modelId: primaryModelId,
-        retryModelId: group.primary.default?.retryModelId ?? null,
+      await updateDefault(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, {
+        modelId: modalDraft.value.primaryModelId,
+        retryModelId: null,
         strategyKey: null
       });
     }
 
     await fetchRouting();
-    clearScenarioSelections(group.key);
-  } catch {
-    toast.add({ title: t('common.error.generic'), color: 'error' });
+    closeScenarioEditor();
+  } catch (error) {
+    toast.add({
+      title: t('common.error.generic'),
+      description: errorMessage(error),
+      color: 'error'
+    });
   }
 };
 </script>

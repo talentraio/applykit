@@ -132,6 +132,10 @@
         "defaultRetryModel": "Retry default: {model}",
         "defaultScoringModel": "Scoring default: {model}",
         "defaultStrategy": "Strategy default: {strategy}",
+        "currentModel": "Current override: {model}",
+        "currentRetryModel": "Current retry override: {model}",
+        "currentScoringModel": "Current scoring override: {model}",
+        "currentStrategy": "Current strategy override: {strategy}",
         "notConfigured": "Not configured",
         "modelUnavailable": "Model unavailable"
       },
@@ -209,12 +213,28 @@
         "title": "LLM Routing",
         "description": "Configure scenario defaults. Role overrides are managed per role.",
         "empty": "No routing configuration",
+        "capabilities": "Capabilities",
+        "edit": "Edit",
         "defaultLabel": "Scenario default",
         "retryLabel": "Retry model",
         "scoringLabel": "Scoring model",
         "strategyLabel": "Strategy",
         "overrideLabel": "Role override",
         "removeOverride": "Remove override",
+        "resumeAdaptationTips": {
+          "title": "Tips for model and strategy setup",
+          "cache": "Cache is model-specific: when adaptation and scoring use different models, cache is not shared between them.",
+          "strategy": "Best practice: use Economy with lower-cost models and Quality with stronger models."
+        },
+        "capability": {
+          "defaultModel": "Default model: {model}",
+          "retryModel": "Retry model: {model}",
+          "scoringModel": "Scoring model: {model}",
+          "strategy": "Strategy: {strategy}"
+        },
+        "modal": {
+          "editTitle": "Edit {scenario}"
+        },
         "strategy": {
           "economy": "Economy",
           "quality": "Quality"
@@ -225,6 +245,11 @@
           "resume_adaptation_scoring": "Resume Adaptation Scoring",
           "resume_adaptation_with_scoring": "Resume Adaptation + Scoring",
           "cover_letter_generation": "Cover Letter Generation"
+        },
+        "scenarioDescriptions": {
+          "resume_parse": "Parse uploaded resume into strict structured JSON.",
+          "resume_adaptation_with_scoring": "Generate tailored resume and evaluate improvement score.",
+          "cover_letter_generation": "Generate a tailored cover letter for the selected vacancy."
         }
       }
     }

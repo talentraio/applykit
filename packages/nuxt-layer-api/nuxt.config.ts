@@ -27,6 +27,15 @@ export default defineNuxtConfig({
     llm: {
       openaiApiKey: '',
       geminiApiKey: '',
+      openaiPromptCache: {
+        enabled: process.env.NUXT_LLM_OPENAI_PROMPT_CACHE_ENABLED !== 'false',
+        minPrefixTokens: Number(
+          process.env.NUXT_LLM_OPENAI_PROMPT_CACHE_MIN_PREFIX_TOKENS ?? '1024'
+        ),
+        safetyBufferTokens: Number(
+          process.env.NUXT_LLM_OPENAI_PROMPT_CACHE_SAFETY_BUFFER_TOKENS ?? '256'
+        )
+      },
       geminiCache: {
         enabled: process.env.NUXT_LLM_GEMINI_CACHE_ENABLED !== 'false',
         ttlSeconds: Number(process.env.NUXT_LLM_GEMINI_CACHE_TTL_SECONDS ?? '300')
@@ -83,7 +92,7 @@ export default defineNuxtConfig({
       authDefault: '/'
     },
     public: {
-      apiCallTimeoutMs: 60000,
+      apiCallTimeoutMs: 120000,
       appUrl: 'http://localhost:3000',
       formatSettings: {
         defaults: createFormatSettingsDefaults()

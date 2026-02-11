@@ -73,6 +73,9 @@ Required keys:
 
 Optional cache controls:
 
+- `NUXT_LLM_OPENAI_PROMPT_CACHE_ENABLED` (`true` by default)
+- `NUXT_LLM_OPENAI_PROMPT_CACHE_MIN_PREFIX_TOKENS` (`1024` by default)
+- `NUXT_LLM_OPENAI_PROMPT_CACHE_SAFETY_BUFFER_TOKENS` (`256` by default)
 - `NUXT_LLM_GEMINI_CACHE_ENABLED` (`true` by default)
 - `NUXT_LLM_GEMINI_CACHE_TTL_SECONDS` (`300` by default)
 

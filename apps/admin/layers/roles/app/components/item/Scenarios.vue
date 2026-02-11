@@ -1,74 +1,39 @@
 <template>
-  <UPageCard class="roles-item-scenarios">
-    <template #header>
-      <div class="space-y-1">
-        <h2 class="text-lg font-semibold">
-          {{ $t('admin.roles.routing.title') }}
-        </h2>
-        <p class="text-sm text-muted">
-          {{ $t('admin.roles.routing.description') }}
-        </p>
-      </div>
-    </template>
+  <LlmRoutingScenarios
+    :title="$t('admin.roles.routing.title')"
+    :description="$t('admin.roles.routing.description')"
+    :loading="isInitialLoading"
+    :is-empty="routingItems.length === 0"
+    :empty-label="$t('admin.llm.routing.empty')"
+    :edit-label="$t('admin.roles.edit')"
+    :scenario-cards="scenarioCards"
+    class="roles-item-scenarios"
+    @edit="openScenarioEditor"
+  />
 
-    <div class="space-y-4">
-      <div v-if="isInitialLoading" class="flex items-center justify-center py-6">
-        <UIcon name="i-lucide-loader-2" class="h-6 w-6 animate-spin text-primary" />
-      </div>
-
-      <div
-        v-else-if="routingItems.length === 0"
-        class="rounded-lg border border-dashed border-muted p-4 text-sm text-muted"
-      >
-        {{ $t('admin.llm.routing.empty') }}
-      </div>
-
-      <template v-else>
-        <LlmRoutingCard
-          v-for="group in routingGroups"
-          :key="group.key"
-          :item="group.primary"
-          :scenario-label="groupScenarioLabel(group)"
-          :primary-model-id="selectedOverrideModelId(group)"
-          :secondary-model-id="selectedSecondaryOverrideModelId(group)"
-          :saved-primary-model-id="savedPrimaryOverrideModelId(group)"
-          :saved-secondary-model-id="savedSecondaryOverrideModelId(group)"
-          :tertiary-model-id="selectedTertiaryOverrideModelId(group)"
-          :saved-tertiary-model-id="savedTertiaryOverrideModelId(group)"
-          :strategy-key="selectedStrategyOverrideKeyForGroup(group)"
-          :saved-strategy-key="savedStrategyOverrideKeyForGroup(group)"
-          :strategy-options="strategyOptionsWithInherit"
-          :info-lines="scenarioInfoLines(group)"
-          :model-options="modelOptionsWithInherit"
-          :primary-label="$t('admin.roles.routing.overrideLabel')"
-          :secondary-label="secondaryLabelForGroup(group)"
-          :tertiary-label="$t('admin.roles.routing.retryOverrideLabel')"
-          :strategy-label="$t('admin.roles.routing.strategyOverrideLabel')"
-          :saving="isRoutingDisabled"
-          :require-primary="false"
-          :require-secondary="false"
-          :require-tertiary="false"
-          :require-strategy="false"
-          :disable-secondary-when-primary-empty="group.isResumeParse"
-          :tertiary-disabled="selectedOverrideModelId(group) === INHERIT_MODEL_ID"
-          :strategy-disabled="selectedOverrideModelId(group) === INHERIT_MODEL_ID"
-          :show-secondary="showSecondaryForGroup(group)"
-          :show-tertiary="showTertiaryForGroup(group)"
-          :show-strategy="showStrategyForGroup(group)"
-          :empty-value="INHERIT_MODEL_ID"
-          @update:primary-model-id="setOverrideSelection(group.key, $event)"
-          @update:secondary-model-id="setSecondaryOverrideSelection(group.key, $event)"
-          @update:tertiary-model-id="setTertiaryOverrideSelection(group.key, $event)"
-          @update:strategy-key="setStrategyOverrideSelection(group.key, $event)"
-          @save="saveOverride"
-        />
-      </template>
-    </div>
-  </UPageCard>
+  <LlmRoutingScenariosEditModal
+    v-model:open="modalOpen"
+    v-model:draft="modalDraft"
+    :title="modalTitle"
+    :description="modalDescription"
+    :form-component="activeFormComponent"
+    :form-props="activeFormProps"
+    :loading="isRoutingDisabled"
+    :can-save="modalCanSave"
+    @cancel="closeScenarioEditor"
+    @save="saveScenario"
+  />
 </template>
 
 <script setup lang="ts">
+import type {
+  EditableScenarioKey,
+  RoutingScenarioCardsConfig,
+  RoutingScenarioDraft,
+  RoutingSelectOption
+} from '@admin/llm/app/components/routing/Scenarios/types';
 import type { LlmRoutingItem, LlmScenarioKey, LlmStrategyKey, Role } from '@int/schema';
+import { useRoutingScenarioEditor } from '@admin/llm/app/composables/useRoutingScenarioEditor';
 import { LLM_SCENARIO_KEY_MAP, LLM_STRATEGY_KEY_MAP } from '@int/schema';
 
 defineOptions({ name: 'RolesItemScenarios' });
@@ -77,6 +42,12 @@ const props = defineProps<Props>();
 
 type Props = {
   role: Role;
+};
+
+type ApiErrorWithMessage = {
+  data?: {
+    message?: string;
+  };
 };
 
 const INHERIT_MODEL_ID = '__inherit__';
@@ -90,31 +61,26 @@ const {
   upsertRoleOverride,
   deleteRoleOverride
 } = useAdminLlmRouting();
+
 const { items: llmModels, activeItems: activeModels, fetchAll: fetchModels } = useAdminLlmModels();
-const {
-  setPrimarySelection,
-  setSecondarySelection,
-  setTertiarySelection,
-  setStrategySelection,
-  selectedPrimaryModelId,
-  selectedSecondaryModelId,
-  selectedTertiaryModelId,
-  selectedStrategyKey,
-  clearScenarioSelections,
-  clearAllSelections
-} = useLlmRoutingSelection();
 
 const { t } = useI18n();
 const toast = useToast();
 
-const routingGroups = computed(() => buildLlmRoutingGroups(routingItems.value));
-
 const notifyError = (error: unknown) => {
   if (!import.meta.client) return;
 
+  const apiError = error as ApiErrorWithMessage;
+  const description =
+    typeof apiError?.data?.message === 'string' && apiError.data.message.length > 0
+      ? apiError.data.message
+      : error instanceof Error && error.message.length > 0
+        ? error.message
+        : undefined;
+
   toast.add({
     title: t('common.error.generic'),
-    description: error instanceof Error ? error.message : undefined,
+    description,
     color: 'error'
   });
 };
@@ -139,11 +105,47 @@ const { pending } = await useAsyncData(
   }
 );
 
+const routingByScenario = computed(() => {
+  const map = new Map<LlmScenarioKey, LlmRoutingItem>();
+  routingItems.value.forEach(item => {
+    map.set(item.scenarioKey, item);
+  });
+  return map;
+});
+
+const resumeParseItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.RESUME_PARSE) ?? null;
+});
+
+const resumeAdaptationItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) ?? null;
+});
+
+const resumeScoringItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING) ?? null;
+});
+
+const coverLetterItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION) ?? null;
+});
+
+const hasAdaptationCard = computed(() => {
+  return Boolean(resumeAdaptationItem.value || resumeScoringItem.value);
+});
+
+const canEditAdaptation = computed(() => {
+  return Boolean(resumeAdaptationItem.value && resumeScoringItem.value);
+});
+
 const isInitialLoading = computed(() => {
   return pending.value || routingLoading.value;
 });
 
-const modelOptionsWithInherit = computed<Array<{ label: string; value: string }>>(() => [
+const isRoutingDisabled = computed(() => {
+  return routingSaving.value || routingLoading.value || pending.value;
+});
+
+const modelOptionsWithInherit = computed<RoutingSelectOption[]>(() => [
   {
     label: t('admin.roles.routing.inheritDefault'),
     value: INHERIT_MODEL_ID
@@ -154,7 +156,7 @@ const modelOptionsWithInherit = computed<Array<{ label: string; value: string }>
   }))
 ]);
 
-const strategyOptionsWithInherit = computed<Array<{ label: string; value: string }>>(() => [
+const strategyOptionsWithInherit = computed<RoutingSelectOption[]>(() => [
   {
     label: t('admin.roles.routing.inheritDefault'),
     value: INHERIT_STRATEGY_KEY
@@ -169,10 +171,6 @@ const strategyOptionsWithInherit = computed<Array<{ label: string; value: string
   }
 ]);
 
-const isRoutingDisabled = computed(
-  () => routingSaving.value || routingLoading.value || pending.value
-);
-
 const resolveModelLabel = (modelId: string | null): string => {
   if (!modelId) {
     return t('admin.roles.routing.notConfigured');
@@ -184,14 +182,6 @@ const resolveModelLabel = (modelId: string | null): string => {
   }
 
   return `${model.displayName} (${model.provider})`;
-};
-
-const defaultModelLabel = (item: LlmRoutingItem): string => {
-  return resolveModelLabel(item.default?.modelId ?? null);
-};
-
-const defaultRetryModelLabel = (item: LlmRoutingItem): string => {
-  return resolveModelLabel(item.default?.retryModelId ?? null);
 };
 
 const resolveStrategyLabel = (strategyKey: string | null): string => {
@@ -206,27 +196,41 @@ const resolveStrategyLabel = (strategyKey: string | null): string => {
   return t('admin.llm.routing.strategy.economy');
 };
 
-const defaultStrategyLabel = (item: LlmRoutingItem): string => {
-  return resolveStrategyLabel(item.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY);
+const resolveInheritedModelLabel = (modelId: string): string => {
+  if (!modelId) {
+    return t('admin.roles.routing.inheritDefault');
+  }
+
+  return resolveModelLabel(modelId);
 };
 
-const currentOverrideModelId = (item: LlmRoutingItem): string => {
-  const roleOverride = item.overrides.find(entry => entry.role === props.role);
-  return roleOverride?.modelId ?? '';
+const resolveInheritedStrategyLabel = (strategyKey: string): string => {
+  if (!strategyKey) {
+    return t('admin.roles.routing.inheritDefault');
+  }
+
+  return resolveStrategyLabel(strategyKey);
 };
 
-const currentRetryOverrideModelId = (item: LlmRoutingItem): string => {
-  const roleOverride = item.overrides.find(entry => entry.role === props.role);
-  return roleOverride?.retryModelId ?? '';
+const findRoleOverride = (item: LlmRoutingItem | null) => {
+  if (!item) return null;
+  return item.overrides.find(entry => entry.role === props.role) ?? null;
 };
 
-const currentStrategyOverrideKey = (item: LlmRoutingItem): string => {
-  const roleOverride = item.overrides.find(entry => entry.role === props.role);
-  return roleOverride?.strategyKey ?? '';
+const currentOverrideModelId = (item: LlmRoutingItem | null): string => {
+  return findRoleOverride(item)?.modelId ?? '';
 };
 
-const toSelectModelId = (modelId: string): string => {
-  return modelId || INHERIT_MODEL_ID;
+const currentRetryOverrideModelId = (item: LlmRoutingItem | null): string => {
+  return findRoleOverride(item)?.retryModelId ?? '';
+};
+
+const currentStrategyOverrideKey = (item: LlmRoutingItem | null): string => {
+  return findRoleOverride(item)?.strategyKey ?? '';
+};
+
+const toSelectModelId = (value: string): string => {
+  return value || INHERIT_MODEL_ID;
 };
 
 const fromSelectModelId = (value: string): string => {
@@ -249,256 +253,271 @@ const fromSelectStrategyKey = (value: string): LlmStrategyKey | null => {
   return LLM_STRATEGY_KEY_MAP.ECONOMY;
 };
 
-const showSecondaryForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): boolean => {
-  return group.isResumeParse || group.secondary !== null;
-};
-
-const isAdaptationGroup = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): boolean => {
-  return group.primary.scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
-};
-
-const showTertiaryForGroup = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): boolean => {
-  return isAdaptationGroup(group);
-};
-
-const showStrategyForGroup = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): boolean => {
-  return isAdaptationGroup(group);
-};
-
-const currentSecondaryOverrideModelId = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  if (group.isResumeParse) {
-    return currentRetryOverrideModelId(group.primary);
-  }
-
-  if (group.secondary) {
-    return currentOverrideModelId(group.secondary);
-  }
-
-  return '';
-};
-
-const currentTertiaryOverrideModelId = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  if (isAdaptationGroup(group)) {
-    return currentRetryOverrideModelId(group.primary);
-  }
-
-  return '';
-};
-
-const currentStrategyOverrideSelection = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  if (!isAdaptationGroup(group)) {
-    return '';
-  }
-
-  return currentStrategyOverrideKey(group.primary);
-};
-
-const savedPrimaryOverrideModelId = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return toSelectModelId(currentOverrideModelId(group.primary));
-};
-
-const savedSecondaryOverrideModelId = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return toSelectModelId(currentSecondaryOverrideModelId(group));
-};
-
-const savedTertiaryOverrideModelId = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return toSelectModelId(currentTertiaryOverrideModelId(group));
-};
-
-const savedStrategyOverrideKeyForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return toSelectStrategyKey(currentStrategyOverrideSelection(group));
-};
-
-const selectedOverrideModelId = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return selectedPrimaryModelId(group.key, savedPrimaryOverrideModelId(group));
-};
-
-const selectedSecondaryOverrideModelId = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return selectedSecondaryModelId(group.key, savedSecondaryOverrideModelId(group));
-};
-
-const selectedTertiaryOverrideModelId = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return selectedTertiaryModelId(group.key, savedTertiaryOverrideModelId(group));
-};
-
-const selectedStrategyOverrideKeyForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  return selectedStrategyKey(group.key, savedStrategyOverrideKeyForGroup(group));
-};
-
-const setOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
-  setPrimarySelection(scenarioKey, value);
-};
-
-const setSecondaryOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
-  setSecondarySelection(scenarioKey, value);
-};
-
-const setTertiaryOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
-  setTertiarySelection(scenarioKey, value);
-};
-
-const setStrategyOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
-  setStrategySelection(scenarioKey, value);
-};
-
-const secondaryLabelForGroup = (
-  group: ReturnType<typeof buildLlmRoutingGroups>[number]
-): string => {
-  if (group.isResumeParse) {
-    return t('admin.roles.routing.retryOverrideLabel');
-  }
-
-  return t('admin.roles.routing.scoringOverrideLabel');
-};
-
-const groupScenarioLabel = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): string => {
-  if (group.secondary) {
-    return t('admin.llm.routing.scenarios.resume_adaptation_with_scoring');
-  }
-
-  const key = `admin.llm.routing.scenarios.${group.primary.scenarioKey}`;
-  return t(key);
-};
-
-const scenarioInfoLines = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): string[] => {
-  const lines = [
-    t('admin.roles.routing.defaultModel', { model: defaultModelLabel(group.primary) })
+const resumeParseCapabilities = computed<string[]>(() => {
+  return [
+    t('admin.roles.routing.currentModel', {
+      model: resolveInheritedModelLabel(currentOverrideModelId(resumeParseItem.value))
+    }),
+    t('admin.roles.routing.currentRetryModel', {
+      model: resolveInheritedModelLabel(currentRetryOverrideModelId(resumeParseItem.value))
+    }),
+    t('admin.roles.routing.defaultModel', {
+      model: resolveModelLabel(resumeParseItem.value?.default?.modelId ?? null)
+    }),
+    t('admin.roles.routing.defaultRetryModel', {
+      model: resolveModelLabel(resumeParseItem.value?.default?.retryModelId ?? null)
+    })
   ];
+});
 
-  if (group.isResumeParse) {
-    lines.push(
-      t('admin.roles.routing.defaultRetryModel', { model: defaultRetryModelLabel(group.primary) })
-    );
+const resumeAdaptationCapabilities = computed<string[]>(() => {
+  return [
+    t('admin.roles.routing.currentModel', {
+      model: resolveInheritedModelLabel(currentOverrideModelId(resumeAdaptationItem.value))
+    }),
+    t('admin.roles.routing.currentScoringModel', {
+      model: resolveInheritedModelLabel(currentOverrideModelId(resumeScoringItem.value))
+    }),
+    t('admin.roles.routing.currentRetryModel', {
+      model: resolveInheritedModelLabel(currentRetryOverrideModelId(resumeAdaptationItem.value))
+    }),
+    t('admin.roles.routing.currentStrategy', {
+      strategy: resolveInheritedStrategyLabel(
+        currentStrategyOverrideKey(resumeAdaptationItem.value)
+      )
+    }),
+    t('admin.roles.routing.defaultModel', {
+      model: resolveModelLabel(resumeAdaptationItem.value?.default?.modelId ?? null)
+    }),
+    t('admin.roles.routing.defaultScoringModel', {
+      model: resolveModelLabel(resumeScoringItem.value?.default?.modelId ?? null)
+    }),
+    t('admin.roles.routing.defaultRetryModel', {
+      model: resolveModelLabel(resumeAdaptationItem.value?.default?.retryModelId ?? null)
+    }),
+    t('admin.roles.routing.defaultStrategy', {
+      strategy: resolveStrategyLabel(
+        resumeAdaptationItem.value?.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY
+      )
+    })
+  ];
+});
+
+const coverLetterCapabilities = computed<string[]>(() => {
+  return [
+    t('admin.roles.routing.currentModel', {
+      model: resolveInheritedModelLabel(currentOverrideModelId(coverLetterItem.value))
+    }),
+    t('admin.roles.routing.defaultModel', {
+      model: resolveModelLabel(coverLetterItem.value?.default?.modelId ?? null)
+    })
+  ];
+});
+
+const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
+  const cards: RoutingScenarioCardsConfig = {};
+
+  if (resumeParseItem.value) {
+    cards[LLM_SCENARIO_KEY_MAP.RESUME_PARSE] = {
+      capabilities: resumeParseCapabilities.value,
+      editDisabled: isRoutingDisabled.value
+    };
   }
 
-  if (group.secondary) {
-    lines.push(
-      t('admin.roles.routing.defaultScoringModel', { model: defaultModelLabel(group.secondary) })
-    );
+  if (hasAdaptationCard.value) {
+    cards[LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION] = {
+      capabilities: resumeAdaptationCapabilities.value,
+      editDisabled: isRoutingDisabled.value || !canEditAdaptation.value
+    };
   }
 
-  if (isAdaptationGroup(group)) {
-    lines.push(
-      t('admin.roles.routing.defaultStrategy', { strategy: defaultStrategyLabel(group.primary) })
-    );
+  if (coverLetterItem.value) {
+    cards[LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION] = {
+      capabilities: coverLetterCapabilities.value,
+      editDisabled: isRoutingDisabled.value
+    };
   }
 
-  return lines;
+  return cards;
+});
+
+const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScenarioDraft => {
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
+    return {
+      primaryModelId: toSelectModelId(currentOverrideModelId(resumeParseItem.value)),
+      secondaryModelId: toSelectModelId(currentRetryOverrideModelId(resumeParseItem.value)),
+      tertiaryModelId: '',
+      strategyKey: ''
+    };
+  }
+
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
+    return {
+      primaryModelId: toSelectModelId(currentOverrideModelId(resumeAdaptationItem.value)),
+      secondaryModelId: toSelectModelId(currentOverrideModelId(resumeScoringItem.value)),
+      tertiaryModelId: toSelectModelId(currentRetryOverrideModelId(resumeAdaptationItem.value)),
+      strategyKey: toSelectStrategyKey(currentStrategyOverrideKey(resumeAdaptationItem.value))
+    };
+  }
+
+  return {
+    primaryModelId: toSelectModelId(currentOverrideModelId(coverLetterItem.value)),
+    secondaryModelId: '',
+    tertiaryModelId: '',
+    strategyKey: ''
+  };
 };
 
-const saveSingleOverride = async (
-  scenarioKey: LlmScenarioKey,
-  modelId: string,
-  existingModelId: string
-) => {
-  if (modelId) {
-    await upsertRoleOverride(scenarioKey, props.role, {
-      modelId,
-      retryModelId: null
-    });
-    return;
+const getModalDescriptionByScenario = (scenarioKey: EditableScenarioKey): string => {
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
+    return resumeParseItem.value?.description ?? '';
   }
 
-  if (existingModelId) {
-    await deleteRoleOverride(scenarioKey, props.role);
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
+    return resumeAdaptationItem.value?.description ?? '';
   }
+
+  return coverLetterItem.value?.description ?? '';
 };
 
-const saveOverride = async (scenarioKey: LlmScenarioKey) => {
-  const group = routingGroups.value.find(entry => entry.key === scenarioKey);
-  if (!group) return;
-
-  const selectedPrimary = fromSelectModelId(selectedOverrideModelId(group));
-  const selectedSecondary = fromSelectModelId(selectedSecondaryOverrideModelId(group));
-  const selectedTertiary = fromSelectModelId(selectedTertiaryOverrideModelId(group));
-  const selectedStrategy = fromSelectStrategyKey(selectedStrategyOverrideKeyForGroup(group));
-  const existingPrimary = currentOverrideModelId(group.primary);
-  const existingSecondary = currentSecondaryOverrideModelId(group);
-  const existingTertiary = currentTertiaryOverrideModelId(group);
-  const existingStrategy = currentStrategyOverrideSelection(group);
-
-  let hasChanges = false;
-
-  if (showSecondaryForGroup(group)) {
-    hasChanges = selectedPrimary !== existingPrimary || selectedSecondary !== existingSecondary;
-  } else {
-    hasChanges = selectedPrimary !== existingPrimary;
+const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<string, unknown> => {
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
+    return {
+      modelOptions: modelOptionsWithInherit.value,
+      primaryLabel: t('admin.roles.routing.overrideLabel'),
+      retryLabel: t('admin.roles.routing.retryOverrideLabel'),
+      disabled: isRoutingDisabled.value,
+      emptyValue: INHERIT_MODEL_ID,
+      disableRetryWhenPrimaryEmpty: true
+    };
   }
 
-  const adaptationOverrideActive = selectedPrimary.length > 0 || existingPrimary.length > 0;
-
-  if (showTertiaryForGroup(group) && adaptationOverrideActive) {
-    hasChanges = hasChanges || selectedTertiary !== existingTertiary;
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
+    return {
+      modelOptions: modelOptionsWithInherit.value,
+      strategyOptions: strategyOptionsWithInherit.value,
+      primaryLabel: t('admin.roles.routing.overrideLabel'),
+      scoringLabel: t('admin.roles.routing.scoringOverrideLabel'),
+      retryLabel: t('admin.roles.routing.retryOverrideLabel'),
+      strategyLabel: t('admin.roles.routing.strategyOverrideLabel'),
+      disabled: isRoutingDisabled.value,
+      emptyValue: INHERIT_MODEL_ID,
+      disableTertiaryWhenPrimaryEmpty: true,
+      disableStrategyWhenPrimaryEmpty: true
+    };
   }
 
-  if (showStrategyForGroup(group) && adaptationOverrideActive) {
-    const normalizedExistingStrategy = existingStrategy || '';
-    const normalizedSelectedStrategy = selectedStrategy ?? '';
-    hasChanges = hasChanges || normalizedSelectedStrategy !== normalizedExistingStrategy;
-  }
+  return {
+    modelOptions: modelOptionsWithInherit.value,
+    primaryLabel: t('admin.roles.routing.overrideLabel'),
+    disabled: isRoutingDisabled.value
+  };
+};
 
-  if (!hasChanges) return;
+const {
+  modalOpen,
+  modalScenarioKey,
+  modalDraft,
+  modalTitle,
+  modalDescription,
+  activeFormComponent,
+  activeFormProps,
+  modalCanSave,
+  openScenarioEditor,
+  closeScenarioEditor
+} = useRoutingScenarioEditor({
+  getSavedDraft: getSavedDraftForScenario,
+  getDescription: getModalDescriptionByScenario,
+  getFormProps: getModalFormPropsByScenario
+});
+
+const saveScenario = async () => {
+  const scenarioKey = modalScenarioKey.value;
+  if (!scenarioKey || !modalCanSave.value) return;
 
   try {
-    if (group.isResumeParse) {
+    if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
+      const selectedPrimary = fromSelectModelId(modalDraft.value.primaryModelId);
+      const selectedRetry = fromSelectModelId(modalDraft.value.secondaryModelId);
+      const existingPrimary = currentOverrideModelId(resumeParseItem.value);
+
       if (selectedPrimary) {
-        await upsertRoleOverride(group.primary.scenarioKey, props.role, {
+        await upsertRoleOverride(LLM_SCENARIO_KEY_MAP.RESUME_PARSE, props.role, {
           modelId: selectedPrimary,
-          retryModelId: selectedSecondary || null,
+          retryModelId: selectedRetry || null,
           strategyKey: null
         });
       } else if (existingPrimary) {
-        await deleteRoleOverride(group.primary.scenarioKey, props.role);
+        await deleteRoleOverride(LLM_SCENARIO_KEY_MAP.RESUME_PARSE, props.role);
       }
-    } else if (group.secondary) {
-      await Promise.all([
-        selectedPrimary
-          ? upsertRoleOverride(group.primary.scenarioKey, props.role, {
-              modelId: selectedPrimary,
-              retryModelId: selectedTertiary || null,
-              strategyKey: selectedStrategy
-            })
-          : existingPrimary
-            ? deleteRoleOverride(group.primary.scenarioKey, props.role)
-            : Promise.resolve(),
-        saveSingleOverride(group.secondary.scenarioKey, selectedSecondary, existingSecondary)
-      ]);
+    } else if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
+      const selectedPrimary = fromSelectModelId(modalDraft.value.primaryModelId);
+      const selectedScoring = fromSelectModelId(modalDraft.value.secondaryModelId);
+      const selectedRetry = fromSelectModelId(modalDraft.value.tertiaryModelId);
+      const selectedStrategy = fromSelectStrategyKey(modalDraft.value.strategyKey);
+
+      const existingPrimary = currentOverrideModelId(resumeAdaptationItem.value);
+      const existingScoring = currentOverrideModelId(resumeScoringItem.value);
+
+      const updates: Promise<unknown>[] = [];
+
+      if (selectedPrimary) {
+        updates.push(
+          upsertRoleOverride(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION, props.role, {
+            modelId: selectedPrimary,
+            retryModelId: selectedRetry || null,
+            strategyKey: selectedStrategy
+          })
+        );
+      } else if (existingPrimary) {
+        updates.push(deleteRoleOverride(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION, props.role));
+      }
+
+      if (selectedScoring) {
+        updates.push(
+          upsertRoleOverride(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING, props.role, {
+            modelId: selectedScoring,
+            retryModelId: null,
+            strategyKey: null
+          })
+        );
+      } else if (existingScoring) {
+        updates.push(
+          deleteRoleOverride(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING, props.role)
+        );
+      }
+
+      if (updates.length > 0) {
+        await Promise.all(updates);
+      }
     } else {
-      await saveSingleOverride(group.primary.scenarioKey, selectedPrimary, existingPrimary);
+      const selectedPrimary = fromSelectModelId(modalDraft.value.primaryModelId);
+      const existingPrimary = currentOverrideModelId(coverLetterItem.value);
+
+      if (selectedPrimary) {
+        await upsertRoleOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, props.role, {
+          modelId: selectedPrimary,
+          retryModelId: null,
+          strategyKey: null
+        });
+      } else if (existingPrimary) {
+        await deleteRoleOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, props.role);
+      }
     }
 
     await fetchRouting();
-    clearScenarioSelections(group.key);
+    closeScenarioEditor();
   } catch (error) {
     notifyError(error);
   }
 };
 
-watch(() => props.role, clearAllSelections);
+watch(
+  () => props.role,
+  () => {
+    closeScenarioEditor();
+  }
+);
 </script>
 
 <style lang="scss">
