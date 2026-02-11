@@ -25,24 +25,26 @@
 
       <template v-else>
         <LlmRoutingCard
-          v-for="item in routingItems"
-          :key="item.scenarioKey"
-          :item="item"
-          :primary-model-id="selectedOverrideModelId(item)"
-          :retry-model-id="selectedRetryOverrideModelId(item)"
-          :saved-primary-model-id="toSelectModelId(currentOverrideModelId(item))"
-          :saved-retry-model-id="toSelectModelId(currentRetryOverrideModelId(item))"
-          :info-lines="scenarioInfoLines(item)"
+          v-for="group in routingGroups"
+          :key="group.key"
+          :item="group.primary"
+          :scenario-label="groupScenarioLabel(group)"
+          :primary-model-id="selectedOverrideModelId(group)"
+          :secondary-model-id="selectedSecondaryOverrideModelId(group)"
+          :saved-primary-model-id="savedPrimaryOverrideModelId(group)"
+          :saved-secondary-model-id="savedSecondaryOverrideModelId(group)"
+          :info-lines="scenarioInfoLines(group)"
           :model-options="modelOptionsWithInherit"
           :primary-label="$t('admin.roles.routing.overrideLabel')"
-          :retry-label="$t('admin.roles.routing.retryOverrideLabel')"
+          :secondary-label="secondaryLabelForGroup(group)"
           :saving="isRoutingDisabled"
           :require-primary="false"
-          :require-retry-for-resume-parse="false"
-          :disable-retry-when-primary-empty="true"
+          :require-secondary="false"
+          :disable-secondary-when-primary-empty="group.isResumeParse"
+          :show-secondary="showSecondaryForGroup(group)"
           :empty-value="INHERIT_MODEL_ID"
-          @update:primary-model-id="setOverrideSelection(item.scenarioKey, $event)"
-          @update:retry-model-id="setRetryOverrideSelection(item.scenarioKey, $event)"
+          @update:primary-model-id="setOverrideSelection(group.key, $event)"
+          @update:secondary-model-id="setSecondaryOverrideSelection(group.key, $event)"
           @save="saveOverride"
         />
       </template>
@@ -52,7 +54,6 @@
 
 <script setup lang="ts">
 import type { LlmRoutingItem, LlmScenarioKey, Role } from '@int/schema';
-import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 
 defineOptions({ name: 'RolesItemScenarios' });
 
@@ -75,15 +76,17 @@ const {
 const { items: llmModels, activeItems: activeModels, fetchAll: fetchModels } = useAdminLlmModels();
 const {
   setPrimarySelection,
-  setRetrySelection,
+  setSecondarySelection,
   selectedPrimaryModelId,
-  selectedRetryModelId,
+  selectedSecondaryModelId,
   clearScenarioSelections,
   clearAllSelections
 } = useLlmRoutingSelection();
 
 const { t } = useI18n();
 const toast = useToast();
+
+const routingGroups = computed(() => buildLlmRoutingGroups(routingItems.value));
 
 const notifyError = (error: unknown) => {
   if (!import.meta.client) return;
@@ -155,10 +158,6 @@ const defaultRetryModelLabel = (item: LlmRoutingItem): string => {
   return resolveModelLabel(item.default?.retryModelId ?? null);
 };
 
-const isResumeParseScenario = (scenarioKey: LlmScenarioKey): boolean => {
-  return scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE;
-};
-
 const currentOverrideModelId = (item: LlmRoutingItem): string => {
   const roleOverride = item.overrides.find(entry => entry.role === props.role);
   return roleOverride?.modelId ?? '';
@@ -177,61 +176,151 @@ const fromSelectModelId = (value: string): string => {
   return value === INHERIT_MODEL_ID ? '' : value;
 };
 
-const selectedOverrideModelId = (item: LlmRoutingItem): string => {
-  return selectedPrimaryModelId(item.scenarioKey, toSelectModelId(currentOverrideModelId(item)));
+const showSecondaryForGroup = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): boolean => {
+  return group.isResumeParse || group.secondary !== null;
 };
 
-const selectedRetryOverrideModelId = (item: LlmRoutingItem): string => {
-  return selectedRetryModelId(item.scenarioKey, toSelectModelId(currentRetryOverrideModelId(item)));
+const currentSecondaryOverrideModelId = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  if (group.isResumeParse) {
+    return currentRetryOverrideModelId(group.primary);
+  }
+
+  if (group.secondary) {
+    return currentOverrideModelId(group.secondary);
+  }
+
+  return '';
+};
+
+const savedPrimaryOverrideModelId = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  return toSelectModelId(currentOverrideModelId(group.primary));
+};
+
+const savedSecondaryOverrideModelId = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  return toSelectModelId(currentSecondaryOverrideModelId(group));
+};
+
+const selectedOverrideModelId = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  return selectedPrimaryModelId(group.key, savedPrimaryOverrideModelId(group));
+};
+
+const selectedSecondaryOverrideModelId = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  return selectedSecondaryModelId(group.key, savedSecondaryOverrideModelId(group));
 };
 
 const setOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
   setPrimarySelection(scenarioKey, value);
 };
 
-const setRetryOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
-  setRetrySelection(scenarioKey, value);
+const setSecondaryOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
+  setSecondarySelection(scenarioKey, value);
 };
 
-const scenarioInfoLines = (item: LlmRoutingItem): string[] => {
-  const lines = [t('admin.roles.routing.defaultModel', { model: defaultModelLabel(item) })];
+const secondaryLabelForGroup = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  if (group.isResumeParse) {
+    return t('admin.roles.routing.retryOverrideLabel');
+  }
 
-  if (isResumeParseScenario(item.scenarioKey)) {
-    lines.push(t('admin.roles.routing.defaultRetryModel', { model: defaultRetryModelLabel(item) }));
+  return t('admin.roles.routing.scoringOverrideLabel');
+};
+
+const groupScenarioLabel = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): string => {
+  if (group.secondary) {
+    return t('admin.llm.routing.scenarios.resume_adaptation_with_scoring');
+  }
+
+  const key = `admin.llm.routing.scenarios.${group.primary.scenarioKey}`;
+  return t(key);
+};
+
+const scenarioInfoLines = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): string[] => {
+  const lines = [
+    t('admin.roles.routing.defaultModel', { model: defaultModelLabel(group.primary) })
+  ];
+
+  if (group.isResumeParse) {
+    lines.push(
+      t('admin.roles.routing.defaultRetryModel', { model: defaultRetryModelLabel(group.primary) })
+    );
+  }
+
+  if (group.secondary) {
+    lines.push(
+      t('admin.roles.routing.defaultScoringModel', { model: defaultModelLabel(group.secondary) })
+    );
   }
 
   return lines;
 };
 
+const saveSingleOverride = async (
+  scenarioKey: LlmScenarioKey,
+  modelId: string,
+  existingModelId: string
+) => {
+  if (modelId) {
+    await upsertRoleOverride(scenarioKey, props.role, {
+      modelId,
+      retryModelId: null
+    });
+    return;
+  }
+
+  if (existingModelId) {
+    await deleteRoleOverride(scenarioKey, props.role);
+  }
+};
+
 const saveOverride = async (scenarioKey: LlmScenarioKey) => {
-  const item = routingItems.value.find(entry => entry.scenarioKey === scenarioKey);
-  if (!item) return;
+  const group = routingGroups.value.find(entry => entry.key === scenarioKey);
+  if (!group) return;
 
-  const selectedModelId = fromSelectModelId(selectedOverrideModelId(item));
-  const selectedRetryModelId = fromSelectModelId(selectedRetryOverrideModelId(item));
-  const existingModelId = currentOverrideModelId(item);
-  const existingRetryModelId = currentRetryOverrideModelId(item);
+  const selectedPrimary = fromSelectModelId(selectedOverrideModelId(group));
+  const selectedSecondary = fromSelectModelId(selectedSecondaryOverrideModelId(group));
+  const existingPrimary = currentOverrideModelId(group.primary);
+  const existingSecondary = currentSecondaryOverrideModelId(group);
 
-  const hasChanges = isResumeParseScenario(scenarioKey)
-    ? selectedModelId !== existingModelId ||
-      (selectedModelId ? selectedRetryModelId : '') !==
-        (existingModelId ? existingRetryModelId : '')
-    : selectedModelId !== existingModelId;
+  const hasChanges = showSecondaryForGroup(group)
+    ? selectedPrimary !== existingPrimary || selectedSecondary !== existingSecondary
+    : selectedPrimary !== existingPrimary;
 
   if (!hasChanges) return;
 
   try {
-    if (selectedModelId) {
-      await upsertRoleOverride(scenarioKey, props.role, {
-        modelId: selectedModelId,
-        retryModelId: isResumeParseScenario(scenarioKey) ? selectedRetryModelId || null : null
-      });
-    } else if (existingModelId) {
-      await deleteRoleOverride(scenarioKey, props.role);
+    if (group.isResumeParse) {
+      if (selectedPrimary) {
+        await upsertRoleOverride(group.primary.scenarioKey, props.role, {
+          modelId: selectedPrimary,
+          retryModelId: selectedSecondary || null
+        });
+      } else if (existingPrimary) {
+        await deleteRoleOverride(group.primary.scenarioKey, props.role);
+      }
+    } else if (group.secondary) {
+      await Promise.all([
+        saveSingleOverride(group.primary.scenarioKey, selectedPrimary, existingPrimary),
+        saveSingleOverride(group.secondary.scenarioKey, selectedSecondary, existingSecondary)
+      ]);
+    } else {
+      await saveSingleOverride(group.primary.scenarioKey, selectedPrimary, existingPrimary);
     }
 
     await fetchRouting();
-    clearScenarioSelections(scenarioKey);
+    clearScenarioSelections(group.key);
   } catch (error) {
     notifyError(error);
   }

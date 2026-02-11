@@ -113,11 +113,10 @@ Role-level platform controls stored in `role_settings`:
 
 - `role: Role`
 - `platformLlmEnabled: boolean`
-- `platformProvider: 'openai' | 'gemini_flash'`
 - `dailyBudgetCap: number`
+- `weeklyBudgetCap: number`
+- `monthlyBudgetCap: number`
 - `updatedAt: Date`
-
-`byokEnabled` was removed from schema/API.
 
 ## LLM Model Catalog
 
@@ -145,6 +144,7 @@ Role-level platform controls stored in `role_settings`:
 
 - `resume_parse`
 - `resume_adaptation`
+- `resume_adaptation_scoring`
 - `cover_letter_generation`
 
 Routing schemas:
@@ -161,4 +161,4 @@ Routing schemas:
 
 ## Usage Provider Type
 
-Runtime now writes platform-only usage records. Legacy `byok` rows can remain historically in DB.
+Runtime writes platform-only usage records.

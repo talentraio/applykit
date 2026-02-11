@@ -79,7 +79,7 @@
   - returns: 204 No Content
 - `POST /api/vacancies/:id/generate`
   - generates a new adapted version from current base resume + vacancy
-  - platform-managed execution path only (no BYOK header contract)
+  - platform-managed execution path only
   - returns created generation
 
 ## Vacancy List Preferences
@@ -122,4 +122,4 @@ Notes:
 
 - All admin endpoints require `super_admin`
 - Blocked users receive `403` on protected endpoints
-- BYOK endpoints (`/api/keys/*`) were removed; runtime is platform-only
+- Runtime uses platform-managed provider credentials only

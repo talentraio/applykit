@@ -68,12 +68,14 @@ export const LLM_MODEL_STATUS_VALUES = [
 export const LLM_SCENARIO_KEY_MAP = {
   RESUME_PARSE: 'resume_parse',
   RESUME_ADAPTATION: 'resume_adaptation',
+  RESUME_ADAPTATION_SCORING: 'resume_adaptation_scoring',
   COVER_LETTER_GENERATION: 'cover_letter_generation'
 } as const;
 
 export const LLM_SCENARIO_KEY_VALUES = [
   LLM_SCENARIO_KEY_MAP.RESUME_PARSE,
   LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION,
+  LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING,
   LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION
 ] as const;
 
@@ -102,21 +104,22 @@ export const OPERATION_VALUES = [
 export const USAGE_CONTEXT_MAP = {
   RESUME_BASE: 'resume_base',
   RESUME_ADAPTATION: 'resume_adaptation',
+  RESUME_ADAPTATION_SCORING: 'resume_adaptation_scoring',
   EXPORT: 'export'
 } as const;
 
 export const USAGE_CONTEXT_VALUES = [
   USAGE_CONTEXT_MAP.RESUME_BASE,
   USAGE_CONTEXT_MAP.RESUME_ADAPTATION,
+  USAGE_CONTEXT_MAP.RESUME_ADAPTATION_SCORING,
   USAGE_CONTEXT_MAP.EXPORT
 ] as const;
 
 export const PROVIDER_TYPE_MAP = {
-  PLATFORM: 'platform',
-  BYOK: 'byok'
+  PLATFORM: 'platform'
 } as const;
 
-export const PROVIDER_TYPE_VALUES = [PROVIDER_TYPE_MAP.PLATFORM, PROVIDER_TYPE_MAP.BYOK] as const;
+export const PROVIDER_TYPE_VALUES = [PROVIDER_TYPE_MAP.PLATFORM] as const;
 
 export const EXPORT_FORMAT_MAP = {
   ATS: 'ats',

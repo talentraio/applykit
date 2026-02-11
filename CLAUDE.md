@@ -44,6 +44,8 @@ other docs/\* relevant to the task.
 
 ## Active Technologies
 
+- TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, Pinia, Zod, Drizzle ORM, OpenAI SDK, Google GenAI, Mullion (`@mullion/core`, `@mullion/ai-sdk`), Vercel AI SDK (`ai`, provider adapters) (009-llm-cached-flow)
+
 - TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, NuxtUI v4, Pinia, Zod, Drizzle ORM, date-fns (008-admin-llm-models-management)
 - PostgreSQL (Drizzle schema in `packages/nuxt-layer-api/server/data/`) (008-admin-llm-models-management)
 

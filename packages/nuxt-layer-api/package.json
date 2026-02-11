@@ -15,11 +15,16 @@
     "db:set-role": "tsx ./scripts/set-user-role.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "catalog:",
+    "@ai-sdk/openai": "catalog:",
     "@google/genai": "catalog:",
     "@int/schema": "workspace:*",
     "@int/utils": "workspace:*",
+    "@mullion/ai-sdk": "catalog:",
+    "@mullion/core": "catalog:",
     "@pinia/nuxt": "catalog:",
     "@vercel/blob": "catalog:",
+    "ai": "catalog:",
     "bcryptjs": "catalog:",
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",

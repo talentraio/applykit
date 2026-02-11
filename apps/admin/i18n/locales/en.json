@@ -125,9 +125,11 @@
         "description": "Override scenario defaults for this role when needed.",
         "overrideLabel": "Role override",
         "retryOverrideLabel": "Retry override",
+        "scoringOverrideLabel": "Scoring override",
         "inheritDefault": "Inherit scenario default",
         "defaultModel": "Default: {model}",
         "defaultRetryModel": "Retry default: {model}",
+        "defaultScoringModel": "Scoring default: {model}",
         "notConfigured": "Not configured",
         "modelUnavailable": "Model unavailable"
       },
@@ -207,11 +209,14 @@
         "empty": "No routing configuration",
         "defaultLabel": "Scenario default",
         "retryLabel": "Retry model",
+        "scoringLabel": "Scoring model",
         "overrideLabel": "Role override",
         "removeOverride": "Remove override",
         "scenarios": {
           "resume_parse": "Resume Parse",
           "resume_adaptation": "Resume Adaptation",
+          "resume_adaptation_scoring": "Resume Adaptation Scoring",
+          "resume_adaptation_with_scoring": "Resume Adaptation + Scoring",
           "cover_letter_generation": "Cover Letter Generation"
         }
       }

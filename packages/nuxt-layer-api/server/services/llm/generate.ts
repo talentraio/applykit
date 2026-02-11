@@ -1,73 +1,64 @@
-import type { LLMProvider, ResumeContent, Role } from '@int/schema';
-import { LLM_SCENARIO_KEY_MAP, ResumeContentSchema } from '@int/schema';
+import type { LLMProvider, LlmScenarioKey, ProviderType, ResumeContent, Role } from '@int/schema';
+import {
+  LLM_PROVIDER_MAP,
+  LLM_SCENARIO_KEY_MAP,
+  ResumeContentSchema,
+  USER_ROLE_MAP
+} from '@int/schema';
 import { z } from 'zod';
-import { callLLM, LLMError } from './index';
+import { callLLM, getFallbackLlmModel, LLMError, resolveScenarioModel } from './index';
+import {
+  buildSharedResumeContext,
+  createGeminiCachedContent,
+  createGeminiCachedProviderOptions
+} from './mullion';
 import { createGenerateUserPrompt, GENERATE_SYSTEM_PROMPT } from './prompts/generate';
+import {
+  createGenerateScoreUserPrompt,
+  GENERATE_SCORE_SYSTEM_PROMPT
+} from './prompts/generate-score';
 
-/**
- * LLM Generate Service
- *
- * Tailors resume to match vacancy using LLM
- * Includes Zod validation and automatic retry on validation failure
- *
- * Related: T105 (US5)
- */
+const GenerateAdaptationResponseSchema = z.object({
+  content: ResumeContentSchema
+});
 
-/**
- * Generation LLM response schema
- */
-const GenerateLLMResponseSchema = z.object({
-  content: ResumeContentSchema,
+const GenerateScoringResponseSchema = z.object({
   matchScoreBefore: z.number().int().min(0).max(100),
   matchScoreAfter: z.number().int().min(0).max(100)
 });
 
-/**
- * Generate options
- */
+const WORD_PATTERN = /[a-z0-9][a-z0-9+#-]*/g;
+const MIN_WORD_LENGTH = 3;
+const DEFAULT_GEMINI_CACHE_TTL_SECONDS = 300;
+
 export type GenerateOptions = {
-  /**
-   * User ID (required for role-based checks)
-   */
   userId?: string;
-
-  /**
-   * User role (required for role-based checks)
-   */
   role?: Role;
-
-  /**
-   * Preferred provider
-   */
   provider?: LLMProvider;
-
-  /**
-   * Maximum retry attempts (default: 2)
-   */
   maxRetries?: number;
-
-  /**
-   * Temperature for LLM (default: 0.3 for consistent but creative tailoring)
-   */
+  scoringMaxRetries?: number;
   temperature?: number;
+  scoringTemperature?: number;
 };
 
-/**
- * Generate result
- */
+export type GenerateStepUsage = {
+  cost: number;
+  tokensUsed: number;
+  provider: LLMProvider;
+  providerType: ProviderType;
+  model: string;
+  attemptsUsed: number;
+};
+
 export type GenerateLLMResult = {
   content: ResumeContent;
   matchScoreBefore: number;
   matchScoreAfter: number;
-  cost: number;
-  tokensUsed: number;
-  provider: LLMProvider;
-  attemptsUsed: number;
+  adaptation: GenerateStepUsage;
+  scoring: GenerateStepUsage | null;
+  scoringFallbackUsed: boolean;
 };
 
-/**
- * Generate error class
- */
 export class GenerateLLMError extends Error {
   constructor(
     message: string,
@@ -84,22 +75,12 @@ export class GenerateLLMError extends Error {
   }
 }
 
-/**
- * Extract JSON from LLM response
- *
- * Handles cases where LLM wraps JSON in markdown code blocks
- *
- * @param text - LLM response text
- * @returns Extracted JSON string
- */
 function extractJSON(text: string): string {
-  // Try to find JSON in markdown code block
   const codeBlockMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
   if (codeBlockMatch && codeBlockMatch[1]) {
     return codeBlockMatch[1].trim();
   }
 
-  // Try to find JSON object
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
     return jsonMatch[0].trim();
@@ -108,22 +89,370 @@ function extractJSON(text: string): string {
   return text.trim();
 }
 
-/**
- * Tailor resume to match vacancy using LLM
- *
- * @param baseResume - Original resume content
- * @param vacancy - Vacancy details
- * @param vacancy.company - Vacancy company name
- * @param vacancy.jobPosition - Vacancy job title or role
- * @param vacancy.description - Vacancy description text
- * @param profile - Optional user profile for additional context
- * @param profile.preferredJobTitle - User's preferred job title
- * @param profile.targetIndustries - User's target industries
- * @param profile.careerGoals - User's career goals
- * @param options - Generation options
- * @returns Tailored resume content with match scores and metadata
- * @throws GenerateLLMError if generation fails after retries
- */
+const parseJSON = (content: string): unknown => {
+  const jsonString = extractJSON(content);
+
+  try {
+    return JSON.parse(jsonString);
+  } catch (error) {
+    throw new GenerateLLMError(
+      `Failed to parse JSON: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      'INVALID_JSON',
+      { response: content }
+    );
+  }
+};
+
+const parseAdaptationContent = (content: string): ResumeContent => {
+  const parsed = parseJSON(content);
+  const validationResult = GenerateAdaptationResponseSchema.safeParse(parsed);
+
+  if (!validationResult.success) {
+    throw new GenerateLLMError(
+      `Validation failed: ${JSON.stringify(validationResult.error.errors)}`,
+      'VALIDATION_FAILED',
+      validationResult.error.errors
+    );
+  }
+
+  return validationResult.data.content;
+};
+
+const parseScoring = (content: string): { matchScoreBefore: number; matchScoreAfter: number } => {
+  const parsed = parseJSON(content);
+  const validationResult = GenerateScoringResponseSchema.safeParse(parsed);
+
+  if (!validationResult.success) {
+    throw new GenerateLLMError(
+      `Validation failed: ${JSON.stringify(validationResult.error.errors)}`,
+      'VALIDATION_FAILED',
+      validationResult.error.errors
+    );
+  }
+
+  if (validationResult.data.matchScoreAfter < validationResult.data.matchScoreBefore) {
+    throw new GenerateLLMError(
+      `Invalid scores: matchScoreAfter (${validationResult.data.matchScoreAfter}) is less than matchScoreBefore (${validationResult.data.matchScoreBefore})`,
+      'INVALID_SCORES',
+      validationResult.data
+    );
+  }
+
+  return validationResult.data;
+};
+
+const flattenTextValues = (value: unknown): string[] => {
+  if (typeof value === 'string') {
+    return [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(entry => flattenTextValues(entry));
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.values(value).flatMap(entry => flattenTextValues(entry));
+  }
+
+  return [];
+};
+
+const tokenizeWords = (value: string): string[] => {
+  const words = value.toLowerCase().match(WORD_PATTERN);
+  if (!words) {
+    return [];
+  }
+
+  return words.filter(word => word.length >= MIN_WORD_LENGTH);
+};
+
+const toWordSet = (value: string): Set<string> => {
+  return new Set(tokenizeWords(value));
+};
+
+const toResumeWordSet = (resume: ResumeContent): Set<string> => {
+  return new Set(tokenizeWords(flattenTextValues(resume).join(' ')));
+};
+
+const clampScore = (value: number): number => {
+  return Math.max(0, Math.min(100, Math.round(value)));
+};
+
+const calculateCoverage = (keywords: Set<string>, corpus: Set<string>): number => {
+  if (keywords.size === 0) {
+    return 0;
+  }
+
+  let matches = 0;
+  keywords.forEach(keyword => {
+    if (corpus.has(keyword)) {
+      matches++;
+    }
+  });
+
+  return matches / keywords.size;
+};
+
+const buildDeterministicFallbackScores = (
+  baseResume: ResumeContent,
+  tailoredResume: ResumeContent,
+  vacancyDescription: string
+): { matchScoreBefore: number; matchScoreAfter: number } => {
+  const vacancyKeywords = toWordSet(vacancyDescription);
+  if (vacancyKeywords.size === 0) {
+    return {
+      matchScoreBefore: 62,
+      matchScoreAfter: 74
+    };
+  }
+
+  const baseCoverage = calculateCoverage(vacancyKeywords, toResumeWordSet(baseResume));
+  const tailoredCoverage = calculateCoverage(vacancyKeywords, toResumeWordSet(tailoredResume));
+
+  const matchScoreBefore = clampScore(42 + baseCoverage * 46);
+  const rawImprovement = clampScore(Math.max(tailoredCoverage - baseCoverage, 0) * 30);
+  const minimalGain = tailoredCoverage >= baseCoverage ? 2 : 0;
+  const matchScoreAfter = clampScore(
+    Math.max(matchScoreBefore, matchScoreBefore + rawImprovement + minimalGain)
+  );
+
+  return {
+    matchScoreBefore,
+    matchScoreAfter: Math.max(matchScoreAfter, matchScoreBefore)
+  };
+};
+
+const toRole = (role?: Role): Role => {
+  return role ?? USER_ROLE_MAP.PUBLIC;
+};
+
+const resolveScenarioTarget = async (
+  role: Role,
+  scenario: LlmScenarioKey
+): Promise<{ provider: LLMProvider; model: string }> => {
+  const scenarioModel = await resolveScenarioModel(role, scenario);
+  if (scenarioModel) {
+    return {
+      provider: scenarioModel.primary.provider,
+      model: scenarioModel.primary.model
+    };
+  }
+
+  const fallbackModel = getFallbackLlmModel();
+  return {
+    provider: fallbackModel.provider,
+    model: fallbackModel.model
+  };
+};
+
+const toPositiveInteger = (value: unknown, fallback: number): number => {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return Math.floor(value);
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.floor(parsed);
+    }
+  }
+
+  return fallback;
+};
+
+const getGeminiCacheConfig = (): { enabled: boolean; ttlSeconds: number } => {
+  const runtimeConfig = useRuntimeConfig();
+  const enabled = runtimeConfig.llm?.geminiCache?.enabled !== false;
+  const ttlSeconds = toPositiveInteger(
+    runtimeConfig.llm?.geminiCache?.ttlSeconds,
+    DEFAULT_GEMINI_CACHE_TTL_SECONDS
+  );
+
+  return {
+    enabled,
+    ttlSeconds
+  };
+};
+
+const getPlatformGeminiApiKey = (): string | null => {
+  const runtimeConfig = useRuntimeConfig();
+  const apiKey = runtimeConfig.llm?.geminiApiKey;
+  return typeof apiKey === 'string' && apiKey.trim().length > 0 ? apiKey : null;
+};
+
+const createAdaptationPrompt = (sharedContextPrompt: string): string => {
+  return createGenerateUserPrompt(sharedContextPrompt);
+};
+
+const createScoringPrompt = (
+  sharedContextPrompt: string,
+  tailoredResume: ResumeContent
+): string => {
+  return createGenerateScoreUserPrompt(sharedContextPrompt, tailoredResume);
+};
+
+const runAdaptationStep = async (
+  sharedContextPrompt: string,
+  options: GenerateOptions
+): Promise<{ content: ResumeContent; usage: GenerateStepUsage }> => {
+  const maxRetries = options.maxRetries ?? 2;
+  let totalCost = 0;
+  let totalTokens = 0;
+  let lastError: GenerateLLMError | null = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await callLLM(
+        {
+          systemMessage: GENERATE_SYSTEM_PROMPT,
+          prompt: createAdaptationPrompt(sharedContextPrompt),
+          temperature: options.temperature ?? 0.3,
+          maxTokens: 6000,
+          responseFormat: 'json'
+        },
+        {
+          userId: options.userId,
+          role: options.role,
+          provider: options.provider,
+          scenario: LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION,
+          scenarioPhase: attempt > 1 ? 'retry' : 'primary'
+        }
+      );
+
+      totalCost += response.cost;
+      totalTokens += response.tokensUsed;
+
+      return {
+        content: parseAdaptationContent(response.content),
+        usage: {
+          cost: totalCost,
+          tokensUsed: totalTokens,
+          provider: response.provider,
+          providerType: response.providerType,
+          model: response.model,
+          attemptsUsed: attempt
+        }
+      };
+    } catch (error) {
+      if (error instanceof GenerateLLMError) {
+        lastError = error;
+      } else if (error instanceof LLMError) {
+        lastError = new GenerateLLMError(`LLM error: ${error.message}`, 'LLM_ERROR', error);
+      } else {
+        lastError = new GenerateLLMError(
+          `Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'LLM_ERROR',
+          error
+        );
+      }
+    }
+  }
+
+  throw (
+    lastError ?? new GenerateLLMError('Failed to generate tailored resume', 'MAX_RETRIES_EXCEEDED')
+  );
+};
+
+const runScoringStep = async (
+  sharedContextPrompt: string,
+  tailoredResume: ResumeContent,
+  options: GenerateOptions,
+  providerOptions?: Record<string, Record<string, unknown>>
+): Promise<{
+  scores: { matchScoreBefore: number; matchScoreAfter: number };
+  usage: GenerateStepUsage;
+}> => {
+  const maxRetries = options.scoringMaxRetries ?? 2;
+  let totalCost = 0;
+  let totalTokens = 0;
+  let lastError: GenerateLLMError | null = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await callLLM(
+        {
+          systemMessage: GENERATE_SCORE_SYSTEM_PROMPT,
+          prompt: createScoringPrompt(sharedContextPrompt, tailoredResume),
+          temperature: options.scoringTemperature,
+          maxTokens: 2000,
+          responseFormat: 'json',
+          providerOptions
+        },
+        {
+          userId: options.userId,
+          role: options.role,
+          provider: options.provider,
+          scenario: LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING,
+          scenarioPhase: attempt > 1 ? 'retry' : 'primary'
+        }
+      );
+
+      totalCost += response.cost;
+      totalTokens += response.tokensUsed;
+
+      return {
+        scores: parseScoring(response.content),
+        usage: {
+          cost: totalCost,
+          tokensUsed: totalTokens,
+          provider: response.provider,
+          providerType: response.providerType,
+          model: response.model,
+          attemptsUsed: attempt
+        }
+      };
+    } catch (error) {
+      if (error instanceof GenerateLLMError) {
+        lastError = error;
+      } else if (error instanceof LLMError) {
+        lastError = new GenerateLLMError(`LLM error: ${error.message}`, 'LLM_ERROR', error);
+      } else {
+        lastError = new GenerateLLMError(
+          `Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'LLM_ERROR',
+          error
+        );
+      }
+    }
+  }
+
+  throw (
+    lastError ?? new GenerateLLMError('Failed to calculate match score', 'MAX_RETRIES_EXCEEDED')
+  );
+};
+
+const resolveScoringProviderOptions = async (
+  role: Role,
+  sharedContextPrompt: string
+): Promise<Record<string, Record<string, unknown>> | undefined> => {
+  const scoringTarget = await resolveScenarioTarget(
+    role,
+    LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING
+  );
+  if (scoringTarget.provider !== LLM_PROVIDER_MAP.GEMINI) {
+    return undefined;
+  }
+
+  const cacheConfig = getGeminiCacheConfig();
+  const geminiApiKey = getPlatformGeminiApiKey();
+  if (!cacheConfig.enabled || !geminiApiKey) {
+    return undefined;
+  }
+
+  const cachedContent = await createGeminiCachedContent({
+    apiKey: geminiApiKey,
+    model: scoringTarget.model,
+    sharedContextPrompt,
+    ttlSeconds: cacheConfig.ttlSeconds
+  });
+
+  if (!cachedContent) {
+    return undefined;
+  }
+
+  return createGeminiCachedProviderOptions(scoringTarget.model, cachedContent);
+};
+
 export async function generateResumeWithLLM(
   baseResume: ResumeContent,
   vacancy: {
@@ -138,124 +467,64 @@ export async function generateResumeWithLLM(
   },
   options: GenerateOptions = {}
 ): Promise<GenerateLLMResult> {
-  const { userId, role, provider, maxRetries = 2, temperature = 0.3 } = options;
-
-  let attempts = 0;
-  let totalCost = 0;
-  let totalTokens = 0;
-  let lastError: Error | null = null;
-  let actualProvider: LLMProvider | undefined;
-
-  while (attempts < maxRetries) {
-    attempts++;
-
-    try {
-      // Call LLM
-      const response = await callLLM(
-        {
-          systemMessage: GENERATE_SYSTEM_PROMPT,
-          prompt: createGenerateUserPrompt(baseResume, vacancy, profile),
-          temperature,
-          maxTokens: 6000 // Larger than parse since we're generating more content
-        },
-        {
-          userId,
-          role,
-          provider,
-          scenario: LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION
-        }
-      );
-
-      actualProvider = response.provider;
-      totalCost += response.cost;
-      totalTokens += response.tokensUsed;
-
-      // Extract JSON from response
-      const jsonString = extractJSON(response.content);
-
-      // Parse JSON
-      let parsedJSON: unknown;
-      try {
-        parsedJSON = JSON.parse(jsonString);
-      } catch (jsonError) {
-        throw new GenerateLLMError(
-          `Failed to parse JSON: ${jsonError instanceof Error ? jsonError.message : 'Unknown error'}`,
-          'INVALID_JSON',
-          { response: response.content }
-        );
-      }
-
-      // Validate with Zod
-      const validationResult = GenerateLLMResponseSchema.safeParse(parsedJSON);
-
-      if (validationResult.success) {
-        const data = validationResult.data;
-
-        // Additional validation: matchScoreAfter should be >= matchScoreBefore
-        if (data.matchScoreAfter < data.matchScoreBefore) {
-          throw new GenerateLLMError(
-            `Invalid scores: matchScoreAfter (${data.matchScoreAfter}) is less than matchScoreBefore (${data.matchScoreBefore})`,
-            'INVALID_SCORES',
-            { matchScoreBefore: data.matchScoreBefore, matchScoreAfter: data.matchScoreAfter }
-          );
-        }
-
-        // Success!
-        return {
-          content: data.content,
-          matchScoreBefore: data.matchScoreBefore,
-          matchScoreAfter: data.matchScoreAfter,
-          cost: totalCost,
-          tokensUsed: totalTokens,
-          provider: actualProvider,
-          attemptsUsed: attempts
-        };
-      }
-
-      // Validation failed
-      lastError = new GenerateLLMError(
-        `Validation failed: ${JSON.stringify(validationResult.error.errors)}`,
-        'VALIDATION_FAILED',
-        validationResult.error.errors
-      );
-
-      console.warn(
-        `Generate validation failed (attempt ${attempts}/${maxRetries}):`,
-        validationResult.error.errors
-      );
-
-      // If this is the last attempt, throw error
-      if (attempts >= maxRetries) {
-        throw lastError;
-      }
-
-      // Otherwise, retry
-    } catch (error) {
-      if (error instanceof GenerateLLMError) {
-        lastError = error;
-      } else if (error instanceof LLMError) {
-        throw new GenerateLLMError(`LLM error: ${error.message}`, 'LLM_ERROR', error);
-      } else {
-        lastError = new GenerateLLMError(
-          `Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          'LLM_ERROR',
-          error
-        );
-      }
-
-      // If this is the last attempt, throw error
-      if (attempts >= maxRetries) {
-        throw lastError;
-      }
-
-      console.warn(`Generate attempt ${attempts}/${maxRetries} failed:`, lastError.message);
-    }
-  }
-
-  // Should not reach here, but just in case
-  throw new GenerateLLMError(
-    `Failed to generate resume after ${attempts} attempts: ${lastError?.message || 'Unknown error'}`,
-    'MAX_RETRIES_EXCEEDED',
-    lastError
+  const runtimeRole = toRole(options.role);
+  const adaptationTarget = await resolveScenarioTarget(
+    runtimeRole,
+    LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION
   );
+  const sharedContext = buildSharedResumeContext(
+    {
+      baseResume,
+      vacancy,
+      profile
+    },
+    {
+      provider: adaptationTarget.provider,
+      model: adaptationTarget.model
+    }
+  );
+
+  const adaptationResult = await runAdaptationStep(sharedContext.prompt, options);
+
+  const scoringProviderOptions = await resolveScoringProviderOptions(
+    runtimeRole,
+    sharedContext.prompt
+  );
+  try {
+    const scoringResult = await runScoringStep(
+      sharedContext.prompt,
+      adaptationResult.content,
+      options,
+      scoringProviderOptions
+    );
+
+    return {
+      content: adaptationResult.content,
+      matchScoreBefore: scoringResult.scores.matchScoreBefore,
+      matchScoreAfter: scoringResult.scores.matchScoreAfter,
+      adaptation: adaptationResult.usage,
+      scoring: scoringResult.usage,
+      scoringFallbackUsed: false
+    };
+  } catch (error) {
+    console.warn(
+      `Scoring step failed. Falling back to deterministic scores. Shared context estimate: ${sharedContext.cacheTokenEstimate} tokens.`,
+      error instanceof Error ? error.message : error
+    );
+
+    const fallbackScores = buildDeterministicFallbackScores(
+      baseResume,
+      adaptationResult.content,
+      vacancy.description
+    );
+
+    return {
+      content: adaptationResult.content,
+      matchScoreBefore: fallbackScores.matchScoreBefore,
+      matchScoreAfter: fallbackScores.matchScoreAfter,
+      adaptation: adaptationResult.usage,
+      scoring: null,
+      scoringFallbackUsed: true
+    };
+  }
 }

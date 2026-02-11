@@ -3,7 +3,7 @@
     class="llm-routing-card grid gap-3 border-b border-muted/30 pb-4 last:border-0 last:pb-0 md:grid-cols-[1fr_minmax(280px,max-content)_minmax(280px,max-content)_auto] md:items-end"
   >
     <div class="space-y-1">
-      <p class="text-sm font-medium">{{ scenarioLabel }}</p>
+      <p class="text-sm font-medium">{{ scenarioLabelValue }}</p>
       <p v-if="item.description" class="text-xs text-muted">
         {{ item.description }}
       </p>
@@ -23,13 +23,13 @@
       />
     </UFormField>
 
-    <UFormField v-if="isResumeParseScenario" :label="retryLabelValue" class="w-full">
+    <UFormField v-if="showSecondary" :label="secondaryLabelValue" class="w-full">
       <USelectMenu
-        v-model="retryModelIdProxy"
+        v-model="secondaryModelIdProxy"
         :items="modelOptions"
         value-key="value"
         :search-input="false"
-        :disabled="saving || retryDisabled"
+        :disabled="saving || secondaryDisabled"
         class="w-full md:min-w-[280px]"
       />
     </UFormField>
@@ -60,21 +60,22 @@
 
 <script setup lang="ts">
 import type { LlmRoutingItem, LlmScenarioKey } from '@int/schema';
-import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 
 type Props = {
   item: LlmRoutingItem;
+  scenarioLabel?: string;
   primaryModelId: string;
-  retryModelId: string;
+  secondaryModelId?: string;
   modelOptions: Array<{ label: string; value: string }>;
   infoLines?: string[];
   primaryLabel?: string;
-  retryLabel?: string;
+  secondaryLabel?: string;
   savedPrimaryModelId?: string;
-  savedRetryModelId?: string;
+  savedSecondaryModelId?: string;
   requirePrimary?: boolean;
-  requireRetryForResumeParse?: boolean;
-  disableRetryWhenPrimaryEmpty?: boolean;
+  requireSecondary?: boolean;
+  disableSecondaryWhenPrimaryEmpty?: boolean;
+  showSecondary?: boolean;
   emptyValue?: string;
   saving?: boolean;
 };
@@ -82,21 +83,24 @@ type Props = {
 defineOptions({ name: 'LlmRoutingCard' });
 
 const props = withDefaults(defineProps<Props>(), {
+  scenarioLabel: '',
+  secondaryModelId: '',
   infoLines: () => [],
   primaryLabel: '',
-  retryLabel: '',
+  secondaryLabel: '',
   savedPrimaryModelId: '',
-  savedRetryModelId: '',
+  savedSecondaryModelId: '',
   requirePrimary: true,
-  requireRetryForResumeParse: true,
-  disableRetryWhenPrimaryEmpty: false,
+  requireSecondary: false,
+  disableSecondaryWhenPrimaryEmpty: false,
+  showSecondary: false,
   emptyValue: '',
   saving: false
 });
 
 const emit = defineEmits<{
   'update:primaryModelId': [value: string];
-  'update:retryModelId': [value: string];
+  'update:secondaryModelId': [value: string];
   save: [scenarioKey: LlmScenarioKey];
 }>();
 
@@ -107,31 +111,36 @@ const primaryModelIdProxy = computed({
   set: value => emit('update:primaryModelId', value)
 });
 
-const retryModelIdProxy = computed({
-  get: () => props.retryModelId,
-  set: value => emit('update:retryModelId', value)
+const secondaryModelIdProxy = computed({
+  get: () => props.secondaryModelId,
+  set: value => emit('update:secondaryModelId', value)
 });
 
-const scenarioLabel = computed(() => {
+const scenarioLabelValue = computed(() => {
+  if (props.scenarioLabel) {
+    return props.scenarioLabel;
+  }
+
   const key = `admin.llm.routing.scenarios.${props.item.scenarioKey}`;
   return t(key);
 });
 
-const isResumeParseScenario = computed(
-  () => props.item.scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE
-);
 const savedPrimaryModelId = computed(() => props.savedPrimaryModelId || '');
-const savedRetryModelId = computed(() => props.savedRetryModelId || '');
+const savedSecondaryModelId = computed(() => props.savedSecondaryModelId || '');
 const primaryLabelValue = computed(() => props.primaryLabel || t('admin.llm.routing.defaultLabel'));
-const retryLabelValue = computed(() => props.retryLabel || t('admin.llm.routing.retryLabel'));
+const secondaryLabelValue = computed(
+  () => props.secondaryLabel || t('admin.llm.routing.retryLabel')
+);
 const isPrimaryEmpty = computed(() => primaryModelIdProxy.value === props.emptyValue);
-const isRetryEmpty = computed(() => retryModelIdProxy.value === props.emptyValue);
-const retryDisabled = computed(() => props.disableRetryWhenPrimaryEmpty && isPrimaryEmpty.value);
+const isSecondaryEmpty = computed(() => secondaryModelIdProxy.value === props.emptyValue);
+const secondaryDisabled = computed(
+  () => props.disableSecondaryWhenPrimaryEmpty && isPrimaryEmpty.value
+);
 
 const hasChanges = computed(() => {
   if (primaryModelIdProxy.value !== savedPrimaryModelId.value) return true;
-  if (!isResumeParseScenario.value) return false;
-  return retryModelIdProxy.value !== savedRetryModelId.value;
+  if (!props.showSecondary) return false;
+  return secondaryModelIdProxy.value !== savedSecondaryModelId.value;
 });
 
 const canSave = computed(() => {
@@ -141,10 +150,8 @@ const canSave = computed(() => {
     return false;
   }
 
-  if (!isResumeParseScenario.value) return true;
-
-  if (props.requireRetryForResumeParse && !isPrimaryEmpty.value) {
-    return !isRetryEmpty.value;
+  if (props.showSecondary && props.requireSecondary && !isPrimaryEmpty.value) {
+    return !isSecondaryEmpty.value;
   }
 
   return true;
@@ -155,8 +162,8 @@ const handleCancel = () => {
 
   primaryModelIdProxy.value = savedPrimaryModelId.value;
 
-  if (isResumeParseScenario.value) {
-    retryModelIdProxy.value = savedRetryModelId.value;
+  if (props.showSecondary) {
+    secondaryModelIdProxy.value = savedSecondaryModelId.value;
   }
 };
 

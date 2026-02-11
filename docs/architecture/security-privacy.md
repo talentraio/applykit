@@ -35,7 +35,7 @@ Supported auth methods:
 
 ## Platform-managed LLM keys
 
-- User-provided BYOK keys are removed from runtime/API/UI surface.
+- User-provided API key flows are removed from runtime/API/UI surface.
 - Platform secrets stay server-side in runtime config (`NUXT_LLM_*`), never in client storage.
 - Do NOT expose platform keys in logs, responses, or client bundles.
 - Continue enforcing role limits, per-user daily caps, and global budget caps for all LLM operations.

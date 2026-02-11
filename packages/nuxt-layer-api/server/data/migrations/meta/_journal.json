@@ -92,6 +92,13 @@
       "when": 1770873600000,
       "tag": "0012_role_budget_windows",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1770988800000,
+      "tag": "0013_resume_adaptation_scoring_and_provider_type_cleanup",
+      "breakpoints": true
     }
   ]
 }

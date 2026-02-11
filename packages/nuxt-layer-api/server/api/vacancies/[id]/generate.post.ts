@@ -1,11 +1,5 @@
 import type { Role } from '@int/schema';
-import {
-  OPERATION_MAP,
-  PROVIDER_TYPE_MAP,
-  USAGE_CONTEXT_MAP,
-  USER_ROLE_MAP,
-  VACANCY_STATUS_MAP
-} from '@int/schema';
+import { OPERATION_MAP, USAGE_CONTEXT_MAP, USER_ROLE_MAP, VACANCY_STATUS_MAP } from '@int/schema';
 import {
   generationRepository,
   resumeRepository,
@@ -138,14 +132,24 @@ export default defineEventHandler(async event => {
       matchScoreAfter: result.matchScoreAfter
     });
 
-    // Log usage
+    // Log adaptation usage
     await logGenerate(
       userId,
-      PROVIDER_TYPE_MAP.PLATFORM,
+      result.adaptation.providerType,
       USAGE_CONTEXT_MAP.RESUME_ADAPTATION,
-      result.tokensUsed,
-      result.cost
+      result.adaptation.tokensUsed,
+      result.adaptation.cost
     );
+
+    if (result.scoring) {
+      await logGenerate(
+        userId,
+        result.scoring.providerType,
+        USAGE_CONTEXT_MAP.RESUME_ADAPTATION_SCORING,
+        result.scoring.tokensUsed,
+        result.scoring.cost
+      );
+    }
 
     // Lock further generation until explicit unlock conditions are met.
     // Also auto-advance status from 'created' to 'generated' on first generation.

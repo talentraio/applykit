@@ -27,17 +27,24 @@
 
       <UPageCard v-else>
         <LlmRoutingCard
-          v-for="item in routingItems"
-          :key="item.scenarioKey"
-          :item="item"
-          :primary-model-id="selectedPrimaryModelId(item.scenarioKey, item.default?.modelId ?? '')"
-          :retry-model-id="selectedRetryModelId(item.scenarioKey, item.default?.retryModelId ?? '')"
-          :saved-primary-model-id="item.default?.modelId ?? ''"
-          :saved-retry-model-id="item.default?.retryModelId ?? ''"
+          v-for="group in routingGroups"
+          :key="group.key"
+          :item="group.primary"
+          :scenario-label="groupScenarioLabel(group)"
+          :primary-model-id="
+            selectedPrimaryModelId(group.key, group.primary.default?.modelId ?? '')
+          "
+          :secondary-model-id="selectedSecondaryModelIdForGroup(group)"
+          :saved-primary-model-id="group.primary.default?.modelId ?? ''"
+          :saved-secondary-model-id="savedSecondaryModelIdForGroup(group)"
           :model-options="modelOptions"
           :saving="routingSaving"
-          @update:primary-model-id="setPrimarySelection(item.scenarioKey, $event)"
-          @update:retry-model-id="setRetrySelection(item.scenarioKey, $event)"
+          :show-secondary="showSecondaryForGroup(group)"
+          :secondary-label="secondaryLabelForGroup(group)"
+          :require-secondary="showSecondaryForGroup(group)"
+          :disable-secondary-when-primary-empty="group.secondary !== null"
+          @update:primary-model-id="setPrimarySelection(group.key, $event)"
+          @update:secondary-model-id="setSecondarySelection(group.key, $event)"
           @save="saveDefault"
         />
       </UPageCard>
@@ -47,7 +54,6 @@
 
 <script setup lang="ts">
 import type { LlmScenarioKey } from '@int/schema';
-import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 
 defineOptions({ name: 'AdminLlmRoutingPage' });
 
@@ -67,11 +73,13 @@ const toast = useToast();
 
 const {
   setPrimarySelection,
-  setRetrySelection,
+  setSecondarySelection,
   selectedPrimaryModelId,
-  selectedRetryModelId,
+  selectedSecondaryModelId,
   clearScenarioSelections
 } = useLlmRoutingSelection();
+
+const routingGroups = computed(() => buildLlmRoutingGroups(routingItems.value));
 
 const modelOptions = computed<Array<{ label: string; value: string }>>(() =>
   activeModels.value.map(model => ({
@@ -105,23 +113,83 @@ const pageErrorMessage = computed(() => {
   return errorValue instanceof Error ? errorValue.message : t('common.error.generic');
 });
 
+const showSecondaryForGroup = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): boolean => {
+  return group.isResumeParse || group.secondary !== null;
+};
+
+const savedSecondaryModelIdForGroup = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  if (group.isResumeParse) {
+    return group.primary.default?.retryModelId ?? '';
+  }
+
+  return group.secondary?.default?.modelId ?? '';
+};
+
+const selectedSecondaryModelIdForGroup = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  return selectedSecondaryModelId(group.key, savedSecondaryModelIdForGroup(group));
+};
+
+const secondaryLabelForGroup = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  if (group.isResumeParse) {
+    return t('admin.llm.routing.retryLabel');
+  }
+
+  return t('admin.llm.routing.scoringLabel');
+};
+
+const groupScenarioLabel = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): string => {
+  if (group.secondary) {
+    return t('admin.llm.routing.scenarios.resume_adaptation_with_scoring');
+  }
+
+  const key = `admin.llm.routing.scenarios.${group.primary.scenarioKey}`;
+  return t(key);
+};
+
 const saveDefault = async (scenarioKey: LlmScenarioKey) => {
-  const item = routingItems.value.find(entry => entry.scenarioKey === scenarioKey);
-  if (!item) return;
+  const group = routingGroups.value.find(entry => entry.key === scenarioKey);
+  if (!group) return;
 
-  const modelId = selectedPrimaryModelId(scenarioKey, item.default?.modelId ?? '');
-  if (!modelId) return;
+  const primaryModelId = selectedPrimaryModelId(group.key, group.primary.default?.modelId ?? '');
+  if (!primaryModelId) return;
 
-  const retryModelId = selectedRetryModelId(scenarioKey, item.default?.retryModelId ?? '');
-  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE && !retryModelId) return;
+  const secondaryModelId = selectedSecondaryModelIdForGroup(group);
+  if (showSecondaryForGroup(group) && !secondaryModelId) return;
 
   try {
-    await updateDefault(scenarioKey, {
-      modelId,
-      retryModelId: retryModelId || null
-    });
+    if (group.isResumeParse) {
+      await updateDefault(group.primary.scenarioKey, {
+        modelId: primaryModelId,
+        retryModelId: secondaryModelId || null
+      });
+    } else if (group.secondary) {
+      await Promise.all([
+        updateDefault(group.primary.scenarioKey, {
+          modelId: primaryModelId,
+          retryModelId: group.primary.default?.retryModelId ?? null
+        }),
+        updateDefault(group.secondary.scenarioKey, {
+          modelId: secondaryModelId,
+          retryModelId: group.secondary.default?.retryModelId ?? null
+        })
+      ]);
+    } else {
+      await updateDefault(group.primary.scenarioKey, {
+        modelId: primaryModelId,
+        retryModelId: group.primary.default?.retryModelId ?? null
+      });
+    }
+
     await fetchRouting();
-    clearScenarioSelections(scenarioKey);
+    clearScenarioSelections(group.key);
   } catch {
     toast.add({ title: t('common.error.generic'), color: 'error' });
   }

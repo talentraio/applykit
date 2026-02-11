@@ -27,6 +27,10 @@ export default defineNuxtConfig({
     llm: {
       openaiApiKey: '',
       geminiApiKey: '',
+      geminiCache: {
+        enabled: process.env.NUXT_LLM_GEMINI_CACHE_ENABLED !== 'false',
+        ttlSeconds: Number(process.env.NUXT_LLM_GEMINI_CACHE_TTL_SECONDS ?? '300')
+      },
       fallbackLlmModel: {
         provider: process.env.NUXT_LLM_FALLBACK_PROVIDER ?? 'openai',
         model: process.env.NUXT_LLM_FALLBACK_MODEL ?? 'gpt-4.1-mini',

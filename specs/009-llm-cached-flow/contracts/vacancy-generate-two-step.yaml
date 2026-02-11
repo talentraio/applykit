@@ -1,0 +1,217 @@
+openapi: 3.0.3
+info:
+  title: Vacancy Generate Two-Step Contract
+  version: 1.0.0
+  description: |
+    Internal contract updates for two-step vacancy generation (adaptation + scoring)
+    while preserving public response shape.
+
+servers:
+  - url: /
+
+paths:
+  /api/vacancies/{id}/generate:
+    post:
+      summary: Generate tailored resume for vacancy
+      tags: [Vacancies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resumeId:
+                  type: string
+                  format: uuid
+                provider:
+                  $ref: '#/components/schemas/LlmProvider'
+      responses:
+        '200':
+          description: Generated resume version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Generation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Generation unavailable for this vacancy
+        '429':
+          description: Daily generation limit exceeded
+        '500':
+          description: Generation failed
+
+  /api/admin/llm/routing:
+    get:
+      summary: Get routing configuration (includes scoring scenario)
+      tags: [Admin LLM]
+      responses:
+        '200':
+          description: Scenario routing configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LlmRoutingItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  schemas:
+    LlmProvider:
+      type: string
+      enum: [openai, gemini]
+
+    LlmScenarioKey:
+      type: string
+      enum:
+        - resume_parse
+        - resume_adaptation
+        - resume_adaptation_scoring
+        - cover_letter_generation
+
+    Role:
+      type: string
+      enum: [super_admin, friend, public]
+
+    ResumeContent:
+      type: object
+      additionalProperties: true
+      description: Strict schema is defined in @int/schema ResumeContentSchema
+
+    Generation:
+      type: object
+      required:
+        - id
+        - vacancyId
+        - resumeId
+        - content
+        - matchScoreBefore
+        - matchScoreAfter
+        - generatedAt
+        - expiresAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        vacancyId:
+          type: string
+          format: uuid
+        resumeId:
+          type: string
+          format: uuid
+        content:
+          $ref: '#/components/schemas/ResumeContent'
+        matchScoreBefore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        matchScoreAfter:
+          type: integer
+          minimum: 0
+          maximum: 100
+        generatedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    RoutingAssignmentInput:
+      type: object
+      required: [modelId]
+      properties:
+        modelId:
+          type: string
+          format: uuid
+        retryModelId:
+          type: string
+          format: uuid
+          nullable: true
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          nullable: true
+        maxTokens:
+          type: integer
+          minimum: 1
+          nullable: true
+        responseFormat:
+          type: string
+          enum: [text, json]
+          nullable: true
+
+    LlmRoutingDefault:
+      allOf:
+        - $ref: '#/components/schemas/RoutingAssignmentInput'
+        - type: object
+          required: [updatedAt]
+          properties:
+            updatedAt:
+              type: string
+              format: date-time
+
+    LlmRoutingOverride:
+      allOf:
+        - $ref: '#/components/schemas/RoutingAssignmentInput'
+        - type: object
+          required: [role, updatedAt]
+          properties:
+            role:
+              $ref: '#/components/schemas/Role'
+            updatedAt:
+              type: string
+              format: date-time
+
+    LlmRoutingItem:
+      type: object
+      required: [scenarioKey, overrides]
+      properties:
+        scenarioKey:
+          $ref: '#/components/schemas/LlmScenarioKey'
+        label:
+          type: string
+        description:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        default:
+          $ref: '#/components/schemas/LlmRoutingDefault'
+          nullable: true
+        overrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/LlmRoutingOverride'
+
+  responses:
+    BadRequest:
+      description: Invalid request payload
+    Unauthorized:
+      description: Authentication required
+    Forbidden:
+      description: Forbidden
+    NotFound:
+      description: Resource not found

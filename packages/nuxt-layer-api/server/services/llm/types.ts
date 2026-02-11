@@ -45,6 +45,11 @@ export type LLMRequest = {
    * - json: force JSON object output when provider supports it
    */
   responseFormat?: 'text' | 'json';
+
+  /**
+   * Provider-specific options passed through to the selected provider.
+   */
+  providerOptions?: Record<string, Record<string, unknown>>;
 };
 
 /**
@@ -80,6 +85,15 @@ export type LLMResponse = {
    * Provider type used for execution (platform-managed path)
    */
   providerType: ProviderType;
+
+  /**
+   * Optional token usage split returned by provider.
+   */
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    cachedInputTokens?: number;
+  };
 };
 
 /**

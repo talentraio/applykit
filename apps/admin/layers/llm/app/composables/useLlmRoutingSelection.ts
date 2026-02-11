@@ -2,9 +2,9 @@ import type { LlmScenarioKey } from '@int/schema';
 
 export type UseLlmRoutingSelectionReturn = {
   setPrimarySelection: (scenarioKey: LlmScenarioKey, value: string) => void;
-  setRetrySelection: (scenarioKey: LlmScenarioKey, value: string) => void;
+  setSecondarySelection: (scenarioKey: LlmScenarioKey, value: string) => void;
   selectedPrimaryModelId: (scenarioKey: LlmScenarioKey, fallback?: string) => string;
-  selectedRetryModelId: (scenarioKey: LlmScenarioKey, fallback?: string) => string;
+  selectedSecondaryModelId: (scenarioKey: LlmScenarioKey, fallback?: string) => string;
   clearScenarioSelections: (scenarioKey: LlmScenarioKey) => void;
   clearAllSelections: () => void;
 };
@@ -17,27 +17,27 @@ export type UseLlmRoutingSelectionReturn = {
  */
 export function useLlmRoutingSelection(): UseLlmRoutingSelectionReturn {
   const primarySelection = reactive<Partial<Record<LlmScenarioKey, string>>>({});
-  const retrySelection = reactive<Partial<Record<LlmScenarioKey, string>>>({});
+  const secondarySelection = reactive<Partial<Record<LlmScenarioKey, string>>>({});
 
   const setPrimarySelection = (scenarioKey: LlmScenarioKey, value: string) => {
     primarySelection[scenarioKey] = value;
   };
 
-  const setRetrySelection = (scenarioKey: LlmScenarioKey, value: string) => {
-    retrySelection[scenarioKey] = value;
+  const setSecondarySelection = (scenarioKey: LlmScenarioKey, value: string) => {
+    secondarySelection[scenarioKey] = value;
   };
 
   const selectedPrimaryModelId = (scenarioKey: LlmScenarioKey, fallback = ''): string => {
     return primarySelection[scenarioKey] ?? fallback;
   };
 
-  const selectedRetryModelId = (scenarioKey: LlmScenarioKey, fallback = ''): string => {
-    return retrySelection[scenarioKey] ?? fallback;
+  const selectedSecondaryModelId = (scenarioKey: LlmScenarioKey, fallback = ''): string => {
+    return secondarySelection[scenarioKey] ?? fallback;
   };
 
   const clearScenarioSelections = (scenarioKey: LlmScenarioKey) => {
     delete primarySelection[scenarioKey];
-    delete retrySelection[scenarioKey];
+    delete secondarySelection[scenarioKey];
   };
 
   const clearAllSelections = () => {
@@ -45,16 +45,16 @@ export function useLlmRoutingSelection(): UseLlmRoutingSelectionReturn {
       delete primarySelection[key as LlmScenarioKey];
     });
 
-    Object.keys(retrySelection).forEach(key => {
-      delete retrySelection[key as LlmScenarioKey];
+    Object.keys(secondarySelection).forEach(key => {
+      delete secondarySelection[key as LlmScenarioKey];
     });
   };
 
   return {
     setPrimarySelection,
-    setRetrySelection,
+    setSecondarySelection,
     selectedPrimaryModelId,
-    selectedRetryModelId,
+    selectedSecondaryModelId,
     clearScenarioSelections,
     clearAllSelections
   };
