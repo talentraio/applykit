@@ -2,6 +2,22 @@ import type { Generation } from '../schemas/generation';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getDaysUntilExpiration, isGenerationExpired } from '../schemas/generation';
 
+const DEFAULT_SCORE_BREAKDOWN: Generation['scoreBreakdown'] = {
+  version: 'test-v1',
+  components: {
+    core: { before: 70, after: 90, weight: 0.35 },
+    mustHave: { before: 70, after: 90, weight: 0.3 },
+    niceToHave: { before: 70, after: 90, weight: 0.1 },
+    responsibilities: { before: 70, after: 90, weight: 0.15 },
+    human: { before: 70, after: 90, weight: 0.1 }
+  },
+  gateStatus: {
+    schemaValid: true,
+    identityStable: true,
+    hallucinationFree: true
+  }
+};
+
 describe('getDaysUntilExpiration', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -27,6 +43,7 @@ describe('getDaysUntilExpiration', () => {
       },
       matchScoreBefore: 70,
       matchScoreAfter: 90,
+      scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: now,
       expiresAt: futureDate
     };
@@ -56,6 +73,7 @@ describe('getDaysUntilExpiration', () => {
       },
       matchScoreBefore: 70,
       matchScoreAfter: 90,
+      scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: new Date('2025-12-20T12:00:00Z'),
       expiresAt: pastDate
     };
@@ -85,6 +103,7 @@ describe('getDaysUntilExpiration', () => {
       },
       matchScoreBefore: 70,
       matchScoreAfter: 90,
+      scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: now,
       expiresAt: futureDate
     };
@@ -120,6 +139,7 @@ describe('isGenerationExpired', () => {
       },
       matchScoreBefore: 70,
       matchScoreAfter: 90,
+      scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: now,
       expiresAt: futureDate
     };
@@ -147,6 +167,7 @@ describe('isGenerationExpired', () => {
       },
       matchScoreBefore: 70,
       matchScoreAfter: 90,
+      scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: new Date('2025-12-20T12:00:00Z'),
       expiresAt: pastDate
     };
@@ -174,6 +195,7 @@ describe('isGenerationExpired', () => {
       },
       matchScoreBefore: 70,
       matchScoreAfter: 90,
+      scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: new Date('2025-12-20T12:00:00Z'),
       expiresAt: sameTime
     };
@@ -202,6 +224,7 @@ describe('isGenerationExpired', () => {
       },
       matchScoreBefore: 70,
       matchScoreAfter: 90,
+      scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: now,
       expiresAt: futureByOneMilli
     };

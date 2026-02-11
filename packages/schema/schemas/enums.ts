@@ -5,6 +5,7 @@ import {
   LLM_PROVIDER_MAP,
   LLM_RESPONSE_FORMAT_MAP,
   LLM_SCENARIO_KEY_MAP,
+  LLM_STRATEGY_KEY_MAP,
   OPERATION_MAP,
   PROVIDER_TYPE_MAP,
   SOURCE_FILE_TYPE_MAP,
@@ -46,6 +47,10 @@ export type LlmScenarioKey = z.infer<typeof LlmScenarioKeySchema>;
 // LLM response format
 export const LlmResponseFormatSchema = z.nativeEnum(LLM_RESPONSE_FORMAT_MAP);
 export type LlmResponseFormat = z.infer<typeof LlmResponseFormatSchema>;
+
+// LLM strategy keys for grouped adaptation/scoring flow
+export const LlmStrategyKeySchema = z.nativeEnum(LLM_STRATEGY_KEY_MAP);
+export type LlmStrategyKey = z.infer<typeof LlmStrategyKeySchema>;
 
 // Operations for usage tracking
 export const OperationSchema = z.nativeEnum(OPERATION_MAP);

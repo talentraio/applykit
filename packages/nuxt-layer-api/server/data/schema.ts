@@ -4,6 +4,7 @@ import type {
   ResumeContent,
   ResumeFormatSettingsAts,
   ResumeFormatSettingsHuman,
+  ScoreBreakdown,
   VacancyListColumnVisibility
 } from '@int/schema';
 import {
@@ -11,6 +12,7 @@ import {
   LLM_PROVIDER_VALUES,
   LLM_RESPONSE_FORMAT_VALUES,
   LLM_SCENARIO_KEY_VALUES,
+  LLM_STRATEGY_KEY_VALUES,
   OPERATION_VALUES,
   PROVIDER_TYPE_VALUES,
   SOURCE_FILE_TYPE_VALUES,
@@ -53,6 +55,7 @@ export const sourceFileTypeEnum = pgEnum('source_file_type', SOURCE_FILE_TYPE_VA
 export const llmProviderEnum = pgEnum('llm_provider', LLM_PROVIDER_VALUES);
 export const llmModelStatusEnum = pgEnum('llm_model_status', LLM_MODEL_STATUS_VALUES);
 export const llmScenarioKeyEnum = pgEnum('llm_scenario_key', LLM_SCENARIO_KEY_VALUES);
+export const llmStrategyKeyEnum = pgEnum('llm_strategy_key', LLM_STRATEGY_KEY_VALUES);
 export const llmResponseFormatEnum = pgEnum('llm_response_format', LLM_RESPONSE_FORMAT_VALUES);
 export const operationEnum = pgEnum('operation', OPERATION_VALUES);
 export const providerTypeEnum = pgEnum('provider_type', PROVIDER_TYPE_VALUES);
@@ -294,6 +297,7 @@ export const generations = pgTable(
     content: jsonb('content').$type<ResumeContent>().notNull(),
     matchScoreBefore: integer('match_score_before').notNull(),
     matchScoreAfter: integer('match_score_after').notNull(),
+    scoreBreakdown: jsonb('score_breakdown').$type<ScoreBreakdown>().notNull(),
     generatedAt: timestamp('generated_at', { mode: 'date' }).notNull().defaultNow(),
     expiresAt: timestamp('expires_at', { mode: 'date' }).notNull()
   },
@@ -372,6 +376,7 @@ export const llmScenarioModels = pgTable(
     temperature: decimal('temperature', { precision: 3, scale: 2 }),
     maxTokens: integer('max_tokens'),
     responseFormat: llmResponseFormatEnum('response_format'),
+    strategyKey: llmStrategyKeyEnum('strategy_key'),
     updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
   },
   table => ({
@@ -398,6 +403,7 @@ export const llmRoleScenarioOverrides = pgTable(
     temperature: decimal('temperature', { precision: 3, scale: 2 }),
     maxTokens: integer('max_tokens'),
     responseFormat: llmResponseFormatEnum('response_format'),
+    strategyKey: llmStrategyKeyEnum('strategy_key'),
     updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
   },
   table => ({

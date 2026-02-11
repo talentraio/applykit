@@ -99,6 +99,13 @@
       "when": 1770988800000,
       "tag": "0013_resume_adaptation_scoring_and_provider_type_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1771075200000,
+      "tag": "0014_generation_strategy_and_score_breakdown",
+      "breakpoints": true
     }
   ]
 }

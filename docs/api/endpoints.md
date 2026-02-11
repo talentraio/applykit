@@ -79,8 +79,12 @@
   - returns: 204 No Content
 - `POST /api/vacancies/:id/generate`
   - generates a new adapted version from current base resume + vacancy
+  - executes two-step pipeline:
+    - adaptation (`resume_adaptation`, strategy-aware, retry model optional)
+    - scoring (`resume_adaptation_scoring`, extract signals + map evidence)
+  - if scoring fails, generation is still persisted with deterministic fallback scoring
   - platform-managed execution path only
-  - returns created generation
+  - returns created generation (`matchScoreBefore`, `matchScoreAfter`, `scoreBreakdown`)
 
 ## Vacancy List Preferences
 
@@ -115,7 +119,15 @@
 - `DELETE /api/admin/llm/models/:id`
 - `GET /api/admin/llm/routing`
 - `PUT /api/admin/llm/routing/:scenarioKey/default`
+  - body: `RoutingAssignmentInput`
+  - normalization rules:
+    - `retryModelId` is persisted only for `resume_parse` and `resume_adaptation`
+    - `strategyKey` is persisted only for `resume_adaptation`
 - `PUT /api/admin/llm/routing/:scenarioKey/roles/:role`
+  - body: `RoutingAssignmentInput`
+  - normalization rules:
+    - `retryModelId` is persisted only for `resume_parse` and `resume_adaptation`
+    - `strategyKey` is persisted only for `resume_adaptation`
 - `DELETE /api/admin/llm/routing/:scenarioKey/roles/:role`
 
 Notes:

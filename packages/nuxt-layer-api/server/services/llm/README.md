@@ -7,7 +7,7 @@ Platform-managed multi-provider LLM service for `@int/api`.
 - Providers: OpenAI, Gemini
 - Execution mode: **platform-only** (no user-provided key path)
 - Budget enforcement: role caps + global budget cap
-- Routing: scenario defaults with role overrides
+- Routing: scenario defaults with role overrides + runtime fallback model
 - Usage logging: provider type `platform`, scenario usage contexts
 
 ## Main files
@@ -32,9 +32,31 @@ server/services/llm/
 `POST /api/vacancies/:id/generate` executes:
 
 1. Adaptation call (`resume_adaptation`) -> tailored `ResumeContent`
-2. Scoring call (`resume_adaptation_scoring`) -> `matchScoreBefore/After`
+   - strategy-aware prompt (`economy` or `quality`)
+   - retry model supported for adaptation scenario
+2. Scoring call (`resume_adaptation_scoring`)
+   - extract vacancy signals
+   - map evidence before/after
+   - compute deterministic `matchScoreBefore/After` + `scoreBreakdown`
 
 If scoring fails, generation is still saved with deterministic fallback scores.
+
+## Routing semantics
+
+- Resolution precedence for each scenario:
+  - role override
+  - scenario default
+  - runtime fallback from config
+- `strategyKey` applies only to `resume_adaptation`.
+- `retryModelId` applies to `resume_parse` and `resume_adaptation`.
+- Scoring scenario does not use retry model in current implementation.
+
+## Usage contexts
+
+Generation writes separate usage logs:
+
+- adaptation: `resume_adaptation`
+- scoring: `resume_adaptation_scoring`
 
 ## Caching behavior
 

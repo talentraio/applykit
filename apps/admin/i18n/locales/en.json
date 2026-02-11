@@ -126,10 +126,12 @@
         "overrideLabel": "Role override",
         "retryOverrideLabel": "Retry override",
         "scoringOverrideLabel": "Scoring override",
+        "strategyOverrideLabel": "Strategy override",
         "inheritDefault": "Inherit scenario default",
         "defaultModel": "Default: {model}",
         "defaultRetryModel": "Retry default: {model}",
         "defaultScoringModel": "Scoring default: {model}",
+        "defaultStrategy": "Strategy default: {strategy}",
         "notConfigured": "Not configured",
         "modelUnavailable": "Model unavailable"
       },
@@ -210,8 +212,13 @@
         "defaultLabel": "Scenario default",
         "retryLabel": "Retry model",
         "scoringLabel": "Scoring model",
+        "strategyLabel": "Strategy",
         "overrideLabel": "Role override",
         "removeOverride": "Remove override",
+        "strategy": {
+          "economy": "Economy",
+          "quality": "Quality"
+        },
         "scenarios": {
           "resume_parse": "Resume Parse",
           "resume_adaptation": "Resume Adaptation",

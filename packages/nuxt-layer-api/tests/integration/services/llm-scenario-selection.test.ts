@@ -1,10 +1,187 @@
-import { describe, expect, it } from 'vitest';
+import type { ResumeContent } from '@int/schema';
+import { LLM_SCENARIO_KEY_MAP, USER_ROLE_MAP } from '@int/schema';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-/**
- * Integration coverage placeholder for parse/generate scenario model selection.
- */
-describe.skip('llm scenario selection integration', () => {
-  it('reserves parse and generation scenario wiring checks', () => {
-    expect(true).toBe(true);
+const callLLMMock = vi.fn();
+const resolveScenarioModelMock = vi.fn();
+
+vi.mock('../../../server/services/llm/index', () => ({
+  callLLM: callLLMMock,
+  resolveScenarioModel: resolveScenarioModelMock,
+  getFallbackLlmModel: () => ({
+    provider: 'openai',
+    model: 'gpt-4.1-mini',
+    price: {
+      input: 0.4,
+      output: 1.6,
+      cache: 0
+    }
+  }),
+  LLMError: class MockLLMError extends Error {}
+}));
+
+vi.mock('../../../server/services/llm/mullion', () => ({
+  buildSharedResumeContext: ({
+    baseResume,
+    vacancy
+  }: {
+    baseResume: ResumeContent;
+    vacancy: { description: string };
+  }) => ({
+    prompt: `BASE:${JSON.stringify(baseResume)}\nVACANCY:${vacancy.description}`,
+    cacheTokenEstimate: 1200
+  }),
+  createGeminiCachedContent: vi.fn(),
+  createGeminiCachedProviderOptions: vi.fn()
+}));
+
+const baseResume: ResumeContent = {
+  personalInfo: {
+    fullName: 'Taylor Doe',
+    email: 'taylor@example.com'
+  },
+  experience: [],
+  education: [],
+  skills: [
+    {
+      type: 'Core',
+      skills: ['Reporting']
+    }
+  ]
+};
+
+describe('llm scenario selection integration', () => {
+  beforeEach(() => {
+    callLLMMock.mockReset();
+    resolveScenarioModelMock.mockReset();
+
+    resolveScenarioModelMock.mockImplementation(async (_role, scenario) => {
+      if (scenario === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
+        return {
+          source: 'scenario_default',
+          primary: {
+            provider: 'openai',
+            model: 'gpt-4.1-mini',
+            inputPricePer1mUsd: 0.4,
+            outputPricePer1mUsd: 1.6,
+            cachedInputPricePer1mUsd: 0
+          },
+          retry: null,
+          temperature: 0.3,
+          maxTokens: 6000,
+          responseFormat: 'json',
+          strategyKey: 'quality'
+        };
+      }
+
+      if (scenario === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING) {
+        return {
+          source: 'scenario_default',
+          primary: {
+            provider: 'openai',
+            model: 'gpt-4.1-mini',
+            inputPricePer1mUsd: 0.4,
+            outputPricePer1mUsd: 1.6,
+            cachedInputPricePer1mUsd: 0
+          },
+          retry: null,
+          temperature: 0,
+          maxTokens: 3000,
+          responseFormat: 'json',
+          strategyKey: null
+        };
+      }
+
+      return null;
+    });
+
+    callLLMMock.mockImplementation(async (_request, options) => {
+      if (options?.scenario === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
+        return {
+          content: JSON.stringify({
+            content: {
+              ...baseResume,
+              summary: 'Tailored summary'
+            }
+          }),
+          tokensUsed: 100,
+          cost: 0.001,
+          provider: 'openai',
+          providerType: 'platform',
+          model: 'gpt-4.1-mini'
+        };
+      }
+
+      if (options?.scenario === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING) {
+        const callIndex = callLLMMock.mock.calls.length;
+        if (callIndex === 2) {
+          return {
+            content: JSON.stringify({
+              signals: {
+                jobFamily: 'operations',
+                seniority: null,
+                coreRequirements: [],
+                mustHave: [],
+                niceToHave: [],
+                responsibilities: [],
+                domainTerms: ['operations'],
+                constraints: []
+              }
+            }),
+            tokensUsed: 50,
+            cost: 0.0005,
+            provider: 'openai',
+            providerType: 'platform',
+            model: 'gpt-4.1-mini'
+          };
+        }
+
+        return {
+          content: JSON.stringify({ evidence: [] }),
+          tokensUsed: 50,
+          cost: 0.0005,
+          provider: 'openai',
+          providerType: 'platform',
+          model: 'gpt-4.1-mini'
+        };
+      }
+
+      throw new Error('Unexpected scenario');
+    });
+  });
+
+  it('uses strategy-specific adaptation prompt and scoring scenario calls', async () => {
+    const { generateResumeWithLLM } = await import('../../../server/services/llm/generate');
+
+    const result = await generateResumeWithLLM(
+      baseResume,
+      {
+        company: 'Acme',
+        jobPosition: 'Operations Manager',
+        description: 'Need operations and reporting skills'
+      },
+      undefined,
+      {
+        role: USER_ROLE_MAP.FRIEND,
+        userId: 'user-1'
+      }
+    );
+
+    expect(callLLMMock).toHaveBeenCalledTimes(3);
+
+    const adaptationRequest = callLLMMock.mock.calls[0]?.[0];
+    const adaptationOptions = callLLMMock.mock.calls[0]?.[1];
+
+    expect(adaptationRequest.prompt).toContain('Strategy: quality');
+    expect(adaptationOptions.scenario).toBe(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION);
+
+    const extractOptions = callLLMMock.mock.calls[1]?.[1];
+    const mapOptions = callLLMMock.mock.calls[2]?.[1];
+
+    expect(extractOptions.scenario).toBe(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING);
+    expect(mapOptions.scenario).toBe(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING);
+
+    expect(result.scoringFallbackUsed).toBe(false);
+    expect(result.scoreBreakdown.version).toBe('deterministic-v1');
   });
 });

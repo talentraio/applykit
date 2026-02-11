@@ -1,5 +1,5 @@
 import type { Role } from '@int/schema';
-import { OPERATION_MAP, USAGE_CONTEXT_MAP, USER_ROLE_MAP, VACANCY_STATUS_MAP } from '@int/schema';
+import { OPERATION_MAP, USER_ROLE_MAP, VACANCY_STATUS_MAP } from '@int/schema';
 import {
   generationRepository,
   resumeRepository,
@@ -7,7 +7,7 @@ import {
 } from '../../../data/repositories';
 import { requireLimit } from '../../../services/limits';
 import { generateResumeWithLLM } from '../../../services/llm/generate';
-import { logGenerate } from '../../../utils/usage';
+import { logGenerateAdaptation, logGenerateScoring } from '../../../utils/usage';
 
 /**
  * POST /api/vacancies/:id/generate
@@ -129,23 +129,22 @@ export default defineEventHandler(async event => {
       resumeId: resume.id,
       content: result.content,
       matchScoreBefore: result.matchScoreBefore,
-      matchScoreAfter: result.matchScoreAfter
+      matchScoreAfter: result.matchScoreAfter,
+      scoreBreakdown: result.scoreBreakdown
     });
 
     // Log adaptation usage
-    await logGenerate(
+    await logGenerateAdaptation(
       userId,
       result.adaptation.providerType,
-      USAGE_CONTEXT_MAP.RESUME_ADAPTATION,
       result.adaptation.tokensUsed,
       result.adaptation.cost
     );
 
     if (result.scoring) {
-      await logGenerate(
+      await logGenerateScoring(
         userId,
         result.scoring.providerType,
-        USAGE_CONTEXT_MAP.RESUME_ADAPTATION_SCORING,
         result.scoring.tokensUsed,
         result.scoring.cost
       );

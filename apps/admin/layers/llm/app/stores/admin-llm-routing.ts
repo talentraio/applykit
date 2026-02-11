@@ -1,12 +1,29 @@
 import type { LlmRoutingItem, LlmScenarioKey, Role, RoutingAssignmentInput } from '@int/schema';
+import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 import { adminLlmRoutingApi } from '../infrastructure/admin-llm-routing.api';
+
+const normalizeRoutingInputForScenario = (
+  scenarioKey: LlmScenarioKey,
+  input: RoutingAssignmentInput
+): RoutingAssignmentInput => {
+  const supportsRetry =
+    scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE ||
+    scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
+  const supportsStrategy = scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
+
+  return {
+    ...input,
+    retryModelId: supportsRetry ? (input.retryModelId ?? null) : null,
+    strategyKey: supportsStrategy ? (input.strategyKey ?? null) : null
+  };
+};
 
 export const useAdminLlmRoutingStore = defineStore('AdminLlmRoutingStore', {
   state: (): {
     items: LlmRoutingItem[];
     loading: boolean;
     saving: boolean;
-    error: Error | null;
+    error: string | null;
   } => ({
     items: [],
     loading: false,
@@ -28,8 +45,8 @@ export const useAdminLlmRoutingStore = defineStore('AdminLlmRoutingStore', {
         this.items = response.items;
         return response.items;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to fetch routing');
-        throw this.error;
+        this.error = err instanceof Error ? err.message : 'Failed to fetch routing';
+        throw err;
       } finally {
         this.loading = false;
       }
@@ -43,12 +60,13 @@ export const useAdminLlmRoutingStore = defineStore('AdminLlmRoutingStore', {
       this.error = null;
 
       try {
-        const updated = await adminLlmRoutingApi.updateDefault(scenarioKey, input);
+        const normalizedInput = normalizeRoutingInputForScenario(scenarioKey, input);
+        const updated = await adminLlmRoutingApi.updateDefault(scenarioKey, normalizedInput);
         this.items = this.items.map(item => (item.scenarioKey === scenarioKey ? updated : item));
         return updated;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to update scenario default');
-        throw this.error;
+        this.error = err instanceof Error ? err.message : 'Failed to update scenario default';
+        throw err;
       } finally {
         this.saving = false;
       }
@@ -63,12 +81,17 @@ export const useAdminLlmRoutingStore = defineStore('AdminLlmRoutingStore', {
       this.error = null;
 
       try {
-        const updated = await adminLlmRoutingApi.upsertRoleOverride(scenarioKey, role, input);
+        const normalizedInput = normalizeRoutingInputForScenario(scenarioKey, input);
+        const updated = await adminLlmRoutingApi.upsertRoleOverride(
+          scenarioKey,
+          role,
+          normalizedInput
+        );
         this.items = this.items.map(item => (item.scenarioKey === scenarioKey ? updated : item));
         return updated;
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to update role override');
-        throw this.error;
+        this.error = err instanceof Error ? err.message : 'Failed to update role override';
+        throw err;
       } finally {
         this.saving = false;
       }
@@ -82,8 +105,8 @@ export const useAdminLlmRoutingStore = defineStore('AdminLlmRoutingStore', {
         await adminLlmRoutingApi.deleteRoleOverride(scenarioKey, role);
         await this.fetchAll();
       } catch (err) {
-        this.error = err instanceof Error ? err : new Error('Failed to delete role override');
-        throw this.error;
+        this.error = err instanceof Error ? err.message : 'Failed to delete role override';
+        throw err;
       } finally {
         this.saving = false;
       }

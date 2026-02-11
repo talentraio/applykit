@@ -1,5 +1,5 @@
 import type { Operation, ProviderType, UsageContext } from '@int/schema';
-import { OPERATION_MAP } from '@int/schema';
+import { OPERATION_MAP, USAGE_CONTEXT_MAP } from '@int/schema';
 import { addDays, startOfDay } from 'date-fns';
 import { usageLogRepository } from '../data/repositories';
 
@@ -115,6 +115,36 @@ export async function logGenerate(
   cost?: number
 ): Promise<void> {
   await logUsage(userId, OPERATION_MAP.GENERATE, providerType, usageContext, tokensUsed, cost);
+}
+
+/**
+ * Helper to log resume adaptation generate usage.
+ */
+export async function logGenerateAdaptation(
+  userId: string,
+  providerType: ProviderType,
+  tokensUsed?: number,
+  cost?: number
+): Promise<void> {
+  await logGenerate(userId, providerType, USAGE_CONTEXT_MAP.RESUME_ADAPTATION, tokensUsed, cost);
+}
+
+/**
+ * Helper to log resume adaptation scoring usage.
+ */
+export async function logGenerateScoring(
+  userId: string,
+  providerType: ProviderType,
+  tokensUsed?: number,
+  cost?: number
+): Promise<void> {
+  await logGenerate(
+    userId,
+    providerType,
+    USAGE_CONTEXT_MAP.RESUME_ADAPTATION_SCORING,
+    tokensUsed,
+    cost
+  );
 }
 
 /**

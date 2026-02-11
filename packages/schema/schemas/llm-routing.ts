@@ -1,11 +1,18 @@
 import { z } from 'zod';
-import { LlmResponseFormatSchema, LlmScenarioKeySchema, RoleSchema } from './enums';
+import {
+  LlmResponseFormatSchema,
+  LlmScenarioKeySchema,
+  LlmStrategyKeySchema,
+  RoleSchema
+} from './enums';
 
 export {
   type LlmResponseFormat,
   LlmResponseFormatSchema,
   type LlmScenarioKey,
   LlmScenarioKeySchema,
+  type LlmStrategyKey,
+  LlmStrategyKeySchema,
   type Role,
   RoleSchema
 } from './enums';
@@ -14,13 +21,15 @@ const nullableTemperature = z.number().min(0).max(2).nullable().optional();
 const nullableMaxTokens = z.number().int().positive().nullable().optional();
 const nullableResponseFormat = LlmResponseFormatSchema.nullable().optional();
 const nullableModelId = z.string().uuid().nullable().optional();
+const nullableStrategyKey = LlmStrategyKeySchema.nullable().optional();
 
 export const RoutingAssignmentInputSchema = z.object({
   modelId: z.string().uuid(),
   retryModelId: nullableModelId,
   temperature: nullableTemperature,
   maxTokens: nullableMaxTokens,
-  responseFormat: nullableResponseFormat
+  responseFormat: nullableResponseFormat,
+  strategyKey: nullableStrategyKey
 });
 
 export type RoutingAssignmentInput = z.infer<typeof RoutingAssignmentInputSchema>;

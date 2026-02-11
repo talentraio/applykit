@@ -1,4 +1,4 @@
-import type { LLMProvider, ProviderType } from '@int/schema';
+import type { LLMProvider, LlmStrategyKey, ProviderType } from '@int/schema';
 
 /**
  * LLM Service Types
@@ -173,6 +173,13 @@ export type LLMServiceConfig = {
    * CRITICAL: Never log full API keys
    */
   enableLogging?: boolean;
+};
+
+export type LlmGenerationStrategyConfig = {
+  key: LlmStrategyKey;
+  adaptationTemperature: number;
+  scoringTemperature: number;
+  useMinimalEdits: boolean;
 };
 
 /**

@@ -13,14 +13,16 @@ export type UseAdminLlmModelsReturn = {
 
 export function useAdminLlmModels(): UseAdminLlmModelsReturn {
   const store = useAdminLlmModelsStore();
+  const nuxtApp = useNuxtApp();
 
   return {
     items: computed(() => store.items),
     activeItems: computed(() => store.activeItems),
     saving: computed(() => store.saving),
-    fetchAll: () => store.fetchAll(),
-    create: (input: LlmModelCreateInput) => store.create(input),
-    update: (id: string, input: LlmModelUpdateInput) => store.update(id, input),
-    delete: (id: string) => store.delete(id)
+    fetchAll: () => nuxtApp.runWithContext(() => store.fetchAll()),
+    create: (input: LlmModelCreateInput) => nuxtApp.runWithContext(() => store.create(input)),
+    update: (id: string, input: LlmModelUpdateInput) =>
+      nuxtApp.runWithContext(() => store.update(id, input)),
+    delete: (id: string) => nuxtApp.runWithContext(() => store.delete(id))
   };
 }

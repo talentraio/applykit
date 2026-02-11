@@ -33,18 +33,33 @@
           :secondary-model-id="selectedSecondaryOverrideModelId(group)"
           :saved-primary-model-id="savedPrimaryOverrideModelId(group)"
           :saved-secondary-model-id="savedSecondaryOverrideModelId(group)"
+          :tertiary-model-id="selectedTertiaryOverrideModelId(group)"
+          :saved-tertiary-model-id="savedTertiaryOverrideModelId(group)"
+          :strategy-key="selectedStrategyOverrideKeyForGroup(group)"
+          :saved-strategy-key="savedStrategyOverrideKeyForGroup(group)"
+          :strategy-options="strategyOptionsWithInherit"
           :info-lines="scenarioInfoLines(group)"
           :model-options="modelOptionsWithInherit"
           :primary-label="$t('admin.roles.routing.overrideLabel')"
           :secondary-label="secondaryLabelForGroup(group)"
+          :tertiary-label="$t('admin.roles.routing.retryOverrideLabel')"
+          :strategy-label="$t('admin.roles.routing.strategyOverrideLabel')"
           :saving="isRoutingDisabled"
           :require-primary="false"
           :require-secondary="false"
+          :require-tertiary="false"
+          :require-strategy="false"
           :disable-secondary-when-primary-empty="group.isResumeParse"
+          :tertiary-disabled="selectedOverrideModelId(group) === INHERIT_MODEL_ID"
+          :strategy-disabled="selectedOverrideModelId(group) === INHERIT_MODEL_ID"
           :show-secondary="showSecondaryForGroup(group)"
+          :show-tertiary="showTertiaryForGroup(group)"
+          :show-strategy="showStrategyForGroup(group)"
           :empty-value="INHERIT_MODEL_ID"
           @update:primary-model-id="setOverrideSelection(group.key, $event)"
           @update:secondary-model-id="setSecondaryOverrideSelection(group.key, $event)"
+          @update:tertiary-model-id="setTertiaryOverrideSelection(group.key, $event)"
+          @update:strategy-key="setStrategyOverrideSelection(group.key, $event)"
           @save="saveOverride"
         />
       </template>
@@ -53,7 +68,8 @@
 </template>
 
 <script setup lang="ts">
-import type { LlmRoutingItem, LlmScenarioKey, Role } from '@int/schema';
+import type { LlmRoutingItem, LlmScenarioKey, LlmStrategyKey, Role } from '@int/schema';
+import { LLM_SCENARIO_KEY_MAP, LLM_STRATEGY_KEY_MAP } from '@int/schema';
 
 defineOptions({ name: 'RolesItemScenarios' });
 
@@ -64,6 +80,7 @@ type Props = {
 };
 
 const INHERIT_MODEL_ID = '__inherit__';
+const INHERIT_STRATEGY_KEY = '__inherit_strategy__';
 
 const {
   items: routingItems,
@@ -77,8 +94,12 @@ const { items: llmModels, activeItems: activeModels, fetchAll: fetchModels } = u
 const {
   setPrimarySelection,
   setSecondarySelection,
+  setTertiarySelection,
+  setStrategySelection,
   selectedPrimaryModelId,
   selectedSecondaryModelId,
+  selectedTertiaryModelId,
+  selectedStrategyKey,
   clearScenarioSelections,
   clearAllSelections
 } = useLlmRoutingSelection();
@@ -133,6 +154,21 @@ const modelOptionsWithInherit = computed<Array<{ label: string; value: string }>
   }))
 ]);
 
+const strategyOptionsWithInherit = computed<Array<{ label: string; value: string }>>(() => [
+  {
+    label: t('admin.roles.routing.inheritDefault'),
+    value: INHERIT_STRATEGY_KEY
+  },
+  {
+    label: t('admin.llm.routing.strategy.economy'),
+    value: LLM_STRATEGY_KEY_MAP.ECONOMY
+  },
+  {
+    label: t('admin.llm.routing.strategy.quality'),
+    value: LLM_STRATEGY_KEY_MAP.QUALITY
+  }
+]);
+
 const isRoutingDisabled = computed(
   () => routingSaving.value || routingLoading.value || pending.value
 );
@@ -158,6 +194,22 @@ const defaultRetryModelLabel = (item: LlmRoutingItem): string => {
   return resolveModelLabel(item.default?.retryModelId ?? null);
 };
 
+const resolveStrategyLabel = (strategyKey: string | null): string => {
+  if (!strategyKey) {
+    return t('admin.roles.routing.notConfigured');
+  }
+
+  if (strategyKey === LLM_STRATEGY_KEY_MAP.QUALITY) {
+    return t('admin.llm.routing.strategy.quality');
+  }
+
+  return t('admin.llm.routing.strategy.economy');
+};
+
+const defaultStrategyLabel = (item: LlmRoutingItem): string => {
+  return resolveStrategyLabel(item.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY);
+};
+
 const currentOverrideModelId = (item: LlmRoutingItem): string => {
   const roleOverride = item.overrides.find(entry => entry.role === props.role);
   return roleOverride?.modelId ?? '';
@@ -168,6 +220,11 @@ const currentRetryOverrideModelId = (item: LlmRoutingItem): string => {
   return roleOverride?.retryModelId ?? '';
 };
 
+const currentStrategyOverrideKey = (item: LlmRoutingItem): string => {
+  const roleOverride = item.overrides.find(entry => entry.role === props.role);
+  return roleOverride?.strategyKey ?? '';
+};
+
 const toSelectModelId = (modelId: string): string => {
   return modelId || INHERIT_MODEL_ID;
 };
@@ -176,10 +233,38 @@ const fromSelectModelId = (value: string): string => {
   return value === INHERIT_MODEL_ID ? '' : value;
 };
 
+const toSelectStrategyKey = (value: string): string => {
+  return value || INHERIT_STRATEGY_KEY;
+};
+
+const fromSelectStrategyKey = (value: string): LlmStrategyKey | null => {
+  if (value === INHERIT_STRATEGY_KEY || value.length === 0) {
+    return null;
+  }
+
+  if (value === LLM_STRATEGY_KEY_MAP.QUALITY) {
+    return LLM_STRATEGY_KEY_MAP.QUALITY;
+  }
+
+  return LLM_STRATEGY_KEY_MAP.ECONOMY;
+};
+
 const showSecondaryForGroup = (
   group: ReturnType<typeof buildLlmRoutingGroups>[number]
 ): boolean => {
   return group.isResumeParse || group.secondary !== null;
+};
+
+const isAdaptationGroup = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): boolean => {
+  return group.primary.scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
+};
+
+const showTertiaryForGroup = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): boolean => {
+  return isAdaptationGroup(group);
+};
+
+const showStrategyForGroup = (group: ReturnType<typeof buildLlmRoutingGroups>[number]): boolean => {
+  return isAdaptationGroup(group);
 };
 
 const currentSecondaryOverrideModelId = (
@@ -196,6 +281,26 @@ const currentSecondaryOverrideModelId = (
   return '';
 };
 
+const currentTertiaryOverrideModelId = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  if (isAdaptationGroup(group)) {
+    return currentRetryOverrideModelId(group.primary);
+  }
+
+  return '';
+};
+
+const currentStrategyOverrideSelection = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  if (!isAdaptationGroup(group)) {
+    return '';
+  }
+
+  return currentStrategyOverrideKey(group.primary);
+};
+
 const savedPrimaryOverrideModelId = (
   group: ReturnType<typeof buildLlmRoutingGroups>[number]
 ): string => {
@@ -206,6 +311,18 @@ const savedSecondaryOverrideModelId = (
   group: ReturnType<typeof buildLlmRoutingGroups>[number]
 ): string => {
   return toSelectModelId(currentSecondaryOverrideModelId(group));
+};
+
+const savedTertiaryOverrideModelId = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  return toSelectModelId(currentTertiaryOverrideModelId(group));
+};
+
+const savedStrategyOverrideKeyForGroup = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  return toSelectStrategyKey(currentStrategyOverrideSelection(group));
 };
 
 const selectedOverrideModelId = (
@@ -220,12 +337,32 @@ const selectedSecondaryOverrideModelId = (
   return selectedSecondaryModelId(group.key, savedSecondaryOverrideModelId(group));
 };
 
+const selectedTertiaryOverrideModelId = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  return selectedTertiaryModelId(group.key, savedTertiaryOverrideModelId(group));
+};
+
+const selectedStrategyOverrideKeyForGroup = (
+  group: ReturnType<typeof buildLlmRoutingGroups>[number]
+): string => {
+  return selectedStrategyKey(group.key, savedStrategyOverrideKeyForGroup(group));
+};
+
 const setOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
   setPrimarySelection(scenarioKey, value);
 };
 
 const setSecondaryOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
   setSecondarySelection(scenarioKey, value);
+};
+
+const setTertiaryOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
+  setTertiarySelection(scenarioKey, value);
+};
+
+const setStrategyOverrideSelection = (scenarioKey: LlmScenarioKey, value: string) => {
+  setStrategySelection(scenarioKey, value);
 };
 
 const secondaryLabelForGroup = (
@@ -264,6 +401,12 @@ const scenarioInfoLines = (group: ReturnType<typeof buildLlmRoutingGroups>[numbe
     );
   }
 
+  if (isAdaptationGroup(group)) {
+    lines.push(
+      t('admin.roles.routing.defaultStrategy', { strategy: defaultStrategyLabel(group.primary) })
+    );
+  }
+
   return lines;
 };
 
@@ -291,12 +434,32 @@ const saveOverride = async (scenarioKey: LlmScenarioKey) => {
 
   const selectedPrimary = fromSelectModelId(selectedOverrideModelId(group));
   const selectedSecondary = fromSelectModelId(selectedSecondaryOverrideModelId(group));
+  const selectedTertiary = fromSelectModelId(selectedTertiaryOverrideModelId(group));
+  const selectedStrategy = fromSelectStrategyKey(selectedStrategyOverrideKeyForGroup(group));
   const existingPrimary = currentOverrideModelId(group.primary);
   const existingSecondary = currentSecondaryOverrideModelId(group);
+  const existingTertiary = currentTertiaryOverrideModelId(group);
+  const existingStrategy = currentStrategyOverrideSelection(group);
 
-  const hasChanges = showSecondaryForGroup(group)
-    ? selectedPrimary !== existingPrimary || selectedSecondary !== existingSecondary
-    : selectedPrimary !== existingPrimary;
+  let hasChanges = false;
+
+  if (showSecondaryForGroup(group)) {
+    hasChanges = selectedPrimary !== existingPrimary || selectedSecondary !== existingSecondary;
+  } else {
+    hasChanges = selectedPrimary !== existingPrimary;
+  }
+
+  const adaptationOverrideActive = selectedPrimary.length > 0 || existingPrimary.length > 0;
+
+  if (showTertiaryForGroup(group) && adaptationOverrideActive) {
+    hasChanges = hasChanges || selectedTertiary !== existingTertiary;
+  }
+
+  if (showStrategyForGroup(group) && adaptationOverrideActive) {
+    const normalizedExistingStrategy = existingStrategy || '';
+    const normalizedSelectedStrategy = selectedStrategy ?? '';
+    hasChanges = hasChanges || normalizedSelectedStrategy !== normalizedExistingStrategy;
+  }
 
   if (!hasChanges) return;
 
@@ -305,14 +468,23 @@ const saveOverride = async (scenarioKey: LlmScenarioKey) => {
       if (selectedPrimary) {
         await upsertRoleOverride(group.primary.scenarioKey, props.role, {
           modelId: selectedPrimary,
-          retryModelId: selectedSecondary || null
+          retryModelId: selectedSecondary || null,
+          strategyKey: null
         });
       } else if (existingPrimary) {
         await deleteRoleOverride(group.primary.scenarioKey, props.role);
       }
     } else if (group.secondary) {
       await Promise.all([
-        saveSingleOverride(group.primary.scenarioKey, selectedPrimary, existingPrimary),
+        selectedPrimary
+          ? upsertRoleOverride(group.primary.scenarioKey, props.role, {
+              modelId: selectedPrimary,
+              retryModelId: selectedTertiary || null,
+              strategyKey: selectedStrategy
+            })
+          : existingPrimary
+            ? deleteRoleOverride(group.primary.scenarioKey, props.role)
+            : Promise.resolve(),
         saveSingleOverride(group.secondary.scenarioKey, selectedSecondary, existingSecondary)
       ]);
     } else {

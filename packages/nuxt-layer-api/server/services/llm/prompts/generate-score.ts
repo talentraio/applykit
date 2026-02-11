@@ -2,41 +2,82 @@ import type { ResumeContent } from '@int/schema';
 import { createSharedContextPromptPrefix, GENERATE_SHARED_SYSTEM_PROMPT } from './shared-context';
 
 /**
- * Scoring prompt.
+ * Scoring prompt pack.
  *
- * Calculates before/after fit scores for resume adaptation.
+ * Step 1: Extract vacancy signals
+ * Step 2: Map evidence for before/after resumes
  */
 
 export const GENERATE_SCORE_SYSTEM_PROMPT = GENERATE_SHARED_SYSTEM_PROMPT;
 
-const SCORING_TASK_INSTRUCTIONS = `Task:
-Evaluate how well resume versions match vacancy requirements.
+const EXTRACT_SIGNALS_INSTRUCTIONS = `Task:
+Extract structured vacancy signals as JSON.
 
-Output must be valid JSON only:
+Output JSON schema:
 {
-  "matchScoreBefore": number,
-  "matchScoreAfter": number
+  "signals": {
+    "jobFamily": string,
+    "seniority": string | null,
+    "coreRequirements": [{ "name": string, "weight": number, "confidence": number }],
+    "mustHave": [{ "name": string, "weight": number, "confidence": number }],
+    "niceToHave": [{ "name": string, "weight": number, "confidence": number }],
+    "responsibilities": [{ "name": string, "weight": number, "confidence": number }],
+    "domainTerms": string[],
+    "constraints": string[]
+  }
 }
 
-Scoring constraints:
-- both scores are integers in range 0..100
-- scoreAfter must be greater than or equal to scoreBefore
-- be realistic, avoid inflated scores
-- base score uses original resume fit
-- after score uses tailored resume fit`;
+Rules:
+- weights and confidence must be within 0..1
+- keep output domain-agnostic (not IT-only)
+- return valid JSON only`;
 
-export function createGenerateScoreUserPrompt(
+const MAP_EVIDENCE_INSTRUCTIONS = `Task:
+Map vacancy signals to resume evidence for both original and tailored resume.
+
+Output JSON schema:
+{
+  "evidence": [
+    {
+      "signalType": "core" | "mustHave" | "niceToHave" | "responsibility",
+      "signalName": string,
+      "strengthBefore": number,
+      "strengthAfter": number,
+      "presentBefore": boolean,
+      "presentAfter": boolean,
+      "evidenceRefsBefore": string[],
+      "evidenceRefsAfter": string[]
+    }
+  ]
+}
+
+Rules:
+- strengths must be within 0..1
+- evidenceRefs should reference sections or bullets in plain text paths
+- no narrative text, JSON only`;
+
+export function createExtractSignalsUserPrompt(sharedContext: string): string {
+  const sharedPrefix = createSharedContextPromptPrefix(sharedContext);
+
+  return `${sharedPrefix}
+
+${EXTRACT_SIGNALS_INSTRUCTIONS}`;
+}
+
+export function createMapEvidenceUserPrompt(
   sharedContext: string,
-  tailoredResume: ResumeContent
+  tailoredResume: ResumeContent,
+  signals: unknown
 ): string {
   const sharedPrefix = createSharedContextPromptPrefix(sharedContext);
 
   return `${sharedPrefix}
 
-${SCORING_TASK_INSTRUCTIONS}
+${MAP_EVIDENCE_INSTRUCTIONS}
+
+Signals:
+${JSON.stringify(signals, null, 2)}
 
 Tailored resume:
-${JSON.stringify(tailoredResume, null, 2)}
-
-Return JSON with matchScoreBefore and matchScoreAfter only.`;
+${JSON.stringify(tailoredResume, null, 2)}`;
 }

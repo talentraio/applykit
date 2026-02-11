@@ -151,13 +151,42 @@ Routing schemas:
 
 - `RoutingAssignmentInput`:
   - `modelId: uuid`
+  - `retryModelId?: uuid | null`
   - `temperature?: number | null`
   - `maxTokens?: number | null`
   - `responseFormat?: 'text' | 'json' | null`
+  - `strategyKey?: 'economy' | 'quality' | null`
+  - persistence rules by scenario:
+    - `retryModelId` is used for `resume_parse` and `resume_adaptation`
+    - `strategyKey` is used only for `resume_adaptation`
 - `LlmRoutingItem`:
   - `scenarioKey`
   - `default?: RoutingAssignmentInput & { updatedAt } | null`
   - `overrides: Array<RoutingAssignmentInput & { role, updatedAt }>`
+
+`LlmStrategyKey` enum:
+
+- `economy`
+- `quality`
+
+## Generation Score Breakdown
+
+`Generation` now includes deterministic scoring metadata:
+
+- `matchScoreBefore: number (0..100)`
+- `matchScoreAfter: number (0..100)`
+- `scoreBreakdown`:
+  - `version: string`
+  - `components`:
+    - `core: { before, after, weight }`
+    - `mustHave: { before, after, weight }`
+    - `niceToHave: { before, after, weight }`
+    - `responsibilities: { before, after, weight }`
+    - `human: { before, after, weight }`
+  - `gateStatus`:
+    - `schemaValid: boolean`
+    - `identityStable: boolean`
+    - `hallucinationFree: boolean`
 
 ## Usage Provider Type
 

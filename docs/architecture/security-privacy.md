@@ -40,6 +40,21 @@ Supported auth methods:
 - Do NOT expose platform keys in logs, responses, or client bundles.
 - Continue enforcing role limits, per-user daily caps, and global budget caps for all LLM operations.
 
+## LLM routing controls
+
+- Runtime model selection uses precedence: `role override -> scenario default -> runtime fallback model`.
+- Routing payload is normalized server-side:
+  - retry model is accepted only for adaptation/parse scenarios;
+  - strategy is accepted only for adaptation scenario.
+- Inactive model IDs are rejected (`409`) for both primary and retry assignments.
+
+## Scoring integrity
+
+- Resume adaptation scoring is deterministic from structured evidence, not a direct judge-only score.
+- Each generation stores `scoreBreakdown` (versioned components + gate status) for auditability.
+- If scoring step fails, generation still succeeds with deterministic fallback scores and explicit fallback
+  breakdown version.
+
 ## User data (EU / GDPR shape)
 
 If we collect CVs and personal data, we need:

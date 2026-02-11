@@ -1,0 +1,187 @@
+openapi: 3.1.0
+info:
+  title: LLM Routing Strategy Management
+  version: 0.1.0
+  description: >
+    Admin contract extensions for strategy-aware adaptation/scoring routing.
+servers:
+  - url: /api
+paths:
+  /admin/llm/routing:
+    get:
+      summary: List routing configuration
+      operationId: getAdminLlmRouting
+      tags: [Admin LLM Routing]
+      responses:
+        '200':
+          description: Routing configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmRoutingResponse'
+
+  /admin/llm/routing/{scenarioKey}/default:
+    put:
+      summary: Upsert default routing assignment for scenario
+      operationId: putAdminLlmRoutingDefault
+      tags: [Admin LLM Routing]
+      parameters:
+        - $ref: '#/components/parameters/ScenarioKeyParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutingAssignmentInput'
+      responses:
+        '200':
+          description: Updated routing item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmRoutingItem'
+
+  /admin/llm/routing/{scenarioKey}/roles/{role}:
+    put:
+      summary: Upsert role override routing assignment
+      operationId: putAdminLlmRoutingRoleOverride
+      tags: [Admin LLM Routing]
+      parameters:
+        - $ref: '#/components/parameters/ScenarioKeyParam'
+        - $ref: '#/components/parameters/RoleParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutingAssignmentInput'
+      responses:
+        '200':
+          description: Updated routing item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmRoutingItem'
+    delete:
+      summary: Delete role override assignment
+      operationId: deleteAdminLlmRoutingRoleOverride
+      tags: [Admin LLM Routing]
+      parameters:
+        - $ref: '#/components/parameters/ScenarioKeyParam'
+        - $ref: '#/components/parameters/RoleParam'
+      responses:
+        '200':
+          description: Updated routing item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmRoutingItem'
+
+components:
+  parameters:
+    ScenarioKeyParam:
+      name: scenarioKey
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - resume_parse
+          - resume_adaptation
+          - resume_adaptation_scoring
+          - cover_letter_generate
+    RoleParam:
+      name: role
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [super_admin, friend, public]
+
+  schemas:
+    StrategyKey:
+      type: string
+      enum: [economy, quality]
+
+    RoutingAssignmentInput:
+      type: object
+      required: [modelId]
+      properties:
+        modelId:
+          type: string
+          format: uuid
+        retryModelId:
+          type: [string, 'null']
+          format: uuid
+          description: Used for adaptation retry; ignored for scoring in this phase.
+        temperature:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 2
+        maxTokens:
+          type: [integer, 'null']
+          minimum: 1
+        responseFormat:
+          type: [string, 'null']
+          enum: [json, text]
+        strategyKey:
+          type: [string, 'null']
+          description: Strategy variant for grouped adaptation/scoring behavior.
+          allOf:
+            - $ref: '#/components/schemas/StrategyKey'
+
+    LlmRoutingDefault:
+      allOf:
+        - $ref: '#/components/schemas/RoutingAssignmentInput'
+        - type: object
+          required: [updatedAt]
+          properties:
+            updatedAt:
+              type: string
+              format: date-time
+
+    LlmRoutingOverride:
+      allOf:
+        - $ref: '#/components/schemas/RoutingAssignmentInput'
+        - type: object
+          required: [role, updatedAt]
+          properties:
+            role:
+              type: string
+              enum: [super_admin, friend, public]
+            updatedAt:
+              type: string
+              format: date-time
+
+    LlmRoutingItem:
+      type: object
+      required: [scenarioKey, overrides]
+      properties:
+        scenarioKey:
+          type: string
+        label:
+          type: string
+        description:
+          type: [string, 'null']
+        enabled:
+          type: boolean
+        groupKey:
+          type: [string, 'null']
+          description: UI grouping key for adaptation/scoring controls.
+        default:
+          anyOf:
+            - $ref: '#/components/schemas/LlmRoutingDefault'
+            - type: 'null'
+        overrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/LlmRoutingOverride'
+
+    LlmRoutingResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LlmRoutingItem'

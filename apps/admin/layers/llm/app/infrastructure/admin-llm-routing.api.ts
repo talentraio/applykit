@@ -5,8 +5,25 @@ import type {
   Role,
   RoutingAssignmentInput
 } from '@int/schema';
+import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 
 const adminLlmRoutingUrl = '/api/admin/llm/routing';
+
+const normalizeRoutingInput = (
+  scenarioKey: LlmScenarioKey,
+  input: RoutingAssignmentInput
+): RoutingAssignmentInput => {
+  const supportsRetry =
+    scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE ||
+    scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
+  const supportsStrategy = scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
+
+  return {
+    ...input,
+    retryModelId: supportsRetry ? (input.retryModelId ?? null) : null,
+    strategyKey: supportsStrategy ? (input.strategyKey ?? null) : null
+  };
+};
 
 export const adminLlmRoutingApi = {
   async fetchAll(): Promise<LlmRoutingResponse> {
@@ -19,9 +36,10 @@ export const adminLlmRoutingApi = {
     scenarioKey: LlmScenarioKey,
     input: RoutingAssignmentInput
   ): Promise<LlmRoutingItem> {
+    const body = normalizeRoutingInput(scenarioKey, input);
     return await useApi(`${adminLlmRoutingUrl}/${scenarioKey}/default`, {
       method: 'PUT',
-      body: input
+      body
     });
   },
 
@@ -30,9 +48,10 @@ export const adminLlmRoutingApi = {
     role: Role,
     input: RoutingAssignmentInput
   ): Promise<LlmRoutingItem> {
+    const body = normalizeRoutingInput(scenarioKey, input);
     return await useApi(`${adminLlmRoutingUrl}/${scenarioKey}/roles/${role}`, {
       method: 'PUT',
-      body: input
+      body
     });
   },
 

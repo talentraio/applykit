@@ -89,6 +89,16 @@ export const LLM_RESPONSE_FORMAT_VALUES = [
   LLM_RESPONSE_FORMAT_MAP.JSON
 ] as const;
 
+export const LLM_STRATEGY_KEY_MAP = {
+  ECONOMY: 'economy',
+  QUALITY: 'quality'
+} as const;
+
+export const LLM_STRATEGY_KEY_VALUES = [
+  LLM_STRATEGY_KEY_MAP.ECONOMY,
+  LLM_STRATEGY_KEY_MAP.QUALITY
+] as const;
+
 export const OPERATION_MAP = {
   PARSE: 'parse',
   GENERATE: 'generate',

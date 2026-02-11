@@ -4,6 +4,8 @@
  * Produces tailored resume content only.
  * Match scoring is executed in a dedicated second call.
  */
+import type { LlmStrategyKey } from '@int/schema';
+import { LLM_STRATEGY_KEY_MAP } from '@int/schema';
 import { createSharedContextPromptPrefix, GENERATE_SHARED_SYSTEM_PROMPT } from './shared-context';
 
 export const GENERATE_SYSTEM_PROMPT = GENERATE_SHARED_SYSTEM_PROMPT;
@@ -37,12 +39,34 @@ Rules:
 - Keep URLs valid
 - Do not include markdown or explanations`;
 
-export function createGenerateUserPrompt(sharedContext: string): string {
+const ECONOMY_STRATEGY_INSTRUCTIONS = `Strategy: economy
+- Prefer minimal, high-impact edits over full rewrites
+- Reorder content to improve relevance before rewriting text
+- Keep phrasing concise and direct
+- Avoid adding decorative language`;
+
+const QUALITY_STRATEGY_INSTRUCTIONS = `Strategy: quality
+- Keep ATS keyword alignment while improving readability
+- Avoid AI-like cliches (e.g. results-driven, passionate, dynamic)
+- Maintain natural variation in bullet phrasing
+- Improve summary clarity without changing factual meaning`;
+
+const STRATEGY_INSTRUCTIONS: Record<LlmStrategyKey, string> = {
+  [LLM_STRATEGY_KEY_MAP.ECONOMY]: ECONOMY_STRATEGY_INSTRUCTIONS,
+  [LLM_STRATEGY_KEY_MAP.QUALITY]: QUALITY_STRATEGY_INSTRUCTIONS
+};
+
+export function createGenerateUserPrompt(
+  sharedContext: string,
+  strategyKey: LlmStrategyKey
+): string {
   const sharedPrefix = createSharedContextPromptPrefix(sharedContext);
+  const strategyInstructions = STRATEGY_INSTRUCTIONS[strategyKey];
 
   return `${sharedPrefix}
 
 ${ADAPTATION_TASK_INSTRUCTIONS}
+${strategyInstructions}
 
 Return JSON with "content" only.`;
 }
