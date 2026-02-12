@@ -1,9 +1,12 @@
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const dataDir = resolve(fileURLToPath(new URL('.', import.meta.url)), '.data');
 mkdirSync(dataDir, { recursive: true });
+const siteHmrPort = Number(process.env.NUXT_SITE_HMR_PORT ?? '24678');
+const siteSsrHmrPort = Number(process.env.NUXT_SITE_SSR_HMR_PORT ?? '24680');
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
@@ -25,6 +28,9 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@nuxtjs/i18n', '@nuxtjs/device', '@vueuse/nuxt'],
 
   runtimeConfig: {
+    session: {
+      name: process.env.NODE_ENV === 'development' ? 'nuxt-session-site' : 'nuxt-session'
+    },
     redirects: {
       authDefault: '/dashboard'
     }
@@ -32,6 +38,37 @@ export default defineNuxtConfig({
 
   devtools: {
     enabled: true
+  },
+
+  vite: {
+    server: {
+      hmr: {
+        port: siteHmrPort,
+        clientPort: siteHmrPort
+      }
+    }
+  },
+
+  hooks: {
+    'vite:extendConfig': function (config, { isServer }) {
+      if (!isServer) {
+        return;
+      }
+
+      const server = config.server;
+      if (!server) {
+        return;
+      }
+
+      if (server.hmr === false || server.hmr == null) {
+        server.hmr = {};
+      }
+
+      if (typeof server.hmr === 'object') {
+        server.hmr.port = siteSsrHmrPort;
+        server.hmr.clientPort = siteSsrHmrPort;
+      }
+    }
   },
 
   image: {
