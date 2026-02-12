@@ -125,6 +125,9 @@ export class GeminiProvider implements ILLMProvider {
   ): Promise<LLMResponse> {
     const ai = new GoogleGenAI({ apiKey });
     const model = resolveModel(request.model);
+    const googleOptions = request.providerOptions?.google;
+    const cachedContent =
+      typeof googleOptions?.cachedContent === 'string' ? googleOptions.cachedContent : undefined;
 
     try {
       // Build the prompt with system message if provided
@@ -139,15 +142,23 @@ export class GeminiProvider implements ILLMProvider {
         config: {
           temperature: request.temperature ?? 0.7,
           maxOutputTokens: request.maxTokens,
-          responseMimeType: request.responseFormat === 'json' ? 'application/json' : undefined
+          responseMimeType: request.responseFormat === 'json' ? 'application/json' : undefined,
+          cachedContent
         }
       });
 
       const content = response.text || '';
+      const inputTokens = response.usageMetadata?.promptTokenCount ?? 0;
+      const outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
+      const cachedInputTokens = response.usageMetadata?.cachedContentTokenCount ?? undefined;
+      const totalTokensFromApi = response.usageMetadata?.totalTokenCount;
 
       // Note: Gemini API doesn't always return token usage in basic responses
       // We'll estimate based on content length if not available
-      const tokensUsed = this.estimateTokens(contents, content);
+      const tokensUsed =
+        typeof totalTokensFromApi === 'number' && Number.isFinite(totalTokensFromApi)
+          ? totalTokensFromApi
+          : this.estimateTokens(contents, content);
       const cost = this.calculateCost(tokensUsed, model);
 
       return {
@@ -156,7 +167,12 @@ export class GeminiProvider implements ILLMProvider {
         cost,
         model,
         provider: LLM_PROVIDER_MAP.GEMINI,
-        providerType
+        providerType,
+        usage: {
+          inputTokens,
+          outputTokens,
+          cachedInputTokens
+        }
       };
     } catch (error: any) {
       // Handle specific Gemini errors based on status code

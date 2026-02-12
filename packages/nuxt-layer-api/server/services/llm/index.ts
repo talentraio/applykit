@@ -22,7 +22,7 @@ import { getKeyHint, LLMError, sanitizeApiKey } from './types';
  * LLM Service Factory
  *
  * Manages provider selection and platform budget checks.
- * Execution path is platform-only (BYOK removed).
+ * Execution path is platform-only.
  */
 
 const providers: Map<LLMProvider, ILLMProvider> = new Map();
@@ -34,7 +34,7 @@ const initProviders = (): void => {
   }
 };
 
-type RuntimeFallbackLlmModel = {
+export type RuntimeFallbackLlmModel = {
   provider: LLMProvider;
   model: string;
   price: {
@@ -69,7 +69,7 @@ const toNonNegativeNumber = (value: unknown, fallback: number): number => {
   return fallback;
 };
 
-const getFallbackLlmModel = (): RuntimeFallbackLlmModel => {
+export const getFallbackLlmModel = (): RuntimeFallbackLlmModel => {
   const runtimeConfig = useRuntimeConfig();
   const fallbackConfig = runtimeConfig.llm?.fallbackLlmModel;
   const providerCandidate = fallbackConfig?.provider;
@@ -129,21 +129,63 @@ function getPlatformKey(provider: LLMProvider): string | undefined {
   return undefined;
 }
 
+type CatalogCostOptions = {
+  usage?: LLMResponse['usage'];
+  cachedInputPricePer1mUsd?: number | null;
+};
+
 /**
- * Estimate cost from model catalog rates using a simple 50/50 input/output split.
+ * Estimate cost from model catalog rates.
+ *
+ * If provider usage split is available, use input/output/cached input token counts.
+ * Otherwise fallback to a simple 50/50 input/output approximation by total tokens.
  */
 export function calculateCatalogCost(
   tokensUsed: number,
   inputPricePer1mUsd: number,
-  outputPricePer1mUsd: number
+  outputPricePer1mUsd: number,
+  options: CatalogCostOptions = {}
 ): number {
-  const inputTokens = tokensUsed * 0.5;
-  const outputTokens = tokensUsed * 0.5;
+  const usage = options.usage;
+  const inputTokens = usage?.inputTokens;
+  const outputTokens = usage?.outputTokens;
 
-  const inputCost = (inputTokens / 1_000_000) * inputPricePer1mUsd;
-  const outputCost = (outputTokens / 1_000_000) * outputPricePer1mUsd;
+  if (
+    typeof inputTokens === 'number' &&
+    Number.isFinite(inputTokens) &&
+    typeof outputTokens === 'number' &&
+    Number.isFinite(outputTokens) &&
+    (inputTokens > 0 || outputTokens > 0 || tokensUsed === 0)
+  ) {
+    const safeInputTokens = Math.max(0, inputTokens);
+    const safeOutputTokens = Math.max(0, outputTokens);
+    const rawCachedInputTokens =
+      typeof usage?.cachedInputTokens === 'number' && Number.isFinite(usage.cachedInputTokens)
+        ? Math.max(0, usage.cachedInputTokens)
+        : 0;
+    const cachedInputTokens = Math.min(rawCachedInputTokens, safeInputTokens);
+    const regularInputTokens = Math.max(0, safeInputTokens - cachedInputTokens);
+    const cachedInputPricePer1mUsd =
+      typeof options.cachedInputPricePer1mUsd === 'number' &&
+      Number.isFinite(options.cachedInputPricePer1mUsd) &&
+      options.cachedInputPricePer1mUsd >= 0
+        ? options.cachedInputPricePer1mUsd
+        : inputPricePer1mUsd;
 
-  return inputCost + outputCost;
+    const regularInputCost = (regularInputTokens / 1_000_000) * inputPricePer1mUsd;
+    const cachedInputCost = (cachedInputTokens / 1_000_000) * cachedInputPricePer1mUsd;
+    const outputCost = (safeOutputTokens / 1_000_000) * outputPricePer1mUsd;
+
+    return regularInputCost + cachedInputCost + outputCost;
+  }
+
+  const approximatedInputTokens = tokensUsed * 0.5;
+  const approximatedOutputTokens = tokensUsed * 0.5;
+
+  const approximatedInputCost = (approximatedInputTokens / 1_000_000) * inputPricePer1mUsd;
+  const approximatedOutputCost = (approximatedOutputTokens / 1_000_000) * outputPricePer1mUsd;
+
+  return approximatedInputCost + approximatedOutputCost;
 }
 
 export async function validateKey(provider: LLMProvider, apiKey: string): Promise<boolean> {
@@ -162,6 +204,7 @@ export async function callLLM(
     provider?: LLMProvider;
     scenario?: LlmScenarioKey;
     scenarioPhase?: 'primary' | 'retry';
+    respectRequestMaxTokens?: boolean;
   }
 ): Promise<LLMResponse> {
   const userRole = options?.role ?? USER_ROLE_MAP.PUBLIC;
@@ -296,7 +339,10 @@ export async function callLLM(
       ? fallbackLlmModel.model
       : (scenarioPhaseModel?.model ?? request.model ?? modelFromFallbackProvider),
     temperature: scenarioModel?.temperature ?? request.temperature,
-    maxTokens: scenarioModel?.maxTokens ?? request.maxTokens,
+    maxTokens:
+      options?.respectRequestMaxTokens && request.maxTokens !== undefined
+        ? request.maxTokens
+        : (scenarioModel?.maxTokens ?? request.maxTokens),
     responseFormat: scenarioModel?.responseFormat ?? request.responseFormat
   };
 
@@ -307,13 +353,21 @@ export async function callLLM(
       ? calculateCatalogCost(
           response.tokensUsed,
           scenarioPhaseModel.inputPricePer1mUsd,
-          scenarioPhaseModel.outputPricePer1mUsd
+          scenarioPhaseModel.outputPricePer1mUsd,
+          {
+            usage: response.usage,
+            cachedInputPricePer1mUsd: scenarioPhaseModel.cachedInputPricePer1mUsd
+          }
         )
       : useFallbackModel
         ? calculateCatalogCost(
             response.tokensUsed,
             fallbackLlmModel.price.input,
-            fallbackLlmModel.price.output
+            fallbackLlmModel.price.output,
+            {
+              usage: response.usage,
+              cachedInputPricePer1mUsd: fallbackLlmModel.price.cache
+            }
           )
         : response.cost;
 

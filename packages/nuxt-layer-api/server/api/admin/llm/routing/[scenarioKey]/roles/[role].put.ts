@@ -1,4 +1,9 @@
-import { LlmScenarioKeySchema, RoleSchema, RoutingAssignmentInputSchema } from '@int/schema';
+import {
+  LLM_SCENARIO_KEY_MAP,
+  LlmScenarioKeySchema,
+  RoleSchema,
+  RoutingAssignmentInputSchema
+} from '@int/schema';
 import { llmRoutingRepository } from '../../../../../../data/repositories';
 
 /**
@@ -38,6 +43,20 @@ export default defineEventHandler(async event => {
   }
 
   const scenarioKey = scenarioValidation.data;
+  const normalizedInput = {
+    ...validation.data,
+    retryModelId:
+      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE ||
+      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION ||
+      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
+        ? (validation.data.retryModelId ?? null)
+        : null,
+    strategyKey:
+      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION
+        ? (validation.data.strategyKey ?? null)
+        : null
+  };
+
   const scenario = await llmRoutingRepository.findScenario(scenarioKey);
   if (!scenario) {
     throw createError({
@@ -54,8 +73,8 @@ export default defineEventHandler(async event => {
     });
   }
 
-  if (validation.data.retryModelId) {
-    const retryModelActive = await llmRoutingRepository.isModelActive(validation.data.retryModelId);
+  if (normalizedInput.retryModelId) {
+    const retryModelActive = await llmRoutingRepository.isModelActive(normalizedInput.retryModelId);
     if (!retryModelActive) {
       throw createError({
         statusCode: 409,
@@ -67,7 +86,7 @@ export default defineEventHandler(async event => {
   const item = await llmRoutingRepository.upsertRoleOverride(
     scenarioKey,
     roleValidation.data,
-    validation.data
+    normalizedInput
   );
   if (!item) {
     throw createError({

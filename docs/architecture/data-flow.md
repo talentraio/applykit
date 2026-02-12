@@ -27,12 +27,41 @@
 2. User provides vacancy description text (MVP) + optional link
 3. Server generates adapted resume version + stores it under vacancy
 
+### Generation pipeline (strategy + lightweight baseline score)
+
+`POST /api/vacancies/:id/generate` executes:
+
+1. Resolve adaptation routing (`resume_adaptation`) with precedence:
+   `role override -> default -> runtime fallback`.
+2. Build shared context once (base resume + vacancy + optional profile).
+3. Adaptation call using selected strategy (`economy` or `quality`).
+4. Baseline scoring call (`resume_adaptation_scoring`) for lightweight `before/after` score.
+5. Persist generation with `matchScoreBefore`, `matchScoreAfter`, `scoreBreakdown`.
+6. If baseline scoring fails, persist generation with fallback deterministic breakdown.
+
+### On-demand detailed scoring pipeline
+
+Detailed scoring is decoupled from generation and triggered only on demand.
+
+`POST /api/vacancies/:id/generations/:generationId/score-details`:
+
+1. Reuses persisted details by default when fresh for current vacancy version.
+2. On regenerate/invalidated state, executes detailed scoring (`resume_adaptation_scoring_detail`):
+   - `extractSignals` from vacancy text,
+   - `mapEvidence` against base/tailored resume,
+   - deterministic score/breakdown calculation in code.
+3. Persists details in `generation_score_details` with vacancy version marker.
+4. `GET /api/vacancies/:id/preparation` returns details + flags for request/regenerate CTA state.
+
 ## Re-generation (important)
 
 If base resume changes, user can re-run generation for an existing vacancy.
 We support:
 
 - `POST /api/vacancies/:id/generate` (create a new version, append to versions array)
+
+Generation availability can be locked per vacancy after success and re-enabled by vacancy edits according
+to business rules.
 
 ## Rendering & export
 

@@ -79,8 +79,24 @@
   - returns: 204 No Content
 - `POST /api/vacancies/:id/generate`
   - generates a new adapted version from current base resume + vacancy
-  - platform-managed execution path only (no BYOK header contract)
-  - returns created generation
+  - executes two-step pipeline:
+    - adaptation (`resume_adaptation`, strategy-aware, retry model optional)
+    - lightweight baseline scoring (`resume_adaptation_scoring`)
+  - if baseline scoring fails, generation is still persisted with deterministic fallback scoring
+  - platform-managed execution path only
+  - returns created generation (`matchScoreBefore`, `matchScoreAfter`, `scoreBreakdown`)
+- `POST /api/vacancies/:id/generations/:generationId/score-details`
+  - sync endpoint for on-demand detailed scoring
+  - default behavior reuses latest stored details for the generation
+  - `?regenerate=true` forces recompute when details are stale/eligible
+  - uses dedicated scenario routing key `resume_adaptation_scoring_detail`
+  - returns `{ generationId, vacancyId, reused, stale, details }`
+- `GET /api/vacancies/:id/preparation`
+  - returns preparation payload:
+    - vacancy meta
+    - latest generation summary
+    - optional detailed scoring payload
+    - flags for `canRequestDetails` / `canRegenerateDetails`
 
 ## Vacancy List Preferences
 
@@ -115,11 +131,21 @@
 - `DELETE /api/admin/llm/models/:id`
 - `GET /api/admin/llm/routing`
 - `PUT /api/admin/llm/routing/:scenarioKey/default`
+  - body: `RoutingAssignmentInput`
+  - normalization rules:
+    - `retryModelId` is persisted only for `resume_parse`, `resume_adaptation`, and
+      `resume_adaptation_scoring_detail`
+    - `strategyKey` is persisted only for `resume_adaptation`
 - `PUT /api/admin/llm/routing/:scenarioKey/roles/:role`
+  - body: `RoutingAssignmentInput`
+  - normalization rules:
+    - `retryModelId` is persisted only for `resume_parse`, `resume_adaptation`, and
+      `resume_adaptation_scoring_detail`
+    - `strategyKey` is persisted only for `resume_adaptation`
 - `DELETE /api/admin/llm/routing/:scenarioKey/roles/:role`
 
 Notes:
 
 - All admin endpoints require `super_admin`
 - Blocked users receive `403` on protected endpoints
-- BYOK endpoints (`/api/keys/*`) were removed; runtime is platform-only
+- Runtime uses platform-managed provider credentials only

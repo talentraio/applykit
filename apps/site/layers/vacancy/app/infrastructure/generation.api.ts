@@ -1,5 +1,8 @@
 import type { Generation, LLMProvider } from '@int/schema';
-import type { VacanciesResumeGeneration } from '@layer/api/types/vacancies';
+import type {
+  VacanciesResumeGeneration,
+  VacanciesScoreDetailsResponse
+} from '@layer/api/types/vacancies';
 
 const baseUrl = '/api/vacancies';
 
@@ -16,6 +19,10 @@ export type GenerateOptions = {
    * Preferred LLM provider
    */
   provider?: LLMProvider;
+};
+
+export type GenerateScoreDetailsOptions = {
+  regenerate?: boolean;
 };
 
 /**
@@ -61,6 +68,22 @@ export const generationApi = {
   async fetchLatest(vacancyId: string): Promise<VacanciesResumeGeneration> {
     return await useApi(`${baseUrl}/${vacancyId}/generations/latest`, {
       method: 'GET'
+    });
+  },
+
+  /**
+   * Fetch or generate detailed scoring for a generation.
+   */
+  async fetchScoreDetails(
+    vacancyId: string,
+    generationId: string,
+    options: GenerateScoreDetailsOptions = {}
+  ): Promise<VacanciesScoreDetailsResponse> {
+    return await useApi(`${baseUrl}/${vacancyId}/generations/${generationId}/score-details`, {
+      method: 'POST',
+      query: {
+        regenerate: options.regenerate ? 'true' : 'false'
+      }
     });
   },
 

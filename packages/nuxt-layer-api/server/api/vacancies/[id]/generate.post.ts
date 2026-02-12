@@ -1,11 +1,5 @@
 import type { Role } from '@int/schema';
-import {
-  OPERATION_MAP,
-  PROVIDER_TYPE_MAP,
-  USAGE_CONTEXT_MAP,
-  USER_ROLE_MAP,
-  VACANCY_STATUS_MAP
-} from '@int/schema';
+import { OPERATION_MAP, USER_ROLE_MAP, VACANCY_STATUS_MAP } from '@int/schema';
 import {
   generationRepository,
   resumeRepository,
@@ -13,7 +7,7 @@ import {
 } from '../../../data/repositories';
 import { requireLimit } from '../../../services/limits';
 import { generateResumeWithLLM } from '../../../services/llm/generate';
-import { logGenerate } from '../../../utils/usage';
+import { logGenerateAdaptation, logGenerateScoring } from '../../../utils/usage';
 
 /**
  * POST /api/vacancies/:id/generate
@@ -135,17 +129,26 @@ export default defineEventHandler(async event => {
       resumeId: resume.id,
       content: result.content,
       matchScoreBefore: result.matchScoreBefore,
-      matchScoreAfter: result.matchScoreAfter
+      matchScoreAfter: result.matchScoreAfter,
+      scoreBreakdown: result.scoreBreakdown
     });
 
-    // Log usage
-    await logGenerate(
+    // Log adaptation usage
+    await logGenerateAdaptation(
       userId,
-      PROVIDER_TYPE_MAP.PLATFORM,
-      USAGE_CONTEXT_MAP.RESUME_ADAPTATION,
-      result.tokensUsed,
-      result.cost
+      result.adaptation.providerType,
+      result.adaptation.tokensUsed,
+      result.adaptation.cost
     );
+
+    if (result.scoring) {
+      await logGenerateScoring(
+        userId,
+        result.scoring.providerType,
+        result.scoring.tokensUsed,
+        result.scoring.cost
+      );
+    }
 
     // Lock further generation until explicit unlock conditions are met.
     // Also auto-advance status from 'created' to 'generated' on first generation.

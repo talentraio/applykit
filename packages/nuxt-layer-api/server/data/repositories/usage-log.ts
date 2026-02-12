@@ -241,13 +241,10 @@ export const usageLogRepository = {
   },
 
   /**
-   * Get platform vs BYOK usage ratio
-   * Analytics: track how many users use BYOK
+   * Get provider usage ratio.
+   * Runtime is platform-only, so breakdown currently exposes platform aggregate.
    */
-  async getProviderTypeBreakdown(
-    userId: string,
-    days = 30
-  ): Promise<{ platform: number; byok: number }> {
+  async getProviderTypeBreakdown(userId: string, days = 30): Promise<{ platform: number }> {
     const startDate = subDays(new Date(), days);
 
     const result = await db
@@ -259,10 +256,10 @@ export const usageLogRepository = {
       .where(and(eq(usageLogs.userId, userId), buildDateGte(startDate)))
       .groupBy(usageLogs.providerType);
 
-    const breakdown = { platform: 0, byok: 0 };
+    const breakdown = { platform: 0 };
 
     result.forEach(row => {
-      breakdown[row.providerType] = Number(row.count);
+      breakdown.platform += Number(row.count);
     });
 
     return breakdown;

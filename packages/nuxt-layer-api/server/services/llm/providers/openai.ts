@@ -151,7 +151,10 @@ export class OpenAIProvider implements ILLMProvider {
       });
 
       const content = completion.choices[0]?.message?.content || '';
-      const tokensUsed = completion.usage?.total_tokens || 0;
+      const inputTokens = completion.usage?.prompt_tokens ?? 0;
+      const outputTokens = completion.usage?.completion_tokens ?? 0;
+      const cachedInputTokens = completion.usage?.prompt_tokens_details?.cached_tokens ?? undefined;
+      const tokensUsed = completion.usage?.total_tokens ?? inputTokens + outputTokens;
       const cost = this.calculateCost(tokensUsed, model);
 
       return {
@@ -160,7 +163,12 @@ export class OpenAIProvider implements ILLMProvider {
         cost,
         model,
         provider: LLM_PROVIDER_MAP.OPENAI,
-        providerType
+        providerType,
+        usage: {
+          inputTokens,
+          outputTokens,
+          cachedInputTokens
+        }
       };
     } catch (error) {
       // Handle specific OpenAI errors

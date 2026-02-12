@@ -1,4 +1,4 @@
-import type { ResumeContent } from '@int/schema';
+import type { ResumeContent, ScoreBreakdown } from '@int/schema';
 import type { Generation } from '../schema';
 import { addDays, endOfDay } from 'date-fns';
 import { desc, eq, lt, sql } from 'drizzle-orm';
@@ -100,6 +100,7 @@ export const generationRepository = {
     content: ResumeContent;
     matchScoreBefore: number;
     matchScoreAfter: number;
+    scoreBreakdown: ScoreBreakdown;
   }): Promise<Generation> {
     // Set expiration to end of day (23:59:59.999) 90 days from now
     // This makes expiration more predictable and user-friendly
@@ -113,6 +114,7 @@ export const generationRepository = {
         content: data.content,
         matchScoreBefore: data.matchScoreBefore,
         matchScoreAfter: data.matchScoreAfter,
+        scoreBreakdown: data.scoreBreakdown,
         expiresAt
       })
       .returning();

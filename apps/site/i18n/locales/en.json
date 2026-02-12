@@ -547,7 +547,26 @@
       "backToOverview": "Back to Overview",
       "saving": "Saving...",
       "autoSaved": "Changes saved",
-      "saveFailed": "Failed to save changes"
+      "saveFailed": "Failed to save changes",
+      "details": "Details",
+      "regenerateDetails": "Regenerate details",
+      "detailsFailed": "Failed to load detailed scoring",
+      "detailsFetchFailed": "Failed to load preparation data"
+    },
+    "preparation": {
+      "title": "Preparation Details",
+      "before": "Before score",
+      "after": "After score",
+      "improvement": "Improvement",
+      "matched": "Matched Signals",
+      "gaps": "Gaps to Improve",
+      "recommendations": "Recommendations",
+      "staleBadge": "Needs refresh",
+      "openResume": "Open Resume",
+      "noGenerationTitle": "No Generation Found",
+      "noGenerationDescription": "Generate a tailored resume first to unlock preparation insights.",
+      "noDetailsTitle": "Detailed Scoring Not Generated",
+      "noDetailsDescription": "Open the resume page and run detailed scoring to view preparation insights."
     },
     "error": {
       "fetchFailed": "Failed to load vacancies",

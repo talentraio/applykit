@@ -42,7 +42,6 @@ All tables are defined in `schema.ts` using Drizzle ORM:
 | `resumes`        | Uploaded resumes (parsed to JSON)  | userId, title, content (JSONB)             |
 | `vacancies`      | Job vacancies for tailoring        | userId, company, jobPosition, description  |
 | `generations`    | Tailored resume versions           | vacancyId, resumeId, content, matchScores  |
-| `llm_keys`       | BYOK metadata (hint only!)         | userId, provider, keyHint (4 chars)        |
 | `usage_logs`     | Operation tracking                 | userId, operation, providerType, cost      |
 | `system_configs` | System configuration               | key, value (JSONB)                         |
 
@@ -53,7 +52,7 @@ All tables are defined in `schema.ts` using Drizzle ORM:
 - `source_file_type`: docx, pdf
 - `llm_provider`: openai, gemini
 - `operation`: parse, generate, export
-- `provider_type`: platform, byok
+- `provider_type`: platform
 
 ## Migrations
 
@@ -157,14 +156,14 @@ export const userRepository = {
 
 ## Security Notes
 
-### BYOK Keys (CRITICAL)
+### Platform Keys (CRITICAL)
 
-The `llm_keys` table stores **ONLY** the last 4 characters:
+Platform provider keys are stored in server runtime config and must never be exposed to clients:
 
-- ❌ NEVER store full API keys in database
-- ✅ ONLY store hint (last 4 chars) for user reference
-- ✅ Full keys stored in browser localStorage
-- ✅ Full keys transmitted per-request over HTTPS
+- ❌ NEVER store platform API keys in database tables
+- ❌ NEVER expose platform API keys to browser code
+- ✅ Load platform API keys from secure environment/runtime config
+- ✅ Keep server-side request logs sanitized
 
 ### Connection Security
 
@@ -189,7 +188,6 @@ server/data/
     ├── resume.ts          # Resume repository ✅
     ├── vacancy.ts         # Vacancy repository ✅
     ├── generation.ts      # Generation repository ✅
-    ├── llm-key.ts         # LLM Key repository ✅
     ├── usage-log.ts       # Usage Log repository ✅
     └── system-config.ts   # System Config repository ✅
 ```
@@ -235,12 +233,6 @@ Each repository provides standard CRUD operations plus domain-specific methods:
 - `create`, `delete`, `deleteByVacancyId`, `deleteByResumeId`
 - `findExpired`, `deleteExpired`, `isValidGeneration`
 
-### llmKeyRepository (T033)
-
-- `findById`, `findByUserAndProvider`, `findByUserId`
-- `upsert` (replaces existing), `delete`, `deleteByUserId`
-- `hasKeyForProvider`, `getKeyHint`
-
 ### usageLogRepository (T034)
 
 - `log`, `getDailyCount` (for rate limiting)
@@ -254,7 +246,7 @@ Each repository provides standard CRUD operations plus domain-specific methods:
 - `get`, `getBoolean`, `getNumber`, `getPlatformProvider`
 - `set`, `setBoolean`, `setNumber`, `setPlatformProvider`
 - `getAll`, `resetToDefaults`
-- `incrementBudgetUsed`, `canUsePlatformLLM`, `isBYOKEnabled`
+- `incrementBudgetUsed`, `canUsePlatformLLM`
 
 ## Next Steps
 

@@ -3,6 +3,7 @@ import type {
   LlmRoutingItem,
   LlmRoutingOverride,
   LlmScenarioKey,
+  LlmStrategyKey,
   Role,
   RoutingAssignmentInput
 } from '@int/schema';
@@ -25,6 +26,7 @@ type RoutingAssignment = {
   temperature: number | null;
   maxTokens: number | null;
   responseFormat: 'text' | 'json' | null;
+  strategyKey: LlmStrategyKey | null;
   updatedAt: Date;
 };
 
@@ -36,6 +38,7 @@ const toAssignment = (
   temperature: toNullableNumber(row.temperature),
   maxTokens: row.maxTokens,
   responseFormat: row.responseFormat,
+  strategyKey: row.strategyKey ?? null,
   updatedAt: row.updatedAt
 });
 
@@ -65,7 +68,7 @@ const toDbPatch = (
   input: RoutingAssignmentInput
 ): Pick<
   typeof llmScenarioModels.$inferInsert,
-  'modelId' | 'retryModelId' | 'temperature' | 'maxTokens' | 'responseFormat'
+  'modelId' | 'retryModelId' | 'temperature' | 'maxTokens' | 'responseFormat' | 'strategyKey'
 > => {
   return {
     modelId: input.modelId,
@@ -77,7 +80,8 @@ const toDbPatch = (
           ? null
           : input.temperature.toString(),
     maxTokens: input.maxTokens ?? null,
-    responseFormat: input.responseFormat ?? null
+    responseFormat: input.responseFormat ?? null,
+    strategyKey: input.strategyKey ?? null
   };
 };
 

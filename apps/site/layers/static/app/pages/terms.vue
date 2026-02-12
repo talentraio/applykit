@@ -35,10 +35,10 @@
           license to process your documents for the purpose of providing our services.
         </p>
 
-        <h2>5. API Keys (BYOK)</h2>
+        <h2>5. AI Provider Usage</h2>
         <p>
-          If you choose to use your own API keys, you are responsible for compliance with the
-          respective provider's terms of service. We do not store your API keys on our servers.
+          ApplyKit uses platform-managed AI provider integrations to deliver parsing and generation
+          features. You are responsible for compliant use of generated output.
         </p>
 
         <h2>6. Service Availability</h2>

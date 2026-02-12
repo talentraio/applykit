@@ -1,4 +1,9 @@
-import type { Generation, Vacancy } from '@int/schema';
+import type {
+  Generation,
+  GenerationScoreDetail,
+  GenerationScoreDetailPayload,
+  Vacancy
+} from '@int/schema';
 
 export type VacancyMeta = Pick<Vacancy, 'id' | 'company' | 'jobPosition'>;
 
@@ -16,4 +21,21 @@ export type VacancyOverview = {
 export type VacanciesResumeGeneration = {
   isValid: boolean;
   generation: Generation | null;
+};
+
+export type VacanciesScoreDetailsResponse = {
+  generationId: string;
+  vacancyId: string;
+  reused: boolean;
+  stale: boolean;
+  details: GenerationScoreDetailPayload;
+};
+
+export type VacancyPreparationResponse = {
+  vacancy: VacancyMeta;
+  latestGeneration: VacancyOverviewGeneration | null;
+  scoreDetails: GenerationScoreDetail | null;
+  scoreDetailsStale: boolean;
+  canRequestDetails: boolean;
+  canRegenerateDetails: boolean;
 };

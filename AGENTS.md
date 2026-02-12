@@ -80,3 +80,12 @@
 - Use `useRuntimeConfig()` for env values; avoid `process.env` in runtime code (except `NODE_ENV`).
 - Env vars must use `NUXT_` (server-only) or `NUXT_PUBLIC_` (client-exposed) prefixes; set defaults only in `nuxt.config.ts`.
 - `NUXT_DATABASE_URL` is optional for local development (defaults to local Postgres if unset).
+
+## Active Technologies
+
+- TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, NuxtUI 4, Pinia, Zod, Drizzle ORM, Vercel AI SDK adapters, `@mullion/ai-sdk` (011-detailed-scoring-modes)
+- PostgreSQL (Drizzle schema under `packages/nuxt-layer-api/server/data/`) (011-detailed-scoring-modes)
+
+## Recent Changes
+
+- 011-detailed-scoring-modes: Added TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, NuxtUI 4, Pinia, Zod, Drizzle ORM, Vercel AI SDK adapters, `@mullion/ai-sdk`

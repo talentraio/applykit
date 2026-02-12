@@ -97,7 +97,7 @@ await logUsage(userId, 'parse', 'platform', 1500, 0.003);
 
 // Helper functions
 await logParse(userId, 'platform', 1500, 0.003);
-await logGenerate(userId, 'byok', 2000, 0.004);
+await logGenerate(userId, 'platform', 2000, 0.004);
 await logExport(userId, 'platform'); // No tokens/cost required
 ```
 

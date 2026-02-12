@@ -1,4 +1,10 @@
-import type { LLMProvider, LlmResponseFormat, LlmScenarioKey, Role } from '@int/schema';
+import type {
+  LLMProvider,
+  LlmResponseFormat,
+  LlmScenarioKey,
+  LlmStrategyKey,
+  Role
+} from '@int/schema';
 import { llmRoutingRepository } from '../../data/repositories';
 
 type ResolvedScenarioPhaseModel = {
@@ -16,6 +22,7 @@ export type ResolvedScenarioModel = {
   temperature: number | null;
   maxTokens: number | null;
   responseFormat: LlmResponseFormat | null;
+  strategyKey: LlmStrategyKey | null;
 };
 
 export async function resolveScenarioModel(
@@ -51,6 +58,7 @@ export async function resolveScenarioModel(
     retry,
     temperature: resolved.assignment.temperature ?? null,
     maxTokens: resolved.assignment.maxTokens ?? null,
-    responseFormat: resolved.assignment.responseFormat ?? null
+    responseFormat: resolved.assignment.responseFormat ?? null,
+    strategyKey: resolved.assignment.strategyKey ?? null
   };
 }

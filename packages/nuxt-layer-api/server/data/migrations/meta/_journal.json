@@ -92,6 +92,34 @@
       "when": 1770873600000,
       "tag": "0012_role_budget_windows",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1770988800000,
+      "tag": "0013_resume_adaptation_scoring_and_provider_type_cleanup",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1771075200000,
+      "tag": "0014_generation_strategy_and_score_breakdown",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1771161600000,
+      "tag": "0015_detailed_scoring_modes",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1770843944000,
+      "tag": "0016_detailed_scoring_storage",
+      "breakpoints": true
     }
   ]
 }
