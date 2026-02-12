@@ -39,6 +39,9 @@
 5. Persist generation with `matchScoreBefore`, `matchScoreAfter`, `scoreBreakdown`.
 6. If baseline scoring fails, persist generation with fallback deterministic breakdown.
 
+For full scenario-level behavior and admin routing semantics, see
+[`llm-scenarios.md`](./llm-scenarios.md).
+
 ### On-demand detailed scoring pipeline
 
 Detailed scoring is decoupled from generation and triggered only on demand.
