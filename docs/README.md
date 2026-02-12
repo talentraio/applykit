@@ -1,8 +1,17 @@
 # Docs Index
 
-- [Development Guide](./development.md)
-- [API](./api/README.md)
+## Product and architecture
+
 - [Architecture](./architecture/README.md)
-- [Code Style](./codestyle/README.md)
-- [Design](./design)
-- [Schema Constants](../packages/schema/constants/README.md)
+- [LLM scenarios](./architecture/llm-scenarios.md)
+- [API](./api/README.md)
+- [Design / MVP contract](./design/mvp.md)
+
+## Development
+
+- [Development guide](./development/README.md)
+- [Code style](./codestyle/README.md)
+
+## Shared contracts
+
+- [Schema constants](../packages/schema/constants/README.md)
