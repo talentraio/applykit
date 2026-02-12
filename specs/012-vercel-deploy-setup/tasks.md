@@ -20,10 +20,10 @@
 
 **Purpose**: Prepare the repository for Vercel CLI deploys — config files, ignore lists, dependency installation.
 
-- [ ] T001 [P] Create Vercel config for site app with Fluid Compute and crons in `apps/site/vercel.json`
-- [ ] T002 [P] Create Vercel config for admin app with Fluid Compute in `apps/admin/vercel.json`
-- [ ] T003 Create `.vercelignore` at repo root to exclude non-essential files from Vercel uploads
-- [ ] T004 Install Vercel CLI as pinned workspace dev dependency via `pnpm add -D vercel -w`
+- [x] T001 [P] Create Vercel config for site app with Fluid Compute and crons in `apps/site/vercel.json`
+- [x] T002 [P] Create Vercel config for admin app with Fluid Compute in `apps/admin/vercel.json`
+- [x] T003 Create `.vercelignore` at repo root to exclude non-essential files from Vercel uploads
+- [x] T004 Install Vercel CLI as pinned workspace dev dependency via `pnpm add -D vercel -w`
 
 ---
 
@@ -35,8 +35,8 @@
 
 ### Implementation for Production Deploy
 
-- [ ] T005 [US1] Create `.github/workflows/` directory if it doesn't exist
-- [ ] T006 [US1] Create production deploy workflow in `.github/workflows/production.yml` with: checkout, pnpm+Node.js setup with caching, `pnpm install --frozen-lockfile`, DB migration step (`pnpm --filter @int/api db:migrate` with `PROD_DATABASE_URL`), per-app `vercel pull` → `vercel build --prod` → `vercel deploy --prebuilt --prod` for site and admin, concurrency group `production-deploy` with `cancel-in-progress: false`
+- [x] T005 [US1] Create `.github/workflows/` directory if it doesn't exist
+- [x] T006 [US1] Create production deploy workflow in `.github/workflows/production.yml` with: checkout, pnpm+Node.js setup with caching, `pnpm install --frozen-lockfile`, DB migration step (`pnpm --filter @int/api db:migrate` with `PROD_DATABASE_URL`), per-app `vercel pull` → `vercel build --prod` → `vercel deploy --prebuilt --prod` for site and admin, concurrency group `production-deploy` with `cancel-in-progress: false`
 
 **Checkpoint**: Production workflow file is complete. Can be validated with `actionlint` before merging.
 
@@ -50,7 +50,7 @@
 
 ### Implementation for Preview Deploy
 
-- [ ] T007 [US2] Create preview deploy workflow in `.github/workflows/preview.yml` with: `pull_request` trigger (opened, synchronize, reopened) targeting `main`, checkout, pnpm+Node.js setup with caching, `pnpm install --frozen-lockfile`, preview DB migration step (`pnpm --filter @int/api db:migrate` with `PREVIEW_DATABASE_URL`), per-app `vercel pull --environment=preview` → `vercel build` (no `--prod`) → `vercel deploy --prebuilt` (no `--prod`) for site and admin, sticky PR comment via `marocchino/sticky-pull-request-comment@v2` with `header: vercel-preview` showing both app URLs and commit SHA
+- [x] T007 [US2] Create preview deploy workflow in `.github/workflows/preview.yml` with: `pull_request` trigger (opened, synchronize, reopened) targeting `main`, checkout, pnpm+Node.js setup with caching, `pnpm install --frozen-lockfile`, preview DB migration step (`pnpm --filter @int/api db:migrate` with `PREVIEW_DATABASE_URL`), per-app `vercel pull --environment=preview` → `vercel build` (no `--prod`) → `vercel deploy --prebuilt` (no `--prod`) for site and admin, sticky PR comment via `marocchino/sticky-pull-request-comment@v2` with `header: vercel-preview` showing both app URLs and commit SHA
 
 **Checkpoint**: Preview workflow file is complete. Can be validated with `actionlint` before merging.
 
@@ -60,9 +60,9 @@
 
 **Purpose**: Ensure env var documentation is complete and repo hygiene is maintained.
 
-- [ ] T008 [P] Verify `.env.example` files include all Vercel-relevant env vars documented in spec — check `apps/site/.env.example`, `apps/admin/.env.example`, and `packages/nuxt-layer-api/.env.example` (package: `@int/api`)
-- [ ] T009 [P] Validate both workflow YAML files with `actionlint` (install via `brew install actionlint` or npx)
-- [ ] T010 Run quickstart.md validation — walk through the one-time setup steps in `specs/012-vercel-deploy-setup/quickstart.md` and confirm they match the implemented workflow files
+- [x] T008 [P] Verify `.env.example` files include all Vercel-relevant env vars documented in spec — check `apps/site/.env.example`, `apps/admin/.env.example`, and `packages/nuxt-layer-api/.env.example` (package: `@int/api`)
+- [x] T009 [P] Validate both workflow YAML files with `actionlint` (install via `brew install actionlint` or npx)
+- [x] T010 Run quickstart.md validation — walk through the one-time setup steps in `specs/012-vercel-deploy-setup/quickstart.md` and confirm they match the implemented workflow files
 
 ---
 
