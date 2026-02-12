@@ -8,6 +8,46 @@ mkdirSync(dataDir, { recursive: true });
 const adminHmrPort = Number(process.env.NUXT_ADMIN_HMR_PORT ?? '24679');
 const adminSsrHmrPort = Number(process.env.NUXT_ADMIN_SSR_HMR_PORT ?? '24681');
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value != null && typeof value === 'object';
+
+const applySsrHmrPort = (config: unknown, port: number) => {
+  if (!isRecord(config)) {
+    return;
+  }
+
+  const environments = config.environments;
+  if (!isRecord(environments)) {
+    return;
+  }
+
+  const ssrEnvironment = environments.ssr;
+  if (!isRecord(ssrEnvironment)) {
+    return;
+  }
+
+  const server = ssrEnvironment.server;
+  if (!isRecord(server)) {
+    return;
+  }
+
+  const hmr = server.hmr;
+  if (hmr === false) {
+    return;
+  }
+
+  if (!isRecord(hmr)) {
+    server.hmr = {
+      port,
+      clientPort: port
+    };
+    return;
+  }
+
+  hmr.port = port;
+  hmr.clientPort = port;
+};
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
 
@@ -48,24 +88,8 @@ export default defineNuxtConfig({
   },
 
   hooks: {
-    'vite:extendConfig': function (config, { isServer }) {
-      if (!isServer) {
-        return;
-      }
-
-      const server = config.server;
-      if (!server) {
-        return;
-      }
-
-      if (server.hmr === false || server.hmr == null) {
-        server.hmr = {};
-      }
-
-      if (typeof server.hmr === 'object') {
-        server.hmr.port = adminSsrHmrPort;
-        server.hmr.clientPort = adminSsrHmrPort;
-      }
+    'vite:extend': function ({ config }) {
+      applySsrHmrPort(config, adminSsrHmrPort);
     }
   },
 
