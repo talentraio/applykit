@@ -23,8 +23,8 @@ type UseRoutingScenarioEditorReturn = {
   modalDraft: Ref<RoutingScenarioDraft>;
   modalTitle: ComputedRef<string>;
   modalDescription: ComputedRef<string>;
-  activeFormComponent: ComputedRef<Component>;
-  activeFormProps: ComputedRef<Record<string, unknown>>;
+  activeFormComponent: ComputedRef<Component | null>;
+  activeFormProps: ComputedRef<Record<string, unknown> | null>;
   modalCanSave: ComputedRef<boolean>;
   openScenarioEditor: (scenarioKey: EditableScenarioKey) => void;
   closeScenarioEditor: () => void;
@@ -94,17 +94,15 @@ export function useRoutingScenarioEditor(
     return options.getDescription(scenarioKey);
   });
 
-  const activeFormComponent = computed<Component>(() => {
+  const activeFormComponent = computed<Component | null>(() => {
     const scenarioKey = modalScenarioKey.value;
-    return scenarioKey
-      ? scenarioFormComponents[scenarioKey]
-      : scenarioFormComponents[LLM_SCENARIO_KEY_MAP.RESUME_PARSE];
+    return scenarioKey ? scenarioFormComponents[scenarioKey] : null;
   });
 
-  const activeFormProps = computed<Record<string, unknown>>(() => {
+  const activeFormProps = computed<Record<string, unknown> | null>(() => {
     const scenarioKey = modalScenarioKey.value;
     if (!scenarioKey) {
-      return {};
+      return null;
     }
 
     return options.getFormProps(scenarioKey);

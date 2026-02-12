@@ -59,11 +59,63 @@
         class="w-full"
       />
     </UFormField>
+
+    <UPageCard
+      v-if="runtimeConfig"
+      variant="subtle"
+      class="llm-routing-scenarios-form-resume-adaptation__runtime md:col-span-2"
+    >
+      <template #header>
+        <h3 class="text-sm font-semibold">
+          {{ t('admin.llm.routing.runtimeConfig.title') }}
+        </h3>
+      </template>
+
+      <div class="grid gap-4 text-xs text-muted md:grid-cols-2">
+        <div class="space-y-1">
+          <p class="font-medium text-default">
+            {{ t('admin.llm.routing.runtimeConfig.adaptation') }}
+          </p>
+          <p>
+            {{ t('admin.llm.routing.runtimeConfig.temperature') }}:
+            {{ runtimeConfig.adaptationTemperature }}
+          </p>
+          <p>
+            {{ t('admin.llm.routing.runtimeConfig.maxTokens') }}:
+            {{ runtimeConfig.adaptationMaxTokens }}
+          </p>
+          <p>
+            {{ t('admin.llm.routing.runtimeConfig.responseFormat') }}:
+            {{ runtimeConfig.adaptationResponseFormat }}
+          </p>
+        </div>
+
+        <div class="space-y-1">
+          <p class="font-medium text-default">{{ t('admin.llm.routing.runtimeConfig.scoring') }}</p>
+          <p>
+            {{ t('admin.llm.routing.runtimeConfig.temperature') }}:
+            {{ runtimeConfig.scoringTemperature }}
+          </p>
+          <p>
+            {{ t('admin.llm.routing.runtimeConfig.maxTokens') }}:
+            {{ runtimeConfig.scoringMaxTokens }}
+          </p>
+          <p>
+            {{ t('admin.llm.routing.runtimeConfig.responseFormat') }}:
+            {{ runtimeConfig.scoringResponseFormat }}
+          </p>
+        </div>
+      </div>
+    </UPageCard>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { RoutingScenarioDraft, RoutingSelectOption } from '../types';
+import type {
+  ResumeAdaptationRuntimeConfig,
+  RoutingScenarioDraft,
+  RoutingSelectOption
+} from '../types';
 
 type Props = {
   modelOptions: RoutingSelectOption[];
@@ -76,6 +128,7 @@ type Props = {
   emptyValue?: string;
   disableTertiaryWhenPrimaryEmpty?: boolean;
   disableStrategyWhenPrimaryEmpty?: boolean;
+  runtimeConfig?: ResumeAdaptationRuntimeConfig | null;
 };
 
 defineOptions({ name: 'LlmRoutingScenariosFormResumeAdaptation' });
@@ -88,7 +141,8 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   emptyValue: '',
   disableTertiaryWhenPrimaryEmpty: false,
-  disableStrategyWhenPrimaryEmpty: false
+  disableStrategyWhenPrimaryEmpty: false,
+  runtimeConfig: null
 });
 
 const draft = defineModel<RoutingScenarioDraft>('draft', { required: true });

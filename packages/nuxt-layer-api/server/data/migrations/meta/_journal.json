@@ -120,6 +120,13 @@
       "when": 1770843944000,
       "tag": "0016_detailed_scoring_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1770912566000,
+      "tag": "0017_resume_adaptation_routing_presets",
+      "breakpoints": true
     }
   ]
 }

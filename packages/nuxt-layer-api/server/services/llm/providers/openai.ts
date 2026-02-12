@@ -135,6 +135,7 @@ export class OpenAIProvider implements ILLMProvider {
     const temperatureField = model.startsWith('gpt-5')
       ? {}
       : { temperature: request.temperature ?? 0.7 };
+    const reasoningField = model.startsWith('gpt-5') ? { reasoning_effort: 'low' as const } : {};
 
     try {
       const completion = await client.chat.completions.create({
@@ -146,6 +147,7 @@ export class OpenAIProvider implements ILLMProvider {
           { role: 'user', content: request.prompt }
         ],
         ...temperatureField,
+        ...reasoningField,
         ...tokenLimitField,
         response_format: responseFormat
       });

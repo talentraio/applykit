@@ -45,6 +45,7 @@
 import type { LlmRoutingItem, LlmScenarioKey, LlmStrategyKey } from '@int/schema';
 import type {
   EditableScenarioKey,
+  ResumeAdaptationRuntimeConfig,
   RoutingScenarioCardsConfig,
   RoutingScenarioDraft,
   RoutingSelectOption
@@ -73,6 +74,13 @@ const { items: allModels, activeItems: activeModels, fetchAll: fetchModels } = u
 
 const { t } = useI18n();
 const toast = useToast();
+
+const ADAPTATION_RUNTIME_DEFAULT_TEMPERATURE = 0.3;
+const ADAPTATION_RUNTIME_DEFAULT_MAX_TOKENS = 6000;
+const ADAPTATION_RUNTIME_DEFAULT_RESPONSE_FORMAT = 'json';
+const SCORING_RUNTIME_DEFAULT_TEMPERATURE = 0;
+const SCORING_RUNTIME_DEFAULT_MAX_TOKENS = 800;
+const SCORING_RUNTIME_DEFAULT_RESPONSE_FORMAT = 'json';
 
 const { pending: initialPending, error: initialLoadError } = await useAsyncData(
   'admin-llm-routing-page',
@@ -157,6 +165,19 @@ const resolveStrategyLabel = (strategyKey: string | null): string => {
   return t('admin.llm.routing.strategy.economy');
 };
 
+const formatRuntimeValue = (
+  value: number | string | null | undefined,
+  runtimeDefault: number | string
+): string => {
+  if (value === null || value === undefined || value === '') {
+    return t('admin.llm.routing.runtimeConfig.runtimeDefault', {
+      value: runtimeDefault
+    });
+  }
+
+  return String(value);
+};
+
 const resumeParseCapabilities = computed<string[]>(() => {
   const item = resumeParseItem.value;
   if (!item) return [];
@@ -216,6 +237,42 @@ const detailedScoringCapabilities = computed<string[]>(() => {
       model: resolveModelLabel(item.default?.retryModelId ?? null)
     })
   ];
+});
+
+const resumeAdaptationRuntimeConfig = computed<ResumeAdaptationRuntimeConfig | null>(() => {
+  const adaptationDefault = resumeAdaptationItem.value?.default;
+  const scoringDefault = resumeScoringItem.value?.default;
+
+  if (!adaptationDefault || !scoringDefault) {
+    return null;
+  }
+
+  return {
+    adaptationTemperature: formatRuntimeValue(
+      adaptationDefault.temperature,
+      ADAPTATION_RUNTIME_DEFAULT_TEMPERATURE
+    ),
+    adaptationMaxTokens: formatRuntimeValue(
+      adaptationDefault.maxTokens,
+      ADAPTATION_RUNTIME_DEFAULT_MAX_TOKENS
+    ),
+    adaptationResponseFormat: formatRuntimeValue(
+      adaptationDefault.responseFormat,
+      ADAPTATION_RUNTIME_DEFAULT_RESPONSE_FORMAT
+    ),
+    scoringTemperature: formatRuntimeValue(
+      scoringDefault.temperature,
+      SCORING_RUNTIME_DEFAULT_TEMPERATURE
+    ),
+    scoringMaxTokens: formatRuntimeValue(
+      scoringDefault.maxTokens,
+      SCORING_RUNTIME_DEFAULT_MAX_TOKENS
+    ),
+    scoringResponseFormat: formatRuntimeValue(
+      scoringDefault.responseFormat,
+      SCORING_RUNTIME_DEFAULT_RESPONSE_FORMAT
+    )
+  };
 });
 
 const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
@@ -339,7 +396,8 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
       scoringLabel: t('admin.llm.routing.scoringLabel'),
       retryLabel: t('admin.llm.routing.retryLabel'),
       strategyLabel: t('admin.llm.routing.strategyLabel'),
-      disabled: routingSaving.value
+      disabled: routingSaving.value,
+      runtimeConfig: resumeAdaptationRuntimeConfig.value
     };
   }
 

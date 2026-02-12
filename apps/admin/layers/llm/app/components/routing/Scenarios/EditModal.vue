@@ -8,7 +8,12 @@
     class="llm-routing-scenarios-edit-modal"
   >
     <template #body>
-      <component :is="formComponent" v-model:draft="draft" v-bind="formProps" />
+      <component
+        :is="formComponent"
+        v-if="formComponent"
+        v-model:draft="draft"
+        v-bind="resolvedFormProps"
+      />
     </template>
 
     <template #footer>
@@ -43,17 +48,17 @@ import type { RoutingScenarioDraft } from './types';
 type Props = {
   title: string;
   description?: string;
-  formComponent: Component;
-  formProps?: Record<string, unknown>;
+  formComponent: Component | null;
+  formProps?: Record<string, unknown> | null;
   loading?: boolean;
   canSave?: boolean;
 };
 
 defineOptions({ name: 'LlmRoutingScenariosEditModal' });
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   description: '',
-  formProps: () => ({}),
+  formProps: null,
   loading: false,
   canSave: false
 });
@@ -65,6 +70,10 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { required: true });
 const draft = defineModel<RoutingScenarioDraft>('draft', { required: true });
+
+const resolvedFormProps = computed<Record<string, unknown>>(() => {
+  return props.formProps ?? {};
+});
 
 const handleCancel = () => {
   emit('cancel');
