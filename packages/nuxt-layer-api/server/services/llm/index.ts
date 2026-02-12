@@ -204,6 +204,7 @@ export async function callLLM(
     provider?: LLMProvider;
     scenario?: LlmScenarioKey;
     scenarioPhase?: 'primary' | 'retry';
+    respectRequestMaxTokens?: boolean;
   }
 ): Promise<LLMResponse> {
   const userRole = options?.role ?? USER_ROLE_MAP.PUBLIC;
@@ -338,7 +339,10 @@ export async function callLLM(
       ? fallbackLlmModel.model
       : (scenarioPhaseModel?.model ?? request.model ?? modelFromFallbackProvider),
     temperature: scenarioModel?.temperature ?? request.temperature,
-    maxTokens: scenarioModel?.maxTokens ?? request.maxTokens,
+    maxTokens:
+      options?.respectRequestMaxTokens && request.maxTokens !== undefined
+        ? request.maxTokens
+        : (scenarioModel?.maxTokens ?? request.maxTokens),
     responseFormat: scenarioModel?.responseFormat ?? request.responseFormat
   };
 

@@ -18,12 +18,15 @@ const SCORING_SHARED_GUIDELINES = `Scoring protocol:
 5) Keep the same semantic scale for strengths: 0..1.
 6) If evidence is uncertain, lower confidence/strength instead of guessing.
 7) Return JSON only.
+8) Never return partial JSON. If response may be too long, reduce list sizes but always close the JSON object.
 
 Output size control:
 - Keep arrays compact.
 - Prefer top-ranked signals by relevance.
 - Do not include duplicate signals.
 - Limit verbosity in every string field.
+- Keep signal names short (1-5 words).
+- Keep evidence refs short and minimal.
 
 Quality gates:
 - Never invent resume facts.
@@ -71,7 +74,7 @@ Output JSON schema:
 Rules:
 - strengths must be within 0..1
 - evidenceRef values should be short plain-text paths (e.g. "experience[0].bullets[1]")
-- keep at most 12 evidence items total
+- keep at most 10 evidence items total
 - no narrative text, JSON only`;
 
 const createScoringSharedPrefix = (sharedContext: string): string => {

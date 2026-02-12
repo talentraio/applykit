@@ -129,6 +129,10 @@ const coverLetterItem = computed(() => {
   return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION) ?? null;
 });
 
+const detailedScoringItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) ?? null;
+});
+
 const hasAdaptationCard = computed(() => {
   return Boolean(resumeAdaptationItem.value || resumeScoringItem.value);
 });
@@ -314,6 +318,23 @@ const coverLetterCapabilities = computed<string[]>(() => {
   ];
 });
 
+const detailedScoringCapabilities = computed<string[]>(() => {
+  return [
+    t('admin.roles.routing.currentModel', {
+      model: resolveInheritedModelLabel(currentOverrideModelId(detailedScoringItem.value))
+    }),
+    t('admin.roles.routing.currentRetryModel', {
+      model: resolveInheritedModelLabel(currentRetryOverrideModelId(detailedScoringItem.value))
+    }),
+    t('admin.roles.routing.defaultModel', {
+      model: resolveModelLabel(detailedScoringItem.value?.default?.modelId ?? null)
+    }),
+    t('admin.roles.routing.defaultRetryModel', {
+      model: resolveModelLabel(detailedScoringItem.value?.default?.retryModelId ?? null)
+    })
+  ];
+});
+
 const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
   const cards: RoutingScenarioCardsConfig = {};
 
@@ -334,6 +355,13 @@ const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
   if (coverLetterItem.value) {
     cards[LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION] = {
       capabilities: coverLetterCapabilities.value,
+      editDisabled: isRoutingDisabled.value
+    };
+  }
+
+  if (detailedScoringItem.value) {
+    cards[LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL] = {
+      capabilities: detailedScoringCapabilities.value,
       editDisabled: isRoutingDisabled.value
     };
   }
@@ -360,6 +388,15 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
     };
   }
 
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+    return {
+      primaryModelId: toSelectModelId(currentOverrideModelId(detailedScoringItem.value)),
+      secondaryModelId: toSelectModelId(currentRetryOverrideModelId(detailedScoringItem.value)),
+      tertiaryModelId: '',
+      strategyKey: ''
+    };
+  }
+
   return {
     primaryModelId: toSelectModelId(currentOverrideModelId(coverLetterItem.value)),
     secondaryModelId: '',
@@ -375,6 +412,10 @@ const getModalDescriptionByScenario = (scenarioKey: EditableScenarioKey): string
 
   if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
     return resumeAdaptationItem.value?.description ?? '';
+  }
+
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+    return detailedScoringItem.value?.description ?? '';
   }
 
   return coverLetterItem.value?.description ?? '';
@@ -404,6 +445,17 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
       emptyValue: INHERIT_MODEL_ID,
       disableTertiaryWhenPrimaryEmpty: true,
       disableStrategyWhenPrimaryEmpty: true
+    };
+  }
+
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+    return {
+      modelOptions: modelOptionsWithInherit.value,
+      primaryLabel: t('admin.roles.routing.overrideLabel'),
+      retryLabel: t('admin.roles.routing.retryOverrideLabel'),
+      disabled: isRoutingDisabled.value,
+      emptyValue: INHERIT_MODEL_ID,
+      disableRetryWhenPrimaryEmpty: true
     };
   }
 
@@ -489,6 +541,24 @@ const saveScenario = async () => {
 
       if (updates.length > 0) {
         await Promise.all(updates);
+      }
+    } else if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+      const selectedPrimary = fromSelectModelId(modalDraft.value.primaryModelId);
+      const selectedRetry = fromSelectModelId(modalDraft.value.secondaryModelId);
+      const existingPrimary = currentOverrideModelId(detailedScoringItem.value);
+
+      if (selectedPrimary) {
+        await upsertRoleOverride(
+          LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL,
+          props.role,
+          {
+            modelId: selectedPrimary,
+            retryModelId: selectedRetry || null,
+            strategyKey: null
+          }
+        );
+      } else if (existingPrimary) {
+        await deleteRoleOverride(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL, props.role);
       }
     } else {
       const selectedPrimary = fromSelectModelId(modalDraft.value.primaryModelId);

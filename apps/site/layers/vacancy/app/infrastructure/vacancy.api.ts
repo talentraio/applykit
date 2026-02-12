@@ -5,7 +5,11 @@ import type {
   VacancyListQuery,
   VacancyListResponse
 } from '@int/schema';
-import type { VacancyMeta, VacancyOverview } from '@layer/api/types/vacancies';
+import type {
+  VacancyMeta,
+  VacancyOverview,
+  VacancyPreparationResponse
+} from '@layer/api/types/vacancies';
 
 const vacancyUrl = '/api/vacancies';
 
@@ -32,6 +36,15 @@ export const vacancyApi = {
    */
   async fetchOverview(id: string): Promise<VacancyOverview> {
     return await useApi(`${vacancyUrl}/${id}/overview`, {
+      method: 'GET'
+    });
+  },
+
+  /**
+   * Fetch preparation payload by vacancy ID.
+   */
+  async fetchPreparation(id: string): Promise<VacancyPreparationResponse> {
+    return await useApi(`${vacancyUrl}/${id}/preparation`, {
       method: 'GET'
     });
   },

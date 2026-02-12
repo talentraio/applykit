@@ -49,6 +49,19 @@
       />
 
       <LlmRoutingScenariosCard
+        v-if="detailedScoringCard"
+        :title="$t('admin.llm.routing.scenarios.resume_adaptation_scoring_detail')"
+        :description="
+          detailedScoringCard.description ??
+          $t('admin.llm.routing.scenarioDescriptions.resume_adaptation_scoring_detail')
+        "
+        :capabilities="detailedScoringCard.capabilities ?? []"
+        :edit-disabled="detailedScoringCard.editDisabled ?? false"
+        :edit-label="editLabel"
+        @edit="emit('edit', LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL)"
+      />
+
+      <LlmRoutingScenariosCard
         v-if="coverLetterCard"
         :title="$t('admin.llm.routing.scenarios.cover_letter_generation')"
         :description="
@@ -105,8 +118,17 @@ const coverLetterCard = computed(() => {
   return props.scenarioCards[LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION];
 });
 
+const detailedScoringCard = computed(() => {
+  return props.scenarioCards[LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL];
+});
+
 const hasScenarioCards = computed(() => {
-  return Boolean(resumeParseCard.value || resumeAdaptationCard.value || coverLetterCard.value);
+  return Boolean(
+    resumeParseCard.value ||
+    resumeAdaptationCard.value ||
+    coverLetterCard.value ||
+    detailedScoringCard.value
+  );
 });
 
 const showEmptyState = computed(() => {

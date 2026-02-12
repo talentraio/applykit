@@ -126,4 +126,40 @@ describe('admin llm routing api integration', () => {
       })
     );
   });
+
+  it('keeps retry for detailed scoring scenario and strips strategy', async () => {
+    repositoryMock.findScenario.mockResolvedValueOnce({
+      key: LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
+    });
+    repositoryMock.isModelActive.mockResolvedValue(true);
+    repositoryMock.upsertScenarioDefault.mockResolvedValueOnce({
+      scenarioKey: LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL,
+      default: null,
+      overrides: []
+    });
+
+    const handlerModule =
+      await import('../../../server/api/admin/llm/routing/[scenarioKey]/default.put');
+
+    const event = {
+      params: {
+        scenarioKey: LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
+      },
+      body: {
+        modelId: '11111111-1111-4111-8111-111111111111',
+        retryModelId: '22222222-2222-4222-8222-222222222222',
+        strategyKey: 'quality'
+      }
+    };
+
+    await handlerModule.default(event as never);
+
+    expect(repositoryMock.upsertScenarioDefault).toHaveBeenCalledWith(
+      LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL,
+      expect.objectContaining({
+        retryModelId: '22222222-2222-4222-8222-222222222222',
+        strategyKey: null
+      })
+    );
+  });
 });

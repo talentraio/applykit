@@ -243,12 +243,14 @@
           "resume_parse": "Resume Parse",
           "resume_adaptation": "Resume Adaptation",
           "resume_adaptation_scoring": "Resume Adaptation Scoring",
+          "resume_adaptation_scoring_detail": "Resume Detailed Scoring",
           "resume_adaptation_with_scoring": "Resume Adaptation + Scoring",
           "cover_letter_generation": "Cover Letter Generation"
         },
         "scenarioDescriptions": {
           "resume_parse": "Parse uploaded resume into strict structured JSON.",
           "resume_adaptation_with_scoring": "Generate tailored resume and evaluate improvement score.",
+          "resume_adaptation_scoring_detail": "Generate extended matched/gaps insights on demand for preparation.",
           "cover_letter_generation": "Generate a tailored cover letter for the selected vacancy."
         }
       }

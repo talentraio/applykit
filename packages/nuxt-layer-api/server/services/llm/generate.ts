@@ -7,7 +7,6 @@ import type {
   Role,
   ScoreBreakdown
 } from '@int/schema';
-import type { ScoringEvidenceItem } from './scoring';
 import {
   LLM_PROVIDER_MAP,
   LLM_SCENARIO_KEY_MAP,
@@ -22,67 +21,27 @@ import {
   createGeminiCachedContent,
   createGeminiCachedProviderOptions
 } from './mullion';
-import { createGenerateUserPrompt, GENERATE_SYSTEM_PROMPT } from './prompts/generate';
 import {
-  createExtractSignalsUserPrompt,
-  createMapEvidenceUserPrompt,
-  GENERATE_SCORE_SYSTEM_PROMPT
-} from './prompts/generate-score';
-import { computeDeterministicScoringResult, createFallbackScoreBreakdown } from './scoring';
+  BASELINE_SCORE_SYSTEM_PROMPT,
+  createBaselineScoreUserPrompt
+} from './prompts/baseline-score';
+import { createGenerateUserPrompt, GENERATE_SYSTEM_PROMPT } from './prompts/generate';
+import { createFallbackScoreBreakdown, normalizeBaselineScores } from './scoring';
 
 const GenerateAdaptationResponseSchema = z.object({
   content: ResumeContentSchema
 });
 
-const WeightedSignalSchema = z.object({
-  name: z.string().trim().min(1),
-  weight: z.number().min(0).max(1),
-  confidence: z.number().min(0).max(1).optional().default(1)
-});
-
-const ExtractedSignalsSchema = z.object({
-  coreRequirements: z.array(WeightedSignalSchema),
-  mustHave: z.array(WeightedSignalSchema),
-  niceToHave: z.array(WeightedSignalSchema),
-  responsibilities: z.array(WeightedSignalSchema)
-});
-
-const ExtractSignalsResponseSchema = z.object({
-  signals: ExtractedSignalsSchema
-});
-
-const EvidenceSignalTypeSchema = z.enum(['core', 'mustHave', 'niceToHave', 'responsibility']);
-
-const EvidenceItemSchema = z.object({
-  signalType: EvidenceSignalTypeSchema,
-  signalName: z.string().trim().min(1),
-  strengthBefore: z.number().min(0).max(1),
-  strengthAfter: z.number().min(0).max(1),
-  presentBefore: z.boolean(),
-  presentAfter: z.boolean(),
-  // Keep both compact and legacy keys for backward-compatible parsing.
-  evidenceRefBefore: z.string().trim().min(1).nullable().optional(),
-  evidenceRefAfter: z.string().trim().min(1).nullable().optional(),
-  evidenceRefsBefore: z.array(z.string().trim().min(1)).optional(),
-  evidenceRefsAfter: z.array(z.string().trim().min(1)).optional()
-});
-
-const MapEvidenceResponseSchema = z.object({
-  evidence: z.array(EvidenceItemSchema)
+const BaselineScoreResponseSchema = z.object({
+  matchScoreBefore: z.number().int().min(0).max(100),
+  matchScoreAfter: z.number().int().min(0).max(100)
 });
 
 const WORD_PATTERN = /[a-z0-9][a-z0-9+#-]*/g;
 const MIN_WORD_LENGTH = 3;
 const DEFAULT_GEMINI_CACHE_TTL_SECONDS = 300;
-const MAX_SCORING_SIGNAL_ITEMS = 4;
-const MAX_SCORING_EVIDENCE_ITEMS = 12;
-const MAX_SCORING_REF_ITEMS = 1;
-const SCORING_EXTRACT_MAX_TOKENS = 1600;
-const SCORING_MAP_MAX_TOKENS = 1400;
+const BASELINE_SCORING_MAX_TOKENS = 800;
 
-type ExtractedSignals = z.infer<typeof ExtractedSignalsSchema>;
-type ParsedEvidenceItem = z.infer<typeof EvidenceItemSchema>;
-type ScoringEvidenceItems = ScoringEvidenceItem[];
 type LlmUsageBreakdown = {
   inputTokens: number;
   outputTokens: number;
@@ -180,9 +139,11 @@ const parseAdaptationContent = (content: string): ResumeContent => {
   return validationResult.data.content;
 };
 
-const parseExtractedSignals = (content: string): ExtractedSignals => {
+const parseBaselineScores = (
+  content: string
+): { matchScoreBefore: number; matchScoreAfter: number } => {
   const parsed = parseJSON(content);
-  const validationResult = ExtractSignalsResponseSchema.safeParse(parsed);
+  const validationResult = BaselineScoreResponseSchema.safeParse(parsed);
 
   if (!validationResult.success) {
     throw new GenerateLLMError(
@@ -191,68 +152,14 @@ const parseExtractedSignals = (content: string): ExtractedSignals => {
       validationResult.error.errors
     );
   }
-
-  const toTopSignals = (
-    items: z.infer<typeof WeightedSignalSchema>[]
-  ): z.infer<typeof WeightedSignalSchema>[] => {
-    return [...items]
-      .sort((left, right) => right.weight - left.weight)
-      .slice(0, MAX_SCORING_SIGNAL_ITEMS);
-  };
 
   return {
-    ...validationResult.data.signals,
-    coreRequirements: toTopSignals(validationResult.data.signals.coreRequirements),
-    mustHave: toTopSignals(validationResult.data.signals.mustHave),
-    niceToHave: toTopSignals(validationResult.data.signals.niceToHave),
-    responsibilities: toTopSignals(validationResult.data.signals.responsibilities)
+    matchScoreBefore: validationResult.data.matchScoreBefore,
+    matchScoreAfter: Math.max(
+      validationResult.data.matchScoreAfter,
+      validationResult.data.matchScoreBefore
+    )
   };
-};
-
-const parseEvidenceItems = (content: string): ScoringEvidenceItems => {
-  const parsed = parseJSON(content);
-  const validationResult = MapEvidenceResponseSchema.safeParse(parsed);
-
-  if (!validationResult.success) {
-    throw new GenerateLLMError(
-      `Validation failed: ${JSON.stringify(validationResult.error.errors)}`,
-      'VALIDATION_FAILED',
-      validationResult.error.errors
-    );
-  }
-
-  const normalizeRefs = (
-    refs: string[] | undefined,
-    singleRef: string | null | undefined
-  ): string[] => {
-    const compactFromArray = (refs ?? [])
-      .map(item => item.trim())
-      .filter(item => item.length > 0)
-      .slice(0, MAX_SCORING_REF_ITEMS);
-
-    if (compactFromArray.length > 0) {
-      return compactFromArray;
-    }
-
-    if (typeof singleRef === 'string' && singleRef.trim().length > 0) {
-      return [singleRef.trim()];
-    }
-
-    return [];
-  };
-
-  return validationResult.data.evidence.slice(0, MAX_SCORING_EVIDENCE_ITEMS).map(
-    (item: ParsedEvidenceItem): ScoringEvidenceItem => ({
-      signalType: item.signalType,
-      signalName: item.signalName,
-      strengthBefore: item.strengthBefore,
-      strengthAfter: item.strengthAfter,
-      presentBefore: item.presentBefore,
-      presentAfter: item.presentAfter,
-      evidenceRefsBefore: normalizeRefs(item.evidenceRefsBefore, item.evidenceRefBefore),
-      evidenceRefsAfter: normalizeRefs(item.evidenceRefsAfter, item.evidenceRefAfter)
-    })
-  );
 };
 
 const toUsageBreakdown = (
@@ -335,36 +242,35 @@ const buildDeterministicFallbackResult = (
   const vacancyKeywords = toWordSet(vacancyDescription);
 
   if (vacancyKeywords.size === 0) {
-    const matchScoreBefore = 62;
-    const matchScoreAfter = 74;
+    const normalizedScores = normalizeBaselineScores({
+      matchScoreBefore: 62,
+      matchScoreAfter: 74
+    });
 
     return {
-      matchScoreBefore,
-      matchScoreAfter,
-      scoreBreakdown: createFallbackScoreBreakdown({
-        matchScoreBefore,
-        matchScoreAfter
-      })
+      matchScoreBefore: normalizedScores.matchScoreBefore,
+      matchScoreAfter: normalizedScores.matchScoreAfter,
+      scoreBreakdown: createFallbackScoreBreakdown(normalizedScores)
     };
   }
 
   const baseCoverage = calculateCoverage(vacancyKeywords, toResumeWordSet(baseResume));
   const tailoredCoverage = calculateCoverage(vacancyKeywords, toResumeWordSet(tailoredResume));
 
-  const matchScoreBefore = clampScore(42 + baseCoverage * 46);
+  const rawMatchScoreBefore = clampScore(42 + baseCoverage * 46);
   const rawImprovement = clampScore(Math.max(tailoredCoverage - baseCoverage, 0) * 30);
   const minimalGain = tailoredCoverage >= baseCoverage ? 2 : 0;
-  const matchScoreAfter = clampScore(
-    Math.max(matchScoreBefore, matchScoreBefore + rawImprovement + minimalGain)
-  );
+  const normalizedScores = normalizeBaselineScores({
+    matchScoreBefore: rawMatchScoreBefore,
+    matchScoreAfter: clampScore(
+      Math.max(rawMatchScoreBefore, rawMatchScoreBefore + rawImprovement + minimalGain)
+    )
+  });
 
   return {
-    matchScoreBefore,
-    matchScoreAfter,
-    scoreBreakdown: createFallbackScoreBreakdown({
-      matchScoreBefore,
-      matchScoreAfter
-    })
+    matchScoreBefore: normalizedScores.matchScoreBefore,
+    matchScoreAfter: normalizedScores.matchScoreAfter,
+    scoreBreakdown: createFallbackScoreBreakdown(normalizedScores)
   };
 };
 
@@ -506,9 +412,8 @@ const runAdaptationStep = async (
   );
 };
 
-const runDeterministicScoringStep = async (
+const runBaselineScoringStep = async (
   sharedContextPrompt: string,
-  baseResume: ResumeContent,
   tailoredResume: ResumeContent,
   options: GenerateOptions,
   providerOptions?: Record<string, Record<string, unknown>>
@@ -520,8 +425,7 @@ const runDeterministicScoringStep = async (
   };
   usage: GenerateStepUsage;
 }> => {
-  // No dedicated scoring retry model in this phase; keep attempts minimal to control cost.
-  const maxRetries = Math.max(1, Math.min(options.scoringMaxRetries ?? 1, 2));
+  const maxRetries = Math.max(1, Math.min(options.scoringMaxRetries ?? 2, 2));
   let totalCost = 0;
   let totalTokens = 0;
   let totalInputTokens = 0;
@@ -531,43 +435,14 @@ const runDeterministicScoringStep = async (
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const extractResponse = await callLLM(
+      const response = await callLLM(
         {
-          prompt: `${GENERATE_SCORE_SYSTEM_PROMPT}\n\n${createExtractSignalsUserPrompt(
-            sharedContextPrompt
-          )}`,
-          temperature: options.scoringTemperature ?? 0,
-          maxTokens: SCORING_EXTRACT_MAX_TOKENS,
-          responseFormat: 'json',
-          providerOptions
-        },
-        {
-          userId: options.userId,
-          role: options.role,
-          provider: options.provider,
-          scenario: LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING,
-          scenarioPhase: 'primary'
-        }
-      );
-
-      totalCost += extractResponse.cost;
-      totalTokens += extractResponse.tokensUsed;
-      const extractUsageBreakdown = toUsageBreakdown(extractResponse.usage);
-      totalInputTokens += extractUsageBreakdown.inputTokens;
-      totalOutputTokens += extractUsageBreakdown.outputTokens;
-      totalCachedInputTokens += extractUsageBreakdown.cachedInputTokens;
-
-      const signals = parseExtractedSignals(extractResponse.content);
-
-      const mapResponse = await callLLM(
-        {
-          prompt: `${GENERATE_SCORE_SYSTEM_PROMPT}\n\n${createMapEvidenceUserPrompt(
+          prompt: `${BASELINE_SCORE_SYSTEM_PROMPT}\n\n${createBaselineScoreUserPrompt(
             sharedContextPrompt,
-            tailoredResume,
-            signals
+            tailoredResume
           )}`,
           temperature: options.scoringTemperature ?? 0,
-          maxTokens: SCORING_MAP_MAX_TOKENS,
+          maxTokens: BASELINE_SCORING_MAX_TOKENS,
           responseFormat: 'json',
           providerOptions
         },
@@ -576,35 +451,35 @@ const runDeterministicScoringStep = async (
           role: options.role,
           provider: options.provider,
           scenario: LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING,
-          scenarioPhase: 'primary'
+          scenarioPhase: attempt > 1 ? 'retry' : 'primary'
         }
       );
 
-      totalCost += mapResponse.cost;
-      totalTokens += mapResponse.tokensUsed;
-      const mapUsageBreakdown = toUsageBreakdown(mapResponse.usage);
-      totalInputTokens += mapUsageBreakdown.inputTokens;
-      totalOutputTokens += mapUsageBreakdown.outputTokens;
-      totalCachedInputTokens += mapUsageBreakdown.cachedInputTokens;
+      totalCost += response.cost;
+      totalTokens += response.tokensUsed;
+      const usageBreakdown = toUsageBreakdown(response.usage);
+      totalInputTokens += usageBreakdown.inputTokens;
+      totalOutputTokens += usageBreakdown.outputTokens;
+      totalCachedInputTokens += usageBreakdown.cachedInputTokens;
 
-      const evidenceItems = parseEvidenceItems(mapResponse.content);
-      const computed = computeDeterministicScoringResult({
-        baseResume,
-        tailoredResume,
-        evidenceItems
-      });
+      const parsedScores = parseBaselineScores(response.content);
+      const normalizedScores = normalizeBaselineScores(parsedScores);
 
       return {
-        scores: computed,
+        scores: {
+          matchScoreBefore: normalizedScores.matchScoreBefore,
+          matchScoreAfter: normalizedScores.matchScoreAfter,
+          scoreBreakdown: createFallbackScoreBreakdown(normalizedScores)
+        },
         usage: {
           cost: totalCost,
           tokensUsed: totalTokens,
           inputTokens: totalInputTokens,
           outputTokens: totalOutputTokens,
           cachedInputTokens: totalCachedInputTokens,
-          provider: mapResponse.provider,
-          providerType: mapResponse.providerType,
-          model: mapResponse.model,
+          provider: response.provider,
+          providerType: response.providerType,
+          model: response.model,
           attemptsUsed: attempt
         }
       };
@@ -624,7 +499,7 @@ const runDeterministicScoringStep = async (
   }
 
   throw (
-    lastError ?? new GenerateLLMError('Failed to calculate match score', 'MAX_RETRIES_EXCEEDED')
+    lastError ?? new GenerateLLMError('Failed to calculate baseline score', 'MAX_RETRIES_EXCEEDED')
   );
 };
 
@@ -701,9 +576,8 @@ export async function generateResumeWithLLM(
   );
 
   try {
-    const scoringResult = await runDeterministicScoringStep(
+    const scoringResult = await runBaselineScoringStep(
       sharedContext.prompt,
-      baseResume,
       adaptationResult.content,
       options,
       scoringProviderOptions
@@ -720,7 +594,7 @@ export async function generateResumeWithLLM(
     };
   } catch (error) {
     console.warn(
-      `Scoring step failed. Falling back to deterministic scores. Shared context estimate: ${sharedContext.cacheTokenEstimate} tokens.`,
+      `Baseline scoring step failed. Falling back to deterministic scores. Shared context estimate: ${sharedContext.cacheTokenEstimate} tokens.`,
       error instanceof Error ? error.message : error
     );
 

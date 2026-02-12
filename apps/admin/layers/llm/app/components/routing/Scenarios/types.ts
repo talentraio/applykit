@@ -8,6 +8,7 @@ export type RoutingSelectOption = {
 export type EditableScenarioKey =
   | typeof LLM_SCENARIO_KEY_MAP.RESUME_PARSE
   | typeof LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION
+  | typeof LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
   | typeof LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION;
 
 export type RoutingScenarioCardConfig = {

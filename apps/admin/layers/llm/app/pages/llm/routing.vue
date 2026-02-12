@@ -106,6 +106,10 @@ const coverLetterItem = computed(() => {
   return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION) ?? null;
 });
 
+const detailedScoringItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) ?? null;
+});
+
 const hasAdaptationCard = computed(() => {
   return Boolean(resumeAdaptationItem.value || resumeScoringItem.value);
 });
@@ -200,6 +204,20 @@ const coverLetterCapabilities = computed<string[]>(() => {
   ];
 });
 
+const detailedScoringCapabilities = computed<string[]>(() => {
+  const item = detailedScoringItem.value;
+  if (!item) return [];
+
+  return [
+    t('admin.llm.routing.capability.defaultModel', {
+      model: resolveModelLabel(item.default?.modelId ?? null)
+    }),
+    t('admin.llm.routing.capability.retryModel', {
+      model: resolveModelLabel(item.default?.retryModelId ?? null)
+    })
+  ];
+});
+
 const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
   const cards: RoutingScenarioCardsConfig = {};
 
@@ -220,6 +238,13 @@ const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
   if (coverLetterItem.value) {
     cards[LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION] = {
       capabilities: coverLetterCapabilities.value,
+      editDisabled: routingSaving.value
+    };
+  }
+
+  if (detailedScoringItem.value) {
+    cards[LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL] = {
+      capabilities: detailedScoringCapabilities.value,
       editDisabled: routingSaving.value
     };
   }
@@ -263,6 +288,15 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
     };
   }
 
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+    return {
+      primaryModelId: detailedScoringItem.value?.default?.modelId ?? '',
+      secondaryModelId: detailedScoringItem.value?.default?.retryModelId ?? '',
+      tertiaryModelId: '',
+      strategyKey: ''
+    };
+  }
+
   return {
     primaryModelId: coverLetterItem.value?.default?.modelId ?? '',
     secondaryModelId: '',
@@ -278,6 +312,10 @@ const getModalDescriptionByScenario = (scenarioKey: EditableScenarioKey): string
 
   if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
     return resumeAdaptationItem.value?.description ?? '';
+  }
+
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+    return detailedScoringItem.value?.description ?? '';
   }
 
   return coverLetterItem.value?.description ?? '';
@@ -301,6 +339,15 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
       scoringLabel: t('admin.llm.routing.scoringLabel'),
       retryLabel: t('admin.llm.routing.retryLabel'),
       strategyLabel: t('admin.llm.routing.strategyLabel'),
+      disabled: routingSaving.value
+    };
+  }
+
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+    return {
+      modelOptions: modelOptions.value,
+      primaryLabel: t('admin.llm.routing.defaultLabel'),
+      retryLabel: t('admin.llm.routing.retryLabel'),
       disabled: routingSaving.value
     };
   }
@@ -330,6 +377,10 @@ const hasRequiredValuesForScenario = (
 
   if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {
     return Boolean(draft.primaryModelId && draft.secondaryModelId && draft.strategyKey);
+  }
+
+  if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+    return Boolean(draft.primaryModelId);
   }
 
   return Boolean(draft.primaryModelId);
@@ -390,6 +441,12 @@ const saveScenario = async () => {
           strategyKey: null
         })
       ]);
+    } else if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+      await updateDefault(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL, {
+        modelId: modalDraft.value.primaryModelId,
+        retryModelId: modalDraft.value.secondaryModelId || null,
+        strategyKey: null
+      });
     } else {
       await updateDefault(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, {
         modelId: modalDraft.value.primaryModelId,

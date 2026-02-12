@@ -38,6 +38,8 @@ const retryModel: LlmModel = {
 };
 
 const scenario = LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION as LlmScenarioKey;
+const detailedScoringScenario =
+  LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL as LlmScenarioKey;
 const role = USER_ROLE_MAP.FRIEND as Role;
 
 describe('llm routing runtime resolution', () => {
@@ -79,5 +81,32 @@ describe('llm routing runtime resolution', () => {
     const resolved = await resolveScenarioModel(role, scenario);
 
     expect(resolved).toBeNull();
+  });
+
+  it('resolves dedicated detailed scoring scenario with runtime precedence metadata', async () => {
+    resolveRuntimeModelMock.mockResolvedValueOnce({
+      source: 'scenario_default',
+      assignment: {
+        modelId: baseModel.id,
+        retryModelId: null,
+        temperature: 0,
+        maxTokens: 1800,
+        responseFormat: 'json',
+        strategyKey: null,
+        updatedAt: new Date('2026-02-11T00:00:00Z')
+      },
+      model: baseModel,
+      retryModel: null
+    });
+
+    const { resolveScenarioModel } = await import('../../../server/services/llm/routing');
+    const resolved = await resolveScenarioModel(role, detailedScoringScenario);
+
+    expect(resolveRuntimeModelMock).toHaveBeenCalledWith(role, detailedScoringScenario);
+    expect(resolved).not.toBeNull();
+    expect(resolved?.source).toBe('scenario_default');
+    expect(resolved?.retry).toBeNull();
+    expect(resolved?.temperature).toBe(0);
+    expect(resolved?.responseFormat).toBe('json');
   });
 });

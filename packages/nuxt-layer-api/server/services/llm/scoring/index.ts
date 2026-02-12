@@ -19,6 +19,11 @@ export type DeterministicScoringResult = {
   scoreBreakdown: ScoreBreakdown;
 };
 
+export type BaselineScores = {
+  matchScoreBefore: number;
+  matchScoreAfter: number;
+};
+
 const SCORE_WEIGHTS = {
   core: 0.35,
   mustHave: 0.3,
@@ -53,6 +58,16 @@ const clampScore = (value: number): number => {
 
   return Math.max(0, Math.min(100, Math.round(value)));
 };
+
+export function normalizeBaselineScores(scores: BaselineScores): BaselineScores {
+  const matchScoreBefore = clampScore(scores.matchScoreBefore);
+  const matchScoreAfter = Math.max(clampScore(scores.matchScoreAfter), matchScoreBefore);
+
+  return {
+    matchScoreBefore,
+    matchScoreAfter
+  };
+}
 
 const average = (values: number[]): number => {
   if (values.length === 0) {
@@ -270,15 +285,14 @@ export function createFallbackScoreBreakdown(scores: {
   matchScoreBefore: number;
   matchScoreAfter: number;
 }): ScoreBreakdown {
-  const before = clampScore(scores.matchScoreBefore);
-  const after = Math.max(clampScore(scores.matchScoreAfter), before);
+  const normalized = normalizeBaselineScores(scores);
 
   return toScoreBreakdown({
-    core: { before, after },
-    mustHave: { before, after },
-    niceToHave: { before, after },
-    responsibilities: { before, after },
-    human: { before, after },
+    core: { before: normalized.matchScoreBefore, after: normalized.matchScoreAfter },
+    mustHave: { before: normalized.matchScoreBefore, after: normalized.matchScoreAfter },
+    niceToHave: { before: normalized.matchScoreBefore, after: normalized.matchScoreAfter },
+    responsibilities: { before: normalized.matchScoreBefore, after: normalized.matchScoreAfter },
+    human: { before: normalized.matchScoreBefore, after: normalized.matchScoreAfter },
     version: 'fallback-keyword-v1'
   });
 }

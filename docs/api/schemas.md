@@ -145,6 +145,7 @@ Role-level platform controls stored in `role_settings`:
 - `resume_parse`
 - `resume_adaptation`
 - `resume_adaptation_scoring`
+- `resume_adaptation_scoring_detail`
 - `cover_letter_generation`
 
 Routing schemas:
@@ -157,7 +158,8 @@ Routing schemas:
   - `responseFormat?: 'text' | 'json' | null`
   - `strategyKey?: 'economy' | 'quality' | null`
   - persistence rules by scenario:
-    - `retryModelId` is used for `resume_parse` and `resume_adaptation`
+    - `retryModelId` is used for `resume_parse`, `resume_adaptation`, and
+      `resume_adaptation_scoring_detail`
     - `strategyKey` is used only for `resume_adaptation`
 - `LlmRoutingItem`:
   - `scenarioKey`
@@ -171,7 +173,7 @@ Routing schemas:
 
 ## Generation Score Breakdown
 
-`Generation` now includes deterministic scoring metadata:
+`Generation` includes baseline scoring metadata:
 
 - `matchScoreBefore: number (0..100)`
 - `matchScoreAfter: number (0..100)`
@@ -187,6 +189,35 @@ Routing schemas:
     - `schemaValid: boolean`
     - `identityStable: boolean`
     - `hallucinationFree: boolean`
+
+`scoreBreakdown.version`:
+
+- baseline / fallback path: `fallback-keyword-v1`
+- deterministic detailed path: `deterministic-v1`
+
+## Generation Detailed Scoring
+
+Detailed scoring is stored separately and requested on-demand.
+
+`GenerationScoreDetailPayload`:
+
+- `summary`: `{ before, after, improvement }` (0..100 integers)
+- `matched[]`: weighted matched signals with evidence refs
+- `gaps[]`: weighted missing/weak signals with evidence refs
+- `recommendations[]`: short actionable recommendations
+- `scoreBreakdown`: deterministic component breakdown snapshot used for the details output
+
+`GenerationScoreDetail`:
+
+- `id: uuid`
+- `generationId: uuid`
+- `vacancyId: uuid`
+- `vacancyVersionMarker: string` (used to detect stale details when vacancy changes)
+- `details: GenerationScoreDetailPayload`
+- `provider: 'openai' | 'gemini'`
+- `model: string`
+- `strategyKey: 'economy' | 'quality' | null`
+- `createdAt`, `updatedAt`
 
 ## Usage Provider Type
 

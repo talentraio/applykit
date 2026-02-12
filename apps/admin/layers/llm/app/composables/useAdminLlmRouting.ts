@@ -42,6 +42,7 @@ export function useAdminLlmRouting(): UseAdminLlmRoutingReturn {
       scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION,
     supportsRetry: (scenarioKey: LlmScenarioKey) =>
       scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE ||
-      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION
+      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION ||
+      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
   };
 }

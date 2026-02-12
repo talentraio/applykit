@@ -37,6 +37,9 @@ const scenarioFormComponents: Record<EditableScenarioKey, Component> = {
   [LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION]: defineAsyncComponent(
     () => import('@admin/llm/app/components/routing/Scenarios/form/ResumeAdaptation.vue')
   ),
+  [LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL]: defineAsyncComponent(
+    () => import('@admin/llm/app/components/routing/Scenarios/form/ResumeDetailedScoring.vue')
+  ),
   [LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION]: defineAsyncComponent(
     () => import('@admin/llm/app/components/routing/Scenarios/form/CoverLetter.vue')
   )
@@ -111,7 +114,10 @@ export function useRoutingScenarioEditor(
     const scenarioKey = modalScenarioKey.value;
     if (!scenarioKey) return false;
 
-    if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
+    if (
+      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE ||
+      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
+    ) {
       return (
         modalDraft.value.primaryModelId !== savedDraft.value.primaryModelId ||
         modalDraft.value.secondaryModelId !== savedDraft.value.secondaryModelId

@@ -1,0 +1,217 @@
+openapi: 3.0.3
+info:
+  title: Detailed Scoring API
+  version: 0.1.0
+  description: >-
+    Contracts for on-demand detailed scoring and preparation payload enrichment,
+    plus admin routing support for a dedicated detailed-scoring scenario.
+servers:
+  - url: /api
+paths:
+  /vacancies/{id}/generations/{generationId}/score-details:
+    post:
+      summary: Get or generate detailed scoring for a generation
+      operationId: postGenerationScoreDetails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: generationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: regenerate
+          in: query
+          required: false
+          description: >-
+            When true, force recomputation only if vacancy-text-change condition is satisfied
+            (same rule as resume regeneration availability).
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Detailed scoring returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreDetailsResponse'
+        '400':
+          description: Invalid request or regenerate not allowed
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner / role not eligible)
+        '404':
+          description: Vacancy or generation not found
+        '409':
+          description: Configuration conflict (no model resolved for detailed scoring scenario)
+  /vacancies/{id}/preparation:
+    get:
+      summary: Get preparation payload with optional detailed scoring
+      operationId: getVacancyPreparation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Preparation payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreparationResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Vacancy not found
+  /admin/llm/routing/{scenarioKey}/default:
+    put:
+      summary: Update default routing for a scenario (includes detailed scoring scenario)
+      operationId: putRoutingDefault
+      parameters:
+        - name: scenarioKey
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/LlmScenarioKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScenarioDefaultUpdateRequest'
+      responses:
+        '200':
+          description: Updated
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+components:
+  schemas:
+    LlmScenarioKey:
+      type: string
+      enum:
+        - resume_parse
+        - resume_adaptation
+        - resume_adaptation_scoring
+        - resume_adaptation_scoring_detail
+        - cover_letter_generation
+
+    ScoreDetailsResponse:
+      type: object
+      required:
+        - generationId
+        - vacancyId
+        - reused
+        - stale
+        - detailedScore
+      properties:
+        generationId:
+          type: string
+          format: uuid
+        vacancyId:
+          type: string
+          format: uuid
+        reused:
+          type: boolean
+        stale:
+          type: boolean
+        detailedScore:
+          $ref: '#/components/schemas/DetailedScorePayload'
+
+    PreparationResponse:
+      type: object
+      required:
+        - vacancy
+        - latestGeneration
+      properties:
+        vacancy:
+          type: object
+          additionalProperties: true
+        latestGeneration:
+          type: object
+          nullable: true
+          additionalProperties: true
+        scoreDetails:
+          nullable: true
+          $ref: '#/components/schemas/DetailedScorePayload'
+
+    DetailedScorePayload:
+      type: object
+      required:
+        - summary
+        - matched
+        - gaps
+        - recommendations
+      properties:
+        summary:
+          type: object
+          required:
+            - before
+            - after
+          properties:
+            before:
+              type: integer
+              minimum: 0
+              maximum: 100
+            after:
+              type: integer
+              minimum: 0
+              maximum: 100
+        matched:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoreItem'
+        gaps:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoreItem'
+        recommendations:
+          type: array
+          items:
+            type: string
+
+    ScoreItem:
+      type: object
+      required:
+        - signal
+        - weight
+      properties:
+        signal:
+          type: string
+        weight:
+          type: number
+          minimum: 0
+          maximum: 1
+        evidence:
+          type: string
+          nullable: true
+
+    ScenarioDefaultUpdateRequest:
+      type: object
+      required:
+        - modelId
+      properties:
+        modelId:
+          type: string
+          format: uuid
+        retryModelId:
+          type: string
+          format: uuid
+          nullable: true
+        strategyKey:
+          type: string
+          nullable: true

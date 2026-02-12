@@ -1,5 +1,6 @@
 import type {
   Generation,
+  GenerationScoreDetail,
   ResumeContent,
   Vacancy,
   VacancyInput,
@@ -10,10 +11,15 @@ import type {
 } from '@int/schema';
 import type {
   VacanciesResumeGeneration,
+  VacanciesScoreDetailsResponse,
   VacancyOverview,
-  VacancyOverviewGeneration
+  VacancyOverviewGeneration,
+  VacancyPreparationResponse
 } from '@layer/api/types/vacancies';
-import type { GenerateOptions } from '@site/vacancy/app/infrastructure/generation.api';
+import type {
+  GenerateOptions,
+  GenerateScoreDetailsOptions
+} from '@site/vacancy/app/infrastructure/generation.api';
 import { generationApi } from '@site/vacancy/app/infrastructure/generation.api';
 import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
 
@@ -55,7 +61,12 @@ export const useVacancyStore = defineStore('VacancyStore', {
     currentVacancy: Vacancy | null;
     overviewLatestGeneration: VacancyOverviewGeneration | null;
     overviewCanGenerateResume: boolean;
+    preparationScoreDetails: GenerationScoreDetail | null;
+    preparationScoreDetailsStale: boolean;
+    preparationCanRequestDetails: boolean;
+    preparationCanRegenerateDetails: boolean;
     loading: boolean;
+    scoreDetailsLoading: boolean;
 
     // Generation state
     generations: Generation[];
@@ -75,7 +86,12 @@ export const useVacancyStore = defineStore('VacancyStore', {
     currentVacancy: null,
     overviewLatestGeneration: null,
     overviewCanGenerateResume: false,
+    preparationScoreDetails: null,
+    preparationScoreDetailsStale: false,
+    preparationCanRequestDetails: false,
+    preparationCanRegenerateDetails: false,
     loading: false,
+    scoreDetailsLoading: false,
 
     // Generation state
     generations: [],
@@ -188,11 +204,19 @@ export const useVacancyStore = defineStore('VacancyStore', {
         this.currentVacancy = overview.vacancy;
         this.overviewLatestGeneration = overview.latestGeneration;
         this.overviewCanGenerateResume = overview.canGenerateResume;
+        this.preparationScoreDetails = null;
+        this.preparationScoreDetailsStale = false;
+        this.preparationCanRequestDetails = false;
+        this.preparationCanRegenerateDetails = false;
         return overview;
       } catch (err) {
         this.currentVacancy = null;
         this.overviewLatestGeneration = null;
         this.overviewCanGenerateResume = false;
+        this.preparationScoreDetails = null;
+        this.preparationScoreDetailsStale = false;
+        this.preparationCanRequestDetails = false;
+        this.preparationCanRegenerateDetails = false;
         throw err instanceof Error ? err : new Error('Failed to fetch vacancy overview');
       } finally {
         this.loading = false;
@@ -210,6 +234,10 @@ export const useVacancyStore = defineStore('VacancyStore', {
         this.currentVacancy = vacancy;
         this.overviewLatestGeneration = null;
         this.overviewCanGenerateResume = true;
+        this.preparationScoreDetails = null;
+        this.preparationScoreDetailsStale = false;
+        this.preparationCanRequestDetails = false;
+        this.preparationCanRegenerateDetails = false;
         return vacancy;
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to create vacancy');
@@ -242,6 +270,8 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
           if (shouldUnlockGeneration) {
             this.overviewCanGenerateResume = true;
+            this.preparationCanRegenerateDetails = this.preparationScoreDetails !== null;
+            this.preparationScoreDetailsStale = this.preparationScoreDetails !== null;
           }
         }
 
@@ -274,6 +304,10 @@ export const useVacancyStore = defineStore('VacancyStore', {
           this.currentVacancy = null;
           this.overviewLatestGeneration = null;
           this.overviewCanGenerateResume = false;
+          this.preparationScoreDetails = null;
+          this.preparationScoreDetailsStale = false;
+          this.preparationCanRequestDetails = false;
+          this.preparationCanRegenerateDetails = false;
         }
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to delete vacancy');
@@ -327,6 +361,9 @@ export const useVacancyStore = defineStore('VacancyStore', {
         this.latestGeneration = generation;
         this.overviewLatestGeneration = toOverviewGeneration(generation);
         this.overviewCanGenerateResume = false;
+        this.preparationScoreDetails = null;
+        this.preparationScoreDetailsStale = false;
+        this.preparationCanRegenerateDetails = false;
         this.generations.unshift(generation);
         this._addToCache(generation);
         return generation;
@@ -366,6 +403,52 @@ export const useVacancyStore = defineStore('VacancyStore', {
         return payload;
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to fetch latest generation');
+      }
+    },
+
+    /**
+     * Fetch preparation payload (generation summary + detailed score state).
+     */
+    async fetchVacancyPreparation(vacancyId: string): Promise<VacancyPreparationResponse> {
+      this.loading = true;
+
+      try {
+        const payload = await vacancyApi.fetchPreparation(vacancyId);
+        this.overviewLatestGeneration = payload.latestGeneration;
+        this.preparationScoreDetails = payload.scoreDetails;
+        this.preparationScoreDetailsStale = payload.scoreDetailsStale;
+        this.preparationCanRequestDetails = payload.canRequestDetails;
+        this.preparationCanRegenerateDetails = payload.canRegenerateDetails;
+        return payload;
+      } catch (err) {
+        this.preparationScoreDetails = null;
+        this.preparationScoreDetailsStale = false;
+        this.preparationCanRequestDetails = false;
+        this.preparationCanRegenerateDetails = false;
+        throw err instanceof Error ? err : new Error('Failed to fetch vacancy preparation');
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * Fetch or regenerate detailed score for a generation.
+     */
+    async fetchScoreDetails(
+      vacancyId: string,
+      generationId: string,
+      options: GenerateScoreDetailsOptions = {}
+    ): Promise<VacanciesScoreDetailsResponse> {
+      this.scoreDetailsLoading = true;
+
+      try {
+        const response = await generationApi.fetchScoreDetails(vacancyId, generationId, options);
+        await this.fetchVacancyPreparation(vacancyId);
+        return response;
+      } catch (err) {
+        throw err instanceof Error ? err : new Error('Failed to fetch detailed scoring');
+      } finally {
+        this.scoreDetailsLoading = false;
       }
     },
 
@@ -550,6 +633,11 @@ export const useVacancyStore = defineStore('VacancyStore', {
       this.overviewLatestGeneration = null;
       this.overviewCanGenerateResume = false;
       this.loading = false;
+      this.scoreDetailsLoading = false;
+      this.preparationScoreDetails = null;
+      this.preparationScoreDetailsStale = false;
+      this.preparationCanRequestDetails = false;
+      this.preparationCanRegenerateDetails = false;
 
       this.generations = [];
       this.latestGeneration = null;

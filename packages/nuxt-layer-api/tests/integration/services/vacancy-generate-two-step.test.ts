@@ -44,7 +44,7 @@ const baseResume: ResumeContent = {
   ]
 };
 
-describe('vacancy generate two-step integration', () => {
+describe('vacancy generate baseline scoring integration', () => {
   beforeEach(() => {
     callLLMMock.mockReset();
     resolveScenarioModelMock.mockReset();
@@ -78,49 +78,10 @@ describe('vacancy generate two-step integration', () => {
       }
 
       if (options?.scenario === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING) {
-        const callIndex = callLLMMock.mock.calls.length;
-        if (callIndex === 2) {
-          return {
-            content: JSON.stringify({
-              signals: {
-                jobFamily: 'operations',
-                seniority: null,
-                coreRequirements: [
-                  {
-                    name: 'planning',
-                    weight: 0.8,
-                    confidence: 0.9
-                  }
-                ],
-                mustHave: [],
-                niceToHave: [],
-                responsibilities: [],
-                domainTerms: [],
-                constraints: []
-              }
-            }),
-            tokensUsed: 60,
-            cost: 0.0006,
-            provider: 'openai',
-            providerType: 'platform',
-            model: 'gpt-4.1-mini'
-          };
-        }
-
         return {
           content: JSON.stringify({
-            evidence: [
-              {
-                signalType: 'core',
-                signalName: 'planning',
-                strengthBefore: 0.5,
-                strengthAfter: 0.8,
-                presentBefore: true,
-                presentAfter: true,
-                evidenceRefsBefore: ['skills.core'],
-                evidenceRefsAfter: ['skills.core']
-              }
-            ]
+            matchScoreBefore: 64,
+            matchScoreAfter: 78
           }),
           tokensUsed: 60,
           cost: 0.0006,
@@ -134,7 +95,7 @@ describe('vacancy generate two-step integration', () => {
     });
   });
 
-  it('returns adaptation + scoring with deterministic breakdown on success path', async () => {
+  it('returns adaptation + baseline scoring on success path', async () => {
     const { generateResumeWithLLM } = await import('../../../server/services/llm/generate');
 
     const result = await generateResumeWithLLM(
@@ -154,7 +115,7 @@ describe('vacancy generate two-step integration', () => {
     expect(result.scoringFallbackUsed).toBe(false);
     expect(result.scoring).not.toBeNull();
     expect(result.matchScoreAfter).toBeGreaterThanOrEqual(result.matchScoreBefore);
-    expect(result.scoreBreakdown.version).toBe('deterministic-v1');
+    expect(result.scoreBreakdown.version).toBe('fallback-keyword-v1');
     expect(result.adaptation.providerType).toBe('platform');
   });
 });

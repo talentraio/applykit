@@ -148,6 +148,24 @@ export async function logGenerateScoring(
 }
 
 /**
+ * Helper to log on-demand detailed scoring usage.
+ */
+export async function logGenerateDetailedScoring(
+  userId: string,
+  providerType: ProviderType,
+  tokensUsed?: number,
+  cost?: number
+): Promise<void> {
+  await logGenerate(
+    userId,
+    providerType,
+    USAGE_CONTEXT_MAP.RESUME_ADAPTATION_SCORING_DETAIL,
+    tokensUsed,
+    cost
+  );
+}
+
+/**
  * Helper to log export operation
  */
 export async function logExport(

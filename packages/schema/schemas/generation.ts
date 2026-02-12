@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LLMProviderSchema, LlmStrategyKeySchema } from './enums';
 import { ResumeContentSchema } from './resume';
 
 export const ScoreBreakdownComponentSchema = z.object({
@@ -30,6 +31,58 @@ export const ScoreBreakdownSchema = z.object({
 });
 
 export type ScoreBreakdown = z.infer<typeof ScoreBreakdownSchema>;
+
+export const DetailedScoreSignalTypeSchema = z.enum([
+  'core',
+  'mustHave',
+  'niceToHave',
+  'responsibility'
+]);
+
+export type DetailedScoreSignalType = z.infer<typeof DetailedScoreSignalTypeSchema>;
+
+export const DetailedScoreItemSchema = z.object({
+  signalType: DetailedScoreSignalTypeSchema,
+  signal: z.string().trim().min(1).max(255),
+  weight: z.number().min(0).max(1),
+  strengthBefore: z.number().min(0).max(1),
+  strengthAfter: z.number().min(0).max(1),
+  presentBefore: z.boolean(),
+  presentAfter: z.boolean(),
+  evidenceBefore: z.array(z.string().trim().min(1).max(255)).max(3).default([]),
+  evidenceAfter: z.array(z.string().trim().min(1).max(255)).max(3).default([])
+});
+
+export type DetailedScoreItem = z.infer<typeof DetailedScoreItemSchema>;
+
+export const GenerationScoreDetailPayloadSchema = z.object({
+  summary: z.object({
+    before: z.number().int().min(0).max(100),
+    after: z.number().int().min(0).max(100),
+    improvement: z.number().int().min(0).max(100)
+  }),
+  matched: z.array(DetailedScoreItemSchema).max(32),
+  gaps: z.array(DetailedScoreItemSchema).max(32),
+  recommendations: z.array(z.string().trim().min(1).max(500)).max(16),
+  scoreBreakdown: ScoreBreakdownSchema
+});
+
+export type GenerationScoreDetailPayload = z.infer<typeof GenerationScoreDetailPayloadSchema>;
+
+export const GenerationScoreDetailSchema = z.object({
+  id: z.string().uuid(),
+  generationId: z.string().uuid(),
+  vacancyId: z.string().uuid(),
+  vacancyVersionMarker: z.string().trim().min(1).max(128),
+  details: GenerationScoreDetailPayloadSchema,
+  provider: LLMProviderSchema,
+  model: z.string().trim().min(1).max(255),
+  strategyKey: LlmStrategyKeySchema.nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date()
+});
+
+export type GenerationScoreDetail = z.infer<typeof GenerationScoreDetailSchema>;
 
 export const GenerationSchema = z.object({
   id: z.string().uuid(),

@@ -113,31 +113,11 @@ describe('llm scenario selection integration', () => {
       }
 
       if (options?.scenario === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING) {
-        const callIndex = callLLMMock.mock.calls.length;
-        if (callIndex === 2) {
-          return {
-            content: JSON.stringify({
-              signals: {
-                jobFamily: 'operations',
-                seniority: null,
-                coreRequirements: [],
-                mustHave: [],
-                niceToHave: [],
-                responsibilities: [],
-                domainTerms: ['operations'],
-                constraints: []
-              }
-            }),
-            tokensUsed: 50,
-            cost: 0.0005,
-            provider: 'openai',
-            providerType: 'platform',
-            model: 'gpt-4.1-mini'
-          };
-        }
-
         return {
-          content: JSON.stringify({ evidence: [] }),
+          content: JSON.stringify({
+            matchScoreBefore: 58,
+            matchScoreAfter: 71
+          }),
           tokensUsed: 50,
           cost: 0.0005,
           provider: 'openai',
@@ -150,7 +130,7 @@ describe('llm scenario selection integration', () => {
     });
   });
 
-  it('uses strategy-specific adaptation prompt and scoring scenario calls', async () => {
+  it('uses strategy-specific adaptation prompt and baseline scoring scenario call', async () => {
     const { generateResumeWithLLM } = await import('../../../server/services/llm/generate');
 
     const result = await generateResumeWithLLM(
@@ -167,7 +147,7 @@ describe('llm scenario selection integration', () => {
       }
     );
 
-    expect(callLLMMock).toHaveBeenCalledTimes(3);
+    expect(callLLMMock).toHaveBeenCalledTimes(2);
 
     const adaptationRequest = callLLMMock.mock.calls[0]?.[0];
     const adaptationOptions = callLLMMock.mock.calls[0]?.[1];
@@ -175,13 +155,10 @@ describe('llm scenario selection integration', () => {
     expect(adaptationRequest.prompt).toContain('Strategy: quality');
     expect(adaptationOptions.scenario).toBe(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION);
 
-    const extractOptions = callLLMMock.mock.calls[1]?.[1];
-    const mapOptions = callLLMMock.mock.calls[2]?.[1];
-
-    expect(extractOptions.scenario).toBe(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING);
-    expect(mapOptions.scenario).toBe(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING);
+    const scoringOptions = callLLMMock.mock.calls[1]?.[1];
+    expect(scoringOptions.scenario).toBe(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING);
 
     expect(result.scoringFallbackUsed).toBe(false);
-    expect(result.scoreBreakdown.version).toBe('deterministic-v1');
+    expect(result.scoreBreakdown.version).toBe('fallback-keyword-v1');
   });
 });

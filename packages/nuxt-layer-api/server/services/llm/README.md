@@ -17,11 +17,13 @@ server/services/llm/
 ├── index.ts                 # provider init + budget checks + scenario resolution
 ├── routing.ts               # runtime scenario model resolution
 ├── types.ts                 # request/response and errors
-├── generate.ts              # two-step adaptation + scoring orchestration
+├── generate.ts              # adaptation + lightweight baseline scoring
+├── score-details.ts         # on-demand detailed scoring orchestration
 ├── mullion.ts               # shared context + Gemini cached-content helpers
 ├── prompts/
 │   ├── generate.ts          # adaptation prompt
-│   └── generate-score.ts    # scoring prompt
+│   ├── baseline-score.ts    # lightweight baseline scoring prompt
+│   └── generate-score.ts    # detailed scoring prompts (signals/evidence mapping)
 └── providers/
     ├── openai.ts
     └── gemini.ts
@@ -34,12 +36,18 @@ server/services/llm/
 1. Adaptation call (`resume_adaptation`) -> tailored `ResumeContent`
    - strategy-aware prompt (`economy` or `quality`)
    - retry model supported for adaptation scenario
-2. Scoring call (`resume_adaptation_scoring`)
-   - extract vacancy signals
-   - map evidence before/after
-   - compute deterministic `matchScoreBefore/After` + `scoreBreakdown`
+2. Baseline scoring call (`resume_adaptation_scoring`)
+   - returns lightweight `matchScoreBefore/After`
+   - generates fallback `scoreBreakdown` payload for backward-compatible contracts
 
-If scoring fails, generation is still saved with deterministic fallback scores.
+If baseline scoring fails, generation is still saved with deterministic fallback scores.
+
+`POST /api/vacancies/:id/generations/:generationId/score-details` executes on demand:
+
+1. Extract weighted signals from vacancy text
+2. Map before/after evidence against base/tailored resume
+3. Compute deterministic `matchScoreBefore/After` + detailed breakdown
+4. Persist `generation_score_details` with vacancy-version marker for reuse/regenerate gating
 
 ## Routing semantics
 
@@ -48,19 +56,20 @@ If scoring fails, generation is still saved with deterministic fallback scores.
   - scenario default
   - runtime fallback from config
 - `strategyKey` applies only to `resume_adaptation`.
-- `retryModelId` applies to `resume_parse` and `resume_adaptation`.
-- Scoring scenario does not use retry model in current implementation.
+- `retryModelId` applies to `resume_parse`, `resume_adaptation`, and
+  `resume_adaptation_scoring_detail`.
 
 ## Usage contexts
 
 Generation writes separate usage logs:
 
 - adaptation: `resume_adaptation`
-- scoring: `resume_adaptation_scoring`
+- baseline scoring: `resume_adaptation_scoring`
+- detailed scoring: `resume_adaptation_scoring_detail`
 
 ## Caching behavior
 
-- Shared context is built once and reused across adaptation/scoring prompts.
+- Shared context is built once and reused across adaptation/baseline scoring prompts.
 - OpenAI benefits from automatic prompt-prefix caching (provider-side).
 - Gemini uses explicit `cachedContent` when enabled via runtime config.
 

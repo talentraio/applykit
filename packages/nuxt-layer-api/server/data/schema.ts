@@ -1,4 +1,5 @@
 import type {
+  GenerationScoreDetailPayload,
   LanguageEntry,
   PhoneEntry,
   ResumeContent,
@@ -310,6 +311,35 @@ export const generations = pgTable(
 );
 
 /**
+ * Generation Score Details table
+ * Stores on-demand detailed scoring payloads linked to a concrete generation.
+ */
+export const generationScoreDetails = pgTable(
+  'generation_score_details',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    generationId: uuid('generation_id')
+      .notNull()
+      .references(() => generations.id, { onDelete: 'cascade' })
+      .unique(),
+    vacancyId: uuid('vacancy_id')
+      .notNull()
+      .references(() => vacancies.id, { onDelete: 'cascade' }),
+    vacancyVersionMarker: varchar('vacancy_version_marker', { length: 128 }).notNull(),
+    details: jsonb('details').$type<GenerationScoreDetailPayload>().notNull(),
+    provider: llmProviderEnum('provider').notNull(),
+    model: varchar('model', { length: 255 }).notNull(),
+    strategyKey: llmStrategyKeyEnum('strategy_key'),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => ({
+    vacancyIdIdx: index('idx_generation_score_details_vacancy_id').on(table.vacancyId),
+    updatedAtIdx: index('idx_generation_score_details_updated_at').on(table.updatedAt)
+  })
+);
+
+/**
  * LLM Models table
  * Source of truth for provider models, capabilities, and pricing metadata.
  */
@@ -490,6 +520,9 @@ export type NewVacancy = typeof vacancies.$inferInsert;
 
 export type Generation = typeof generations.$inferSelect;
 export type NewGeneration = typeof generations.$inferInsert;
+
+export type GenerationScoreDetail = typeof generationScoreDetails.$inferSelect;
+export type NewGenerationScoreDetail = typeof generationScoreDetails.$inferInsert;
 
 export type LlmModel = typeof llmModels.$inferSelect;
 export type NewLlmModel = typeof llmModels.$inferInsert;

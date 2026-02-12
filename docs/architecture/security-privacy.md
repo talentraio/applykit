@@ -44,16 +44,17 @@ Supported auth methods:
 
 - Runtime model selection uses precedence: `role override -> scenario default -> runtime fallback model`.
 - Routing payload is normalized server-side:
-  - retry model is accepted only for adaptation/parse scenarios;
+  - retry model is accepted only for parse/adaptation/detailed-scoring scenarios;
   - strategy is accepted only for adaptation scenario.
 - Inactive model IDs are rejected (`409`) for both primary and retry assignments.
 
 ## Scoring integrity
 
-- Resume adaptation scoring is deterministic from structured evidence, not a direct judge-only score.
-- Each generation stores `scoreBreakdown` (versioned components + gate status) for auditability.
-- If scoring step fails, generation still succeeds with deterministic fallback scores and explicit fallback
-  breakdown version.
+- Generation returns a lightweight baseline score (`before/after`) and always stores score breakdown.
+- Detailed scoring is executed on demand and persisted separately with vacancy-version marker.
+- Detailed scoring is deterministic from structured evidence, not a direct judge-only score.
+- If baseline or detailed scoring step fails, adaptation result is kept and fallback scoring semantics remain
+  explicit via breakdown versioning.
 
 ## User data (EU / GDPR shape)
 
