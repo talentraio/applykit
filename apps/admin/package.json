@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@int/api": "workspace:*",
+    "@int/npm-utils": "workspace:*",
     "@int/schema": "workspace:*",
     "@int/ui": "workspace:*",
     "@pinia/nuxt": "catalog:",

@@ -2,51 +2,12 @@ import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { applySsrHmrPort } from '@int/npm-utils';
 
 const dataDir = resolve(fileURLToPath(new URL('.', import.meta.url)), '.data');
 mkdirSync(dataDir, { recursive: true });
 const siteHmrPort = Number(process.env.NUXT_SITE_HMR_PORT ?? '24678');
 const siteSsrHmrPort = Number(process.env.NUXT_SITE_SSR_HMR_PORT ?? '24680');
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value != null && typeof value === 'object';
-
-const applySsrHmrPort = (config: unknown, port: number) => {
-  if (!isRecord(config)) {
-    return;
-  }
-
-  const environments = config.environments;
-  if (!isRecord(environments)) {
-    return;
-  }
-
-  const ssrEnvironment = environments.ssr;
-  if (!isRecord(ssrEnvironment)) {
-    return;
-  }
-
-  const server = ssrEnvironment.server;
-  if (!isRecord(server)) {
-    return;
-  }
-
-  const hmr = server.hmr;
-  if (hmr === false) {
-    return;
-  }
-
-  if (!isRecord(hmr)) {
-    server.hmr = {
-      port,
-      clientPort: port
-    };
-    return;
-  }
-
-  hmr.port = port;
-  hmr.clientPort = port;
-};
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
@@ -69,7 +30,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     session: {
-      name: process.env.NODE_ENV === 'development' ? 'nuxt-session-site' : 'nuxt-session'
+      name: 'nuxt-session-site'
     },
     redirects: {
       authDefault: '/dashboard'

@@ -1,0 +1,9 @@
+{
+  "name": "@int/npm-utils",
+  "type": "module",
+  "version": "0.0.1",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "main": "./index.ts"
+}
