@@ -44,6 +44,9 @@ other docs/\* relevant to the task.
 
 ## Active Technologies
 
+- TypeScript 5.7 (Nuxt 4 / Node.js 20 LTS) + Vercel CLI (pinned version), GitHub Actions, Neon (serverless PostgreSQL), Drizzle ORM (012-vercel-deploy-setup)
+- PostgreSQL via Neon (free tier: 1 project, 10 branches, 0.5 GB, 190 compute hours) (012-vercel-deploy-setup)
+
 - TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, NuxtUI 4, Pinia, Zod, Drizzle ORM, `@mullion/core`, `@mullion/ai-sdk`, Vercel AI SDK (`ai` + provider adapters) (010-resume-generation-strategies)
 
 - TypeScript 5.x (Nuxt 4 / Vue 3) + Nuxt 4, Pinia, Zod, Drizzle ORM, OpenAI SDK, Google GenAI, Mullion (`@mullion/core`, `@mullion/ai-sdk`), Vercel AI SDK (`ai`, provider adapters) (009-llm-cached-flow)
