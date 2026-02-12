@@ -83,6 +83,67 @@ const createScoringSharedPrefix = (sharedContext: string): string => {
 ${SCORING_SHARED_GUIDELINES}`;
 };
 
+const compactForPrompt = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    const compact = value.map(item => compactForPrompt(item)).filter(item => item !== undefined);
+
+    return compact.length > 0 ? compact : undefined;
+  }
+
+  if (value && typeof value === 'object') {
+    const compactEntries = Object.entries(value)
+      .map(([key, nestedValue]) => [key, compactForPrompt(nestedValue)] as const)
+      .filter(([, nestedValue]) => nestedValue !== undefined);
+
+    if (compactEntries.length === 0) {
+      return undefined;
+    }
+
+    return Object.fromEntries(compactEntries);
+  }
+
+  if (value === null || value === '') {
+    return undefined;
+  }
+
+  return value;
+};
+
+const compactSignalsForMapPrompt = (signals: unknown): unknown => {
+  if (!signals || typeof signals !== 'object') {
+    return signals;
+  }
+
+  const typedSignals = signals as {
+    coreRequirements?: Array<{ name?: string; weight?: number }>;
+    mustHave?: Array<{ name?: string; weight?: number }>;
+    niceToHave?: Array<{ name?: string; weight?: number }>;
+    responsibilities?: Array<{ name?: string; weight?: number }>;
+  };
+
+  const compactSignalItems = (
+    items: Array<{ name?: string; weight?: number }> | undefined
+  ): Array<{ name: string; weight: number }> => {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    return items
+      .map(item => ({
+        name: typeof item.name === 'string' ? item.name : '',
+        weight: typeof item.weight === 'number' ? item.weight : 0
+      }))
+      .filter(item => item.name.length > 0);
+  };
+
+  return {
+    coreRequirements: compactSignalItems(typedSignals.coreRequirements),
+    mustHave: compactSignalItems(typedSignals.mustHave),
+    niceToHave: compactSignalItems(typedSignals.niceToHave),
+    responsibilities: compactSignalItems(typedSignals.responsibilities)
+  };
+};
+
 export function createExtractSignalsUserPrompt(sharedContext: string): string {
   const sharedPrefix = createScoringSharedPrefix(sharedContext);
 
@@ -97,14 +158,16 @@ export function createMapEvidenceUserPrompt(
   signals: unknown
 ): string {
   const sharedPrefix = createScoringSharedPrefix(sharedContext);
+  const compactSignals = compactSignalsForMapPrompt(signals);
+  const compactTailoredResume = compactForPrompt(tailoredResume) ?? tailoredResume;
 
   return `${sharedPrefix}
 
 ${MAP_EVIDENCE_INSTRUCTIONS}
 
 Signals:
-${JSON.stringify(signals)}
+${JSON.stringify(compactSignals)}
 
 Tailored resume:
-${JSON.stringify(tailoredResume)}`;
+${JSON.stringify(compactTailoredResume)}`;
 }

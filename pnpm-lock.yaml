@@ -243,6 +243,9 @@ importers:
       '@int/api':
         specifier: workspace:*
         version: link:../../packages/nuxt-layer-api
+      '@int/npm-utils':
+        specifier: workspace:*
+        version: link:../../packages/npm-utils
       '@int/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -274,6 +277,9 @@ importers:
       '@int/api':
         specifier: workspace:*
         version: link:../../packages/nuxt-layer-api
+      '@int/npm-utils':
+        specifier: workspace:*
+        version: link:../../packages/npm-utils
       '@int/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -311,6 +317,8 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+
+  packages/npm-utils: {}
 
   packages/nuxt-layer-api:
     dependencies:

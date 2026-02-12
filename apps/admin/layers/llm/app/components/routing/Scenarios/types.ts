@@ -28,6 +28,15 @@ export type RoutingScenarioDraft = {
   strategyKey: string;
 };
 
+export type ResumeAdaptationRuntimeConfig = {
+  adaptationTemperature: string;
+  adaptationMaxTokens: string;
+  adaptationResponseFormat: string;
+  scoringTemperature: string;
+  scoringMaxTokens: string;
+  scoringResponseFormat: string;
+};
+
 export const createEmptyRoutingScenarioDraft = (): RoutingScenarioDraft => ({
   primaryModelId: '',
   secondaryModelId: '',

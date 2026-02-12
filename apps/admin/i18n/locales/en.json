@@ -226,6 +226,15 @@
           "cache": "Cache is model-specific: when adaptation and scoring use different models, cache is not shared between them.",
           "strategy": "Best practice: use Economy with lower-cost models and Quality with stronger models."
         },
+        "runtimeConfig": {
+          "title": "Effective runtime parameters",
+          "adaptation": "Adaptation call",
+          "scoring": "Baseline scoring call",
+          "temperature": "Temperature",
+          "maxTokens": "Max tokens",
+          "responseFormat": "Response format",
+          "runtimeDefault": "{value} (runtime default)"
+        },
         "capability": {
           "defaultModel": "Default model: {model}",
           "retryModel": "Retry model: {model}",

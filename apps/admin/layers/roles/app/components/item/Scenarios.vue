@@ -28,6 +28,7 @@
 <script setup lang="ts">
 import type {
   EditableScenarioKey,
+  ResumeAdaptationRuntimeConfig,
   RoutingScenarioCardsConfig,
   RoutingScenarioDraft,
   RoutingSelectOption
@@ -52,6 +53,12 @@ type ApiErrorWithMessage = {
 
 const INHERIT_MODEL_ID = '__inherit__';
 const INHERIT_STRATEGY_KEY = '__inherit_strategy__';
+const ADAPTATION_RUNTIME_DEFAULT_TEMPERATURE = 0.3;
+const ADAPTATION_RUNTIME_DEFAULT_MAX_TOKENS = 6000;
+const ADAPTATION_RUNTIME_DEFAULT_RESPONSE_FORMAT = 'json';
+const SCORING_RUNTIME_DEFAULT_TEMPERATURE = 0;
+const SCORING_RUNTIME_DEFAULT_MAX_TOKENS = 800;
+const SCORING_RUNTIME_DEFAULT_RESPONSE_FORMAT = 'json';
 
 const {
   items: routingItems,
@@ -221,6 +228,35 @@ const findRoleOverride = (item: LlmRoutingItem | null) => {
   return item.overrides.find(entry => entry.role === props.role) ?? null;
 };
 
+const formatRuntimeValue = (
+  value: number | string | null | undefined,
+  runtimeDefault: number | string
+): string => {
+  if (value === null || value === undefined || value === '') {
+    return t('admin.llm.routing.runtimeConfig.runtimeDefault', {
+      value: runtimeDefault
+    });
+  }
+
+  return String(value);
+};
+
+const resolveEffectiveRuntimeValue = (
+  item: LlmRoutingItem | null,
+  selector: (
+    assignment: NonNullable<LlmRoutingItem['default']>
+  ) => number | string | null | undefined,
+  runtimeDefault: number | string
+): string => {
+  const override = findRoleOverride(item);
+  if (override) {
+    return formatRuntimeValue(selector(override), runtimeDefault);
+  }
+
+  const assignment = item?.default;
+  return formatRuntimeValue(assignment ? selector(assignment) : null, runtimeDefault);
+};
+
 const currentOverrideModelId = (item: LlmRoutingItem | null): string => {
   return findRoleOverride(item)?.modelId ?? '';
 };
@@ -335,6 +371,45 @@ const detailedScoringCapabilities = computed<string[]>(() => {
   ];
 });
 
+const resumeAdaptationRuntimeConfig = computed<ResumeAdaptationRuntimeConfig | null>(() => {
+  if (!resumeAdaptationItem.value || !resumeScoringItem.value) {
+    return null;
+  }
+
+  return {
+    adaptationTemperature: resolveEffectiveRuntimeValue(
+      resumeAdaptationItem.value,
+      assignment => assignment.temperature,
+      ADAPTATION_RUNTIME_DEFAULT_TEMPERATURE
+    ),
+    adaptationMaxTokens: resolveEffectiveRuntimeValue(
+      resumeAdaptationItem.value,
+      assignment => assignment.maxTokens,
+      ADAPTATION_RUNTIME_DEFAULT_MAX_TOKENS
+    ),
+    adaptationResponseFormat: resolveEffectiveRuntimeValue(
+      resumeAdaptationItem.value,
+      assignment => assignment.responseFormat,
+      ADAPTATION_RUNTIME_DEFAULT_RESPONSE_FORMAT
+    ),
+    scoringTemperature: resolveEffectiveRuntimeValue(
+      resumeScoringItem.value,
+      assignment => assignment.temperature,
+      SCORING_RUNTIME_DEFAULT_TEMPERATURE
+    ),
+    scoringMaxTokens: resolveEffectiveRuntimeValue(
+      resumeScoringItem.value,
+      assignment => assignment.maxTokens,
+      SCORING_RUNTIME_DEFAULT_MAX_TOKENS
+    ),
+    scoringResponseFormat: resolveEffectiveRuntimeValue(
+      resumeScoringItem.value,
+      assignment => assignment.responseFormat,
+      SCORING_RUNTIME_DEFAULT_RESPONSE_FORMAT
+    )
+  };
+});
+
 const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
   const cards: RoutingScenarioCardsConfig = {};
 
@@ -444,7 +519,8 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
       disabled: isRoutingDisabled.value,
       emptyValue: INHERIT_MODEL_ID,
       disableTertiaryWhenPrimaryEmpty: true,
-      disableStrategyWhenPrimaryEmpty: true
+      disableStrategyWhenPrimaryEmpty: true,
+      runtimeConfig: resumeAdaptationRuntimeConfig.value
     };
   }
 

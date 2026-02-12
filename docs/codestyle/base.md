@@ -207,6 +207,8 @@ We aim for an **Airbnb-like** style (enforced via ESLint where practical).
 
 **Required approach:**
 
+0. **Before creating a new type guard**, check existing guards in `@int/npm-utils` and reuse them.
+   Add a new guard there only when no suitable one exists.
 1. **Find the proper type** from the library/framework you're using
 2. **Import it explicitly** instead of using `any`
 3. **Fix the root cause** of type errors instead of suppressing them

@@ -68,8 +68,8 @@ const DEFAULT_GEMINI_CACHE_TTL_SECONDS = 300;
 const MAX_SCORING_SIGNAL_ITEMS = 6;
 const MAX_SCORING_EVIDENCE_ITEMS = 20;
 const MAX_SCORING_REF_ITEMS = 3;
-const SCORING_EXTRACT_MAX_TOKENS = 2200;
-const SCORING_MAP_MAX_TOKENS = 2200;
+const SCORING_EXTRACT_MAX_TOKENS = 1200;
+const SCORING_MAP_MAX_TOKENS = 1400;
 const HEURISTIC_SIGNAL_TERMS_LIMIT = 12;
 const JSON_PARSE_ERROR_PATTERN =
   /failed to parse json|unexpected end of json input|unterminated|string in json|invalid json/i;
@@ -310,6 +310,27 @@ export class ScoreDetailsError extends Error {
     this.name = 'ScoreDetailsError';
   }
 }
+
+const withStepContext = (
+  error: ScoreDetailsError,
+  step: 'extract' | 'map',
+  attempt: number
+): ScoreDetailsError => {
+  const details =
+    error.details && typeof error.details === 'object'
+      ? {
+          ...error.details,
+          step,
+          attempt
+        }
+      : {
+          originalDetails: error.details,
+          step,
+          attempt
+        };
+
+  return new ScoreDetailsError(`${step} step: ${error.message}`, error.code, details);
+};
 
 const isJsonParseLikeMessage = (message: string): boolean => {
   return JSON_PARSE_ERROR_PATTERN.test(message.toLowerCase());
@@ -628,16 +649,24 @@ const resolveScenarioTarget = async (
   provider: LLMProvider;
   model: string;
   strategyKey: LlmStrategyKey | null;
+  hasDistinctRetry: boolean;
 }> => {
   const scenarioModel = await resolveScenarioModel(
     role,
     LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
   );
   if (scenarioModel) {
+    const hasDistinctRetry = Boolean(
+      scenarioModel.retry &&
+      (scenarioModel.retry.provider !== scenarioModel.primary.provider ||
+        scenarioModel.retry.model !== scenarioModel.primary.model)
+    );
+
     return {
       provider: scenarioModel.primary.provider,
       model: scenarioModel.primary.model,
-      strategyKey: scenarioModel.strategyKey
+      strategyKey: scenarioModel.strategyKey,
+      hasDistinctRetry
     };
   }
 
@@ -645,7 +674,8 @@ const resolveScenarioTarget = async (
   return {
     provider: fallbackModel.provider,
     model: fallbackModel.model,
-    strategyKey: null
+    strategyKey: null,
+    hasDistinctRetry: false
   };
 };
 
@@ -967,9 +997,12 @@ export async function generateScoreDetailsWithLLM(
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
   let totalCachedInputTokens = 0;
+  let attemptsUsed = 0;
   let lastError: ScoreDetailsError | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    attemptsUsed = attempt;
+
     try {
       const extractResponse = await callLLM(
         {
@@ -998,7 +1031,16 @@ export async function generateScoreDetailsWithLLM(
       totalOutputTokens += extractUsageBreakdown.outputTokens;
       totalCachedInputTokens += extractUsageBreakdown.cachedInputTokens;
 
-      const signals = parseExtractedSignals(extractResponse.content);
+      let signals: ExtractedSignals;
+      try {
+        signals = parseExtractedSignals(extractResponse.content);
+      } catch (error) {
+        if (error instanceof ScoreDetailsError) {
+          throw withStepContext(error, 'extract', attempt);
+        }
+
+        throw error;
+      }
 
       const mapResponse = await callLLM(
         {
@@ -1029,7 +1071,16 @@ export async function generateScoreDetailsWithLLM(
       totalOutputTokens += mapUsageBreakdown.outputTokens;
       totalCachedInputTokens += mapUsageBreakdown.cachedInputTokens;
 
-      const evidenceItems = parseEvidenceItems(mapResponse.content);
+      let evidenceItems: ScoringEvidenceItems;
+      try {
+        evidenceItems = parseEvidenceItems(mapResponse.content);
+      } catch (error) {
+        if (error instanceof ScoreDetailsError) {
+          throw withStepContext(error, 'map', attempt);
+        }
+
+        throw error;
+      }
       const computed = computeDeterministicScoringResult({
         baseResume,
         tailoredResume,
@@ -1047,7 +1098,7 @@ export async function generateScoreDetailsWithLLM(
           provider: mapResponse.provider,
           providerType: mapResponse.providerType,
           model: mapResponse.model,
-          attemptsUsed: attempt
+          attemptsUsed
         },
         provider: mapResponse.provider,
         model: mapResponse.model,
@@ -1071,6 +1122,25 @@ export async function generateScoreDetailsWithLLM(
           isJsonError ? 'INVALID_JSON' : 'LLM_ERROR',
           error
         );
+      }
+
+      if (!lastError) {
+        continue;
+      }
+
+      if (lastError.code === 'INVALID_JSON' || lastError.code === 'VALIDATION_FAILED') {
+        const canRetryWithDifferentModel = attempt < maxRetries && scenarioTarget.hasDistinctRetry;
+
+        if (canRetryWithDifferentModel) {
+          continue;
+        }
+
+        break;
+      }
+
+      const llmErrorCode = readLlmErrorCode(lastError.details);
+      if (llmErrorCode && NON_RECOVERABLE_LLM_ERROR_CODES.has(llmErrorCode)) {
+        break;
       }
     }
   }
@@ -1097,7 +1167,7 @@ export async function generateScoreDetailsWithLLM(
         provider: scenarioTarget.provider,
         providerType: PROVIDER_TYPE_MAP.PLATFORM,
         model: scenarioTarget.model,
-        attemptsUsed: maxRetries
+        attemptsUsed: Math.max(1, attemptsUsed)
       },
       provider: scenarioTarget.provider,
       model: scenarioTarget.model,
