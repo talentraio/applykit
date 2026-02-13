@@ -2,8 +2,8 @@
   <div class="vacancy-detail-layout">
     <VacancyItemLayoutHeader
       :vacancy-id="vacancyId"
-      :company="vacancyMeta?.company ?? ''"
-      :job-position="vacancyMeta?.jobPosition"
+      :company="currentVacancyMeta?.company ?? ''"
+      :job-position="currentVacancyMeta?.jobPosition"
     />
 
     <main class="vacancy-detail-layout__content">
@@ -27,13 +27,13 @@
  *
  * Related: T017 (US1)
  */
-import type { VacancyMeta } from '@layer/api/types/vacancies';
-import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
 
 defineOptions({ name: 'VacancyDetailLayout' });
 
 const route = useRoute();
 const { t } = useI18n();
+const vacancyStore = useVacancyStore();
+const { currentVacancyMeta } = storeToRefs(vacancyStore);
 
 const vacancyId = computed(() => {
   const id = route.params.id;
@@ -42,14 +42,12 @@ const vacancyId = computed(() => {
 });
 
 // Fetch vacancy meta at layout level for title and detail header
-const { data: vacancyMeta, error: vacancyMetaError } = await useAsyncData<VacancyMeta>(
+const { error: vacancyMetaError } = await useAsyncData(
   `vacancy-layout-meta-${vacancyId.value}`,
-  () => {
-    return vacancyApi.fetchMeta(vacancyId.value);
-  }
+  () => vacancyStore.fetchVacancyMeta(vacancyId.value)
 );
 
-if (vacancyMetaError.value || !vacancyMeta.value) {
+if (vacancyMetaError.value || !currentVacancyMeta.value) {
   throw createError({
     statusCode: 404,
     statusMessage: t('vacancy.error.fetchDetailFailed')
@@ -59,10 +57,9 @@ if (vacancyMetaError.value || !vacancyMeta.value) {
 // Page meta
 useHead({
   title: computed(() => {
-    const baseTitle = vacancyMeta.value ? vacancyMeta.value.company : t('vacancy.detail.title');
-    return vacancyMeta.value?.jobPosition
-      ? `${baseTitle} – ${vacancyMeta.value.jobPosition}`
-      : baseTitle;
+    const meta = currentVacancyMeta.value;
+    const baseTitle = meta ? meta.company : t('vacancy.detail.title');
+    return meta?.jobPosition ? `${baseTitle} – ${meta.jobPosition}` : baseTitle;
   })
 });
 </script>

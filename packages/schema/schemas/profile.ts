@@ -24,7 +24,7 @@ export const ProfileSchema = z.object({
   country: z.string().length(2), // ISO 3166-1 alpha-2
   searchRegion: z.string().min(1).max(100),
   workFormat: WorkFormatSchema,
-  languages: z.array(LanguageEntrySchema).min(1),
+  languages: z.array(LanguageEntrySchema).optional(), // TODO: temporarily optional, restore .min(1) when languages section is re-enabled
   phones: z.array(PhoneEntrySchema).optional(),
   photoUrl: z
     .string()
@@ -55,6 +55,6 @@ export function isProfileComplete(profile: Profile | null): boolean {
     profile.email.length > 0 &&
     profile.country.length === 2 &&
     profile.searchRegion.length > 0 &&
-    profile.languages.length > 0
+    (profile.languages?.length ?? 0) > 0
   );
 }
