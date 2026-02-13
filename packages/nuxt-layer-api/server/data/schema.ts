@@ -18,6 +18,7 @@ import {
   OPERATION_VALUES,
   PROVIDER_TYPE_VALUES,
   SOURCE_FILE_TYPE_VALUES,
+  SUPPRESSION_REASON_VALUES,
   USAGE_CONTEXT_VALUES,
   USER_ROLE_MAP,
   USER_ROLE_VALUES,
@@ -66,6 +67,7 @@ export const userStatusEnum = pgEnum('user_status', USER_STATUS_VALUES);
 export const usageContextEnum = pgEnum('usage_context', USAGE_CONTEXT_VALUES);
 export const vacancyStatusEnum = pgEnum('vacancy_status', VACANCY_STATUS_VALUES);
 export const budgetPeriodEnum = pgEnum('budget_period', ['weekly', 'monthly']);
+export const suppressionReasonEnum = pgEnum('suppression_reason', SUPPRESSION_REASON_VALUES);
 
 // ============================================================================
 // Tables
@@ -518,6 +520,27 @@ export const systemConfigs = pgTable('system_configs', {
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
 });
 
+/**
+ * User Suppression table
+ * Anti-abuse: stores HMAC fingerprints of emails from deleted/banned accounts.
+ * Prevents re-signup with the same email within the TTL window.
+ */
+export const userSuppression = pgTable(
+  'user_suppression',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    emailHmac: varchar('email_hmac', { length: 128 }).notNull().unique(),
+    reason: suppressionReasonEnum('reason').notNull().default('account_deleted'),
+    sourceUserId: uuid('source_user_id'), // Audit link, no FK (user is tombstoned)
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { mode: 'date' }).notNull()
+  },
+  table => ({
+    emailHmacIdx: index('idx_user_suppression_email_hmac').on(table.emailHmac),
+    expiresAtIdx: index('idx_user_suppression_expires_at').on(table.expiresAt)
+  })
+);
+
 // ============================================================================
 // Type exports for use in repositories
 // ============================================================================
@@ -575,3 +598,6 @@ export type NewUsageLog = typeof usageLogs.$inferInsert;
 
 export type SystemConfig = typeof systemConfigs.$inferSelect;
 export type NewSystemConfig = typeof systemConfigs.$inferInsert;
+
+export type UserSuppressionRow = typeof userSuppression.$inferSelect;
+export type NewUserSuppressionRow = typeof userSuppression.$inferInsert;

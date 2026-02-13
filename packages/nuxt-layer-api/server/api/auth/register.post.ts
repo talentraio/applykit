@@ -13,6 +13,7 @@ import {
   hashPassword,
   validatePasswordStrength
 } from '../../services/password';
+import { assertEmailNotSuppressed } from '../../utils/suppression-guard';
 
 /**
  * Registration Endpoint
@@ -45,6 +46,9 @@ export default defineEventHandler(async event => {
   }
 
   const { email, password, firstName, lastName } = parsed.data;
+
+  // Check if email is suppressed (anti-abuse)
+  await assertEmailNotSuppressed(email);
 
   // Validate password strength
   const passwordValidation = validatePasswordStrength(password);

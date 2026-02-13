@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { profileRepository, userRepository } from '../../data/repositories';
+import { profileRepository, suppressionRepository, userRepository } from '../../data/repositories';
 import { sendPasswordResetEmail } from '../../services/email';
 import { generateToken, getTokenExpiry } from '../../services/password';
+import { computeEmailHmac } from '../../utils/email-hmac';
 
 /**
  * Forgot Password Endpoint
@@ -31,6 +32,13 @@ export default defineEventHandler(async event => {
   }
 
   const { email } = parsed.data;
+
+  // Silently skip suppressed emails (prevent enumeration)
+  const hmac = computeEmailHmac(email);
+  const suppressed = await suppressionRepository.isEmailSuppressed(hmac);
+  if (suppressed) {
+    return { success: true };
+  }
 
   // Find user (silently fail to prevent email enumeration)
   const user = await userRepository.findByEmail(email);

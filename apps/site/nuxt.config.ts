@@ -30,6 +30,12 @@ export default defineNuxtConfig({
     },
     redirects: {
       authDefault: '/dashboard'
+    },
+    public: {
+      contentConfig: {
+        supportEmail: '',
+        serviceName: ''
+      }
     }
   },
 

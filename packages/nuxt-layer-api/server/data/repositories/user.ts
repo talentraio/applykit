@@ -244,6 +244,32 @@ export const userRepository = {
   },
 
   /**
+   * Sanitize a deleted user's PII (GDPR tombstone).
+   * Replaces email with a placeholder, nulls all OAuth IDs, tokens, and sensitive fields.
+   */
+  async sanitizeDeleted(id: string): Promise<void> {
+    const now = new Date();
+    await db
+      .update(users)
+      .set({
+        email: `deleted+${id}@invalid.local`,
+        googleId: null,
+        linkedInId: null,
+        passwordHash: null,
+        emailVerified: false,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        lastLoginAt: null,
+        status: USER_STATUS_MAP.DELETED,
+        deletedAt: now,
+        updatedAt: now
+      })
+      .where(eq(users.id, id));
+  },
+
+  /**
    * Update user's last login timestamp
    */
   async updateLastLogin(id: string): Promise<void> {

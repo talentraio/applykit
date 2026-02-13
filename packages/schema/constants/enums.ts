@@ -190,6 +190,18 @@ export const LANGUAGE_LEVEL_VALUES = [
   LANGUAGE_LEVEL_MAP.BEGINNER
 ] as const;
 
+export const SUPPRESSION_REASON_MAP = {
+  ACCOUNT_DELETED: 'account_deleted',
+  ABUSE: 'abuse',
+  CHARGEBACK: 'chargeback'
+} as const;
+
+export const SUPPRESSION_REASON_VALUES = [
+  SUPPRESSION_REASON_MAP.ACCOUNT_DELETED,
+  SUPPRESSION_REASON_MAP.ABUSE,
+  SUPPRESSION_REASON_MAP.CHARGEBACK
+] as const;
+
 export const DEGREE_TYPE_MAP = {
   HIGH_SCHOOL: 'High School',
   ASSOCIATE: "Associate's Degree",

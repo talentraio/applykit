@@ -148,6 +148,13 @@
       "when": 1771593600000,
       "tag": "0021_add_score_alert_dismissed_at",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1771680000000,
+      "tag": "0022_user_suppression",
+      "breakpoints": true
     }
   ]
 }

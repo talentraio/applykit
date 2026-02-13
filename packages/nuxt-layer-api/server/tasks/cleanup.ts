@@ -1,5 +1,6 @@
 import process from 'node:process';
 import { generationRepository } from '../data/repositories/generation';
+import { suppressionRepository } from '../data/repositories/suppression';
 import { usageLogRepository } from '../data/repositories/usage-log';
 
 /**
@@ -34,6 +35,7 @@ export default defineEventHandler(async event => {
   const results = {
     expiredGenerations: 0,
     oldUsageLogs: 0,
+    expiredSuppressions: 0,
     errors: [] as string[]
   };
 
@@ -58,6 +60,17 @@ export default defineEventHandler(async event => {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('[Cleanup] Error deleting old usage logs:', error);
     results.errors.push(`Old usage logs: ${message}`);
+  }
+
+  try {
+    // 3. Delete expired suppression records
+    console.warn('[Cleanup] Starting expired suppression cleanup...');
+    results.expiredSuppressions = await suppressionRepository.deleteExpired();
+    console.warn(`[Cleanup] Deleted ${results.expiredSuppressions} expired suppression records`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Cleanup] Error deleting expired suppressions:', error);
+    results.errors.push(`Expired suppressions: ${message}`);
   }
 
   const duration = Date.now() - startTime;

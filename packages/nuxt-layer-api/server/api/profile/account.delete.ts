@@ -1,57 +1,58 @@
+import { SUPPRESSION_REASON_MAP } from '@int/schema';
 import {
   profileRepository,
   resumeRepository,
+  suppressionRepository,
   usageLogRepository,
   userRepository,
   vacancyRepository
 } from '../../data/repositories';
 import { getStorage } from '../../storage';
+import { computeEmailHmac } from '../../utils/email-hmac';
 
 /**
  * DELETE /api/profile/account
  *
- * Delete all user data except the User entity itself.
- * Sets user status to 'deleted' and deletedAt timestamp.
+ * GDPR-compliant account deletion:
+ * 1. Fetch user email before sanitizing
+ * 2. Compute email HMAC and create suppression record
+ * 3. Delete all user content (photos, vacancies, resumes, usage logs, profile)
+ * 4. Sanitize user PII (tombstone with placeholder email)
+ * 5. Clear session
  *
- * Deletes:
- * - Profile (including photo)
- * - Resumes
- * - Vacancies (cascades to generations)
- * - Usage logs
- *
- * Response:
- * - { success: true }
+ * Response: { success: true }
  */
 export default defineEventHandler(async event => {
-  // Require authentication
   const session = await requireUserSession(event);
   const userId = (session.user as { id: string }).id;
 
-  const storage = getStorage();
-
-  try {
-    // Delete profile photo from storage
-    await storage.deleteByPrefix(`photos/${userId}/`);
-
-    // Delete all user data (order matters due to potential foreign key constraints)
-    // Note: generations are deleted via cascade when vacancies are deleted
-    await vacancyRepository.deleteByUserId(userId);
-    await resumeRepository.deleteByUserId(userId);
-    await usageLogRepository.deleteByUserId(userId);
-    await profileRepository.delete(userId);
-
-    // Mark user as deleted (keep the entity for audit trail)
-    await userRepository.markDeleted(userId);
-
-    // Clear the user session
-    await clearUserSession(event);
-
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to delete account:', error);
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to delete account'
-    });
+  // Fetch user email before we sanitize
+  const user = await userRepository.findById(userId);
+  if (!user) {
+    throw createError({ statusCode: 404, message: 'User not found' });
   }
+
+  const emailHmac = computeEmailHmac(user.email);
+
+  // Create suppression record first (anti-abuse protection even if later steps fail)
+  await suppressionRepository.create(emailHmac, SUPPRESSION_REASON_MAP.ACCOUNT_DELETED, userId);
+
+  // Delete profile photo from blob storage (best-effort)
+  const storage = getStorage();
+  await storage.deleteByPrefix(`photos/${userId}/`);
+
+  // Delete all user content (order matters for FK constraints)
+  // Generations are deleted via cascade when vacancies are deleted
+  await vacancyRepository.deleteByUserId(userId);
+  await resumeRepository.deleteByUserId(userId);
+  await usageLogRepository.deleteByUserId(userId);
+  await profileRepository.delete(userId);
+
+  // Sanitize user PII (GDPR tombstone)
+  await userRepository.sanitizeDeleted(userId);
+
+  // Clear the user session
+  await clearUserSession(event);
+
+  return { success: true };
 });
