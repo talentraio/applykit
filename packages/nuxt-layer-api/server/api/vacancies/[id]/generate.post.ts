@@ -7,6 +7,7 @@ import {
 } from '../../../data/repositories';
 import { requireLimit } from '../../../services/limits';
 import { generateResumeWithLLM } from '../../../services/llm/generate';
+import { requireCompleteProfile } from '../../../services/profile';
 import { logGenerateAdaptation, logGenerateScoring } from '../../../utils/usage';
 
 /**
@@ -27,6 +28,9 @@ export default defineEventHandler(async event => {
   const session = await requireUserSession(event);
   const userId = session.user.id;
   const userRole: Role = session.user.role ?? USER_ROLE_MAP.PUBLIC;
+
+  // Require complete profile before generation
+  await requireCompleteProfile(userId);
 
   // Get vacancy ID from route params
   const vacancyId = getRouterParam(event, 'id');

@@ -141,6 +141,13 @@
       "when": 1771507200000,
       "tag": "0019_role_scenario_enabled_overrides",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1771593600000,
+      "tag": "0021_add_score_alert_dismissed_at",
+      "breakpoints": true
     }
   ]
 }

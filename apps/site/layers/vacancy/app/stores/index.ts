@@ -12,6 +12,7 @@ import type {
 import type {
   VacanciesResumeGeneration,
   VacanciesScoreDetailsResponse,
+  VacancyMeta,
   VacancyOverview,
   VacancyOverviewGeneration,
   VacancyPreparationResponse
@@ -58,6 +59,7 @@ const toOverviewGeneration = (generation: Generation | null): VacancyOverviewGen
 export const useVacancyStore = defineStore('VacancyStore', {
   state: (): {
     vacancyListResponse: VacancyListResponse | null;
+    currentVacancyMeta: VacancyMeta | null;
     currentVacancy: Vacancy | null;
     overviewLatestGeneration: VacancyOverviewGeneration | null;
     overviewCanGenerateResume: boolean;
@@ -83,6 +85,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
     isEditingGeneration: boolean;
   } => ({
     vacancyListResponse: null,
+    currentVacancyMeta: null,
     currentVacancy: null,
     overviewLatestGeneration: null,
     overviewCanGenerateResume: false,
@@ -176,6 +179,12 @@ export const useVacancyStore = defineStore('VacancyStore', {
   },
 
   actions: {
+    async fetchVacancyMeta(id: string): Promise<VacancyMeta> {
+      const meta = await vacancyApi.fetchMeta(id);
+      this.currentVacancyMeta = meta;
+      return meta;
+    },
+
     /**
      * Fetch paginated vacancies with sorting, filtering, and search
      */
@@ -443,7 +452,6 @@ export const useVacancyStore = defineStore('VacancyStore', {
 
       try {
         const response = await generationApi.fetchScoreDetails(vacancyId, generationId, options);
-        await this.fetchVacancyPreparation(vacancyId);
         return response;
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to fetch detailed scoring');

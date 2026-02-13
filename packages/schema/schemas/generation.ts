@@ -93,7 +93,8 @@ export const GenerationSchema = z.object({
   matchScoreAfter: z.number().int().min(0).max(100),
   scoreBreakdown: ScoreBreakdownSchema,
   generatedAt: z.date(),
-  expiresAt: z.date()
+  expiresAt: z.date(),
+  scoreAlertDismissedAt: z.date().nullable()
 });
 
 export type Generation = z.infer<typeof GenerationSchema>;

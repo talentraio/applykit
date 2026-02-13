@@ -26,28 +26,68 @@ pnpm db:up
 pnpm --filter @int/api db:migrate
 ```
 
-### After schema changes
+### After schema changes (CRITICAL: follow this order)
 
-1. Update schema in `schema.ts`.
-2. Generate migration:
+**⚠️ NEVER create SQL migration files manually!** Always use Drizzle Kit to generate them.
 
-```bash
-pnpm --filter @int/api db:generate
-```
+1. **Update schema** in `packages/nuxt-layer-api/server/data/schema.ts`
+2. **Generate migration automatically**:
 
-3. Apply migration locally:
+   ```bash
+   pnpm --filter @int/api db:generate
+   ```
 
-```bash
-pnpm --filter @int/api db:migrate
-```
+   This creates:
+   - New SQL file in `server/data/migrations/`
+   - Updates `meta/_journal.json` with correct index
+   - Ensures proper sequencing
 
-### Dev-only sync (use carefully)
+3. **Review generated SQL** — check the migration file looks correct
+
+4. **Apply migration locally**:
+
+   ```bash
+   pnpm --filter @int/api db:migrate
+   ```
+
+5. **Commit both files**:
+   - `server/data/migrations/XXXX_*.sql`
+   - `server/data/migrations/meta/_journal.json`
+
+### Common mistakes (DO NOT DO THIS)
+
+❌ **Creating SQL files manually** → Drizzle won't track them
+❌ **Editing `_journal.json` manually** → Will cause index conflicts
+❌ **Skipping `db:generate`** → Schema and migrations get out of sync
+
+### Dev-only quick sync (use carefully)
 
 ```bash
 pnpm --filter @int/api db:push
 ```
 
-Use `db:push` only for local synchronization. For shared environments, commit proper migration files.
+**When to use `db:push`**:
+
+- ✅ Local development experiments
+- ✅ Prototyping schema changes
+- ✅ When you don't need migration history
+
+**When NOT to use `db:push`**:
+
+- ❌ Shared/staging/production environments
+- ❌ When working in a team (others need migrations)
+- ❌ Schema changes that need to be tracked
+
+### Troubleshooting
+
+**Problem**: `drizzle-kit generate` shows confusing diffs or enum prompts
+
+**Cause**: Previous migrations were created manually, schema is out of sync
+
+**Solution**:
+
+1. For local dev only: Use `db:push` to force-sync schema
+2. For production: Reset migration state (contact team lead)
 
 ## Inspect DB
 

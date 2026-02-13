@@ -14,11 +14,13 @@ export const useApiAuthStore = defineStore('ApiAuthStore', {
   state: (): {
     user: UserPublic | null;
     profile: Profile | null;
+    isProfileComplete: boolean;
     loading: boolean;
     initialized: boolean;
   } => ({
     user: null,
     profile: null,
+    isProfileComplete: false,
     loading: false,
     initialized: false
   }),
@@ -28,22 +30,6 @@ export const useApiAuthStore = defineStore('ApiAuthStore', {
      * Check if user is authenticated
      */
     isAuthenticated: (state): boolean => !!state.user,
-
-    /**
-     * Check if profile is complete (has all required fields)
-     */
-    isProfileComplete: (state): boolean => {
-      if (!state.profile) return false;
-
-      return (
-        state.profile.firstName.length > 0 &&
-        state.profile.lastName.length > 0 &&
-        state.profile.email.length > 0 &&
-        state.profile.country.length === 2 &&
-        state.profile.searchRegion.length > 0 &&
-        state.profile.languages.length > 0
-      );
-    },
 
     /**
      * Get user role (defaults to 'public' if not authenticated)
@@ -63,15 +49,17 @@ export const useApiAuthStore = defineStore('ApiAuthStore', {
       this.loading = true;
 
       try {
-        const { user, profile } = await authApi.fetchMe();
+        const { user, profile, isProfileComplete } = await authApi.fetchMe();
         this.user = user;
         this.profile = profile;
+        this.isProfileComplete = isProfileComplete;
         this.initialized = true;
         return { user, profile };
       } catch (error) {
         // Not authenticated or error - reset state
         this.user = null;
         this.profile = null;
+        this.isProfileComplete = false;
         this.initialized = true;
         throw error;
       } finally {
@@ -92,6 +80,7 @@ export const useApiAuthStore = defineStore('ApiAuthStore', {
         // Always clear local state, even if API fails
         this.user = null;
         this.profile = null;
+        this.isProfileComplete = false;
         this.loading = false;
       }
     },
@@ -110,6 +99,7 @@ export const useApiAuthStore = defineStore('ApiAuthStore', {
     $reset() {
       this.user = null;
       this.profile = null;
+      this.isProfileComplete = false;
       this.loading = false;
       this.initialized = false;
     }

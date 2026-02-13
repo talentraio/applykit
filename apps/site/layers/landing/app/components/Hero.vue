@@ -1,109 +1,129 @@
 <template>
-  <section class="landing-hero">
-    <div class="landing-hero__container container mx-auto px-4 py-16 lg:py-24">
-      <div class="landing-hero__grid grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
-        <!-- Left: Content -->
-        <div class="landing-hero__content">
-          <h1 class="landing-hero__headline text-4xl lg:text-6xl font-bold mb-6">
-            {{ $t('landing.hero.headline') }}
-          </h1>
-          <p
-            class="landing-hero__subheadline text-lg lg:text-xl text-gray-600 dark:text-gray-400 mb-8"
+  <section class="landing-hero relative overflow-hidden pb-20 pt-36 lg:pb-28">
+    <div class="landing-hero__bg-glow landing-hero__bg-glow--primary" aria-hidden="true" />
+    <div class="landing-hero__bg-glow landing-hero__bg-glow--secondary" aria-hidden="true" />
+
+    <UContainer class="landing-hero__container relative">
+      <div class="landing-hero__content space-y-8">
+        <UBadge color="info" variant="soft" size="lg" class="landing-hero__badge">
+          {{ $t('landing.hero.badge') }}
+        </UBadge>
+
+        <div class="space-y-5">
+          <h1
+            class="landing-hero__title max-w-4xl text-4xl font-bold leading-tight text-slate-100 md:text-5xl lg:text-6xl"
           >
-            {{ $t('landing.hero.subheadline') }}
-          </p>
-
-          <div class="landing-hero__actions flex flex-col sm:flex-row gap-4 mb-4">
-            <UButton
-              size="xl"
-              color="primary"
-              icon="i-lucide-rocket"
-              :label="$t('landing.hero.ctaPrimary')"
-              @click="handleTryIt"
-            />
-            <UButton
-              size="xl"
-              color="neutral"
-              variant="outline"
-              icon="i-lucide-arrow-down"
-              :label="$t('landing.hero.ctaSecondary')"
-              @click="scrollToSteps"
-            />
-          </div>
-
-          <p class="landing-hero__disclaimer text-sm text-gray-500 dark:text-gray-500">
-            {{ $t('landing.hero.disclaimer') }}
+            {{ $t('landing.hero.title') }}
+          </h1>
+          <p class="landing-hero__subtitle max-w-3xl text-lg text-slate-300 md:text-xl">
+            {{ $t('landing.hero.subtitle') }}
           </p>
         </div>
 
-        <!-- Right: Visual -->
-        <div class="landing-hero__visual">
-          <div
-            class="landing-hero__preview-card relative rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-xl"
+        <div class="landing-hero__actions flex flex-col gap-3 sm:flex-row">
+          <UButton size="xl" color="primary" icon="i-lucide-rocket" @click="handlePrimaryCta">
+            {{ $t('landing.hero.primaryCta') }}
+          </UButton>
+          <UButton
+            size="xl"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-play"
+            @click="scrollToFlow"
           >
-            <div class="landing-hero__split grid grid-cols-2 gap-4">
-              <!-- ATS Preview -->
-              <div class="landing-hero__ats-preview">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">ATS</div>
-                <div class="space-y-2">
-                  <div class="h-3 bg-gray-200 dark:bg-gray-800 rounded w-full" />
-                  <div class="h-3 bg-gray-200 dark:bg-gray-800 rounded w-3/4" />
-                  <div class="h-3 bg-gray-200 dark:bg-gray-800 rounded w-full" />
-                  <div class="h-3 bg-gray-200 dark:bg-gray-800 rounded w-5/6" />
-                </div>
-              </div>
+            {{ $t('landing.hero.secondaryCta') }}
+          </UButton>
+        </div>
 
-              <!-- Human Preview -->
-              <div class="landing-hero__human-preview">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">Human</div>
-                <div class="space-y-2">
-                  <div class="h-3 bg-violet-200 dark:bg-violet-900 rounded w-full" />
-                  <div class="h-3 bg-violet-200 dark:bg-violet-900 rounded w-3/4" />
-                  <div class="h-3 bg-violet-200 dark:bg-violet-900 rounded w-full" />
-                  <div class="h-3 bg-violet-200 dark:bg-violet-900 rounded w-5/6" />
-                </div>
-              </div>
-            </div>
+        <div class="landing-hero__meta grid gap-3 sm:grid-cols-3">
+          <div
+            v-for="item in metaItems"
+            :key="item.label"
+            class="landing-hero__meta-item rounded-xl border border-white/10 bg-white/5 p-3"
+          >
+            <p class="text-xs uppercase tracking-[0.14em] text-slate-400">{{ item.label }}</p>
+            <p class="mt-1 text-lg font-semibold text-slate-100">{{ item.value }}</p>
           </div>
         </div>
       </div>
-    </div>
+    </UContainer>
   </section>
 </template>
 
 <script setup lang="ts">
-/**
- * Landing Hero Component
- *
- * Main hero section with headline, CTAs, and split preview visual
- * Per docs/architecture/homepage.md
- *
- * T153 [Phase 12] Landing page hero section
- */
-
 defineOptions({ name: 'LandingHero' });
 
+const { t } = useI18n();
 const { loggedIn } = useAuth();
 const { open: openAuthModal } = useAuthModal();
-
-/**
- * Handle "Try it" button click
- * - If logged in: navigate to post-login redirect
- * - If not logged in: open auth modal with post-login redirect
- */
 const { redirects } = useAppConfig();
-const handleTryIt = () => {
+
+const metaItems = computed(() => [
+  { label: t('landing.hero.meta.oneLabel'), value: t('landing.hero.meta.oneValue') },
+  { label: t('landing.hero.meta.twoLabel'), value: t('landing.hero.meta.twoValue') },
+  { label: t('landing.hero.meta.threeLabel'), value: t('landing.hero.meta.threeValue') }
+]);
+
+const handlePrimaryCta = () => {
   if (loggedIn.value) {
     navigateTo(redirects.afterLandingTryIt);
-  } else {
-    openAuthModal('login', redirects.afterLandingTryIt);
+    return;
   }
+
+  openAuthModal('login', redirects.afterLandingTryIt);
 };
 
-const scrollToSteps = () => {
-  const stepsSection = document.querySelector('.landing-steps');
-  if (stepsSection) {
-    stepsSection.scrollIntoView({ behavior: 'smooth' });
+const scrollToFlow = () => {
+  const node = document.getElementById('landing-flow');
+  if (!node) {
+    return;
   }
+
+  node.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 </script>
+
+<style lang="scss">
+.landing-hero {
+  background:
+    radial-gradient(circle at 16% 18%, rgb(6 182 212 / 32%), transparent 40%),
+    radial-gradient(circle at 82% 80%, rgb(16 185 129 / 16%), transparent 44%),
+    linear-gradient(180deg, rgb(5 12 30), rgb(8 16 38));
+  border-bottom: 1px solid var(--landing-border-strong);
+
+  &__container {
+    max-width: 1260px;
+  }
+
+  &__content {
+    max-width: 760px;
+  }
+
+  &__bg-glow {
+    pointer-events: none;
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(64px);
+
+    &--primary {
+      left: -120px;
+      top: 80px;
+      height: 320px;
+      width: 320px;
+      background: rgb(34 211 238 / 25%);
+    }
+
+    &--secondary {
+      bottom: -120px;
+      right: -80px;
+      height: 280px;
+      width: 280px;
+      background: rgb(16 185 129 / 20%);
+    }
+  }
+
+  &__badge {
+    width: fit-content;
+  }
+}
+</style>

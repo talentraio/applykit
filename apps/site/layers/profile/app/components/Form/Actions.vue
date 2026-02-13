@@ -24,7 +24,7 @@
  * TR012 - Created as part of ProfileForm decomposition
  */
 
-defineOptions({ name: 'UserProfileFormActions' });
+defineOptions({ name: 'ProfileFormActions' });
 
 defineProps<{
   showCancel?: boolean;

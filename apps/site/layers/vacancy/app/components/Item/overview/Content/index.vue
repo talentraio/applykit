@@ -1,5 +1,9 @@
 <template>
   <div v-if="vacancy" class="vacancy-overview-content">
+    <ProfileIncompleteModal
+      v-model:open="showProfileModal"
+      :return-to="`/vacancies/${vacancyId}`"
+    />
     <VacancyItemOverviewContentTitle
       :vacancy="vacancy"
       @edit="emit('edit')"
@@ -25,6 +29,8 @@
     <!-- Match Score Block (T024) - Only if generation exists -->
     <template v-if="overviewLatestGeneration">
       <VacancyItemOverviewContentGenerationMatchScore
+        :vacancy-id="vacancyId"
+        :generation-id="overviewLatestGeneration.id"
         :score-before="overviewLatestGeneration.matchScoreBefore"
         :score-after="overviewLatestGeneration.matchScoreAfter"
         class="mb-6"
@@ -51,6 +57,7 @@
 
 <script setup lang="ts">
 import type { VacancyStatus } from '@int/schema';
+import { useApiAuthStore } from '@layer/api/app/stores/auth';
 
 defineOptions({ name: 'VacancyItemOverviewContent' });
 
@@ -63,10 +70,12 @@ const { t } = useI18n();
 const toast = useToast();
 const route = useRoute();
 const vacancyStore = useVacancyStore();
+const authStore = useApiAuthStore();
 const { currentVacancy, overviewLatestGeneration, overviewCanGenerateResume } =
   storeToRefs(vacancyStore);
 const isGenerating = ref(false);
 const isUpdatingStatus = ref(false);
+const showProfileModal = ref(false);
 
 const vacancyId = computed(() => {
   const id = route.params.id;
@@ -81,6 +90,12 @@ const coverTo = computed(() => `/vacancies/${vacancyId.value}/cover`);
 
 const handleGenerate = async () => {
   if (!vacancyId.value) return;
+
+  // Check profile completeness before generating
+  if (!authStore.isProfileComplete) {
+    showProfileModal.value = true;
+    return;
+  }
 
   isGenerating.value = true;
 
