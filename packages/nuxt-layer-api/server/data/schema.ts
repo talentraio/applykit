@@ -452,6 +452,29 @@ export const llmRoleScenarioOverrides = pgTable(
 );
 
 /**
+ * LLM Role Scenario Enabled Overrides table
+ * Optional role-level enabled flag override per scenario.
+ */
+export const llmRoleScenarioEnabledOverrides = pgTable(
+  'llm_role_scenario_enabled_overrides',
+  {
+    role: roleEnum('role').notNull(),
+    scenarioKey: llmScenarioKeyEnum('scenario_key')
+      .notNull()
+      .references(() => llmScenarios.key, { onDelete: 'cascade' }),
+    enabled: boolean('enabled').notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => ({
+    roleScenarioUnique: unique('llm_role_scenario_enabled_overrides_role_scenario_unique').on(
+      table.role,
+      table.scenarioKey
+    ),
+    scenarioIdx: index('idx_llm_role_scenario_enabled_overrides_scenario_key').on(table.scenarioKey)
+  })
+);
+
+/**
  * Usage Logs table
  * Tracks all operations for rate limiting, billing, and analytics
  */
@@ -539,6 +562,9 @@ export type NewLlmScenarioModel = typeof llmScenarioModels.$inferInsert;
 
 export type LlmRoleScenarioOverride = typeof llmRoleScenarioOverrides.$inferSelect;
 export type NewLlmRoleScenarioOverride = typeof llmRoleScenarioOverrides.$inferInsert;
+
+export type LlmRoleScenarioEnabledOverride = typeof llmRoleScenarioEnabledOverrides.$inferSelect;
+export type NewLlmRoleScenarioEnabledOverride = typeof llmRoleScenarioEnabledOverrides.$inferInsert;
 
 export type UsageLog = typeof usageLogs.$inferSelect;
 export type NewUsageLog = typeof usageLogs.$inferInsert;

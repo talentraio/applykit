@@ -1,6 +1,7 @@
 import type {
   LlmModel,
   LlmReasoningEffort,
+  LlmRoutingEnabledOverride,
   LlmRoutingItem,
   LlmRoutingOverride,
   LlmScenarioKey,
@@ -9,17 +10,27 @@ import type {
   RoutingAssignmentInput
 } from '@int/schema';
 import type {
+  LlmRoleScenarioEnabledOverride as LlmRoleScenarioEnabledOverrideRow,
   LlmRoleScenarioOverride as LlmRoleScenarioOverrideRow,
   LlmScenarioModel as LlmScenarioModelRow,
   LlmScenario as LlmScenarioRow
 } from '../schema';
 import { and, eq } from 'drizzle-orm';
+import { isUndefinedTableError } from '../../utils/db-errors';
 import { db } from '../db';
-import { llmModels, llmRoleScenarioOverrides, llmScenarioModels, llmScenarios } from '../schema';
+import {
+  llmModels,
+  llmRoleScenarioEnabledOverrides,
+  llmRoleScenarioOverrides,
+  llmScenarioModels,
+  llmScenarios
+} from '../schema';
 
 const toNullableNumber = (value: string | null): number | null => {
   return value === null ? null : Number(value);
 };
+
+const ROLE_SCENARIO_ENABLED_OVERRIDES_RELATION = 'llm_role_scenario_enabled_overrides';
 
 type RoutingAssignment = {
   modelId: string;
@@ -42,6 +53,12 @@ const toAssignment = (
   responseFormat: row.responseFormat,
   reasoningEffort: row.reasoningEffort ?? null,
   strategyKey: row.strategyKey ?? null,
+  updatedAt: row.updatedAt
+});
+
+const toEnabledOverride = (row: LlmRoleScenarioEnabledOverrideRow): LlmRoutingEnabledOverride => ({
+  role: row.role,
+  enabled: row.enabled,
   updatedAt: row.updatedAt
 });
 
@@ -140,8 +157,24 @@ export const llmRoutingRepository = {
       db.select().from(llmRoleScenarioOverrides)
     ]);
 
+    const enabledOverrideRows = await (async (): Promise<LlmRoleScenarioEnabledOverrideRow[]> => {
+      try {
+        return await db.select().from(llmRoleScenarioEnabledOverrides);
+      } catch (error) {
+        if (isUndefinedTableError(error, ROLE_SCENARIO_ENABLED_OVERRIDES_RELATION)) {
+          console.warn(
+            `${ROLE_SCENARIO_ENABLED_OVERRIDES_RELATION} table is unavailable. Routing enabled overrides are disabled until migrations are applied.`
+          );
+          return [];
+        }
+
+        throw error;
+      }
+    })();
+
     const defaultByScenario = new Map(defaultRows.map(row => [row.scenarioKey, row]));
     const overridesByScenario = new Map<LlmScenarioKey, LlmRoutingOverride[]>();
+    const enabledOverridesByScenario = new Map<LlmScenarioKey, LlmRoutingEnabledOverride[]>();
 
     overrideRows.forEach(row => {
       const scenarioKey = row.scenarioKey;
@@ -153,6 +186,13 @@ export const llmRoutingRepository = {
       overridesByScenario.set(scenarioKey, existing);
     });
 
+    enabledOverrideRows.forEach(row => {
+      const scenarioKey = row.scenarioKey;
+      const existing = enabledOverridesByScenario.get(scenarioKey) ?? [];
+      existing.push(toEnabledOverride(row));
+      enabledOverridesByScenario.set(scenarioKey, existing);
+    });
+
     return scenarioRows.map(row => {
       const defaultRow = defaultByScenario.get(row.key);
 
@@ -161,6 +201,7 @@ export const llmRoutingRepository = {
         label: row.label,
         description: row.description,
         enabled: row.enabled,
+        enabledOverrides: enabledOverridesByScenario.get(row.key) ?? [],
         default: defaultRow ? toAssignment(defaultRow) : null,
         overrides: overridesByScenario.get(row.key) ?? []
       };
@@ -235,6 +276,32 @@ export const llmRoutingRepository = {
     return await this.getRoutingItem(scenarioKey);
   },
 
+  async upsertRoleEnabledOverride(
+    scenarioKey: LlmScenarioKey,
+    role: Role,
+    enabled: boolean
+  ): Promise<LlmRoutingItem | null> {
+    const now = new Date();
+
+    await db
+      .insert(llmRoleScenarioEnabledOverrides)
+      .values({
+        role,
+        scenarioKey,
+        enabled,
+        updatedAt: now
+      })
+      .onConflictDoUpdate({
+        target: [llmRoleScenarioEnabledOverrides.role, llmRoleScenarioEnabledOverrides.scenarioKey],
+        set: {
+          enabled,
+          updatedAt: now
+        }
+      });
+
+    return await this.getRoutingItem(scenarioKey);
+  },
+
   async deleteRoleOverride(scenarioKey: LlmScenarioKey, role: Role): Promise<boolean> {
     const rows = await db
       .delete(llmRoleScenarioOverrides)
@@ -249,12 +316,52 @@ export const llmRoutingRepository = {
     return rows.length > 0;
   },
 
+  async deleteRoleEnabledOverride(scenarioKey: LlmScenarioKey, role: Role): Promise<boolean> {
+    const rows = await db
+      .delete(llmRoleScenarioEnabledOverrides)
+      .where(
+        and(
+          eq(llmRoleScenarioEnabledOverrides.scenarioKey, scenarioKey),
+          eq(llmRoleScenarioEnabledOverrides.role, role)
+        )
+      )
+      .returning({ role: llmRoleScenarioEnabledOverrides.role });
+
+    return rows.length > 0;
+  },
+
   async resolveRuntimeModel(
     role: Role,
     scenarioKey: LlmScenarioKey
   ): Promise<RuntimeResolvedModel | null> {
     const scenario = await this.findScenario(scenarioKey);
-    if (!scenario || !scenario.enabled) {
+    if (!scenario) {
+      return null;
+    }
+
+    const [enabledOverride] = await (async (): Promise<LlmRoleScenarioEnabledOverrideRow[]> => {
+      try {
+        return await db
+          .select()
+          .from(llmRoleScenarioEnabledOverrides)
+          .where(
+            and(
+              eq(llmRoleScenarioEnabledOverrides.scenarioKey, scenarioKey),
+              eq(llmRoleScenarioEnabledOverrides.role, role)
+            )
+          )
+          .limit(1);
+      } catch (error) {
+        if (isUndefinedTableError(error, ROLE_SCENARIO_ENABLED_OVERRIDES_RELATION)) {
+          return [];
+        }
+
+        throw error;
+      }
+    })();
+
+    const scenarioEnabled = enabledOverride?.enabled ?? scenario.enabled;
+    if (!scenarioEnabled) {
       return null;
     }
 

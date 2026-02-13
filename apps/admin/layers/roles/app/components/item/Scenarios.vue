@@ -67,6 +67,8 @@ const {
   loading: routingLoading,
   saving: routingSaving,
   fetchAll: fetchRouting,
+  upsertRoleEnabledOverride,
+  deleteRoleEnabledOverride,
   upsertRoleOverride,
   deleteRoleOverride
 } = useAdminLlmRouting();
@@ -277,6 +279,20 @@ const findRoleOverride = (item: LlmRoutingItem | null) => {
   return item.overrides.find(entry => entry.role === props.role) ?? null;
 };
 
+const findRoleEnabledOverride = (item: LlmRoutingItem | null) => {
+  if (!item) return null;
+  return item.enabledOverrides.find(entry => entry.role === props.role) ?? null;
+};
+
+const resolveEffectiveFlowEnabled = (item: LlmRoutingItem | null): boolean => {
+  const enabledOverride = findRoleEnabledOverride(item);
+  if (enabledOverride) {
+    return enabledOverride.enabled;
+  }
+
+  return item?.enabled ?? true;
+};
+
 const formatRuntimeValue = (
   value: number | string | null | undefined,
   runtimeDefault: number | string
@@ -440,10 +456,9 @@ const coverLetterCapabilities = computed<string[]>(() => {
 });
 
 const detailedScoringCapabilities = computed<string[]>(() => {
-  const flowStatus =
-    detailedScoringItem.value?.enabled === false
-      ? t('admin.llm.routing.detailedScoring.disabledShort')
-      : t('admin.llm.routing.detailedScoring.enabledShort');
+  const flowStatus = resolveEffectiveFlowEnabled(detailedScoringItem.value)
+    ? t('admin.llm.routing.detailedScoring.enabledShort')
+    : t('admin.llm.routing.detailedScoring.disabledShort');
 
   return [
     t('admin.llm.routing.capability.flowState', {
@@ -535,7 +550,7 @@ const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
   if (detailedScoringItem.value) {
     cards[LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL] = {
       capabilities: detailedScoringCapabilities.value,
-      editDisabled: isRoutingDisabled.value || !detailedScoringItem.value.enabled
+      editDisabled: isRoutingDisabled.value
     };
   }
 
@@ -574,7 +589,7 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       tertiaryModelId: '',
       reasoningEffort: '',
       strategyKey: '',
-      flowEnabled: detailedScoringItem.value?.enabled ?? true
+      flowEnabled: resolveEffectiveFlowEnabled(detailedScoringItem.value)
     };
   }
 
@@ -642,7 +657,10 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
       retryLabel: t('admin.roles.routing.retryOverrideLabel'),
       disabled: isRoutingDisabled.value,
       emptyValue: INHERIT_MODEL_ID,
-      disableRetryWhenPrimaryEmpty: true
+      disableRetryWhenPrimaryEmpty: true,
+      showFlowToggle: true,
+      flowToggleLabel: t('admin.llm.routing.detailedScoring.enabledLabel'),
+      flowToggleDescription: t('admin.llm.routing.detailedScoring.enabledDescription')
     };
   }
 
@@ -732,6 +750,24 @@ const saveScenario = async () => {
         await Promise.all(updates);
       }
     } else if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+      const scenarioDefaultEnabled = detailedScoringItem.value?.enabled ?? true;
+      const currentEnabledOverride = findRoleEnabledOverride(detailedScoringItem.value);
+
+      if (modalDraft.value.flowEnabled === scenarioDefaultEnabled) {
+        if (currentEnabledOverride) {
+          await deleteRoleEnabledOverride(
+            LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL,
+            props.role
+          );
+        }
+      } else {
+        await upsertRoleEnabledOverride(
+          LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL,
+          props.role,
+          modalDraft.value.flowEnabled
+        );
+      }
+
       const selectedPrimary = fromSelectModelId(modalDraft.value.primaryModelId);
       const selectedRetry = fromSelectModelId(modalDraft.value.secondaryModelId);
       const existingPrimary = currentOverrideModelId(detailedScoringItem.value);
