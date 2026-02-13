@@ -52,15 +52,16 @@ export default defineEventHandler(async (event): Promise<VacancyPreparationRespo
     userRole,
     LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
   );
-  const hasDetailedScenario = Boolean(scenarioModel);
+  const detailedScoringEnabled = Boolean(scenarioModel);
 
   const vacancyVersionMarker = buildVacancyVersionMarker({
     company: vacancy.company,
     jobPosition: vacancy.jobPosition,
     description: vacancy.description
   });
+  const visibleScoreDetails = detailedScoringEnabled ? scoreDetails : null;
   const scoreDetailsStale = Boolean(
-    scoreDetails && scoreDetails.vacancyVersionMarker !== vacancyVersionMarker
+    visibleScoreDetails && visibleScoreDetails.vacancyVersionMarker !== vacancyVersionMarker
   );
 
   return {
@@ -70,15 +71,16 @@ export default defineEventHandler(async (event): Promise<VacancyPreparationRespo
       jobPosition: vacancy.jobPosition
     },
     latestGeneration,
-    scoreDetails,
+    scoreDetails: visibleScoreDetails,
+    detailedScoringEnabled,
     scoreDetailsStale,
-    canRequestDetails: Boolean(latestGeneration && (hasDetailedScenario || scoreDetails)),
+    canRequestDetails: Boolean(latestGeneration && detailedScoringEnabled),
     canRegenerateDetails: Boolean(
       latestGeneration &&
-      scoreDetails &&
+      visibleScoreDetails &&
       scoreDetailsStale &&
       vacancy.canGenerateResume &&
-      hasDetailedScenario
+      detailedScoringEnabled
     )
   };
 });

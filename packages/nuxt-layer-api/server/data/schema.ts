@@ -11,6 +11,7 @@ import type {
 import {
   LLM_MODEL_STATUS_VALUES,
   LLM_PROVIDER_VALUES,
+  LLM_REASONING_EFFORT_VALUES,
   LLM_RESPONSE_FORMAT_VALUES,
   LLM_SCENARIO_KEY_VALUES,
   LLM_STRATEGY_KEY_VALUES,
@@ -58,6 +59,7 @@ export const llmModelStatusEnum = pgEnum('llm_model_status', LLM_MODEL_STATUS_VA
 export const llmScenarioKeyEnum = pgEnum('llm_scenario_key', LLM_SCENARIO_KEY_VALUES);
 export const llmStrategyKeyEnum = pgEnum('llm_strategy_key', LLM_STRATEGY_KEY_VALUES);
 export const llmResponseFormatEnum = pgEnum('llm_response_format', LLM_RESPONSE_FORMAT_VALUES);
+export const llmReasoningEffortEnum = pgEnum('llm_reasoning_effort', LLM_REASONING_EFFORT_VALUES);
 export const operationEnum = pgEnum('operation', OPERATION_VALUES);
 export const providerTypeEnum = pgEnum('provider_type', PROVIDER_TYPE_VALUES);
 export const userStatusEnum = pgEnum('user_status', USER_STATUS_VALUES);
@@ -406,6 +408,7 @@ export const llmScenarioModels = pgTable(
     temperature: decimal('temperature', { precision: 3, scale: 2 }),
     maxTokens: integer('max_tokens'),
     responseFormat: llmResponseFormatEnum('response_format'),
+    reasoningEffort: llmReasoningEffortEnum('reasoning_effort'),
     strategyKey: llmStrategyKeyEnum('strategy_key'),
     updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
   },
@@ -433,6 +436,7 @@ export const llmRoleScenarioOverrides = pgTable(
     temperature: decimal('temperature', { precision: 3, scale: 2 }),
     maxTokens: integer('max_tokens'),
     responseFormat: llmResponseFormatEnum('response_format'),
+    reasoningEffort: llmReasoningEffortEnum('reasoning_effort'),
     strategyKey: llmStrategyKeyEnum('strategy_key'),
     updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
   },

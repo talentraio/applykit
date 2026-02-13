@@ -10,7 +10,7 @@
     <template #body>
       <component
         :is="formComponent"
-        v-if="formComponent"
+        v-if="open && formComponent"
         v-model:draft="draft"
         v-bind="resolvedFormProps"
       />
@@ -72,7 +72,13 @@ const open = defineModel<boolean>('open', { required: true });
 const draft = defineModel<RoutingScenarioDraft>('draft', { required: true });
 
 const resolvedFormProps = computed<Record<string, unknown>>(() => {
-  return props.formProps ?? {};
+  return (
+    props.formProps ?? {
+      modelOptions: [],
+      strategyOptions: [],
+      reasoningOptions: []
+    }
+  );
 });
 
 const handleCancel = () => {

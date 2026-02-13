@@ -21,9 +21,7 @@ export default defineNuxtConfig({
   extends: ['@int/utils'],
 
   runtimeConfig: {
-    databaseUrl:
-      process.env.NUXT_DATABASE_URL ??
-      'postgresql://postgres:postgres@localhost:5432/resume_editor',
+    databaseUrl: 'postgresql://postgres:postgres@localhost:5432/resume_editor',
     llm: {
       openaiApiKey: '',
       geminiApiKey: '',

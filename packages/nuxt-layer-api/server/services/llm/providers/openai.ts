@@ -135,7 +135,12 @@ export class OpenAIProvider implements ILLMProvider {
     const temperatureField = model.startsWith('gpt-5')
       ? {}
       : { temperature: request.temperature ?? 0.7 };
-    const reasoningField = model.startsWith('gpt-5') ? { reasoning_effort: 'low' as const } : {};
+    const reasoningField =
+      model.startsWith('gpt-5') &&
+      request.reasoningEffort !== undefined &&
+      request.reasoningEffort !== 'auto'
+        ? { reasoning_effort: request.reasoningEffort }
+        : {};
 
     try {
       const completion = await client.chat.completions.create({

@@ -66,10 +66,12 @@ const MapEvidenceResponseSchema = z.object({
 
 const DEFAULT_GEMINI_CACHE_TTL_SECONDS = 300;
 const MAX_SCORING_SIGNAL_ITEMS = 6;
-const MAX_SCORING_EVIDENCE_ITEMS = 20;
+const MAX_SCORING_EVIDENCE_ITEMS = 12;
 const MAX_SCORING_REF_ITEMS = 3;
-const SCORING_EXTRACT_MAX_TOKENS = 1200;
-const SCORING_MAP_MAX_TOKENS = 1400;
+const SCORING_EXTRACT_MAX_TOKENS = 900;
+const SCORING_MAP_MAX_TOKENS = 1000;
+const SCORING_EXTRACT_MAX_TOKENS_GPT5 = 1100;
+const SCORING_MAP_MAX_TOKENS_GPT5 = 1400;
 const HEURISTIC_SIGNAL_TERMS_LIMIT = 12;
 const JSON_PARSE_ERROR_PATTERN =
   /failed to parse json|unexpected end of json input|unterminated|string in json|invalid json/i;
@@ -286,6 +288,10 @@ export type GenerateScoreDetailsOptions = {
   provider?: LLMProvider;
   maxRetries?: number;
   temperature?: number;
+  scoreSummaryAnchor?: {
+    before: number;
+    after: number;
+  };
 };
 
 export type GenerateScoreDetailsResult = {
@@ -447,6 +453,18 @@ const readLlmErrorCode = (details: unknown): string | null => {
   }
 
   return rawCode;
+};
+
+const isGpt5Model = (model: string): boolean => {
+  return model.startsWith('gpt-5');
+};
+
+const resolveExtractStepMaxTokens = (model: string): number => {
+  return isGpt5Model(model) ? SCORING_EXTRACT_MAX_TOKENS_GPT5 : SCORING_EXTRACT_MAX_TOKENS;
+};
+
+const resolveMapStepMaxTokens = (model: string): number => {
+  return isGpt5Model(model) ? SCORING_MAP_MAX_TOKENS_GPT5 : SCORING_MAP_MAX_TOKENS;
 };
 
 const shouldFallbackToHeuristicDetails = (error: ScoreDetailsError | null): boolean => {
@@ -955,6 +973,31 @@ function toDetailsPayload(
   };
 }
 
+const applyScoreSummaryAnchor = (
+  details: GenerationScoreDetailPayload,
+  scoreSummaryAnchor?: GenerateScoreDetailsOptions['scoreSummaryAnchor']
+): GenerationScoreDetailPayload => {
+  if (!scoreSummaryAnchor) {
+    return details;
+  }
+
+  const before = Number.isFinite(scoreSummaryAnchor.before)
+    ? clampScore(scoreSummaryAnchor.before)
+    : details.summary.before;
+  const after = Number.isFinite(scoreSummaryAnchor.after)
+    ? Math.max(clampScore(scoreSummaryAnchor.after), before)
+    : Math.max(details.summary.after, before);
+
+  return {
+    ...details,
+    summary: {
+      before,
+      after,
+      improvement: clampScore(Math.max(after - before, 0))
+    }
+  };
+};
+
 export async function generateScoreDetailsWithLLM(
   baseResume: ResumeContent,
   tailoredResume: ResumeContent,
@@ -992,6 +1035,8 @@ export async function generateScoreDetailsWithLLM(
   );
 
   const maxRetries = Math.max(1, Math.min(options.maxRetries ?? 2, 3));
+  const extractStepMaxTokens = resolveExtractStepMaxTokens(scenarioTarget.model);
+  const mapStepMaxTokens = resolveMapStepMaxTokens(scenarioTarget.model);
   let totalCost = 0;
   let totalTokens = 0;
   let totalInputTokens = 0;
@@ -1010,8 +1055,9 @@ export async function generateScoreDetailsWithLLM(
             sharedContext.prompt
           )}`,
           temperature: options.temperature ?? 0,
-          maxTokens: SCORING_EXTRACT_MAX_TOKENS,
+          maxTokens: extractStepMaxTokens,
           responseFormat: 'json',
+          reasoningEffort: 'low',
           providerOptions
         },
         {
@@ -1050,8 +1096,9 @@ export async function generateScoreDetailsWithLLM(
             signals
           )}`,
           temperature: options.temperature ?? 0,
-          maxTokens: SCORING_MAP_MAX_TOKENS,
+          maxTokens: mapStepMaxTokens,
           responseFormat: 'json',
+          reasoningEffort: 'low',
           providerOptions
         },
         {
@@ -1088,7 +1135,10 @@ export async function generateScoreDetailsWithLLM(
       });
 
       return {
-        details: toDetailsPayload(computed, signals, evidenceItems),
+        details: applyScoreSummaryAnchor(
+          toDetailsPayload(computed, signals, evidenceItems),
+          options.scoreSummaryAnchor
+        ),
         usage: {
           cost: totalCost,
           tokensUsed: totalTokens,
@@ -1153,11 +1203,14 @@ export async function generateScoreDetailsWithLLM(
     );
 
     return {
-      details: buildHeuristicDetailsPayload({
-        baseResume,
-        tailoredResume,
-        vacancyDescription: vacancy.description
-      }),
+      details: applyScoreSummaryAnchor(
+        buildHeuristicDetailsPayload({
+          baseResume,
+          tailoredResume,
+          vacancyDescription: vacancy.description
+        }),
+        options.scoreSummaryAnchor
+      ),
       usage: {
         cost: totalCost,
         tokensUsed: totalTokens,

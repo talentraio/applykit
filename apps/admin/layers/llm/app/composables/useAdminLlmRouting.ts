@@ -12,6 +12,7 @@ export type UseAdminLlmRoutingReturn = {
     scenarioKey: LlmScenarioKey,
     input: RoutingAssignmentInput
   ) => Promise<LlmRoutingItem>;
+  updateScenarioEnabled: (scenarioKey: LlmScenarioKey, enabled: boolean) => Promise<LlmRoutingItem>;
   upsertRoleOverride: (
     scenarioKey: LlmScenarioKey,
     role: Role,
@@ -34,6 +35,8 @@ export function useAdminLlmRouting(): UseAdminLlmRoutingReturn {
     fetchAll: () => nuxtApp.runWithContext(() => store.fetchAll()),
     updateDefault: (scenarioKey: LlmScenarioKey, input: RoutingAssignmentInput) =>
       nuxtApp.runWithContext(() => store.updateDefault(scenarioKey, input)),
+    updateScenarioEnabled: (scenarioKey: LlmScenarioKey, enabled: boolean) =>
+      nuxtApp.runWithContext(() => store.updateScenarioEnabled(scenarioKey, enabled)),
     upsertRoleOverride: (scenarioKey: LlmScenarioKey, role: Role, input: RoutingAssignmentInput) =>
       nuxtApp.runWithContext(() => store.upsertRoleOverride(scenarioKey, role, input)),
     deleteRoleOverride: (scenarioKey: LlmScenarioKey, role: Role) =>

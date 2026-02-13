@@ -40,16 +40,20 @@ Rules:
 - Do not include markdown or explanations`;
 
 const ECONOMY_STRATEGY_INSTRUCTIONS = `Strategy: economy
-- Prefer minimal, high-impact edits over full rewrites
-- Reorder content to improve relevance before rewriting text
-- Keep phrasing concise and direct
-- Avoid adding decorative language`;
+- Operate in minimal_edit mode
+- Keep the original structure and wording unless a clear relevance gain exists
+- Prioritize reordering over rewriting
+- Rewrite only summary and the most relevant bullets in latest experience entries
+- Do not expand section sizes or add extra narrative text
+- Keep edits concise, plain, and ATS-friendly`;
 
 const QUALITY_STRATEGY_INSTRUCTIONS = `Strategy: quality
-- Keep ATS keyword alignment while improving readability
-- Avoid AI-like cliches (e.g. results-driven, passionate, dynamic)
-- Maintain natural variation in bullet phrasing
-- Improve summary clarity without changing factual meaning`;
+- Allow deeper targeted rewriting for summary and key bullets
+- Improve clarity, specificity, and flow while preserving factual accuracy
+- Increase keyword alignment naturally (no keyword stuffing)
+- Keep bullet language human and concrete; avoid AI-like cliches
+- Prefer action + context (+ impact when present in source data)
+- Do not invent metrics or achievements`;
 
 const STRATEGY_INSTRUCTIONS: Record<LlmStrategyKey, string> = {
   [LLM_STRATEGY_KEY_MAP.ECONOMY]: ECONOMY_STRATEGY_INSTRUCTIONS,

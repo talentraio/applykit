@@ -53,9 +53,11 @@ type ApiErrorWithMessage = {
 
 const INHERIT_MODEL_ID = '__inherit__';
 const INHERIT_STRATEGY_KEY = '__inherit_strategy__';
+const INHERIT_REASONING_EFFORT = '__inherit_reasoning_effort__';
 const ADAPTATION_RUNTIME_DEFAULT_TEMPERATURE = 0.3;
 const ADAPTATION_RUNTIME_DEFAULT_MAX_TOKENS = 6000;
 const ADAPTATION_RUNTIME_DEFAULT_RESPONSE_FORMAT = 'json';
+const ADAPTATION_RUNTIME_DEFAULT_REASONING_EFFORT = 'auto';
 const SCORING_RUNTIME_DEFAULT_TEMPERATURE = 0;
 const SCORING_RUNTIME_DEFAULT_MAX_TOKENS = 800;
 const SCORING_RUNTIME_DEFAULT_RESPONSE_FORMAT = 'json';
@@ -182,6 +184,29 @@ const strategyOptionsWithInherit = computed<RoutingSelectOption[]>(() => [
   }
 ]);
 
+const reasoningOptionsWithInherit = computed<RoutingSelectOption[]>(() => [
+  {
+    label: t('admin.roles.routing.inheritDefault'),
+    value: INHERIT_REASONING_EFFORT
+  },
+  {
+    label: t('admin.llm.routing.reasoningEffort.auto'),
+    value: 'auto'
+  },
+  {
+    label: t('admin.llm.routing.reasoningEffort.low'),
+    value: 'low'
+  },
+  {
+    label: t('admin.llm.routing.reasoningEffort.medium'),
+    value: 'medium'
+  },
+  {
+    label: t('admin.llm.routing.reasoningEffort.high'),
+    value: 'high'
+  }
+]);
+
 const resolveModelLabel = (modelId: string | null): string => {
   if (!modelId) {
     return t('admin.roles.routing.notConfigured');
@@ -207,6 +232,22 @@ const resolveStrategyLabel = (strategyKey: string | null): string => {
   return t('admin.llm.routing.strategy.economy');
 };
 
+const resolveReasoningEffortLabel = (reasoningEffort: string | null | undefined): string => {
+  if (reasoningEffort === 'low') {
+    return t('admin.llm.routing.reasoningEffort.low');
+  }
+
+  if (reasoningEffort === 'medium') {
+    return t('admin.llm.routing.reasoningEffort.medium');
+  }
+
+  if (reasoningEffort === 'high') {
+    return t('admin.llm.routing.reasoningEffort.high');
+  }
+
+  return t('admin.llm.routing.reasoningEffort.auto');
+};
+
 const resolveInheritedModelLabel = (modelId: string): string => {
   if (!modelId) {
     return t('admin.roles.routing.inheritDefault');
@@ -221,6 +262,14 @@ const resolveInheritedStrategyLabel = (strategyKey: string): string => {
   }
 
   return resolveStrategyLabel(strategyKey);
+};
+
+const resolveInheritedReasoningEffortLabel = (reasoningEffort: string): string => {
+  if (!reasoningEffort) {
+    return t('admin.roles.routing.inheritDefault');
+  }
+
+  return resolveReasoningEffortLabel(reasoningEffort);
 };
 
 const findRoleOverride = (item: LlmRoutingItem | null) => {
@@ -269,6 +318,10 @@ const currentStrategyOverrideKey = (item: LlmRoutingItem | null): string => {
   return findRoleOverride(item)?.strategyKey ?? '';
 };
 
+const currentReasoningEffortOverride = (item: LlmRoutingItem | null): string => {
+  return findRoleOverride(item)?.reasoningEffort ?? '';
+};
+
 const toSelectModelId = (value: string): string => {
   return value || INHERIT_MODEL_ID;
 };
@@ -291,6 +344,30 @@ const fromSelectStrategyKey = (value: string): LlmStrategyKey | null => {
   }
 
   return LLM_STRATEGY_KEY_MAP.ECONOMY;
+};
+
+const toSelectReasoningEffort = (value: string): string => {
+  return value || INHERIT_REASONING_EFFORT;
+};
+
+const fromSelectReasoningEffort = (value: string): 'auto' | 'low' | 'medium' | 'high' | null => {
+  if (value === INHERIT_REASONING_EFFORT || value.length === 0) {
+    return null;
+  }
+
+  if (value === 'low') {
+    return 'low';
+  }
+
+  if (value === 'medium') {
+    return 'medium';
+  }
+
+  if (value === 'high') {
+    return 'high';
+  }
+
+  return 'auto';
 };
 
 const resumeParseCapabilities = computed<string[]>(() => {
@@ -326,6 +403,11 @@ const resumeAdaptationCapabilities = computed<string[]>(() => {
         currentStrategyOverrideKey(resumeAdaptationItem.value)
       )
     }),
+    t('admin.roles.routing.currentReasoningEffort', {
+      value: resolveInheritedReasoningEffortLabel(
+        currentReasoningEffortOverride(resumeAdaptationItem.value)
+      )
+    }),
     t('admin.roles.routing.defaultModel', {
       model: resolveModelLabel(resumeAdaptationItem.value?.default?.modelId ?? null)
     }),
@@ -339,6 +421,9 @@ const resumeAdaptationCapabilities = computed<string[]>(() => {
       strategy: resolveStrategyLabel(
         resumeAdaptationItem.value?.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY
       )
+    }),
+    t('admin.roles.routing.defaultReasoningEffort', {
+      value: resolveReasoningEffortLabel(resumeAdaptationItem.value?.default?.reasoningEffort)
     })
   ];
 });
@@ -355,7 +440,15 @@ const coverLetterCapabilities = computed<string[]>(() => {
 });
 
 const detailedScoringCapabilities = computed<string[]>(() => {
+  const flowStatus =
+    detailedScoringItem.value?.enabled === false
+      ? t('admin.llm.routing.detailedScoring.disabledShort')
+      : t('admin.llm.routing.detailedScoring.enabledShort');
+
   return [
+    t('admin.llm.routing.capability.flowState', {
+      status: flowStatus
+    }),
     t('admin.roles.routing.currentModel', {
       model: resolveInheritedModelLabel(currentOverrideModelId(detailedScoringItem.value))
     }),
@@ -391,6 +484,11 @@ const resumeAdaptationRuntimeConfig = computed<ResumeAdaptationRuntimeConfig | n
       resumeAdaptationItem.value,
       assignment => assignment.responseFormat,
       ADAPTATION_RUNTIME_DEFAULT_RESPONSE_FORMAT
+    ),
+    adaptationReasoningEffort: resolveEffectiveRuntimeValue(
+      resumeAdaptationItem.value,
+      assignment => assignment.reasoningEffort,
+      ADAPTATION_RUNTIME_DEFAULT_REASONING_EFFORT
     ),
     scoringTemperature: resolveEffectiveRuntimeValue(
       resumeScoringItem.value,
@@ -437,7 +535,7 @@ const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
   if (detailedScoringItem.value) {
     cards[LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL] = {
       capabilities: detailedScoringCapabilities.value,
-      editDisabled: isRoutingDisabled.value
+      editDisabled: isRoutingDisabled.value || !detailedScoringItem.value.enabled
     };
   }
 
@@ -450,7 +548,9 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       primaryModelId: toSelectModelId(currentOverrideModelId(resumeParseItem.value)),
       secondaryModelId: toSelectModelId(currentRetryOverrideModelId(resumeParseItem.value)),
       tertiaryModelId: '',
-      strategyKey: ''
+      reasoningEffort: '',
+      strategyKey: '',
+      flowEnabled: true
     };
   }
 
@@ -459,7 +559,11 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       primaryModelId: toSelectModelId(currentOverrideModelId(resumeAdaptationItem.value)),
       secondaryModelId: toSelectModelId(currentOverrideModelId(resumeScoringItem.value)),
       tertiaryModelId: toSelectModelId(currentRetryOverrideModelId(resumeAdaptationItem.value)),
-      strategyKey: toSelectStrategyKey(currentStrategyOverrideKey(resumeAdaptationItem.value))
+      reasoningEffort: toSelectReasoningEffort(
+        currentReasoningEffortOverride(resumeAdaptationItem.value)
+      ),
+      strategyKey: toSelectStrategyKey(currentStrategyOverrideKey(resumeAdaptationItem.value)),
+      flowEnabled: true
     };
   }
 
@@ -468,7 +572,9 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       primaryModelId: toSelectModelId(currentOverrideModelId(detailedScoringItem.value)),
       secondaryModelId: toSelectModelId(currentRetryOverrideModelId(detailedScoringItem.value)),
       tertiaryModelId: '',
-      strategyKey: ''
+      reasoningEffort: '',
+      strategyKey: '',
+      flowEnabled: detailedScoringItem.value?.enabled ?? true
     };
   }
 
@@ -476,7 +582,9 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
     primaryModelId: toSelectModelId(currentOverrideModelId(coverLetterItem.value)),
     secondaryModelId: '',
     tertiaryModelId: '',
-    strategyKey: ''
+    reasoningEffort: '',
+    strategyKey: '',
+    flowEnabled: true
   };
 };
 
@@ -512,14 +620,17 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
     return {
       modelOptions: modelOptionsWithInherit.value,
       strategyOptions: strategyOptionsWithInherit.value,
+      reasoningOptions: reasoningOptionsWithInherit.value,
       primaryLabel: t('admin.roles.routing.overrideLabel'),
-      scoringLabel: t('admin.roles.routing.scoringOverrideLabel'),
+      scoringLabel: t('admin.roles.routing.baseScoringOverrideLabel'),
       retryLabel: t('admin.roles.routing.retryOverrideLabel'),
+      reasoningLabel: t('admin.llm.routing.reasoningEffortLabel'),
       strategyLabel: t('admin.roles.routing.strategyOverrideLabel'),
       disabled: isRoutingDisabled.value,
       emptyValue: INHERIT_MODEL_ID,
       disableTertiaryWhenPrimaryEmpty: true,
       disableStrategyWhenPrimaryEmpty: true,
+      disableReasoningWhenPrimaryEmpty: true,
       runtimeConfig: resumeAdaptationRuntimeConfig.value
     };
   }
@@ -583,6 +694,7 @@ const saveScenario = async () => {
       const selectedScoring = fromSelectModelId(modalDraft.value.secondaryModelId);
       const selectedRetry = fromSelectModelId(modalDraft.value.tertiaryModelId);
       const selectedStrategy = fromSelectStrategyKey(modalDraft.value.strategyKey);
+      const selectedReasoningEffort = fromSelectReasoningEffort(modalDraft.value.reasoningEffort);
 
       const existingPrimary = currentOverrideModelId(resumeAdaptationItem.value);
       const existingScoring = currentOverrideModelId(resumeScoringItem.value);
@@ -594,6 +706,7 @@ const saveScenario = async () => {
           upsertRoleOverride(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION, props.role, {
             modelId: selectedPrimary,
             retryModelId: selectedRetry || null,
+            reasoningEffort: selectedReasoningEffort,
             strategyKey: selectedStrategy
           })
         );

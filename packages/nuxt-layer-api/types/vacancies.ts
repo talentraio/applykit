@@ -35,6 +35,7 @@ export type VacancyPreparationResponse = {
   vacancy: VacancyMeta;
   latestGeneration: VacancyOverviewGeneration | null;
   scoreDetails: GenerationScoreDetail | null;
+  detailedScoringEnabled: boolean;
   scoreDetailsStale: boolean;
   canRequestDetails: boolean;
   canRegenerateDetails: boolean;

@@ -149,7 +149,7 @@ const props = defineProps<{
   photoUrl?: string; // Not used in ATS view
 }>();
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 // Type-safe payload accessors
 const personalInfo = computed(() => props.block.payload as PersonalInfo);
@@ -168,14 +168,34 @@ const certificationEntry = computed(() => props.block.payload as CertificationEn
 const languageEntry = computed(() => props.block.payload as ResumeLanguage);
 const customSectionItem = computed(() => props.block.payload as CustomSectionItem);
 
+const toTitleCase = (value: string): string => {
+  return value
+    .toLowerCase()
+    .split(' ')
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const resolveSectionTranslationKey = (title: string): string | null => {
+  const normalizedTitle = title.trim().replace(/\s+/g, ' ');
+  const candidates = [normalizedTitle, normalizedTitle.toLowerCase(), toTitleCase(normalizedTitle)];
+
+  for (const candidate of candidates) {
+    const key = `resume.section.${candidate}`;
+    if (te(key)) {
+      return key;
+    }
+  }
+
+  return null;
+};
+
 // Section title from payload or i18n
 const sectionTitle = computed(() => {
   const payload = props.block.payload as BlockPayload['section-heading'];
-  // If title is a key like 'summary', 'experience', translate it
-  const key = `resume.section.${payload.title}`;
-  const translated = t(key);
-  // If translation exists (not same as key), use it; otherwise use raw title
-  return translated !== key ? translated : payload.title;
+  const resolvedKey = resolveSectionTranslationKey(payload.title);
+  return resolvedKey ? t(resolvedKey) : payload.title;
 });
 
 // Contact items for personal info

@@ -91,6 +91,20 @@ export const LLM_RESPONSE_FORMAT_VALUES = [
   LLM_RESPONSE_FORMAT_MAP.JSON
 ] as const;
 
+export const LLM_REASONING_EFFORT_MAP = {
+  AUTO: 'auto',
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high'
+} as const;
+
+export const LLM_REASONING_EFFORT_VALUES = [
+  LLM_REASONING_EFFORT_MAP.AUTO,
+  LLM_REASONING_EFFORT_MAP.LOW,
+  LLM_REASONING_EFFORT_MAP.MEDIUM,
+  LLM_REASONING_EFFORT_MAP.HIGH
+] as const;
+
 export const LLM_STRATEGY_KEY_MAP = {
   ECONOMY: 'economy',
   QUALITY: 'quality'
