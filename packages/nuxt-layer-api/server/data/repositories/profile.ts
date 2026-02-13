@@ -43,7 +43,7 @@ export const profileRepository = {
         country: data.country,
         searchRegion: data.searchRegion,
         workFormat: data.workFormat,
-        languages: data.languages,
+        languages: data.languages ?? [],
         phones: data.phones,
         photoUrl: data.photoUrl
       })
@@ -100,8 +100,9 @@ export const profileRepository = {
       profile.lastName.length > 0 &&
       profile.email.length > 0 &&
       profile.country.length === 2 &&
-      profile.searchRegion.length > 0 &&
-      profile.languages.length > 0
+      profile.searchRegion.length > 0
+      // TODO: temporarily hidden, re-enable when languages section is ready
+      // && (profile.languages?.length ?? 0) > 0
     );
   }
 };

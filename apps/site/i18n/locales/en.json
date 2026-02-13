@@ -326,6 +326,9 @@
         "year": "Year",
         "month": "Month",
         "months": {
+          "10": "Oct",
+          "11": "Nov",
+          "12": "Dec",
           "01": "Jan",
           "02": "Feb",
           "03": "Mar",
@@ -334,10 +337,7 @@
           "06": "Jun",
           "07": "Jul",
           "08": "Aug",
-          "09": "Sep",
-          "10": "Oct",
-          "11": "Nov",
-          "12": "Dec"
+          "09": "Sep"
         }
       }
     }
@@ -551,7 +551,8 @@
       "details": "Details",
       "regenerateDetails": "Regenerate details",
       "detailsFailed": "Failed to load detailed scoring",
-      "detailsFetchFailed": "Failed to load preparation data"
+      "detailsFetchFailed": "Failed to load preparation data",
+      "dismissAlertFailed": "Failed to dismiss notification"
     },
     "preparation": {
       "title": "Preparation Details",
@@ -608,83 +609,203 @@
     "terms": "Terms of Service"
   },
   "landing": {
-    "hero": {
-      "headline": "Tailor your resume to every vacancy — fast.",
-      "subheadline": "Upload a DOCX or PDF, review the structured result, generate ATS + human-friendly versions, and export clean PDFs.",
-      "ctaPrimary": "Try it",
-      "ctaSecondary": "See how it works",
-      "disclaimer": "Free tier available. Bring your own API key if you want higher limits."
-    },
-    "steps": {
-      "title": "How it works",
-      "upload": {
-        "title": "Upload",
-        "description": "Upload your resume in DOCX or PDF format"
-      },
-      "review": {
-        "title": "Review",
-        "description": "Review parsed JSON and fix any missing fields"
-      },
-      "vacancy": {
-        "title": "Add Vacancy",
-        "description": "Add company, position, and job description"
-      },
-      "export": {
-        "title": "Generate & Export",
-        "description": "Generate tailored resumes and export ATS/Human PDFs"
+    "header": {
+      "dashboard": "Dashboard",
+      "signIn": "Sign in",
+      "start": "Start tailoring",
+      "nav": {
+        "flow": "Flow",
+        "features": "Features",
+        "dual": "ATS + Human",
+        "faq": "FAQ"
       }
     },
-    "comparison": {
-      "title": "ATS vs Human Resume",
-      "subtitle": "ApplyKit keeps the content consistent between both versions — only the presentation changes.",
+    "hero": {
+      "badge": "AI Resume Tailoring Platform",
+      "title": "Turn one resume into role-ready applications in minutes.",
+      "subtitle": "ApplyKit adapts your resume to each vacancy, keeps facts grounded, and exports both ATS-safe and human-polished versions from one source.",
+      "primaryCta": "Start tailoring now",
+      "secondaryCta": "See the flow",
+      "previewLabel": "Live Preview",
+      "previewTitle": "Same profile, two output modes",
+      "previewRole": "Senior Product Manager",
+      "previewAts": "ATS",
+      "previewHuman": "Human",
+      "previewAtsLine1": "Optimized for parser readability and structured keyword coverage.",
+      "previewAtsLine2": "Role-specific achievements sorted by impact and relevance.",
+      "previewAtsLine3": "Clean sections and consistent terminology for screening systems.",
+      "previewHumanLine1": "Natural language tuned for recruiter and hiring manager review.",
+      "previewHumanLine2": "Stronger narrative arc, concise impact bullets, better readability.",
+      "previewHumanLine3": "Keeps factual integrity while improving clarity and positioning.",
+      "floating": {
+        "scoreLabel": "Average score lift",
+        "timeLabel": "Average time to tailored draft",
+        "timeValue": "6 minutes"
+      },
+      "meta": {
+        "oneLabel": "Export formats",
+        "oneValue": "ATS + Human PDF",
+        "twoLabel": "Input support",
+        "twoValue": "DOCX + PDF",
+        "threeLabel": "Target roles",
+        "threeValue": "Any office profession"
+      }
+    },
+    "proof": {
+      "label": "Positioning",
+      "title": "Built for serious job search velocity, not generic text generation.",
+      "subtitle": "The workflow is tuned for repeatable applications: keep your baseline resume, adapt per vacancy, track quality, and export instantly.",
+      "metrics": {
+        "aLabel": "Tailored versions / week",
+        "aValue": "8-20",
+        "bLabel": "Median first draft time",
+        "bValue": "6 min",
+        "cLabel": "Manual editing reduction",
+        "cValue": "Up to 70%"
+      },
+      "rolesTitle": "Works beyond engineering roles",
+      "rolesNote": "Marketing, operations, finance, sales, HR, customer success, and other office roles can use the same adaptation flow.",
+      "roles": {
+        "one": "Product",
+        "two": "Marketing",
+        "three": "Sales",
+        "four": "Operations",
+        "five": "Finance",
+        "six": "HR"
+      }
+    },
+    "flow": {
+      "label": "Workflow",
+      "title": "A focused flow from baseline resume to targeted application.",
+      "subtitle": "No noisy dashboard maze. Each step is explicit, fast, and designed to reduce decision fatigue.",
+      "steps": {
+        "upload": {
+          "title": "Import baseline resume",
+          "description": "Upload DOCX/PDF once and keep a reliable base profile in structured form."
+        },
+        "target": {
+          "title": "Attach vacancy context",
+          "description": "Paste the job description and key context so adaptation stays role-specific."
+        },
+        "adapt": {
+          "title": "Generate and review",
+          "description": "Create tailored content, inspect score shifts, and regenerate only when needed."
+        },
+        "export": {
+          "title": "Export and apply",
+          "description": "Download ATS or Human PDF instantly and move to application submission."
+        }
+      }
+    },
+    "features": {
+      "label": "Core Capabilities",
+      "title": "Everything needed for high-throughput, quality-controlled applications.",
+      "subtitle": "Designed to help individuals, coaches, and recruiting teams iterate quickly without losing resume accuracy.",
+      "items": {
+        "parse": {
+          "title": "Structured parsing",
+          "description": "Reliable DOCX/PDF parsing into strict JSON to keep resume data consistent."
+        },
+        "rewrite": {
+          "title": "Vacancy-aware rewriting",
+          "description": "Highlights relevant experience and language while preserving factual boundaries."
+        },
+        "score": {
+          "title": "Scoring signals",
+          "description": "See before/after fit indicators to decide when adaptation is good enough."
+        },
+        "versions": {
+          "title": "Version safety",
+          "description": "Keep history per vacancy and compare outcomes without losing prior iterations."
+        },
+        "formats": {
+          "title": "Dual rendering",
+          "description": "One tailored content source rendered into ATS-safe and recruiter-friendly outputs."
+        },
+        "limits": {
+          "title": "Usage controls",
+          "description": "Role-aware model routing and limits for predictable costs and governance."
+        }
+      }
+    },
+    "dual": {
+      "label": "Output Strategy",
+      "title": "Two resume outputs. One consistent source of truth.",
+      "subtitle": "Keep your content aligned while changing the presentation based on where you send your application.",
       "ats": {
         "title": "ATS Resume",
-        "point1": "Optimized for parsers (simple structure)",
-        "point2": "No fancy layout, minimal styling",
-        "point3": "Best for mass applications"
+        "point1": "Simple structure for parser compatibility and keyword traceability.",
+        "point2": "Minimal visual noise and predictable section hierarchy.",
+        "point3": "Best when application forms auto-parse uploaded files."
       },
       "human": {
         "title": "Human Resume",
-        "point1": "Clean A4 layout, readable typography",
-        "point2": "Optional photo + visual hierarchy",
-        "point3": "Best when recruiter asks for a \"nice PDF\""
-      }
-    },
-    "metrics": {
-      "title": "Your Progress",
-      "vacanciesTracked": "Vacancies tracked",
-      "resumesGenerated": "Resumes generated",
-      "avgMatchScore": "Avg. match score",
-      "bestMatchScore": "Best match score",
-      "timeSaved": "Time saved",
-      "lastGeneration": "Last generation",
-      "placeholder": {
-        "vacanciesTracked": "12",
-        "resumesGenerated": "48",
-        "avgMatchScore": "72%",
-        "bestMatchScore": "89%",
-        "timeSaved": "~3h/week",
-        "lastGeneration": "Today"
-      }
+        "point1": "Clear typography and hierarchy for recruiter readability.",
+        "point2": "Balanced narrative style with concise, impact-focused bullets.",
+        "point3": "Best for direct outreach, referrals, and PDF-first review."
+      },
+      "singleSourceLabel": "Consistency Layer",
+      "singleSourceTitle": "Content is shared. Only presentation differs by channel.",
+      "singleSourceBadge": "No content drift"
     },
     "faq": {
-      "title": "Frequently Asked Questions",
-      "apiKey": {
-        "question": "Is it safe to paste my API key?",
-        "answer": "You can use the free tier, or bring your own key. Keys are treated as sensitive. Prefer temporary keys."
-      },
-      "atsPlain": {
-        "question": "Why does my ATS resume look plain?",
-        "answer": "That's intentional: ATS parsers prefer predictable structure."
-      },
-      "editing": {
-        "question": "Can I edit the result?",
-        "answer": "Yes — MVP uses a JSON editor. A friendly UI editor comes later."
-      },
-      "formats": {
-        "question": "DOCX or PDF?",
-        "answer": "DOCX is preferred, but PDF parsing is supported too."
+      "label": "FAQ",
+      "title": "Questions teams ask before rollout.",
+      "subtitle": "Short answers for technical and non-technical stakeholders.",
+      "callout": "Need a custom setup for roles, model routing, or limits? Start with default flow and extend gradually.",
+      "items": {
+        "data": {
+          "question": "Can we control sensitive data and model usage?",
+          "answer": "Yes. Routing and model configuration are managed in admin settings, with role-based overrides when needed."
+        },
+        "industries": {
+          "question": "Is this only for software engineers?",
+          "answer": "No. The flow is designed for office professions in general: product, marketing, sales, operations, finance, HR, and more."
+        },
+        "model": {
+          "question": "Do we need one model for every scenario?",
+          "answer": "Not necessarily. Start with practical defaults and override only high-impact scenarios or specific user roles."
+        },
+        "output": {
+          "question": "Why keep ATS and Human as separate outputs?",
+          "answer": "Because different channels need different presentation. ATS needs strict structure; humans need readability and narrative clarity."
+        }
       }
+    },
+    "offerPeek": {
+      "kicker": "Dream job offer",
+      "line1": "We'd be excited to welcome you to the team and build meaningful outcomes together.",
+      "line2": "Your profile aligns with our goals, and we believe you'll make a strong impact.",
+      "signature": "— Your dream team"
+    },
+    "floatingPaper": {
+      "summaryLabel": "Resume snapshot",
+      "summaryLine1": "Product-focused profile tailored for leadership, execution, and cross-functional collaboration.",
+      "summaryLine2": "Experience framed around measurable impact, clear responsibilities, and role-specific language.",
+      "summaryLine3": "Optimized structure for both ATS parsing and recruiter readability."
+    },
+    "cta": {
+      "label": "Launch Faster",
+      "title": "Ship higher-quality applications with less manual rewriting.",
+      "subtitle": "Use one controlled workflow for adaptation, scoring, and export. Start small, then scale with role-based model routing.",
+      "primary": "Start tailoring",
+      "secondary": "Sign in"
+    },
+    "footer": {
+      "description": "ApplyKit is a focused resume adaptation workspace for individuals and teams who need quality, speed, and repeatability.",
+      "product": "Product",
+      "flow": "Workflow",
+      "features": "Features",
+      "dual": "ATS + Human",
+      "legal": "Legal",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "account": "Account",
+      "login": "Login",
+      "resume": "Resume",
+      "vacancies": "Vacancies",
+      "copyright": "© {year} ApplyKit. All rights reserved.",
+      "tagline": "Built for fast, high-quality application cycles."
     }
   },
   "profile": {
@@ -783,6 +904,7 @@
       "incomplete": "Profile Incomplete",
       "incompleteDescription": "Complete your profile to enable accurate resume parsing and better vacancy matching.",
       "fromResumeUpload": "You were redirected here because your profile needs to be completed before uploading resumes.",
+      "returnTo": "Please complete your profile to continue. You'll be redirected back automatically after saving.",
       "missing": "Missing required fields",
       "benefits": {
         "parsing": "Better resume parsing accuracy",

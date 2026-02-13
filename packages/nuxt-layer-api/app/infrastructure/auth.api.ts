@@ -9,6 +9,7 @@ const authUrl = '/api/auth';
 export type AuthMeResponse = {
   user: UserPublic;
   profile: Profile | null;
+  isProfileComplete: boolean;
 };
 
 /**
@@ -23,7 +24,7 @@ export const authApi = {
    * Called on app init and after login
    */
   async fetchMe(): Promise<AuthMeResponse> {
-    return await useApi(`${authUrl}/me`, {
+    return useApi(`${authUrl}/me`, {
       method: 'GET'
     });
   },
@@ -33,7 +34,7 @@ export const authApi = {
    * Clears server session
    */
   async logout(): Promise<void> {
-    await useApi(`${authUrl}/logout`, {
+    useApi(`${authUrl}/logout`, {
       method: 'POST'
     });
   }

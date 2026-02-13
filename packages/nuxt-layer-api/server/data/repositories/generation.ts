@@ -207,5 +207,19 @@ export const generationRepository = {
       .where(eq(vacancies.userId, userId));
 
     return Number(result[0]?.count ?? 0);
+  },
+
+  /**
+   * Dismiss score alert for a generation
+   * Marks the alert as dismissed so it won't show again until next generation
+   */
+  async dismissScoreAlert(id: string): Promise<Generation | null> {
+    const result = await db
+      .update(generations)
+      .set({ scoreAlertDismissedAt: new Date() })
+      .where(eq(generations.id, id))
+      .returning();
+
+    return result[0] ?? null;
   }
 };

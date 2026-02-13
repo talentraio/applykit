@@ -8,10 +8,20 @@
       <!-- Header -->
       <UiPageHeader :title="$t('profile.title')" :description="$t('profile.description')" />
 
-      <!-- Redirect from Resume Upload Alert -->
-      <UAlert v-if="fromResumeUpload" color="info" variant="soft" icon="i-lucide-info" class="mb-2">
+      <!-- Redirect Alert -->
+      <UAlert
+        v-if="fromResumeUpload || returnTo"
+        color="info"
+        variant="soft"
+        icon="i-lucide-info"
+        class="mb-2"
+      >
         <template #title>
-          {{ $t('profile.completeness.fromResumeUpload') }}
+          {{
+            returnTo
+              ? $t('profile.completeness.returnTo')
+              : $t('profile.completeness.fromResumeUpload')
+          }}
         </template>
       </UAlert>
 
@@ -108,8 +118,12 @@ const route = useRoute();
 
 const { profile, isComplete, loading, error, saveProfile, checkCompleteness } = useProfile();
 
-// Check if user was redirected from resume upload
+// Check if user was redirected from resume upload or another page
 const fromResumeUpload = computed(() => route.query.from === 'resume-upload');
+const returnTo = computed(() => {
+  const value = route.query.returnTo;
+  return typeof value === 'string' ? value : undefined;
+});
 
 const isSaving = ref(false);
 const saveError = ref<Error | null>(null);
@@ -117,6 +131,8 @@ const saveError = ref<Error | null>(null);
 /**
  * Handle save
  */
+const toast = useToast();
+
 const handleSave = async (data: ProfileInput) => {
   isSaving.value = true;
   saveError.value = null;
@@ -125,7 +141,15 @@ const handleSave = async (data: ProfileInput) => {
     await saveProfile(data);
     await checkCompleteness();
 
-    // Success message would be shown via toast notification in production
+    toast.add({
+      title: t('profile.save.success'),
+      color: 'success'
+    });
+
+    // Redirect back if profile is now complete and returnTo is set
+    if (isComplete.value && returnTo.value) {
+      await navigateTo(returnTo.value);
+    }
   } catch (err) {
     console.error('Failed to save profile:', err);
     saveError.value = err instanceof Error ? err : new Error(t('profile.error.saveFailed'));
