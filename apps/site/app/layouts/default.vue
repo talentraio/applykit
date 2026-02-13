@@ -10,9 +10,6 @@
       </div>
     </main>
 
-    <!-- Footer -->
-    <AppFooter />
-
     <!-- Mobile Navigation Drawer -->
     <LayoutMobileNav v-model:open="isMobileMenuOpen" />
 
