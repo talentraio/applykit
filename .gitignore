@@ -94,6 +94,11 @@ Thumbs.db
 **/.playground/node_modules/
 
 # =========================
+# Temporary / scratch directories
+# =========================
+tmp/
+
+# =========================
 # Misc
 # =========================
 *.tgz
