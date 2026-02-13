@@ -1,5 +1,6 @@
 import type {
   LLMProvider,
+  LlmReasoningEffort,
   LlmResponseFormat,
   LlmScenarioKey,
   LlmStrategyKey,
@@ -22,6 +23,7 @@ export type ResolvedScenarioModel = {
   temperature: number | null;
   maxTokens: number | null;
   responseFormat: LlmResponseFormat | null;
+  reasoningEffort: LlmReasoningEffort | null;
   strategyKey: LlmStrategyKey | null;
 };
 
@@ -59,6 +61,7 @@ export async function resolveScenarioModel(
     temperature: resolved.assignment.temperature ?? null,
     maxTokens: resolved.assignment.maxTokens ?? null,
     responseFormat: resolved.assignment.responseFormat ?? null,
+    reasoningEffort: resolved.assignment.reasoningEffort ?? null,
     strategyKey: resolved.assignment.strategyKey ?? null
   };
 }

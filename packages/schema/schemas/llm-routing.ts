@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  LlmReasoningEffortSchema,
   LlmResponseFormatSchema,
   LlmScenarioKeySchema,
   LlmStrategyKeySchema,
@@ -7,6 +8,8 @@ import {
 } from './enums';
 
 export {
+  type LlmReasoningEffort,
+  LlmReasoningEffortSchema,
   type LlmResponseFormat,
   LlmResponseFormatSchema,
   type LlmScenarioKey,
@@ -20,6 +23,7 @@ export {
 const nullableTemperature = z.number().min(0).max(2).nullable().optional();
 const nullableMaxTokens = z.number().int().positive().nullable().optional();
 const nullableResponseFormat = LlmResponseFormatSchema.nullable().optional();
+const nullableReasoningEffort = LlmReasoningEffortSchema.nullable().optional();
 const nullableModelId = z.string().uuid().nullable().optional();
 const nullableStrategyKey = LlmStrategyKeySchema.nullable().optional();
 
@@ -29,10 +33,17 @@ export const RoutingAssignmentInputSchema = z.object({
   temperature: nullableTemperature,
   maxTokens: nullableMaxTokens,
   responseFormat: nullableResponseFormat,
+  reasoningEffort: nullableReasoningEffort,
   strategyKey: nullableStrategyKey
 });
 
 export type RoutingAssignmentInput = z.infer<typeof RoutingAssignmentInputSchema>;
+
+export const RoutingScenarioEnabledInputSchema = z.object({
+  enabled: z.boolean()
+});
+
+export type RoutingScenarioEnabledInput = z.infer<typeof RoutingScenarioEnabledInputSchema>;
 
 export const LlmRoutingDefaultSchema = RoutingAssignmentInputSchema.extend({
   updatedAt: z.date()

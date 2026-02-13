@@ -1,5 +1,6 @@
 import type {
   LlmModel,
+  LlmReasoningEffort,
   LlmRoutingItem,
   LlmRoutingOverride,
   LlmScenarioKey,
@@ -26,6 +27,7 @@ type RoutingAssignment = {
   temperature: number | null;
   maxTokens: number | null;
   responseFormat: 'text' | 'json' | null;
+  reasoningEffort: LlmReasoningEffort | null;
   strategyKey: LlmStrategyKey | null;
   updatedAt: Date;
 };
@@ -38,6 +40,7 @@ const toAssignment = (
   temperature: toNullableNumber(row.temperature),
   maxTokens: row.maxTokens,
   responseFormat: row.responseFormat,
+  reasoningEffort: row.reasoningEffort ?? null,
   strategyKey: row.strategyKey ?? null,
   updatedAt: row.updatedAt
 });
@@ -68,7 +71,13 @@ const toDbPatch = (
   input: RoutingAssignmentInput
 ): Pick<
   typeof llmScenarioModels.$inferInsert,
-  'modelId' | 'retryModelId' | 'temperature' | 'maxTokens' | 'responseFormat' | 'strategyKey'
+  | 'modelId'
+  | 'retryModelId'
+  | 'temperature'
+  | 'maxTokens'
+  | 'responseFormat'
+  | 'reasoningEffort'
+  | 'strategyKey'
 > => {
   return {
     modelId: input.modelId,
@@ -81,6 +90,7 @@ const toDbPatch = (
           : input.temperature.toString(),
     maxTokens: input.maxTokens ?? null,
     responseFormat: input.responseFormat ?? null,
+    reasoningEffort: input.reasoningEffort ?? null,
     strategyKey: input.strategyKey ?? null
   };
 };
@@ -177,6 +187,26 @@ export const llmRoutingRepository = {
       target: llmScenarioModels.scenarioKey,
       set: values
     });
+
+    return await this.getRoutingItem(scenarioKey);
+  },
+
+  async updateScenarioEnabled(
+    scenarioKey: LlmScenarioKey,
+    enabled: boolean
+  ): Promise<LlmRoutingItem | null> {
+    const rows = await db
+      .update(llmScenarios)
+      .set({
+        enabled,
+        updatedAt: new Date()
+      })
+      .where(eq(llmScenarios.key, scenarioKey))
+      .returning({ key: llmScenarios.key });
+
+    if (rows.length === 0) {
+      return null;
+    }
 
     return await this.getRoutingItem(scenarioKey);
   },

@@ -5,38 +5,41 @@
         <template #header>
           <NuxtLink
             to="/"
-            class="admin-default-layout__sidebar-header flex items-center gap-2 px-3 py-2"
+            class="admin-default-layout__sidebar-header flex flex-col items-start gap-1 px-3 py-2"
           >
-            <UIcon name="i-lucide-shield-check" class="text-primary" />
-            <span class="text-sm font-semibold">{{ appTitle }}</span>
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-shield-check" class="text-primary" />
+              <span class="text-sm font-semibold">{{ appTitle }}</span>
+            </div>
+
+            <p class="text-xs text-muted mt-[6px]">Role: {{ currentRoleLabel }}</p>
           </NuxtLink>
         </template>
 
         <template #default>
-          <UNavigationMenu
-            :items="navLinks"
-            orientation="vertical"
-            class="admin-default-layout__sidebar-nav px-2"
-          />
+          <div class="admin-default-layout__sidebar-content flex h-full flex-col">
+            <UNavigationMenu
+              :items="navLinks"
+              orientation="vertical"
+              class="admin-default-layout__sidebar-nav px-2"
+            />
+
+            <div class="mt-auto border-t border-default p-2">
+              <UButton
+                icon="i-lucide-log-out"
+                color="neutral"
+                variant="outline"
+                class="w-full justify-start"
+                @click="handleLogout"
+              >
+                {{ $t('auth.logout') }}
+              </UButton>
+            </div>
+          </div>
         </template>
       </UDashboardSidebar>
 
       <UDashboardPanel>
-        <template #header>
-          <UDashboardNavbar :title="appTitle" toggle-side="left">
-            <template #right>
-              <UDropdownMenu :items="userMenuItems">
-                <UButton
-                  icon="i-lucide-shield-check"
-                  color="neutral"
-                  variant="ghost"
-                  :label="$t('admin.nav.admin')"
-                />
-              </UDropdownMenu>
-            </template>
-          </UDashboardNavbar>
-        </template>
-
         <template #body>
           <UMain class="admin-default-layout__main">
             <slot />
@@ -59,12 +62,12 @@
  * TR014 - Refactored to use Nuxt UI Pro Dashboard components
  */
 
-import type { DropdownMenuItem, NavigationMenuItem } from '#ui/types';
+import type { NavigationMenuItem } from '#ui/types';
 
 defineOptions({ name: 'AdminDefaultLayout' });
 
-const { t } = useI18n();
-const { logout } = useAuth();
+const { t, te } = useI18n();
+const { user, logout } = useAuth();
 
 const appTitle = 'ApplyKit Admin';
 
@@ -126,15 +129,17 @@ const navLinks = computed<NavigationMenuItem[]>(() => [
   }
 ]);
 
-const userMenuItems = computed<DropdownMenuItem[][]>(() => [
-  [
-    {
-      label: t('auth.logout'),
-      icon: 'i-lucide-log-out',
-      onSelect: async () => {
-        await logout();
-      }
-    }
-  ]
-]);
+const currentRoleLabel = computed(() => {
+  const role = user.value?.role;
+  if (!role) {
+    return '—';
+  }
+
+  const key = `admin.roles.names.${role}`;
+  return te(key) ? t(key) : role;
+});
+
+const handleLogout = async (): Promise<void> => {
+  await logout();
+};
 </script>

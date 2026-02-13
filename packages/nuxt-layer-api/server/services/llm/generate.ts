@@ -1,5 +1,6 @@
 import type {
   LLMProvider,
+  LlmReasoningEffort,
   LlmScenarioKey,
   LlmStrategyKey,
   ProviderType,
@@ -351,6 +352,8 @@ const runAdaptationStep = async (
   let lastError: GenerateLLMError | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const retryReasoningEffort: LlmReasoningEffort | undefined = attempt > 1 ? 'medium' : undefined;
+
     try {
       const response = await callLLM(
         {
@@ -360,14 +363,17 @@ const runAdaptationStep = async (
           )}`,
           temperature: options.temperature ?? 0.3,
           maxTokens: 6000,
-          responseFormat: 'json'
+          responseFormat: 'json',
+          reasoningEffort: retryReasoningEffort
         },
         {
           userId: options.userId,
           role: options.role,
           provider: options.provider,
           scenario: LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION,
-          scenarioPhase: attempt > 1 ? 'retry' : 'primary'
+          scenarioPhase: attempt > 1 ? 'retry' : 'primary',
+          respectRequestMaxTokens: attempt > 1,
+          respectRequestReasoningEffort: attempt > 1
         }
       );
 
@@ -444,6 +450,7 @@ const runBaselineScoringStep = async (
           temperature: options.scoringTemperature ?? 0,
           maxTokens: BASELINE_SCORING_MAX_TOKENS,
           responseFormat: 'json',
+          reasoningEffort: 'low',
           providerOptions
         },
         {

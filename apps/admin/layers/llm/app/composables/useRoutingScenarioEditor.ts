@@ -112,13 +112,18 @@ export function useRoutingScenarioEditor(
     const scenarioKey = modalScenarioKey.value;
     if (!scenarioKey) return false;
 
-    if (
-      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE ||
-      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
-    ) {
+    if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_PARSE) {
       return (
         modalDraft.value.primaryModelId !== savedDraft.value.primaryModelId ||
         modalDraft.value.secondaryModelId !== savedDraft.value.secondaryModelId
+      );
+    }
+
+    if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
+      return (
+        modalDraft.value.primaryModelId !== savedDraft.value.primaryModelId ||
+        modalDraft.value.secondaryModelId !== savedDraft.value.secondaryModelId ||
+        modalDraft.value.flowEnabled !== savedDraft.value.flowEnabled
       );
     }
 
@@ -127,6 +132,7 @@ export function useRoutingScenarioEditor(
         modalDraft.value.primaryModelId !== savedDraft.value.primaryModelId ||
         modalDraft.value.secondaryModelId !== savedDraft.value.secondaryModelId ||
         modalDraft.value.tertiaryModelId !== savedDraft.value.tertiaryModelId ||
+        modalDraft.value.reasoningEffort !== savedDraft.value.reasoningEffort ||
         modalDraft.value.strategyKey !== savedDraft.value.strategyKey
       );
     }

@@ -25,13 +25,16 @@ export type RoutingScenarioDraft = {
   primaryModelId: string;
   secondaryModelId: string;
   tertiaryModelId: string;
+  reasoningEffort: string;
   strategyKey: string;
+  flowEnabled: boolean;
 };
 
 export type ResumeAdaptationRuntimeConfig = {
   adaptationTemperature: string;
   adaptationMaxTokens: string;
   adaptationResponseFormat: string;
+  adaptationReasoningEffort: string;
   scoringTemperature: string;
   scoringMaxTokens: string;
   scoringResponseFormat: string;
@@ -41,12 +44,16 @@ export const createEmptyRoutingScenarioDraft = (): RoutingScenarioDraft => ({
   primaryModelId: '',
   secondaryModelId: '',
   tertiaryModelId: '',
-  strategyKey: ''
+  reasoningEffort: '',
+  strategyKey: '',
+  flowEnabled: true
 });
 
 export const cloneRoutingScenarioDraft = (draft: RoutingScenarioDraft): RoutingScenarioDraft => ({
   primaryModelId: draft.primaryModelId,
   secondaryModelId: draft.secondaryModelId,
   tertiaryModelId: draft.tertiaryModelId,
-  strategyKey: draft.strategyKey
+  reasoningEffort: draft.reasoningEffort,
+  strategyKey: draft.strategyKey,
+  flowEnabled: draft.flowEnabled
 });
