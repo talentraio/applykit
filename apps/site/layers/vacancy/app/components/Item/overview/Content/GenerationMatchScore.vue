@@ -28,13 +28,20 @@
       </div>
 
       <!-- Improvement -->
-      <div v-if="improvement > 0" class="mt-4 rounded-lg bg-primary/10 p-3">
-        <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-trending-up" class="h-5 w-5 text-primary" />
-          <span class="text-sm font-semibold text-primary">
-            {{ $t('generation.matchScore.improvement', { points: improvement }) }}
-          </span>
+      <div class="mt-4 flex items-center justify-between">
+        <div
+          v-if="improvement > 0"
+          class="flex items-center justify-between rounded-lg bg-primary/10 p-3"
+        >
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-trending-up" class="h-5 w-5 text-primary" />
+            <span class="text-sm font-semibold text-primary">
+              {{ $t('generation.matchScore.improvement', { points: improvement }) }}
+            </span>
+          </div>
         </div>
+
+        <VacancyItemScoreDetailsButton :vacancy-id="vacancyId" :generation-id="generationId" />
       </div>
     </div>
   </UPageCard>
@@ -53,11 +60,12 @@
 defineOptions({ name: 'VacancyItemOverviewContentGenerationMatchScore' });
 
 const props = defineProps<{
+  vacancyId: string;
+  generationId: string;
   /**
    * Match score before tailoring (0-100)
    */
   scoreBefore: number;
-
   /**
    * Match score after tailoring (0-100)
    */

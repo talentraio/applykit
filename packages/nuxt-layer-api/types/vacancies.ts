@@ -5,7 +5,10 @@ import type {
   Vacancy
 } from '@int/schema';
 
-export type VacancyMeta = Pick<Vacancy, 'id' | 'company' | 'jobPosition'>;
+export type VacancyMeta = Pick<Vacancy, 'id' | 'company' | 'jobPosition'> & {
+  canRequestScoreDetails: boolean;
+  canRegenerateScoreDetails: boolean;
+};
 
 export type VacancyOverviewGeneration = Pick<
   Generation,

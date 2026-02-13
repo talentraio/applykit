@@ -7,8 +7,8 @@
       <!-- Basic Information Section -->
       <ProfileFormSectionBasic v-model="basicData" :email-verified="emailVerified" />
 
-      <!-- Languages Section -->
-      <ProfileFormSectionLanguages v-model="formData.languages" />
+      <!-- TODO: temporarily hidden, re-enable when languages section is ready -->
+      <!-- <ProfileFormSectionLanguages v-model="formData.languages" /> -->
 
       <!-- Phone Numbers Section -->
       <ProfileFormSectionPhone v-model="formData.phones" />
@@ -40,7 +40,7 @@
 import type { LanguageEntry, PhoneEntry, Profile, ProfileInput, WorkFormat } from '@int/schema';
 import { WORK_FORMAT_MAP } from '@int/schema';
 
-defineOptions({ name: 'UserProfileForm' });
+defineOptions({ name: 'ProfileForm' });
 
 const props = withDefaults(
   defineProps<{
@@ -77,7 +77,7 @@ type ProfileFormData = {
   country: string;
   searchRegion: string;
   workFormat: WorkFormat;
-  languages: LanguageEntry[];
+  languages?: LanguageEntry[];
   phones: PhoneEntry[];
   photoUrl?: string;
 };
@@ -133,10 +133,10 @@ const basicData = computed({
  * Handle form submission
  */
 const handleSubmit = () => {
-  // Validate at least one language
-  if (formData.languages.length === 0) {
-    return;
-  }
+  // TODO: restore language validation when languages section is re-enabled
+  // if (formData.languages?.length === 0) {
+  //   return;
+  // }
 
   // Validate terms acceptance for new profiles
   if (!hasExistingProfile.value && !termsAccepted.value) {
@@ -153,7 +153,7 @@ const handleSubmit = () => {
     country: formData.country.trim().toUpperCase(),
     searchRegion: formData.searchRegion.trim(),
     workFormat: formData.workFormat,
-    languages: formData.languages.filter(l => l.language && l.level),
+    languages: formData.languages?.filter(l => l.language && l.level),
     phones:
       formData.phones.filter(p => p.number).length > 0
         ? formData.phones.filter(p => p.number)
@@ -182,7 +182,7 @@ watch(
       formData.country = newProfile.country;
       formData.searchRegion = newProfile.searchRegion;
       formData.workFormat = newProfile.workFormat;
-      formData.languages = [...newProfile.languages];
+      formData.languages = newProfile.languages ? [...newProfile.languages] : [];
       formData.phones = newProfile.phones ? [...newProfile.phones] : [];
       formData.photoUrl = newProfile.photoUrl;
     } else {

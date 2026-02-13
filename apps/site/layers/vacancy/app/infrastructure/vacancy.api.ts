@@ -25,7 +25,7 @@ export const vacancyApi = {
    * Fetch paginated vacancies with sorting, filtering, and search
    */
   async fetchPaginated(query: VacancyListQuery): Promise<VacancyListResponse> {
-    return await useApi(vacancyUrl, {
+    return useApi(vacancyUrl, {
       method: 'GET',
       query
     });
@@ -35,7 +35,7 @@ export const vacancyApi = {
    * Fetch vacancy overview data by ID
    */
   async fetchOverview(id: string): Promise<VacancyOverview> {
-    return await useApi(`${vacancyUrl}/${id}/overview`, {
+    return useApi(`${vacancyUrl}/${id}/overview`, {
       method: 'GET'
     });
   },
@@ -44,7 +44,7 @@ export const vacancyApi = {
    * Fetch preparation payload by vacancy ID.
    */
   async fetchPreparation(id: string): Promise<VacancyPreparationResponse> {
-    return await useApi(`${vacancyUrl}/${id}/preparation`, {
+    return useApi(`${vacancyUrl}/${id}/preparation`, {
       method: 'GET'
     });
   },
@@ -53,7 +53,7 @@ export const vacancyApi = {
    * Fetch vacancy meta by ID
    */
   async fetchMeta(id: string): Promise<VacancyMeta> {
-    return await useApi(`${vacancyUrl}/${id}/meta`, {
+    return useApi(`${vacancyUrl}/${id}/meta`, {
       method: 'GET'
     });
   },

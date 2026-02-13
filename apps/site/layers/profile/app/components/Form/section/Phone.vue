@@ -77,7 +77,7 @@
 
 import type { PhoneEntry } from '@int/schema';
 
-defineOptions({ name: 'UserProfileFormSectionPhone' });
+defineOptions({ name: 'ProfileFormSectionPhone' });
 
 const props = defineProps<{
   modelValue: PhoneEntry[];

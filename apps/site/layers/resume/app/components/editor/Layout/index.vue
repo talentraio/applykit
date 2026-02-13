@@ -1,7 +1,7 @@
 <template>
   <div class="resume-editor-layout">
     <!-- Header slot -->
-    <header v-if="$slots.header" class="resume-editor-layout__header">
+    <header v-if="$slots.header" class="resume-editor-layout__header py-4">
       <slot name="header" />
     </header>
 
@@ -115,7 +115,6 @@ const photoUrl = computed(() => profile.value?.photoUrl ?? undefined);
 
   &__header {
     flex-shrink: 0;
-    padding: 1rem;
     border-bottom: 1px solid var(--color-neutral-200);
 
     @media (prefers-color-scheme: dark) {
