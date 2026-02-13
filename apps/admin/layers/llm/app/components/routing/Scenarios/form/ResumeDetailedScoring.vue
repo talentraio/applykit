@@ -1,12 +1,21 @@
 <template>
   <div class="llm-routing-scenarios-form-resume-detailed-scoring grid gap-4 md:grid-cols-2">
+    <UFormField
+      v-if="showFlowToggle"
+      :label="flowToggleLabelValue"
+      :description="flowToggleDescriptionValue"
+      class="md:col-span-2"
+    >
+      <USwitch v-model="draft.flowEnabled" :disabled="disabled" />
+    </UFormField>
+
     <UFormField :label="primaryLabelValue" class="w-full">
       <USelectMenu
         v-model="draft.primaryModelId"
         :items="modelOptions"
         value-key="value"
         :search-input="false"
-        :disabled="disabled"
+        :disabled="primaryDisabled"
         class="w-full"
       />
     </UFormField>
@@ -34,6 +43,9 @@ type Props = {
   disabled?: boolean;
   emptyValue?: string;
   disableRetryWhenPrimaryEmpty?: boolean;
+  showFlowToggle?: boolean;
+  flowToggleLabel?: string;
+  flowToggleDescription?: string;
 };
 
 defineOptions({ name: 'LlmRoutingScenariosFormResumeDetailedScoring' });
@@ -43,7 +55,10 @@ const props = withDefaults(defineProps<Props>(), {
   retryLabel: '',
   disabled: false,
   emptyValue: '',
-  disableRetryWhenPrimaryEmpty: false
+  disableRetryWhenPrimaryEmpty: false,
+  showFlowToggle: false,
+  flowToggleLabel: '',
+  flowToggleDescription: ''
 });
 
 const draft = defineModel<RoutingScenarioDraft>('draft', { required: true });
@@ -51,6 +66,14 @@ const { t } = useI18n();
 
 const primaryLabelValue = computed(() => {
   return props.primaryLabel || t('admin.llm.routing.defaultLabel');
+});
+
+const flowToggleLabelValue = computed(() => {
+  return props.flowToggleLabel || t('admin.llm.routing.detailedScoring.enabledLabel');
+});
+
+const flowToggleDescriptionValue = computed(() => {
+  return props.flowToggleDescription || t('admin.llm.routing.detailedScoring.enabledDescription');
 });
 
 const retryLabelValue = computed(() => {
@@ -61,8 +84,16 @@ const isPrimaryEmpty = computed(() => {
   return draft.value.primaryModelId === props.emptyValue;
 });
 
+const primaryDisabled = computed(() => {
+  if (props.disabled) {
+    return true;
+  }
+
+  return props.showFlowToggle && !draft.value.flowEnabled;
+});
+
 const retryDisabled = computed(() => {
-  return props.disabled || (props.disableRetryWhenPrimaryEmpty && isPrimaryEmpty.value);
+  return primaryDisabled.value || (props.disableRetryWhenPrimaryEmpty && isPrimaryEmpty.value);
 });
 </script>
 

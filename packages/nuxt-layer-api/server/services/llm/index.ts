@@ -205,6 +205,7 @@ export async function callLLM(
     scenario?: LlmScenarioKey;
     scenarioPhase?: 'primary' | 'retry';
     respectRequestMaxTokens?: boolean;
+    respectRequestReasoningEffort?: boolean;
   }
 ): Promise<LLMResponse> {
   const userRole = options?.role ?? USER_ROLE_MAP.PUBLIC;
@@ -343,7 +344,11 @@ export async function callLLM(
       options?.respectRequestMaxTokens && request.maxTokens !== undefined
         ? request.maxTokens
         : (scenarioModel?.maxTokens ?? request.maxTokens),
-    responseFormat: scenarioModel?.responseFormat ?? request.responseFormat
+    responseFormat: scenarioModel?.responseFormat ?? request.responseFormat,
+    reasoningEffort:
+      options?.respectRequestReasoningEffort && request.reasoningEffort !== undefined
+        ? request.reasoningEffort
+        : (scenarioModel?.reasoningEffort ?? request.reasoningEffort)
   };
 
   try {

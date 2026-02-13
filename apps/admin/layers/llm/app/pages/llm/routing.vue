@@ -67,7 +67,8 @@ const {
   saving: routingSaving,
   error: routingError,
   fetchAll: fetchRouting,
-  updateDefault
+  updateDefault,
+  updateScenarioEnabled
 } = useAdminLlmRouting();
 
 const { items: allModels, activeItems: activeModels, fetchAll: fetchModels } = useAdminLlmModels();
@@ -78,6 +79,7 @@ const toast = useToast();
 const ADAPTATION_RUNTIME_DEFAULT_TEMPERATURE = 0.3;
 const ADAPTATION_RUNTIME_DEFAULT_MAX_TOKENS = 6000;
 const ADAPTATION_RUNTIME_DEFAULT_RESPONSE_FORMAT = 'json';
+const ADAPTATION_RUNTIME_DEFAULT_REASONING_EFFORT = 'auto';
 const SCORING_RUNTIME_DEFAULT_TEMPERATURE = 0;
 const SCORING_RUNTIME_DEFAULT_MAX_TOKENS = 800;
 const SCORING_RUNTIME_DEFAULT_RESPONSE_FORMAT = 'json';
@@ -144,6 +146,25 @@ const strategyOptions = computed<RoutingSelectOption[]>(() => [
   }
 ]);
 
+const reasoningOptions = computed<RoutingSelectOption[]>(() => [
+  {
+    label: t('admin.llm.routing.reasoningEffort.auto'),
+    value: 'auto'
+  },
+  {
+    label: t('admin.llm.routing.reasoningEffort.low'),
+    value: 'low'
+  },
+  {
+    label: t('admin.llm.routing.reasoningEffort.medium'),
+    value: 'medium'
+  },
+  {
+    label: t('admin.llm.routing.reasoningEffort.high'),
+    value: 'high'
+  }
+]);
+
 const resolveModelLabel = (modelId: string | null): string => {
   if (!modelId) {
     return t('admin.roles.routing.notConfigured');
@@ -163,6 +184,22 @@ const resolveStrategyLabel = (strategyKey: string | null): string => {
   }
 
   return t('admin.llm.routing.strategy.economy');
+};
+
+const resolveReasoningEffortLabel = (reasoningEffort: string | null | undefined): string => {
+  if (reasoningEffort === 'low') {
+    return t('admin.llm.routing.reasoningEffort.low');
+  }
+
+  if (reasoningEffort === 'medium') {
+    return t('admin.llm.routing.reasoningEffort.medium');
+  }
+
+  if (reasoningEffort === 'high') {
+    return t('admin.llm.routing.reasoningEffort.high');
+  }
+
+  return t('admin.llm.routing.reasoningEffort.auto');
 };
 
 const formatRuntimeValue = (
@@ -206,6 +243,9 @@ const resumeAdaptationCapabilities = computed<string[]>(() => {
     t('admin.llm.routing.capability.retryModel', {
       model: resolveModelLabel(adaptation?.default?.retryModelId ?? null)
     }),
+    t('admin.llm.routing.capability.reasoningEffort', {
+      value: resolveReasoningEffortLabel(adaptation?.default?.reasoningEffort)
+    }),
     t('admin.llm.routing.capability.strategy', {
       strategy: resolveStrategyLabel(
         adaptation?.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY
@@ -230,6 +270,11 @@ const detailedScoringCapabilities = computed<string[]>(() => {
   if (!item) return [];
 
   return [
+    t('admin.llm.routing.capability.flowState', {
+      status: item.enabled
+        ? t('admin.llm.routing.detailedScoring.enabledShort')
+        : t('admin.llm.routing.detailedScoring.disabledShort')
+    }),
     t('admin.llm.routing.capability.defaultModel', {
       model: resolveModelLabel(item.default?.modelId ?? null)
     }),
@@ -259,6 +304,10 @@ const resumeAdaptationRuntimeConfig = computed<ResumeAdaptationRuntimeConfig | n
     adaptationResponseFormat: formatRuntimeValue(
       adaptationDefault.responseFormat,
       ADAPTATION_RUNTIME_DEFAULT_RESPONSE_FORMAT
+    ),
+    adaptationReasoningEffort: formatRuntimeValue(
+      adaptationDefault.reasoningEffort,
+      ADAPTATION_RUNTIME_DEFAULT_REASONING_EFFORT
     ),
     scoringTemperature: formatRuntimeValue(
       scoringDefault.temperature,
@@ -332,7 +381,9 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       primaryModelId: resumeParseItem.value?.default?.modelId ?? '',
       secondaryModelId: resumeParseItem.value?.default?.retryModelId ?? '',
       tertiaryModelId: '',
-      strategyKey: ''
+      reasoningEffort: '',
+      strategyKey: '',
+      flowEnabled: true
     };
   }
 
@@ -341,7 +392,9 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       primaryModelId: resumeAdaptationItem.value?.default?.modelId ?? '',
       secondaryModelId: resumeScoringItem.value?.default?.modelId ?? '',
       tertiaryModelId: resumeAdaptationItem.value?.default?.retryModelId ?? '',
-      strategyKey: resumeAdaptationItem.value?.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY
+      reasoningEffort: resumeAdaptationItem.value?.default?.reasoningEffort ?? 'auto',
+      strategyKey: resumeAdaptationItem.value?.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY,
+      flowEnabled: true
     };
   }
 
@@ -350,7 +403,9 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       primaryModelId: detailedScoringItem.value?.default?.modelId ?? '',
       secondaryModelId: detailedScoringItem.value?.default?.retryModelId ?? '',
       tertiaryModelId: '',
-      strategyKey: ''
+      reasoningEffort: '',
+      strategyKey: '',
+      flowEnabled: detailedScoringItem.value?.enabled ?? true
     };
   }
 
@@ -358,7 +413,9 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
     primaryModelId: coverLetterItem.value?.default?.modelId ?? '',
     secondaryModelId: '',
     tertiaryModelId: '',
-    strategyKey: ''
+    reasoningEffort: '',
+    strategyKey: '',
+    flowEnabled: true
   };
 };
 
@@ -392,9 +449,11 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
     return {
       modelOptions: modelOptions.value,
       strategyOptions: strategyOptions.value,
+      reasoningOptions: reasoningOptions.value,
       primaryLabel: t('admin.llm.routing.defaultLabel'),
-      scoringLabel: t('admin.llm.routing.scoringLabel'),
+      scoringLabel: t('admin.llm.routing.baseScoringLabel'),
       retryLabel: t('admin.llm.routing.retryLabel'),
+      reasoningLabel: t('admin.llm.routing.reasoningEffortLabel'),
       strategyLabel: t('admin.llm.routing.strategyLabel'),
       disabled: routingSaving.value,
       runtimeConfig: resumeAdaptationRuntimeConfig.value
@@ -406,7 +465,10 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
       modelOptions: modelOptions.value,
       primaryLabel: t('admin.llm.routing.defaultLabel'),
       retryLabel: t('admin.llm.routing.retryLabel'),
-      disabled: routingSaving.value
+      disabled: routingSaving.value,
+      showFlowToggle: true,
+      flowToggleLabel: t('admin.llm.routing.detailedScoring.enabledLabel'),
+      flowToggleDescription: t('admin.llm.routing.detailedScoring.enabledDescription')
     };
   }
 
@@ -425,6 +487,22 @@ const normalizeStrategyKey = (value: string): LlmStrategyKey => {
   return LLM_STRATEGY_KEY_MAP.ECONOMY;
 };
 
+const normalizeReasoningEffort = (value: string): 'auto' | 'low' | 'medium' | 'high' => {
+  if (value === 'low') {
+    return 'low';
+  }
+
+  if (value === 'medium') {
+    return 'medium';
+  }
+
+  if (value === 'high') {
+    return 'high';
+  }
+
+  return 'auto';
+};
+
 const hasRequiredValuesForScenario = (
   scenarioKey: EditableScenarioKey,
   draft: RoutingScenarioDraft
@@ -438,7 +516,7 @@ const hasRequiredValuesForScenario = (
   }
 
   if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
-    return Boolean(draft.primaryModelId);
+    return !draft.flowEnabled || Boolean(draft.primaryModelId);
   }
 
   return Boolean(draft.primaryModelId);
@@ -491,6 +569,7 @@ const saveScenario = async () => {
         updateDefault(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION, {
           modelId: modalDraft.value.primaryModelId,
           retryModelId: modalDraft.value.tertiaryModelId || null,
+          reasoningEffort: normalizeReasoningEffort(modalDraft.value.reasoningEffort),
           strategyKey: normalizeStrategyKey(modalDraft.value.strategyKey)
         }),
         updateDefault(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING, {
@@ -500,11 +579,18 @@ const saveScenario = async () => {
         })
       ]);
     } else if (scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL) {
-      await updateDefault(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL, {
-        modelId: modalDraft.value.primaryModelId,
-        retryModelId: modalDraft.value.secondaryModelId || null,
-        strategyKey: null
-      });
+      await updateScenarioEnabled(
+        LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL,
+        modalDraft.value.flowEnabled
+      );
+
+      if (modalDraft.value.flowEnabled) {
+        await updateDefault(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL, {
+          modelId: modalDraft.value.primaryModelId,
+          retryModelId: modalDraft.value.secondaryModelId || null,
+          strategyKey: null
+        });
+      }
     } else {
       await updateDefault(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, {
         modelId: modalDraft.value.primaryModelId,

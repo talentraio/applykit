@@ -11,10 +11,12 @@ const normalizeRoutingInputForScenario = (
     scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION ||
     scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL;
   const supportsStrategy = scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
+  const supportsReasoningEffort = scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
 
   return {
     ...input,
     retryModelId: supportsRetry ? (input.retryModelId ?? null) : null,
+    reasoningEffort: supportsReasoningEffort ? (input.reasoningEffort ?? null) : null,
     strategyKey: supportsStrategy ? (input.strategyKey ?? null) : null
   };
 };
@@ -67,6 +69,25 @@ export const useAdminLlmRoutingStore = defineStore('AdminLlmRoutingStore', {
         return updated;
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to update scenario default';
+        throw err;
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    async updateScenarioEnabled(
+      scenarioKey: LlmScenarioKey,
+      enabled: boolean
+    ): Promise<LlmRoutingItem> {
+      this.saving = true;
+      this.error = null;
+
+      try {
+        const updated = await adminLlmRoutingApi.updateScenarioEnabled(scenarioKey, { enabled });
+        this.items = this.items.map(item => (item.scenarioKey === scenarioKey ? updated : item));
+        return updated;
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to update scenario availability';
         throw err;
       } finally {
         this.saving = false;

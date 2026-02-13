@@ -27,17 +27,6 @@
       />
     </UFormField>
 
-    <UFormField :label="scoringLabelValue" class="w-full">
-      <USelectMenu
-        v-model="draft.secondaryModelId"
-        :items="modelOptions"
-        value-key="value"
-        :search-input="false"
-        :disabled="disabled"
-        class="w-full"
-      />
-    </UFormField>
-
     <UFormField :label="retryLabelValue" class="w-full">
       <USelectMenu
         v-model="draft.tertiaryModelId"
@@ -45,6 +34,17 @@
         value-key="value"
         :search-input="false"
         :disabled="retryDisabled"
+        class="w-full"
+      />
+    </UFormField>
+
+    <UFormField :label="reasoningLabelValue" class="w-full">
+      <USelectMenu
+        v-model="draft.reasoningEffort"
+        :items="reasoningOptions"
+        value-key="value"
+        :search-input="false"
+        :disabled="reasoningDisabled"
         class="w-full"
       />
     </UFormField>
@@ -60,10 +60,23 @@
       />
     </UFormField>
 
+    <div class="llm-routing-scenarios-form-resume-adaptation__divider md:col-span-2" />
+
+    <UFormField :label="scoringLabelValue" class="w-full md:col-span-2">
+      <USelectMenu
+        v-model="draft.secondaryModelId"
+        :items="modelOptions"
+        value-key="value"
+        :search-input="false"
+        :disabled="disabled"
+        class="w-full"
+      />
+    </UFormField>
+
     <UPageCard
       v-if="runtimeConfig"
       variant="subtle"
-      class="llm-routing-scenarios-form-resume-adaptation__runtime md:col-span-2"
+      class="llm-routing-scenarios-form-resume-adaptation__runtime md:col-span-2 mt-4"
     >
       <template #header>
         <h3 class="text-sm font-semibold">
@@ -87,6 +100,10 @@
           <p>
             {{ t('admin.llm.routing.runtimeConfig.responseFormat') }}:
             {{ runtimeConfig.adaptationResponseFormat }}
+          </p>
+          <p>
+            {{ t('admin.llm.routing.runtimeConfig.reasoningEffort') }}:
+            {{ runtimeConfig.adaptationReasoningEffort }}
           </p>
         </div>
 
@@ -120,14 +137,17 @@ import type {
 type Props = {
   modelOptions: RoutingSelectOption[];
   strategyOptions: RoutingSelectOption[];
+  reasoningOptions: RoutingSelectOption[];
   primaryLabel?: string;
   scoringLabel?: string;
   retryLabel?: string;
   strategyLabel?: string;
+  reasoningLabel?: string;
   disabled?: boolean;
   emptyValue?: string;
   disableTertiaryWhenPrimaryEmpty?: boolean;
   disableStrategyWhenPrimaryEmpty?: boolean;
+  disableReasoningWhenPrimaryEmpty?: boolean;
   runtimeConfig?: ResumeAdaptationRuntimeConfig | null;
 };
 
@@ -138,10 +158,12 @@ const props = withDefaults(defineProps<Props>(), {
   scoringLabel: '',
   retryLabel: '',
   strategyLabel: '',
+  reasoningLabel: '',
   disabled: false,
   emptyValue: '',
   disableTertiaryWhenPrimaryEmpty: false,
   disableStrategyWhenPrimaryEmpty: false,
+  disableReasoningWhenPrimaryEmpty: false,
   runtimeConfig: null
 });
 
@@ -153,7 +175,7 @@ const primaryLabelValue = computed(() => {
 });
 
 const scoringLabelValue = computed(() => {
-  return props.scoringLabel || t('admin.llm.routing.scoringLabel');
+  return props.scoringLabel || t('admin.llm.routing.baseScoringLabel');
 });
 
 const retryLabelValue = computed(() => {
@@ -162,6 +184,10 @@ const retryLabelValue = computed(() => {
 
 const strategyLabelValue = computed(() => {
   return props.strategyLabel || t('admin.llm.routing.strategyLabel');
+});
+
+const reasoningLabelValue = computed(() => {
+  return props.reasoningLabel || t('admin.llm.routing.reasoningEffortLabel');
 });
 
 const resumeAdaptationTips = computed<string[]>(() => [
@@ -180,10 +206,18 @@ const retryDisabled = computed(() => {
 const strategyDisabled = computed(() => {
   return props.disabled || (props.disableStrategyWhenPrimaryEmpty && isPrimaryEmpty.value);
 });
+
+const reasoningDisabled = computed(() => {
+  return props.disabled || (props.disableReasoningWhenPrimaryEmpty && isPrimaryEmpty.value);
+});
 </script>
 
 <style lang="scss">
 .llm-routing-scenarios-form-resume-adaptation {
-  // Reserved for form-level styles.
+  &__divider {
+    border-top: 1px solid var(--ui-border);
+    margin-top: 0.25rem;
+    padding-top: 0.25rem;
+  }
 }
 </style>

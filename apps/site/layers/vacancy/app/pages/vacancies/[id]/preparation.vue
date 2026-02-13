@@ -24,6 +24,23 @@
       </UPageCard>
     </template>
 
+    <template v-else-if="!preparation?.detailedScoringEnabled">
+      <UPageCard class="vacancy-preparation-page__empty-card">
+        <div class="space-y-4 text-center">
+          <UIcon name="i-lucide-sliders-horizontal" class="mx-auto h-10 w-10 text-muted" />
+          <h2 class="text-lg font-semibold">
+            {{ t('vacancy.preparation.disabledTitle') }}
+          </h2>
+          <p class="text-sm text-muted">
+            {{ t('vacancy.preparation.disabledDescription') }}
+          </p>
+          <UButton :to="`/vacancies/${vacancyId}/resume`" icon="i-lucide-file-pen-line">
+            {{ t('vacancy.preparation.openResume') }}
+          </UButton>
+        </div>
+      </UPageCard>
+    </template>
+
     <template v-else-if="!preparation?.scoreDetails">
       <UPageCard class="vacancy-preparation-page__empty-card">
         <div class="space-y-4 text-center">

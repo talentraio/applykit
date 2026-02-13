@@ -168,7 +168,11 @@ export default defineEventHandler(async (event): Promise<VacanciesScoreDetailsRe
     undefined,
     {
       userId,
-      role: userRole
+      role: userRole,
+      scoreSummaryAnchor: {
+        before: generation.matchScoreBefore,
+        after: generation.matchScoreAfter
+      }
     }
   );
 

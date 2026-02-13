@@ -74,8 +74,86 @@ Output JSON schema:
 Rules:
 - strengths must be within 0..1
 - evidenceRef values should be short plain-text paths (e.g. "experience[0].bullets[1]")
-- keep at most 10 evidence items total
+- keep at most 8 evidence items total
 - no narrative text, JSON only`;
+
+const MAX_PROMPT_SKILL_GROUPS = 6;
+const MAX_PROMPT_SKILLS_PER_GROUP = 8;
+const MAX_PROMPT_EXPERIENCE_ITEMS = 4;
+const MAX_PROMPT_BULLETS_PER_EXPERIENCE = 4;
+const MAX_PROMPT_CERTIFICATIONS = 6;
+const MAX_PROMPT_LANGUAGES = 6;
+const MAX_PROMPT_TEXT_LENGTH = 280;
+
+const trimPromptText = (
+  value: string | undefined | null,
+  maxLength = MAX_PROMPT_TEXT_LENGTH
+): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (normalized.length === 0) {
+    return undefined;
+  }
+
+  return normalized.length <= maxLength
+    ? normalized
+    : `${normalized.slice(0, maxLength).trimEnd()}...`;
+};
+
+const toTailoredResumeProjection = (
+  resume: ResumeContent
+): {
+  summary?: string;
+  skills: Array<{ type?: string; skills: string[] }>;
+  experience: Array<{
+    company?: string;
+    position?: string;
+    startDate: string;
+    endDate: string | null;
+    description?: string;
+    bullets: string[];
+    technologies: string[];
+  }>;
+  certifications: Array<{ name?: string; issuer?: string }>;
+  languages: Array<{ language?: string; level?: string }>;
+} => {
+  return {
+    summary: trimPromptText(resume.summary, 400),
+    skills: resume.skills.slice(0, MAX_PROMPT_SKILL_GROUPS).map(group => ({
+      type: trimPromptText(group.type, 60),
+      skills: group.skills
+        .slice(0, MAX_PROMPT_SKILLS_PER_GROUP)
+        .map(skill => trimPromptText(skill, 40))
+        .filter((item): item is string => Boolean(item))
+    })),
+    experience: resume.experience.slice(0, MAX_PROMPT_EXPERIENCE_ITEMS).map(item => ({
+      company: trimPromptText(item.company, 80),
+      position: trimPromptText(item.position, 80),
+      startDate: item.startDate,
+      endDate: item.endDate ?? null,
+      description: trimPromptText(item.description, 220),
+      bullets: (item.bullets ?? [])
+        .slice(0, MAX_PROMPT_BULLETS_PER_EXPERIENCE)
+        .map(bullet => trimPromptText(bullet, 180))
+        .filter((bullet): bullet is string => Boolean(bullet)),
+      technologies: (item.technologies ?? [])
+        .slice(0, MAX_PROMPT_SKILLS_PER_GROUP)
+        .map(technology => trimPromptText(technology, 40))
+        .filter((technology): technology is string => Boolean(technology))
+    })),
+    certifications: (resume.certifications ?? []).slice(0, MAX_PROMPT_CERTIFICATIONS).map(item => ({
+      name: trimPromptText(item.name, 80),
+      issuer: trimPromptText(item.issuer, 80)
+    })),
+    languages: (resume.languages ?? []).slice(0, MAX_PROMPT_LANGUAGES).map(item => ({
+      language: trimPromptText(item.language, 40),
+      level: trimPromptText(item.level, 40)
+    }))
+  };
+};
 
 const createScoringSharedPrefix = (sharedContext: string): string => {
   return `${createSharedContextPromptPrefix(sharedContext)}
@@ -159,7 +237,9 @@ export function createMapEvidenceUserPrompt(
 ): string {
   const sharedPrefix = createScoringSharedPrefix(sharedContext);
   const compactSignals = compactSignalsForMapPrompt(signals);
-  const compactTailoredResume = compactForPrompt(tailoredResume) ?? tailoredResume;
+  const compactTailoredResumeProjection =
+    compactForPrompt(toTailoredResumeProjection(tailoredResume)) ??
+    toTailoredResumeProjection(tailoredResume);
 
   return `${sharedPrefix}
 
@@ -168,6 +248,6 @@ ${MAP_EVIDENCE_INSTRUCTIONS}
 Signals:
 ${JSON.stringify(compactSignals)}
 
-Tailored resume:
-${JSON.stringify(compactTailoredResume)}`;
+Tailored resume evidence slice:
+${JSON.stringify(compactTailoredResumeProjection)}`;
 }

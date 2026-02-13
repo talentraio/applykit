@@ -1,4 +1,4 @@
-import type { LLMProvider, LlmStrategyKey, ProviderType } from '@int/schema';
+import type { LLMProvider, LlmReasoningEffort, LlmStrategyKey, ProviderType } from '@int/schema';
 
 /**
  * LLM Service Types
@@ -45,6 +45,12 @@ export type LLMRequest = {
    * - json: force JSON object output when provider supports it
    */
   responseFormat?: 'text' | 'json';
+
+  /**
+   * OpenAI GPT-5 reasoning effort control.
+   * Ignored by providers/models that do not support it.
+   */
+  reasoningEffort?: LlmReasoningEffort;
 
   /**
    * Provider-specific options passed through to the selected provider.

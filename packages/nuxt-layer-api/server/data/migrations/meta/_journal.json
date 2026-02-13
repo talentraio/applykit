@@ -117,15 +117,22 @@
     {
       "idx": 16,
       "version": "7",
-      "when": 1770843944000,
+      "when": 1771248000000,
       "tag": "0016_detailed_scoring_storage",
       "breakpoints": true
     },
     {
       "idx": 17,
       "version": "7",
-      "when": 1770912566000,
+      "when": 1771334400000,
       "tag": "0017_resume_adaptation_routing_presets",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1771420800000,
+      "tag": "0018_resume_adaptation_reasoning_effort",
       "breakpoints": true
     }
   ]

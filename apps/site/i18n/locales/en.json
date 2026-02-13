@@ -563,6 +563,8 @@
       "recommendations": "Recommendations",
       "staleBadge": "Needs refresh",
       "openResume": "Open Resume",
+      "disabledTitle": "Detailed Scoring Is Disabled",
+      "disabledDescription": "Detailed scoring is currently disabled for your role.",
       "noGenerationTitle": "No Generation Found",
       "noGenerationDescription": "Generate a tailored resume first to unlock preparation insights.",
       "noDetailsTitle": "Detailed Scoring Not Generated",

@@ -1,13 +1,13 @@
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import process from 'node:process';
+// import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { applySsrHmrPort } from '@int/npm-utils';
+// import { applySsrHmrPort } from '@int/npm-utils';
 
 const dataDir = resolve(fileURLToPath(new URL('.', import.meta.url)), '.data');
 mkdirSync(dataDir, { recursive: true });
-const adminHmrPort = Number(process.env.NUXT_ADMIN_HMR_PORT ?? '24679');
-const adminSsrHmrPort = Number(process.env.NUXT_ADMIN_SSR_HMR_PORT ?? '24681');
+// const adminHmrPort = Number(process.env.NUXT_ADMIN_HMR_PORT ?? '24679');
+// const adminSsrHmrPort = Number(process.env.NUXT_ADMIN_SSR_HMR_PORT ?? '24681');
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
@@ -39,20 +39,20 @@ export default defineNuxtConfig({
     enabled: true
   },
 
-  vite: {
-    server: {
-      hmr: {
-        port: adminHmrPort,
-        clientPort: adminHmrPort
-      }
-    }
-  },
+  // vite: {
+  //   server: {
+  //     hmr: {
+  //       port: adminHmrPort,
+  //       clientPort: adminHmrPort
+  //     }
+  //   }
+  // },
 
-  hooks: {
-    'vite:extend': function ({ config }) {
-      applySsrHmrPort(config, adminSsrHmrPort);
-    }
-  },
+  // hooks: {
+  //   'vite:extend': function ({ config }) {
+  //     applySsrHmrPort(config, adminSsrHmrPort);
+  //   }
+  // },
 
   image: {
     dir: dataDir

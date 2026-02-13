@@ -41,6 +41,10 @@ export default defineEventHandler(async event => {
       scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
         ? (validation.data.retryModelId ?? null)
         : null,
+    reasoningEffort:
+      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION
+        ? (validation.data.reasoningEffort ?? null)
+        : null,
     strategyKey:
       scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION
         ? (validation.data.strategyKey ?? null)

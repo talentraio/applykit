@@ -126,16 +126,19 @@
         "overrideLabel": "Role override",
         "retryOverrideLabel": "Retry override",
         "scoringOverrideLabel": "Scoring override",
+        "baseScoringOverrideLabel": "Base scoring override",
         "strategyOverrideLabel": "Strategy override",
         "inheritDefault": "Inherit scenario default",
         "defaultModel": "Default: {model}",
         "defaultRetryModel": "Retry default: {model}",
         "defaultScoringModel": "Scoring default: {model}",
         "defaultStrategy": "Strategy default: {strategy}",
+        "defaultReasoningEffort": "Reasoning effort default: {value}",
         "currentModel": "Current override: {model}",
         "currentRetryModel": "Current retry override: {model}",
         "currentScoringModel": "Current scoring override: {model}",
         "currentStrategy": "Current strategy override: {strategy}",
+        "currentReasoningEffort": "Current reasoning effort override: {value}",
         "notConfigured": "Not configured",
         "modelUnavailable": "Model unavailable"
       },
@@ -218,6 +221,8 @@
         "defaultLabel": "Scenario default",
         "retryLabel": "Retry model",
         "scoringLabel": "Scoring model",
+        "baseScoringLabel": "Base scoring model",
+        "reasoningEffortLabel": "Adaptation reasoning effort",
         "strategyLabel": "Strategy",
         "overrideLabel": "Role override",
         "removeOverride": "Remove override",
@@ -226,6 +231,12 @@
           "cache": "Cache is model-specific: when adaptation and scoring use different models, cache is not shared between them.",
           "strategy": "Best practice: use Economy with lower-cost models and Quality with stronger models."
         },
+        "detailedScoring": {
+          "enabledLabel": "Enable detailed scoring flow",
+          "enabledDescription": "When disabled, detailed scoring is hidden on the site and generation is blocked.",
+          "enabledShort": "Enabled",
+          "disabledShort": "Disabled"
+        },
         "runtimeConfig": {
           "title": "Effective runtime parameters",
           "adaptation": "Adaptation call",
@@ -233,13 +244,22 @@
           "temperature": "Temperature",
           "maxTokens": "Max tokens",
           "responseFormat": "Response format",
+          "reasoningEffort": "Reasoning effort",
           "runtimeDefault": "{value} (runtime default)"
+        },
+        "reasoningEffort": {
+          "auto": "Auto",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High"
         },
         "capability": {
           "defaultModel": "Default model: {model}",
           "retryModel": "Retry model: {model}",
           "scoringModel": "Scoring model: {model}",
-          "strategy": "Strategy: {strategy}"
+          "reasoningEffort": "Reasoning effort: {value}",
+          "strategy": "Strategy: {strategy}",
+          "flowState": "Flow: {status}"
         },
         "modal": {
           "editTitle": "Edit {scenario}"

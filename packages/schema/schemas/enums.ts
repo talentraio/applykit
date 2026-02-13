@@ -3,6 +3,7 @@ import {
   EXPORT_FORMAT_MAP,
   LLM_MODEL_STATUS_MAP,
   LLM_PROVIDER_MAP,
+  LLM_REASONING_EFFORT_MAP,
   LLM_RESPONSE_FORMAT_MAP,
   LLM_SCENARIO_KEY_MAP,
   LLM_STRATEGY_KEY_MAP,
@@ -47,6 +48,10 @@ export type LlmScenarioKey = z.infer<typeof LlmScenarioKeySchema>;
 // LLM response format
 export const LlmResponseFormatSchema = z.nativeEnum(LLM_RESPONSE_FORMAT_MAP);
 export type LlmResponseFormat = z.infer<typeof LlmResponseFormatSchema>;
+
+// LLM reasoning effort controls
+export const LlmReasoningEffortSchema = z.nativeEnum(LLM_REASONING_EFFORT_MAP);
+export type LlmReasoningEffort = z.infer<typeof LlmReasoningEffortSchema>;
 
 // LLM strategy keys for grouped adaptation/scoring flow
 export const LlmStrategyKeySchema = z.nativeEnum(LLM_STRATEGY_KEY_MAP);

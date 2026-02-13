@@ -3,7 +3,8 @@ import type {
   LlmRoutingResponse,
   LlmScenarioKey,
   Role,
-  RoutingAssignmentInput
+  RoutingAssignmentInput,
+  RoutingScenarioEnabledInput
 } from '@int/schema';
 import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 
@@ -18,10 +19,12 @@ const normalizeRoutingInput = (
     scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION ||
     scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL;
   const supportsStrategy = scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
+  const supportsReasoningEffort = scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
 
   return {
     ...input,
     retryModelId: supportsRetry ? (input.retryModelId ?? null) : null,
+    reasoningEffort: supportsReasoningEffort ? (input.reasoningEffort ?? null) : null,
     strategyKey: supportsStrategy ? (input.strategyKey ?? null) : null
   };
 };
@@ -41,6 +44,16 @@ export const adminLlmRoutingApi = {
     return await useApi(`${adminLlmRoutingUrl}/${scenarioKey}/default`, {
       method: 'PUT',
       body
+    });
+  },
+
+  async updateScenarioEnabled(
+    scenarioKey: LlmScenarioKey,
+    input: RoutingScenarioEnabledInput
+  ): Promise<LlmRoutingItem> {
+    return await useApi(`${adminLlmRoutingUrl}/${scenarioKey}/enabled`, {
+      method: 'PUT',
+      body: input
     });
   },
 
