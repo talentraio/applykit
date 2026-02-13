@@ -134,6 +134,13 @@
       "when": 1771420800000,
       "tag": "0018_resume_adaptation_reasoning_effort",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1771507200000,
+      "tag": "0019_role_scenario_enabled_overrides",
+      "breakpoints": true
     }
   ]
 }

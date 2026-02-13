@@ -119,6 +119,28 @@ export const useAdminLlmRoutingStore = defineStore('AdminLlmRoutingStore', {
       }
     },
 
+    async upsertRoleEnabledOverride(
+      scenarioKey: LlmScenarioKey,
+      role: Role,
+      enabled: boolean
+    ): Promise<LlmRoutingItem> {
+      this.saving = true;
+      this.error = null;
+
+      try {
+        const updated = await adminLlmRoutingApi.upsertRoleEnabledOverride(scenarioKey, role, {
+          enabled
+        });
+        this.items = this.items.map(item => (item.scenarioKey === scenarioKey ? updated : item));
+        return updated;
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to update role enabled override';
+        throw err;
+      } finally {
+        this.saving = false;
+      }
+    },
+
     async deleteRoleOverride(scenarioKey: LlmScenarioKey, role: Role): Promise<void> {
       this.saving = true;
       this.error = null;
@@ -128,6 +150,21 @@ export const useAdminLlmRoutingStore = defineStore('AdminLlmRoutingStore', {
         await this.fetchAll();
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to delete role override';
+        throw err;
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    async deleteRoleEnabledOverride(scenarioKey: LlmScenarioKey, role: Role): Promise<void> {
+      this.saving = true;
+      this.error = null;
+
+      try {
+        await adminLlmRoutingApi.deleteRoleEnabledOverride(scenarioKey, role);
+        await this.fetchAll();
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to delete role enabled override';
         throw err;
       } finally {
         this.saving = false;

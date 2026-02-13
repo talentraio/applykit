@@ -18,7 +18,13 @@ export type UseAdminLlmRoutingReturn = {
     role: Role,
     input: RoutingAssignmentInput
   ) => Promise<LlmRoutingItem>;
+  upsertRoleEnabledOverride: (
+    scenarioKey: LlmScenarioKey,
+    role: Role,
+    enabled: boolean
+  ) => Promise<LlmRoutingItem>;
   deleteRoleOverride: (scenarioKey: LlmScenarioKey, role: Role) => Promise<void>;
+  deleteRoleEnabledOverride: (scenarioKey: LlmScenarioKey, role: Role) => Promise<void>;
   supportsStrategy: (scenarioKey: LlmScenarioKey) => boolean;
   supportsRetry: (scenarioKey: LlmScenarioKey) => boolean;
 };
@@ -39,8 +45,12 @@ export function useAdminLlmRouting(): UseAdminLlmRoutingReturn {
       nuxtApp.runWithContext(() => store.updateScenarioEnabled(scenarioKey, enabled)),
     upsertRoleOverride: (scenarioKey: LlmScenarioKey, role: Role, input: RoutingAssignmentInput) =>
       nuxtApp.runWithContext(() => store.upsertRoleOverride(scenarioKey, role, input)),
+    upsertRoleEnabledOverride: (scenarioKey: LlmScenarioKey, role: Role, enabled: boolean) =>
+      nuxtApp.runWithContext(() => store.upsertRoleEnabledOverride(scenarioKey, role, enabled)),
     deleteRoleOverride: (scenarioKey: LlmScenarioKey, role: Role) =>
       nuxtApp.runWithContext(() => store.deleteRoleOverride(scenarioKey, role)),
+    deleteRoleEnabledOverride: (scenarioKey: LlmScenarioKey, role: Role) =>
+      nuxtApp.runWithContext(() => store.deleteRoleEnabledOverride(scenarioKey, role)),
     supportsStrategy: (scenarioKey: LlmScenarioKey) =>
       scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION,
     supportsRetry: (scenarioKey: LlmScenarioKey) =>

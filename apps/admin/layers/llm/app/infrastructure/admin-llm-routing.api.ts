@@ -69,8 +69,25 @@ export const adminLlmRoutingApi = {
     });
   },
 
+  async upsertRoleEnabledOverride(
+    scenarioKey: LlmScenarioKey,
+    role: Role,
+    input: RoutingScenarioEnabledInput
+  ): Promise<LlmRoutingItem> {
+    return await useApi(`${adminLlmRoutingUrl}/${scenarioKey}/roles/${role}/enabled`, {
+      method: 'PUT',
+      body: input
+    });
+  },
+
   async deleteRoleOverride(scenarioKey: LlmScenarioKey, role: Role): Promise<void> {
     await useApi(`${adminLlmRoutingUrl}/${scenarioKey}/roles/${role}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async deleteRoleEnabledOverride(scenarioKey: LlmScenarioKey, role: Role): Promise<void> {
+    await useApi(`${adminLlmRoutingUrl}/${scenarioKey}/roles/${role}/enabled`, {
       method: 'DELETE'
     });
   }

@@ -45,6 +45,14 @@ export const RoutingScenarioEnabledInputSchema = z.object({
 
 export type RoutingScenarioEnabledInput = z.infer<typeof RoutingScenarioEnabledInputSchema>;
 
+export const LlmRoutingEnabledOverrideSchema = z.object({
+  role: RoleSchema,
+  enabled: z.boolean(),
+  updatedAt: z.date()
+});
+
+export type LlmRoutingEnabledOverride = z.infer<typeof LlmRoutingEnabledOverrideSchema>;
+
 export const LlmRoutingDefaultSchema = RoutingAssignmentInputSchema.extend({
   updatedAt: z.date()
 });
@@ -63,6 +71,7 @@ export const LlmRoutingItemSchema = z.object({
   label: z.string().min(1).max(255).optional(),
   description: z.string().trim().max(1000).nullable().optional(),
   enabled: z.boolean().optional(),
+  enabledOverrides: z.array(LlmRoutingEnabledOverrideSchema).default([]),
   default: LlmRoutingDefaultSchema.nullable().optional(),
   overrides: z.array(LlmRoutingOverrideSchema).default([])
 });
