@@ -31,44 +31,53 @@
       @discard="handleDiscardChanges"
     >
       <template #header>
-        <UPageCard class="vacancy-resume-page__score-card">
-          <div class="vacancy-resume-page__score-row">
-            <div class="vacancy-resume-page__score-values">
-              <UBadge color="neutral" variant="soft">
-                {{ t('generation.matchScore.before', { score: matchScoreBefore }) }}
-              </UBadge>
+        <UAlert
+          v-if="shouldShowScoreAlert"
+          color="success"
+          variant="soft"
+          :close-button="{ icon: 'i-lucide-x', color: 'neutral', variant: 'link', padded: false }"
+          class="vacancy-resume-page__score-alert"
+          @close="handleDismissAlert"
+        >
+          <template #title>
+            <div class="vacancy-resume-page__score-row">
+              <div class="vacancy-resume-page__score-values">
+                <UBadge color="neutral" variant="soft">
+                  {{ t('generation.matchScore.before', { score: matchScoreBefore }) }}
+                </UBadge>
 
-              <UBadge color="primary" variant="soft">
-                {{ t('generation.matchScore.after', { score: matchScoreAfter }) }}
-              </UBadge>
+                <UBadge color="success" variant="soft">
+                  {{ t('generation.matchScore.after', { score: matchScoreAfter }) }}
+                </UBadge>
+              </div>
+
+              <div class="vacancy-resume-page__score-actions">
+                <UButton
+                  v-if="canShowDetailsButton"
+                  size="sm"
+                  :loading="scoreDetailsLoading && detailsActionType === 'details'"
+                  :disabled="scoreDetailsLoading"
+                  icon="i-lucide-list-checks"
+                  @click="handleOpenDetails(false)"
+                >
+                  {{ t('vacancy.resume.details') }}
+                </UButton>
+
+                <UButton
+                  v-if="canShowRegenerateDetailsButton"
+                  size="sm"
+                  variant="outline"
+                  :loading="scoreDetailsLoading && detailsActionType === 'regenerate'"
+                  :disabled="scoreDetailsLoading"
+                  icon="i-lucide-refresh-cw"
+                  @click="handleOpenDetails(true)"
+                >
+                  {{ t('vacancy.resume.regenerateDetails') }}
+                </UButton>
+              </div>
             </div>
-
-            <div class="vacancy-resume-page__score-actions">
-              <UButton
-                v-if="canShowDetailsButton"
-                size="sm"
-                :loading="scoreDetailsLoading && detailsActionType === 'details'"
-                :disabled="scoreDetailsLoading"
-                icon="i-lucide-list-checks"
-                @click="handleOpenDetails(false)"
-              >
-                {{ t('vacancy.resume.details') }}
-              </UButton>
-
-              <UButton
-                v-if="canShowRegenerateDetailsButton"
-                size="sm"
-                variant="outline"
-                :loading="scoreDetailsLoading && detailsActionType === 'regenerate'"
-                :disabled="scoreDetailsLoading"
-                icon="i-lucide-refresh-cw"
-                @click="handleOpenDetails(true)"
-              >
-                {{ t('vacancy.resume.regenerateDetails') }}
-              </UButton>
-            </div>
-          </div>
-        </UPageCard>
+          </template>
+        </UAlert>
       </template>
 
       <!-- Left: Editor Form -->
@@ -217,6 +226,32 @@ const canShowRegenerateDetailsButton = computed(
 );
 const detailsActionType = ref<'details' | 'regenerate' | null>(null);
 
+// Show alert if generation exists and alert has not been dismissed for this generation
+const shouldShowScoreAlert = computed(() => {
+  if (!generation.value) return false;
+  // Show alert if scoreAlertDismissedAt is null (never dismissed)
+  // or if it was dismissed before the current generation was created (new generation)
+  const dismissedAt = generation.value.scoreAlertDismissedAt;
+  if (!dismissedAt) return true;
+  return new Date(dismissedAt) < new Date(generation.value.generatedAt);
+});
+
+const handleDismissAlert = async (): Promise<void> => {
+  if (!generation.value) return;
+
+  try {
+    await $fetch(`/api/vacancies/${vacancyId.value}/generation/dismiss-score-alert`, {
+      method: 'PATCH',
+      body: { generationId: generation.value.id }
+    });
+
+    // Refresh generation to get updated scoreAlertDismissedAt
+    await fetchGeneration();
+  } catch (error) {
+    showErrorToast(t('vacancy.resume.dismissAlertFailed'), error);
+  }
+};
+
 const handleOpenDetails = async (regenerate: boolean): Promise<void> => {
   if (!generation.value) {
     return;
@@ -279,7 +314,7 @@ const pageLoading = computed(() => !generation.value && pending.value);
     padding: 2rem;
   }
 
-  &__score-card {
+  &__score-alert {
     margin-bottom: 1rem;
   }
 
@@ -289,6 +324,7 @@ const pageLoading = computed(() => !generation.value && pending.value);
     justify-content: space-between;
     gap: 1rem;
     flex-wrap: wrap;
+    width: 100%;
   }
 
   &__score-values {

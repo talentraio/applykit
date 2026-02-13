@@ -302,13 +302,17 @@ export const generations = pgTable(
     matchScoreAfter: integer('match_score_after').notNull(),
     scoreBreakdown: jsonb('score_breakdown').$type<ScoreBreakdown>().notNull(),
     generatedAt: timestamp('generated_at', { mode: 'date' }).notNull().defaultNow(),
-    expiresAt: timestamp('expires_at', { mode: 'date' }).notNull()
+    expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
+    scoreAlertDismissedAt: timestamp('score_alert_dismissed_at', { mode: 'date' })
   },
   table => ({
     vacancyIdIdx: index('idx_generations_vacancy_id').on(table.vacancyId),
     resumeIdIdx: index('idx_generations_resume_id').on(table.resumeId),
     generatedAtIdx: index('idx_generations_generated_at').on(table.generatedAt),
-    expiresAtIdx: index('idx_generations_expires_at').on(table.expiresAt)
+    expiresAtIdx: index('idx_generations_expires_at').on(table.expiresAt),
+    scoreAlertDismissedAtIdx: index('idx_generations_score_alert_dismissed_at').on(
+      table.scoreAlertDismissedAt
+    )
   })
 );
 
