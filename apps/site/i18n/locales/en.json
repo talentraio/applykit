@@ -904,6 +904,7 @@
       "incomplete": "Profile Incomplete",
       "incompleteDescription": "Complete your profile to enable accurate resume parsing and better vacancy matching.",
       "fromResumeUpload": "You were redirected here because your profile needs to be completed before uploading resumes.",
+      "returnTo": "Please complete your profile to continue. You'll be redirected back automatically after saving.",
       "missing": "Missing required fields",
       "benefits": {
         "parsing": "Better resume parsing accuracy",

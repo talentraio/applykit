@@ -45,11 +45,13 @@ export const useProfileStore = defineStore('ProfileStore', {
     },
 
     /**
-     * Check if profile is complete
+     * Check if profile is complete — refreshes from server via fetchMe
      */
     async checkProfileCompleteness(): Promise<boolean> {
       try {
-        return await profileApi.checkCompletenessApi();
+        const authStore = useApiAuthStore();
+        await authStore.fetchMe();
+        return authStore.isProfileComplete;
       } catch {
         return false;
       }

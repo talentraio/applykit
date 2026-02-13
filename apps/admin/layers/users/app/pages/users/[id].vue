@@ -43,7 +43,7 @@
             class="admin-user-detail-page__card"
             :profile="profile"
             :work-format-label="profile ? workFormatLabel(profile.workFormat) : ''"
-            :languages-label="profile ? languagesLabel(profile.languages) : ''"
+            :languages-label="profile?.languages ? languagesLabel(profile.languages) : ''"
             :phones-label="profile ? phonesLabel(profile.phones) : ''"
             :profile-created-at="profile ? formatDate(profile.createdAt) : ''"
             :profile-updated-at="profile ? formatDate(profile.updatedAt) : ''"

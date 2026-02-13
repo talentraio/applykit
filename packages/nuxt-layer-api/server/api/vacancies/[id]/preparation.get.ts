@@ -68,7 +68,15 @@ export default defineEventHandler(async (event): Promise<VacancyPreparationRespo
     vacancy: {
       id: vacancy.id,
       company: vacancy.company,
-      jobPosition: vacancy.jobPosition
+      jobPosition: vacancy.jobPosition,
+      canRequestScoreDetails: Boolean(latestGeneration && detailedScoringEnabled),
+      canRegenerateScoreDetails: Boolean(
+        latestGeneration &&
+        visibleScoreDetails &&
+        scoreDetailsStale &&
+        vacancy.canGenerateResume &&
+        detailedScoringEnabled
+      )
     },
     latestGeneration,
     scoreDetails: visibleScoreDetails,

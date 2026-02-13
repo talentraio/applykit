@@ -45,7 +45,8 @@ describe('getDaysUntilExpiration', () => {
       matchScoreAfter: 90,
       scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: now,
-      expiresAt: futureDate
+      expiresAt: futureDate,
+      scoreAlertDismissedAt: null
     };
 
     const days = getDaysUntilExpiration(generation);
@@ -75,7 +76,8 @@ describe('getDaysUntilExpiration', () => {
       matchScoreAfter: 90,
       scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: new Date('2025-12-20T12:00:00Z'),
-      expiresAt: pastDate
+      expiresAt: pastDate,
+      scoreAlertDismissedAt: null
     };
 
     const days = getDaysUntilExpiration(generation);
@@ -105,7 +107,8 @@ describe('getDaysUntilExpiration', () => {
       matchScoreAfter: 90,
       scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: now,
-      expiresAt: futureDate
+      expiresAt: futureDate,
+      scoreAlertDismissedAt: null
     };
 
     const days = getDaysUntilExpiration(generation);
@@ -141,7 +144,8 @@ describe('isGenerationExpired', () => {
       matchScoreAfter: 90,
       scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: now,
-      expiresAt: futureDate
+      expiresAt: futureDate,
+      scoreAlertDismissedAt: null
     };
 
     expect(isGenerationExpired(generation)).toBe(false);
@@ -169,7 +173,8 @@ describe('isGenerationExpired', () => {
       matchScoreAfter: 90,
       scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: new Date('2025-12-20T12:00:00Z'),
-      expiresAt: pastDate
+      expiresAt: pastDate,
+      scoreAlertDismissedAt: null
     };
 
     expect(isGenerationExpired(generation)).toBe(true);
@@ -197,7 +202,8 @@ describe('isGenerationExpired', () => {
       matchScoreAfter: 90,
       scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: new Date('2025-12-20T12:00:00Z'),
-      expiresAt: sameTime
+      expiresAt: sameTime,
+      scoreAlertDismissedAt: null
     };
 
     // expiresAt < now (false), so not expired
@@ -226,7 +232,8 @@ describe('isGenerationExpired', () => {
       matchScoreAfter: 90,
       scoreBreakdown: DEFAULT_SCORE_BREAKDOWN,
       generatedAt: now,
-      expiresAt: futureByOneMilli
+      expiresAt: futureByOneMilli,
+      scoreAlertDismissedAt: null
     };
 
     expect(isGenerationExpired(generation)).toBe(false);

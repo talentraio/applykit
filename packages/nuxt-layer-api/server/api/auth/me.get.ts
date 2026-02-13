@@ -15,6 +15,7 @@ import { profileRepository, userRepository } from '../../data/repositories';
 export type AuthMeResponse = {
   user: UserPublic;
   profile: Profile | null;
+  isProfileComplete: boolean;
 };
 
 export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
@@ -59,6 +60,7 @@ export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
 
   // Fetch profile (may be null if not created yet)
   const profile = await profileRepository.findByUserId(userId);
+  const isProfileComplete = await profileRepository.isComplete(userId);
 
   // Transform profile: convert null to undefined for type compatibility
   const transformedProfile = profile
@@ -83,6 +85,7 @@ export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
       lastLoginAt: user.lastLoginAt,
       deletedAt: user.deletedAt
     },
-    profile: transformedProfile
+    profile: transformedProfile,
+    isProfileComplete
   };
 });

@@ -30,54 +30,14 @@
       @redo="redo"
       @discard="handleDiscardChanges"
     >
-      <template #header>
-        <UAlert
-          v-if="shouldShowScoreAlert"
-          color="success"
-          variant="soft"
-          :close-button="{ icon: 'i-lucide-x', color: 'neutral', variant: 'link', padded: false }"
-          class="vacancy-resume-page__score-alert"
-          @close="handleDismissAlert"
-        >
-          <template #title>
-            <div class="vacancy-resume-page__score-row">
-              <div class="vacancy-resume-page__score-values">
-                <UBadge color="neutral" variant="soft">
-                  {{ t('generation.matchScore.before', { score: matchScoreBefore }) }}
-                </UBadge>
-
-                <UBadge color="success" variant="soft">
-                  {{ t('generation.matchScore.after', { score: matchScoreAfter }) }}
-                </UBadge>
-              </div>
-
-              <div class="vacancy-resume-page__score-actions">
-                <UButton
-                  v-if="canShowDetailsButton"
-                  size="sm"
-                  :loading="scoreDetailsLoading && detailsActionType === 'details'"
-                  :disabled="scoreDetailsLoading"
-                  icon="i-lucide-list-checks"
-                  @click="handleOpenDetails(false)"
-                >
-                  {{ t('vacancy.resume.details') }}
-                </UButton>
-
-                <UButton
-                  v-if="canShowRegenerateDetailsButton"
-                  size="sm"
-                  variant="outline"
-                  :loading="scoreDetailsLoading && detailsActionType === 'regenerate'"
-                  :disabled="scoreDetailsLoading"
-                  icon="i-lucide-refresh-cw"
-                  @click="handleOpenDetails(true)"
-                >
-                  {{ t('vacancy.resume.regenerateDetails') }}
-                </UButton>
-              </div>
-            </div>
-          </template>
-        </UAlert>
+      <template v-if="shouldShowScoreAlert" #header>
+        <VacancyItemResumeScoreAlert
+          :vacancy-id="vacancyId"
+          :generation-id="generation!.id"
+          :match-score-before="matchScoreBefore"
+          :match-score-after="matchScoreAfter"
+          @dismiss="handleDismissAlert"
+        />
       </template>
 
       <!-- Left: Editor Form -->
@@ -125,7 +85,7 @@ definePageMeta({
 const route = useRoute();
 const { t } = useI18n();
 const toast = useToast();
-const vacancyStore = useVacancyStore();
+const _vacancyStore = useVacancyStore();
 
 // Extract vacancy ID
 const vacancyId = computed(() => {
@@ -153,9 +113,6 @@ const {
   redo,
   discardChanges
 } = useVacancyGeneration(vacancyId.value);
-
-const { preparationCanRequestDetails, preparationCanRegenerateDetails, scoreDetailsLoading } =
-  storeToRefs(vacancyStore);
 
 // UI State
 const activeTab = ref('edit');
@@ -218,14 +175,6 @@ const contentModel = computed<ResumeContent | null>({
 
 const matchScoreBefore = computed(() => generation.value?.matchScoreBefore ?? 0);
 const matchScoreAfter = computed(() => generation.value?.matchScoreAfter ?? 0);
-const canShowDetailsButton = computed(
-  () => Boolean(generation.value) && preparationCanRequestDetails.value
-);
-const canShowRegenerateDetailsButton = computed(
-  () => Boolean(generation.value) && preparationCanRegenerateDetails.value
-);
-const detailsActionType = ref<'details' | 'regenerate' | null>(null);
-
 // Show alert if generation exists and alert has not been dismissed for this generation
 const shouldShowScoreAlert = computed(() => {
   if (!generation.value) return false;
@@ -252,29 +201,11 @@ const handleDismissAlert = async (): Promise<void> => {
   }
 };
 
-const handleOpenDetails = async (regenerate: boolean): Promise<void> => {
-  if (!generation.value) {
-    return;
-  }
-
-  detailsActionType.value = regenerate ? 'regenerate' : 'details';
-
-  try {
-    await vacancyStore.fetchScoreDetails(vacancyId.value, generation.value.id, { regenerate });
-    await navigateTo(`/vacancies/${vacancyId.value}/preparation`);
-  } catch (error) {
-    showErrorToast(t('vacancy.resume.detailsFailed'), error);
-  } finally {
-    detailsActionType.value = null;
-  }
-};
-
 // Fetch generation and settings on mount
 const { pending } = await useAsyncData(`vacancy-resume-${vacancyId.value}`, async () => {
-  const [generationResult, settingsResult, preparationResult] = await Promise.allSettled([
+  const [generationResult, settingsResult] = await Promise.allSettled([
     fetchGeneration(),
-    fetchSettings(),
-    vacancyStore.fetchVacancyPreparation(vacancyId.value)
+    fetchSettings()
   ]);
 
   if (generationResult.status === 'rejected') {
@@ -285,15 +216,7 @@ const { pending } = await useAsyncData(`vacancy-resume-${vacancyId.value}`, asyn
     showErrorToast(t('resume.error.settingsUpdateFailed'), settingsResult.reason);
   }
 
-  if (preparationResult.status === 'rejected') {
-    showErrorToast(t('vacancy.resume.detailsFetchFailed'), preparationResult.reason);
-  }
-
-  return (
-    generationResult.status === 'fulfilled' &&
-    settingsResult.status === 'fulfilled' &&
-    preparationResult.status === 'fulfilled'
-  );
+  return generationResult.status === 'fulfilled' && settingsResult.status === 'fulfilled';
 });
 const pageLoading = computed(() => !generation.value && pending.value);
 </script>
@@ -312,33 +235,6 @@ const pageLoading = computed(() => !generation.value && pending.value);
     min-height: 400px;
     text-align: center;
     padding: 2rem;
-  }
-
-  &__score-alert {
-    margin-bottom: 1rem;
-  }
-
-  &__score-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    width: 100%;
-  }
-
-  &__score-values {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  &__score-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
   }
 }
 </style>

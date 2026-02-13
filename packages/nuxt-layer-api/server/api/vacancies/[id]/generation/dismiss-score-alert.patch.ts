@@ -46,7 +46,9 @@ export default defineEventHandler(async event => {
   }
 
   // Parse request body (optional generationId)
-  const body = await readBody<{ generationId?: string }>(event).catch(() => ({}));
+  const body = await readBody<{ generationId?: string }>(event).catch(
+    (): { generationId?: string } => ({})
+  );
 
   // Get generation (use provided ID or find latest)
   let generation;
