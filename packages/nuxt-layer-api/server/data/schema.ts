@@ -100,6 +100,10 @@ export const users = pgTable('users', {
   role: roleEnum('role').notNull().default(USER_ROLE_MAP.PUBLIC),
   status: userStatusEnum('status').notNull().default('active'),
 
+  // Legal consent
+  termsAcceptedAt: timestamp('terms_accepted_at', { mode: 'date' }),
+  legalVersion: varchar('legal_version', { length: 20 }),
+
   // Timestamps
   lastLoginAt: timestamp('last_login_at', { mode: 'date' }),
   deletedAt: timestamp('deleted_at', { mode: 'date' }),

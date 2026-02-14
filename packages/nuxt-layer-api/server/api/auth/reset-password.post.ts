@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { ResetPasswordInputSchema } from '@int/schema';
 import { userRepository } from '../../data/repositories';
 import { hashPassword, isTokenExpired, validatePasswordStrength } from '../../services/password';
 
@@ -12,11 +12,6 @@ import { hashPassword, isTokenExpired, validatePasswordStrength } from '../../se
  *
  * Feature: 003-auth-expansion
  */
-
-const ResetPasswordInputSchema = z.object({
-  token: z.string().min(1, 'Token is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters')
-});
 
 export default defineEventHandler(async event => {
   const body = await readBody(event);

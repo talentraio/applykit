@@ -1,10 +1,63 @@
-// const templateUrl = '/api/template';
+import type { AcceptTermsResponse, AuthMeResponse, LoginInput, RegisterInput } from '@int/schema';
 
-export const templateApi = {
-  // async TemplateRequestApi(request: TemplateType) {
-  //   return await useApi(`${templateUrl}/path`, {
-  //     method: 'POST',
-  //     body: request
-  //   });
-  // }
+const authUrl = '/api/auth';
+
+/**
+ * Site Auth API
+ *
+ * Handles auth-related API calls for the site app.
+ */
+export const siteAuthApi = {
+  async fetchMe(): Promise<AuthMeResponse> {
+    return useApi(`${authUrl}/me`, {
+      method: 'GET'
+    });
+  },
+
+  async logout(): Promise<void> {
+    useApi(`${authUrl}/logout`, {
+      method: 'POST'
+    });
+  },
+
+  async acceptTerms(legalVersion: string): Promise<AcceptTermsResponse> {
+    return useApi('/api/user/accept-terms', {
+      method: 'POST',
+      body: { legalVersion }
+    });
+  },
+
+  async register(input: RegisterInput): Promise<void> {
+    await useApi(`${authUrl}/register`, {
+      method: 'POST',
+      body: input
+    });
+  },
+
+  async login(input: LoginInput): Promise<void> {
+    await useApi(`${authUrl}/login`, {
+      method: 'POST',
+      body: input
+    });
+  },
+
+  async forgotPassword(email: string): Promise<void> {
+    await useApi(`${authUrl}/forgot-password`, {
+      method: 'POST',
+      body: { email }
+    });
+  },
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    await useApi(`${authUrl}/reset-password`, {
+      method: 'POST',
+      body: { token, password }
+    });
+  },
+
+  async sendVerification(): Promise<void> {
+    await useApi(`${authUrl}/send-verification`, {
+      method: 'POST'
+    });
+  }
 };

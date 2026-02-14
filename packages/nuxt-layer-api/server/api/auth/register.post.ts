@@ -1,6 +1,5 @@
 import type { FormatSettingsConfig } from '../../types/format-settings-config';
-import { WORK_FORMAT_MAP } from '@int/schema';
-import { z } from 'zod';
+import { RegisterInputSchema, WORK_FORMAT_MAP } from '@int/schema';
 import {
   formatSettingsRepository,
   profileRepository,
@@ -25,13 +24,6 @@ import { assertEmailNotSuppressed } from '../../utils/suppression-guard';
  *
  * Feature: 003-auth-expansion
  */
-
-const RegisterInputSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required')
-});
 
 export default defineEventHandler(async event => {
   const body = await readBody(event);

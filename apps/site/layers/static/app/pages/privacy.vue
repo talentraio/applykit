@@ -223,7 +223,7 @@
 defineOptions({ name: 'StaticPrivacyPage' });
 
 definePageMeta({
-  layout: 'default'
+  layout: 'static'
 });
 
 const cfg = useRuntimeConfig().public.contentConfig;

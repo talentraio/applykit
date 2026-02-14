@@ -25,6 +25,10 @@ export const UserSchema = z.object({
   role: RoleSchema,
   status: UserStatusSchema,
 
+  // Legal consent
+  termsAcceptedAt: z.date().nullable().optional(),
+  legalVersion: z.string().nullable().optional(),
+
   // Timestamps
   createdAt: z.date(),
   updatedAt: z.date(),

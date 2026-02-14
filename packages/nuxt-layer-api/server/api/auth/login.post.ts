@@ -1,5 +1,4 @@
-import { USER_STATUS_MAP } from '@int/schema';
-import { z } from 'zod';
+import { LoginInputSchema, USER_STATUS_MAP } from '@int/schema';
 import { userRepository } from '../../data/repositories';
 import { verifyPassword } from '../../services/password';
 
@@ -13,11 +12,6 @@ import { verifyPassword } from '../../services/password';
  *
  * Feature: 003-auth-expansion
  */
-
-const LoginInputSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required')
-});
 
 export default defineEventHandler(async event => {
   const body = await readBody(event);

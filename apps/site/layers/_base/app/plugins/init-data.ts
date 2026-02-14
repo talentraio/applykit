@@ -1,5 +1,3 @@
-import { useApiAuthStore } from '@layer/api/app/stores/auth';
-
 /**
  * SSR Data Initialization Plugin
  *
@@ -18,7 +16,7 @@ export default defineNuxtPlugin({
   dependsOn: ['pinia'],
 
   async setup() {
-    const authStore = useApiAuthStore();
+    const authStore = useAuthStore();
 
     await callOnce('UserData', async () => {
       // Skip if already initialized (e.g., during client-side navigation)
@@ -29,7 +27,7 @@ export default defineNuxtPlugin({
       // Try to load user session
       // This will fail silently if not authenticated
       try {
-        await authStore.fetchMe();
+        return await authStore.fetchMe();
       } catch {
         // Not authenticated - this is expected for public pages
         // Store is already initialized with null values

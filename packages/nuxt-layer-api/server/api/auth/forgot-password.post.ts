@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { ForgotPasswordInputSchema } from '@int/schema';
 import { profileRepository, suppressionRepository, userRepository } from '../../data/repositories';
 import { sendPasswordResetEmail } from '../../services/email';
 import { generateToken, getTokenExpiry } from '../../services/password';
@@ -14,10 +14,6 @@ import { computeEmailHmac } from '../../utils/email-hmac';
  *
  * Feature: 003-auth-expansion
  */
-
-const ForgotPasswordInputSchema = z.object({
-  email: z.string().email('Invalid email address')
-});
 
 export default defineEventHandler(async event => {
   const body = await readBody(event);

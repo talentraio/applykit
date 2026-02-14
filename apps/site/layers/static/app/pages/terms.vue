@@ -186,7 +186,7 @@
 defineOptions({ name: 'StaticTermsPage' });
 
 definePageMeta({
-  layout: 'default'
+  layout: 'static'
 });
 
 const cfg = useRuntimeConfig().public.contentConfig;

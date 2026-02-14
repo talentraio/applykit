@@ -1030,6 +1030,16 @@
       "invalidTokenDescription": "This password reset link is invalid or has expired. Please request a new one.",
       "requestNew": "Request New Link",
       "error": "Failed to reset password. Please try again."
+    },
+    "legal": {
+      "title": "Terms & Privacy",
+      "description": "Please review and accept our terms to continue",
+      "checkbox": "I agree to the Terms of Service and Privacy Policy",
+      "agreement": "By continuing, you agree to our",
+      "termsLink": "Terms of Service",
+      "and": "and",
+      "privacyLink": "Privacy Policy",
+      "accept": "Accept & Continue"
     }
   }
 }

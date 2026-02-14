@@ -1,4 +1,4 @@
-import type { Profile, UserPublic } from '@int/schema';
+import type { AuthMeResponse } from '@int/schema';
 import { USER_STATUS_MAP } from '@int/schema';
 /**
  * Current User Endpoint
@@ -11,12 +11,6 @@ import { USER_STATUS_MAP } from '@int/schema';
  */
 
 import { profileRepository, userRepository } from '../../data/repositories';
-
-export type AuthMeResponse = {
-  user: UserPublic;
-  profile: Profile | null;
-  isProfileComplete: boolean;
-};
 
 export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
   // Session is available via auth middleware (event.context.user)
@@ -80,6 +74,8 @@ export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
       emailVerificationExpires: user.emailVerificationExpires,
       role: user.role,
       status: user.status,
+      termsAcceptedAt: user.termsAcceptedAt,
+      legalVersion: user.legalVersion,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       lastLoginAt: user.lastLoginAt,
