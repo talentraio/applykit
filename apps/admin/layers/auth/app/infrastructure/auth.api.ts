@@ -1,10 +1,22 @@
-// const templateUrl = '/api/template';
+import type { AuthMeResponse } from '@int/schema';
 
-export const templateApi = {
-  // async TemplateRequestApi(request: TemplateType) {
-  //   return await useApi(`${templateUrl}/path`, {
-  //     method: 'POST',
-  //     body: request
-  //   });
-  // }
+const authUrl = '/api/auth';
+
+/**
+ * Admin Auth API
+ *
+ * Handles auth-related API calls for the admin app.
+ */
+export const adminAuthApi = {
+  async fetchMe(): Promise<AuthMeResponse> {
+    return useApi(`${authUrl}/me`, {
+      method: 'GET'
+    });
+  },
+
+  async logout(): Promise<void> {
+    useApi(`${authUrl}/logout`, {
+      method: 'POST'
+    });
+  }
 };

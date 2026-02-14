@@ -57,7 +57,6 @@
 
 <script setup lang="ts">
 import type { VacancyStatus } from '@int/schema';
-import { useApiAuthStore } from '@layer/api/app/stores/auth';
 
 defineOptions({ name: 'VacancyItemOverviewContent' });
 
@@ -70,7 +69,7 @@ const { t } = useI18n();
 const toast = useToast();
 const route = useRoute();
 const vacancyStore = useVacancyStore();
-const authStore = useApiAuthStore();
+const authStore = useAuthStore();
 const { currentVacancy, overviewLatestGeneration, overviewCanGenerateResume } =
   storeToRefs(vacancyStore);
 const isGenerating = ref(false);

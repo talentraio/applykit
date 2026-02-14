@@ -78,7 +78,7 @@
       </UPageCard>
 
       <!-- Delete Account Section -->
-      <UPageCard v-if="profile">
+      <UPageCard>
         <ProfileFormSectionDeleteAccount @error="handleDeleteError" />
       </UPageCard>
 

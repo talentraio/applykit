@@ -13,6 +13,7 @@ export { profileRepository } from './profile';
 export { resumeRepository } from './resume';
 export { roleBudgetWindowRepository } from './role-budget-window';
 export { roleSettingsRepository } from './role-settings';
+export { suppressionRepository } from './suppression';
 export { systemConfigRepository } from './system-config';
 export { usageLogRepository } from './usage-log';
 export { userRepository } from './user';

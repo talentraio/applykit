@@ -2,7 +2,7 @@
  * Profile Composable
  *
  * Thin proxy over stores for convenient profile access in components.
- * Does NOT hold state - profile state lives in useApiAuthStore.
+ * Does NOT hold state - profile state lives in useAuthStore.
  *
  * T088 [US3] useProfile composable
  * TR008 - Refactored to use store instead of direct $fetch
@@ -10,7 +10,6 @@
  */
 
 import type { Profile, ProfileInput } from '@int/schema';
-import { useApiAuthStore } from '@layer/api/app/stores/auth';
 
 export type UseProfileReturn = {
   /**
@@ -45,7 +44,7 @@ export type UseProfileReturn = {
 };
 
 export function useProfile(): UseProfileReturn {
-  const authStore = useApiAuthStore();
+  const authStore = useAuthStore();
   const profileStore = useProfileStore();
 
   return {

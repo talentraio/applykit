@@ -1,5 +1,3 @@
-import { useApiAuthStore } from '@layer/api/app/stores/auth';
-
 /**
  * SSR Data Initialization Plugin
  *
@@ -18,7 +16,7 @@ export default defineNuxtPlugin({
   dependsOn: ['pinia'],
 
   async setup() {
-    const authStore = useApiAuthStore();
+    const authStore = useAuthStore();
 
     await callOnce('UserData', async () => {
       // Skip if already initialized (e.g., during client-side navigation)

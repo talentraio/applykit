@@ -17,6 +17,8 @@ type UserRow = {
   emailVerificationExpires: Date | string | null;
   passwordResetToken: string | null;
   passwordResetExpires: Date | string | null;
+  termsAcceptedAt: Date | string | null;
+  legalVersion: string | null;
   role: Role;
   status: UserStatus;
   createdAt: Date | string | null;
@@ -36,6 +38,8 @@ const baseSelectFields = {
   emailVerificationExpires: users.emailVerificationExpires,
   passwordResetToken: users.passwordResetToken,
   passwordResetExpires: users.passwordResetExpires,
+  termsAcceptedAt: users.termsAcceptedAt,
+  legalVersion: users.legalVersion,
   role: users.role,
   status: users.status,
   createdAt: users.createdAt,
@@ -71,6 +75,8 @@ const normalizeUserRow = (row: UserRow): User => {
     emailVerified: Boolean(row.emailVerified),
     emailVerificationExpires: normalizeOptionalDate(row.emailVerificationExpires),
     passwordResetExpires: normalizeOptionalDate(row.passwordResetExpires),
+    termsAcceptedAt: normalizeOptionalDate(row.termsAcceptedAt),
+    legalVersion: row.legalVersion,
     createdAt: normalizeRequiredDate(row.createdAt),
     updatedAt: normalizeRequiredDate(row.updatedAt),
     lastLoginAt: normalizeOptionalDate(row.lastLoginAt ?? null),
@@ -241,6 +247,32 @@ export const userRepository = {
     const updated = result[0];
     if (!updated) return null;
     return normalizeUserRow(updated);
+  },
+
+  /**
+   * Sanitize a deleted user's PII (GDPR tombstone).
+   * Replaces email with a placeholder, nulls all OAuth IDs, tokens, and sensitive fields.
+   */
+  async sanitizeDeleted(id: string): Promise<void> {
+    const now = new Date();
+    await db
+      .update(users)
+      .set({
+        email: `deleted+${id}@invalid.local`,
+        googleId: null,
+        linkedInId: null,
+        passwordHash: null,
+        emailVerified: false,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        lastLoginAt: null,
+        status: USER_STATUS_MAP.DELETED,
+        deletedAt: now,
+        updatedAt: now
+      })
+      .where(eq(users.id, id));
   },
 
   /**
@@ -459,6 +491,24 @@ export const userRepository = {
         : { linkedInId: providerId, emailVerified: true, updatedAt: new Date() };
 
     const result = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
+    const updated = result[0];
+    if (!updated) return null;
+    return normalizeUserRow(updated);
+  },
+
+  /**
+   * Record legal consent acceptance
+   */
+  async acceptTerms(id: string, legalVersion: string): Promise<User | null> {
+    const result = await db
+      .update(users)
+      .set({
+        termsAcceptedAt: new Date(),
+        legalVersion,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
     const updated = result[0];
     if (!updated) return null;
     return normalizeUserRow(updated);
