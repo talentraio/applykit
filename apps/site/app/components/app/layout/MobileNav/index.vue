@@ -1,9 +1,9 @@
 <template>
-  <UDrawer v-model:open="isMobileMenuOpen" class="layout-mobile-nav" direction="left">
+  <UDrawer v-model:open="isMobileMenuOpen" class="app-layout-mobile-nav" direction="left">
     <template #content>
-      <div class="layout-mobile-nav__content flex h-full flex-col">
+      <div class="app-layout-mobile-nav__content flex h-full flex-col">
         <div
-          class="layout-mobile-nav__header flex items-center justify-between border-b border-default p-4"
+          class="app-layout-mobile-nav__header flex items-center justify-between border-b border-default p-4"
         >
           <span class="text-lg font-semibold">{{ $t('nav.menu') }}</span>
           <UButton
@@ -15,7 +15,7 @@
           />
         </div>
 
-        <nav class="layout-mobile-nav__links flex flex-col gap-1 p-4">
+        <nav class="app-layout-mobile-nav__links flex flex-col gap-1 p-4">
           <UButton
             v-for="link in navLinks"
             :key="link.to"
@@ -40,7 +40,7 @@
  * Shared mobile navigation drawer.
  */
 
-defineOptions({ name: 'LayoutMobileNav' });
+defineOptions({ name: 'AppLayoutMobileNav' });
 
 const isMobileMenuOpen = defineModel<boolean>('open', { default: false });
 

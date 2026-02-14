@@ -1,7 +1,7 @@
 <template>
   <div class="site-editor-layout">
     <!-- Navbar -->
-    <LayoutHeader
+    <AppLayoutHeader
       v-model:open="isMobileMenuOpen"
       :app-title="appTitle"
       class="site-editor-layout__header h-16"
@@ -15,10 +15,11 @@
     </main>
 
     <!-- Mobile Navigation Drawer -->
-    <LayoutMobileNav v-model:open="isMobileMenuOpen" />
+    <AppLayoutMobileNav v-model:open="isMobileMenuOpen" />
 
     <!-- Auth Modal -->
     <AuthModal />
+    <AuthLegalConsentModal />
   </div>
 </template>
 

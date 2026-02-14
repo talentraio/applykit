@@ -2,7 +2,12 @@ import type { FormatSettingsConfig } from '../../types/format-settings-config';
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '@int/schema';
 import { eventHandler, getQuery } from 'h3';
 import { decode, hasLeadingSlash, hasProtocol } from 'ufo';
-import { formatSettingsRepository, userRepository } from '../../data/repositories';
+import {
+  formatSettingsRepository,
+  suppressionRepository,
+  userRepository
+} from '../../data/repositories';
+import { computeEmailHmac } from '../../utils/email-hmac';
 
 /**
  * Google OAuth Handler
@@ -92,6 +97,13 @@ const oauthHandler = defineOAuthGoogleEventHandler({
     }
 
     if (!dbUser) {
+      // Check suppression before creating a new account
+      const hmac = computeEmailHmac(email);
+      const suppressed = await suppressionRepository.isEmailSuppressed(hmac);
+      if (suppressed) {
+        return sendRedirect(event, '/?auth=login&error=account_restricted');
+      }
+
       // New user - create with default public role
       dbUser = await userRepository.create({
         email,

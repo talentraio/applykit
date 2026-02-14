@@ -30,6 +30,22 @@ export default defineNuxtConfig({
     },
     redirects: {
       authDefault: '/dashboard'
+    },
+    public: {
+      contentConfig: {
+        supportEmail: 'talentraio@gmail.com',
+        serviceName: 'ApplyKit',
+        operatorDescription: '',
+        operatorCountry: 'DK',
+        emailDeliveryProvider: '',
+        suppressionTtlDays: 180,
+        securityLogRetentionDays: 90,
+        backupRetentionDays: 30,
+        termsEffectiveDate: '13.02.2026',
+        termsLastUpdated: '13.02.2026',
+        privacyEffectiveDate: '13.02.2026',
+        privacyLastUpdated: '13.02.2026'
+      }
     }
   },
 

@@ -1,7 +1,8 @@
-import { z } from 'zod';
-import { profileRepository, userRepository } from '../../data/repositories';
+import { ForgotPasswordInputSchema } from '@int/schema';
+import { profileRepository, suppressionRepository, userRepository } from '../../data/repositories';
 import { sendPasswordResetEmail } from '../../services/email';
 import { generateToken, getTokenExpiry } from '../../services/password';
+import { computeEmailHmac } from '../../utils/email-hmac';
 
 /**
  * Forgot Password Endpoint
@@ -13,10 +14,6 @@ import { generateToken, getTokenExpiry } from '../../services/password';
  *
  * Feature: 003-auth-expansion
  */
-
-const ForgotPasswordInputSchema = z.object({
-  email: z.string().email('Invalid email address')
-});
 
 export default defineEventHandler(async event => {
   const body = await readBody(event);
@@ -31,6 +28,13 @@ export default defineEventHandler(async event => {
   }
 
   const { email } = parsed.data;
+
+  // Silently skip suppressed emails (prevent enumeration)
+  const hmac = computeEmailHmac(email);
+  const suppressed = await suppressionRepository.isEmailSuppressed(hmac);
+  if (suppressed) {
+    return { success: true };
+  }
 
   // Find user (silently fail to prevent email enumeration)
   const user = await userRepository.findByEmail(email);

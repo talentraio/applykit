@@ -22,6 +22,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     databaseUrl: 'postgresql://postgres:postgres@localhost:5432/resume_editor',
+    suppressionPepper: 'dev-pepper-not-for-production',
+    suppressionTtlDays: 180,
     llm: {
       openaiApiKey: '',
       geminiApiKey: '',

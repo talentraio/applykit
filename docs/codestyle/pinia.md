@@ -118,7 +118,7 @@ export default defineNuxtPlugin({
   parallel: false,
   dependsOn: ['pinia'],
   async setup() {
-    const authStore = useApiAuthStore();
+    const authStore = useAuthStore();
 
     // Load user session if authenticated
     try {

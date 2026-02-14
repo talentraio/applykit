@@ -10,6 +10,7 @@ import {
   OPERATION_MAP,
   PROVIDER_TYPE_MAP,
   SOURCE_FILE_TYPE_MAP,
+  SUPPRESSION_REASON_MAP,
   USAGE_CONTEXT_MAP,
   USER_ROLE_MAP,
   USER_STATUS_MAP,
@@ -76,3 +77,7 @@ export type ExportFormat = z.infer<typeof ExportFormatSchema>;
 // Vacancy application status
 export const VacancyStatusSchema = z.nativeEnum(VACANCY_STATUS_MAP);
 export type VacancyStatus = z.infer<typeof VacancyStatusSchema>;
+
+// Suppression reasons for anti-abuse
+export const SuppressionReasonSchema = z.nativeEnum(SUPPRESSION_REASON_MAP);
+export type SuppressionReason = z.infer<typeof SuppressionReasonSchema>;

@@ -1,4 +1,7 @@
 export * from './constants/enums';
+
+// Auth
+export * from './schemas/auth';
 // Enums
 export * from './schemas/enums';
 

@@ -1,5 +1,4 @@
 import type { Profile, ProfileInput } from '@int/schema';
-import { useApiAuthStore } from '@layer/api/app/stores/auth';
 import { profileApi } from '@site/profile/app/infrastructure/profile.api';
 
 /**
@@ -32,7 +31,7 @@ export const useProfileStore = defineStore('ProfileStore', {
         const profile = await profileApi.saveProfileApi(data);
 
         // Update auth store with new profile
-        const authStore = useApiAuthStore();
+        const authStore = useAuthStore();
         authStore.setProfile(profile);
 
         return profile;
@@ -49,7 +48,7 @@ export const useProfileStore = defineStore('ProfileStore', {
      */
     async checkProfileCompleteness(): Promise<boolean> {
       try {
-        const authStore = useApiAuthStore();
+        const authStore = useAuthStore();
         await authStore.fetchMe();
         return authStore.isProfileComplete;
       } catch {

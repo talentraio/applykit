@@ -1,7 +1,7 @@
 <template>
   <div class="site-default-layout">
     <!-- Navbar -->
-    <LayoutHeader v-model:open="isMobileMenuOpen" :app-title="appTitle" class="h-16" />
+    <AppLayoutHeader v-model:open="isMobileMenuOpen" :app-title="appTitle" class="h-16" />
 
     <!-- Main Content -->
     <main class="site-default-layout__main">
@@ -11,10 +11,11 @@
     </main>
 
     <!-- Mobile Navigation Drawer -->
-    <LayoutMobileNav v-model:open="isMobileMenuOpen" />
+    <AppLayoutMobileNav v-model:open="isMobileMenuOpen" />
 
     <!-- Auth Modal -->
     <AuthModal />
+    <AuthLegalConsentModal />
   </div>
 </template>
 

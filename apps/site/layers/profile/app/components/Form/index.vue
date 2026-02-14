@@ -13,13 +13,6 @@
       <!-- Phone Numbers Section -->
       <ProfileFormSectionPhone v-model="formData.phones" />
 
-      <!-- Terms Section (only for new profiles) -->
-      <ProfileFormSectionTerms
-        v-if="!hasExistingProfile"
-        v-model="termsAccepted"
-        :show-error="showTermsError"
-      />
-
       <!-- Actions -->
       <ProfileFormActions :show-cancel="showCancel" :saving="saving" @cancel="handleCancel" />
     </form>
@@ -85,15 +78,8 @@ type ProfileFormData = {
 // Get current user for email verification status
 const { user } = useAuth();
 
-// Check if this is an existing profile (for terms checkbox display)
-const hasExistingProfile = computed(() => !!props.profile?.id);
-
 // Email verification status from user
 const emailVerified = computed(() => user.value?.emailVerified ?? true);
-
-// Terms acceptance state (only required for new profiles)
-const termsAccepted = ref(false);
-const showTermsError = ref(false);
 
 // Main form data
 const formData = reactive<ProfileFormData>({
@@ -137,13 +123,6 @@ const handleSubmit = () => {
   // if (formData.languages?.length === 0) {
   //   return;
   // }
-
-  // Validate terms acceptance for new profiles
-  if (!hasExistingProfile.value && !termsAccepted.value) {
-    showTermsError.value = true;
-    return;
-  }
-  showTermsError.value = false;
 
   // Build ProfileInput
   const data: ProfileInput = {
