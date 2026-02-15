@@ -2,10 +2,7 @@
   <section class="landing-modes py-16 lg:py-20">
     <UContainer class="landing-modes__container">
       <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <UCard
-          class="border border-white/10 bg-white/[0.03] shadow-sm"
-          :ui="{ root: 'divide-y-0' }"
-        >
+        <UCard class="landing-surface-card" :ui="{ root: 'divide-y-0' }">
           <template #header>
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -36,7 +33,7 @@
             </div>
           </template>
 
-          <div class="rounded-2xl border border-white/10 bg-slate-900/65 p-5">
+          <div class="landing-modes__preview-content p-1">
             <div class="mb-4 flex items-center justify-between">
               <div>
                 <p class="text-sm font-semibold text-slate-100">Alex Morgan</p>
@@ -55,11 +52,11 @@
               </UBadge>
             </div>
 
-            <ul class="space-y-2.5">
+            <ul class="space-y-2">
               <li
                 v-for="line in previewLines"
                 :key="line"
-                class="rounded-md border border-white/10 px-3 py-2 text-sm text-slate-300"
+                class="landing-modes__line rounded-md px-3 py-2 text-sm text-slate-300"
               >
                 {{ line }}
               </li>
@@ -69,7 +66,7 @@
 
         <div class="grid gap-4">
           <UCard
-            class="border border-emerald-300/25 bg-emerald-500/10 shadow-sm"
+            class="landing-modes__metric landing-modes__metric--score"
             :ui="{ root: 'divide-y-0' }"
           >
             <p class="text-xs uppercase tracking-[0.12em] text-emerald-200">
@@ -79,7 +76,7 @@
           </UCard>
 
           <UCard
-            class="border border-cyan-300/25 bg-cyan-500/10 shadow-sm"
+            class="landing-modes__metric landing-modes__metric--time"
             :ui="{ root: 'divide-y-0' }"
           >
             <p class="text-xs uppercase tracking-[0.12em] text-cyan-200">
@@ -128,11 +125,34 @@ const previewLines = computed(() => {
 
 <style lang="scss">
 .landing-modes {
-  background: var(--landing-surface-1);
-  border-top: 1px solid var(--landing-border-soft);
-
   &__container {
     max-width: 1260px;
+  }
+
+  &__metric {
+    border: 1px solid var(--landing-card-border);
+    backdrop-filter: blur(4px);
+    box-shadow:
+      inset 0 1px 0 rgb(248 250 252 / 4%),
+      0 14px 30px rgb(2 6 23 / 20%);
+
+    &--score {
+      background: linear-gradient(160deg, rgb(6 95 70 / 24%), rgb(6 78 59 / 14%));
+    }
+
+    &--time {
+      background: linear-gradient(160deg, rgb(8 47 73 / 25%), rgb(12 74 110 / 13%));
+    }
+  }
+
+  &__preview-content {
+    background: transparent;
+  }
+
+  &__line {
+    border: 1px solid rgb(148 163 184 / 14%);
+    border-left: 2px solid rgb(34 211 238 / 24%);
+    background: rgb(15 23 42 / 28%);
   }
 
   &__preview-button {

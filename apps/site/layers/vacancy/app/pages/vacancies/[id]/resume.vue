@@ -189,7 +189,7 @@ const handleDismissAlert = async (): Promise<void> => {
   if (!generation.value) return;
 
   try {
-    await $fetch(`/api/vacancies/${vacancyId.value}/generation/dismiss-score-alert`, {
+    await useApi(`/api/vacancies/${vacancyId.value}/generation/dismiss-score-alert`, {
       method: 'PATCH',
       body: { generationId: generation.value.id }
     });

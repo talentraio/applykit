@@ -17,6 +17,7 @@ Key conventions:
   - Type safety is a core requirement - never compromise it with `any`
 - Zod validation in LLM/parsing services
 - Pinia stores own data flow; components call store actions
+- **CRITICAL**: Always use `useApi()` for client-side API calls — never `$fetch` directly (see `docs/codestyle/base.md`)
 - i18n from the start
 - Date handling: use `date-fns` for formatting/parsing and date arithmetic; avoid `Intl.DateTimeFormat`
   and `toLocale*` for user-facing dates

@@ -50,6 +50,7 @@
 - Use `*.test.ts` or `*.spec.ts` for unit tests (Vitest includes both).
 - Use Zod validation in LLM/parsing services.
 - Pinia stores own data flow; components call store actions.
+- **CRITICAL**: Always use `useApi()` for client-side API calls — never `$fetch` directly (see `docs/codestyle/base.md`).
 - i18n from the start.
 - Use server-side islands rendering for ATS/Human pages.
 

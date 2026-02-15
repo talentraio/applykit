@@ -10,6 +10,7 @@ import {
   vacancyRepository
 } from '../../../data/repositories';
 import { requireSuperAdmin } from '../../../utils/session-helpers';
+import { toAbsoluteStorageUrl } from '../../../utils/storage-url';
 
 /**
  * GET /api/admin/users/:id
@@ -75,7 +76,7 @@ export default defineEventHandler(async (event): Promise<AdminUserDetail> => {
     ? {
         ...profile,
         phones: profile.phones ?? undefined,
-        photoUrl: resolveStorageUrl(profile.photoUrl) ?? undefined
+        photoUrl: toAbsoluteStorageUrl(event, profile.photoUrl) ?? undefined
       }
     : null;
 

@@ -13,14 +13,7 @@ export default defineNuxtConfig({
   },
 
   image: {
-    dir: '.data',
-    screens: {
-      sm: 640,
-      md: 768,
-      lg: 1024,
-      xl: 1280,
-      '2xl': 1536
-    },
+    provider: 'ipx',
     domains: [
       'localhost',
       '127.0.0.1',

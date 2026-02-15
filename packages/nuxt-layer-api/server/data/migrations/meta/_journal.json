@@ -162,6 +162,13 @@
       "when": 1771766400000,
       "tag": "0023_legal_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1771852800000,
+      "tag": "0024_add_promo_role",
+      "breakpoints": true
     }
   ]
 }

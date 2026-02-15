@@ -15,7 +15,7 @@
         <UCard
           v-for="step in steps"
           :key="step.key"
-          class="landing-flow__card border border-white/10 bg-white/[0.03] shadow-sm"
+          class="landing-flow__card landing-surface-card"
         >
           <div class="mb-4 flex items-center justify-between">
             <span
@@ -73,9 +73,6 @@ const steps = computed(() => [
 
 <style lang="scss">
 .landing-flow {
-  background: var(--landing-surface-2);
-  border-top: 1px solid var(--landing-border-strong);
-
   &__container {
     max-width: 1260px;
   }

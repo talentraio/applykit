@@ -12,7 +12,7 @@
       </div>
 
       <div class="grid gap-4 lg:grid-cols-2">
-        <UCard class="landing-comparison__card border border-white/12 bg-white/[0.03]">
+        <UCard class="landing-comparison__card landing-surface-card">
           <template #header>
             <div class="flex items-center gap-3">
               <span
@@ -34,7 +34,7 @@
           </ul>
         </UCard>
 
-        <UCard class="landing-comparison__card border border-white/12 bg-white/[0.03]">
+        <UCard class="landing-comparison__card landing-surface-card">
           <template #header>
             <div class="flex items-center gap-3">
               <span
@@ -56,22 +56,6 @@
           </ul>
         </UCard>
       </div>
-
-      <UCard class="landing-comparison__source mt-6 border border-cyan-200/30 bg-cyan-500/10">
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p class="text-xs uppercase tracking-[0.14em] text-cyan-100">
-              {{ $t('landing.dual.singleSourceLabel') }}
-            </p>
-            <p class="mt-1 text-base font-semibold text-slate-100">
-              {{ $t('landing.dual.singleSourceTitle') }}
-            </p>
-          </div>
-          <UBadge color="info" variant="soft" size="lg">{{
-            $t('landing.dual.singleSourceBadge')
-          }}</UBadge>
-        </div>
-      </UCard>
     </UContainer>
   </section>
 </template>
@@ -96,9 +80,6 @@ const humanPoints = computed(() => [
 
 <style lang="scss">
 .landing-comparison {
-  background: var(--landing-surface-2);
-  border-top: 1px solid var(--landing-border-strong);
-
   &__container {
     max-width: 1260px;
   }

@@ -29,24 +29,34 @@ definePageMeta({
 </script>
 
 <style lang="scss">
-@import 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap';
-
 .landing-page {
-  --landing-bg-base: rgb(4 10 25);
-  --landing-surface-1: rgb(8 16 38);
-  --landing-surface-2: rgb(10 20 46);
-  --landing-surface-3: rgb(12 24 54);
-  --landing-border-soft: rgb(51 65 85 / 62%);
-  --landing-border-strong: rgb(71 85 105 / 75%);
+  --landing-bg-base: rgb(2 7 20);
+  --landing-surface-base: rgb(7 14 32 / 82%);
+  --landing-border-soft: rgb(100 116 139 / 14%);
+  --landing-border-strong: rgb(148 163 184 / 16%);
+  --landing-card-bg: rgb(10 18 38 / 72%);
+  --landing-card-border: rgb(148 163 184 / 12%);
 
   min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
   color-scheme: dark;
-  background:
-    radial-gradient(circle at 16% 8%, rgb(8 145 178 / 16%), transparent 32%),
-    radial-gradient(circle at 84% 20%, rgb(14 116 144 / 18%), transparent 34%),
-    linear-gradient(180deg, rgb(3 9 25), rgb(4 10 25));
+  background: var(--landing-bg-base);
   color: rgb(226 232 240);
   font-family: Manrope, 'Segoe UI', sans-serif;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(72% 48% at 14% 8%, rgb(14 165 233 / 22%), transparent 70%),
+      radial-gradient(56% 40% at 86% 16%, rgb(16 185 129 / 16%), transparent 74%),
+      radial-gradient(62% 46% at 52% 92%, rgb(37 99 235 / 12%), transparent 80%);
+  }
 
   h1,
   h2,
@@ -58,6 +68,25 @@ definePageMeta({
 
   &__main {
     position: relative;
+
+    > section {
+      position: relative;
+      background: transparent;
+    }
+  }
+
+  .landing-surface-card {
+    border: 1px solid var(--landing-card-border);
+    background: linear-gradient(160deg, rgb(14 23 48 / 74%), var(--landing-card-bg));
+    backdrop-filter: blur(6px);
+    box-shadow: 0 14px 30px rgb(2 6 23 / 16%);
+    transition:
+      border-color 180ms ease,
+      transform 180ms ease;
+
+    &:hover {
+      border-color: rgb(125 211 252 / 34%);
+    }
   }
 }
 </style>

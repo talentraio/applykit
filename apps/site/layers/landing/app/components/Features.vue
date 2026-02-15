@@ -15,7 +15,7 @@
         <UCard
           v-for="feature in features"
           :key="feature.key"
-          class="landing-features__card border border-white/10 bg-white/[0.03] shadow-sm transition-transform duration-200 hover:-translate-y-1"
+          class="landing-features__card landing-surface-card transition-transform duration-200 hover:-translate-y-1"
         >
           <div
             class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-400/15 text-cyan-200"
@@ -77,9 +77,6 @@ const features = computed(() => [
 
 <style lang="scss">
 .landing-features {
-  background: var(--landing-surface-1);
-  border-top: 1px solid var(--landing-border-soft);
-
   &__container {
     max-width: 1260px;
   }

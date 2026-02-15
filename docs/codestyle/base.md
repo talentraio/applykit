@@ -101,6 +101,15 @@ defineOptions({ name: 'AuthFormRegistration' });
   - or an explicit import improves readability,
   - or it prevents name collisions.
 
+## API calls (client-side)
+
+- **Always use `useApi()`** for all client-side API calls to the backend (components, composables, stores, API files).
+- **Never use `$fetch` directly** — it bypasses the `create-api.ts` plugin which handles:
+  - SSR header forwarding (`host`, `cookie`, `x-forwarded-*`) — required for correct URL resolution on the server
+  - Auth error interception (403 → redirect to login)
+  - Request timeout configuration
+- `useApi` is auto-imported from `@int/api` layer (`packages/nuxt-layer-api/app/composables/useApi.ts`).
+
 ## Navigation (Nuxt)
 
 - Prefer **native HTML navigation** whenever possible:

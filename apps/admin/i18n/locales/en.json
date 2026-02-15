@@ -95,6 +95,7 @@
       "roles": {
         "super_admin": "Super Admin",
         "friend": "Friend",
+        "promo": "Promo",
         "public": "Public"
       }
     },
@@ -145,6 +146,7 @@
       "names": {
         "super_admin": "Super Admin",
         "friend": "Friend",
+        "promo": "Promo",
         "public": "Public"
       }
     },

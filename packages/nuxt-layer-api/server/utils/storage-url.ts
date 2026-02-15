@@ -1,49 +1,59 @@
-export const resolveStorageUrl = (value?: string | null): string | undefined => {
+import type { H3Event } from 'h3';
+import { getRequestURL } from 'h3';
+
+/**
+ * Normalize a storage path for DB persistence.
+ *
+ * Storage drivers may return absolute URLs or `/api/storage/...` paths.
+ * We always store `/storage/...` in the database.
+ */
+export const normalizeStoragePath = (value?: string | null): string | undefined => {
   if (!value) return undefined;
 
+  // Absolute URL → extract pathname
   if (value.startsWith('http://') || value.startsWith('https://')) {
     try {
-      const url = new URL(value);
-      if (url.pathname.startsWith('/api/storage/')) {
-        return url.pathname.replace('/api/storage/', '/storage/');
-      }
-      if (url.pathname.startsWith('/storage/')) {
-        return url.pathname;
-      }
+      const { pathname } = new URL(value);
+      return pathname.replace('/api/storage/', '/storage/');
     } catch {
       return value;
     }
-    return value;
   }
 
+  // Data/blob URLs → pass through
   if (value.startsWith('data:') || value.startsWith('blob:')) {
     return value;
   }
 
-  const normalized = value.startsWith('/') ? value : `/${value}`;
-
-  if (normalized.startsWith('/api/storage/')) {
-    return normalized.replace('/api/storage/', '/storage/');
-  }
-
-  return normalized;
+  // Relative path → normalize prefix
+  const path = value.startsWith('/') ? value : `/${value}`;
+  return path.replace('/api/storage/', '/storage/');
 };
 
-export const appendCacheBuster = (value?: string | null, token?: string): string | undefined => {
+/**
+ * Build an absolute URL from a relative storage path for API responses.
+ *
+ * Takes the origin (protocol + host + port) from the current request.
+ * Requires `host` header to be forwarded during SSR (see create-api.ts plugin).
+ */
+export const toAbsoluteStorageUrl = (event: H3Event, value?: string | null): string | undefined => {
   if (!value) return undefined;
 
-  const cacheToken = token ?? Date.now().toString();
-  try {
-    if (value.startsWith('http://') || value.startsWith('https://')) {
-      const url = new URL(value);
-      url.searchParams.set('v', cacheToken);
-      return url.toString();
-    }
-
-    const url = new URL(value, 'http://local');
-    url.searchParams.set('v', cacheToken);
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
+  // Already absolute or special scheme → pass through
+  if (
+    value.startsWith('http://') ||
+    value.startsWith('https://') ||
+    value.startsWith('data:') ||
+    value.startsWith('blob:')
+  ) {
     return value;
   }
+
+  const url = getRequestURL(event, {
+    xForwardedHost: true,
+    xForwardedProto: true
+  });
+
+  const path = value.startsWith('/') ? value : `/${value}`;
+  return `${url.origin}${path}`;
 };

@@ -10,24 +10,26 @@
 
     <div class="resume-editor-layout-left-column__footer">
       <div class="resume-editor-layout-left-column__footer-row">
-        <BaseUndoRedoControls
-          :can-undo="canUndo"
-          :can-redo="canRedo"
-          @undo="emit('undo')"
-          @redo="emit('redo')"
-        />
-
-        <div class="flex items-center gap-2">
-          <UButton
-            v-if="isDirty"
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            @click="emit('discard')"
-          >
-            {{ $t('common.cancel') }}
-          </UButton>
+        <div class="resume-editor-layout-left-column__history">
+          <BaseUndoRedoControls
+            :can-undo="canUndo"
+            :can-redo="canRedo"
+            @undo="emit('undo')"
+            @redo="emit('redo')"
+          />
         </div>
+
+        <UButton
+          v-if="isDirty"
+          variant="soft"
+          color="neutral"
+          size="sm"
+          icon="i-lucide-x"
+          class="resume-editor-layout-left-column__discard"
+          @click="emit('discard')"
+        >
+          {{ $t('common.cancel') }}
+        </UButton>
       </div>
     </div>
   </aside>
@@ -89,20 +91,31 @@ const emit = defineEmits<{
 
   &__footer {
     flex-shrink: 0;
-    padding: 0.75rem 1rem;
-    border-top: 1px solid var(--color-neutral-200);
-    background-color: var(--color-neutral-50);
-
-    @media (prefers-color-scheme: dark) {
-      border-top-color: var(--color-neutral-800);
-      background-color: var(--color-neutral-950);
-    }
+    padding: 1rem 1rem 1.25rem;
+    background-color: var(--ui-bg);
   }
 
   &__footer-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid var(--ui-border);
+    border-radius: 0.875rem;
+    background-color: var(--ui-bg-muted);
+    padding: 0.5rem 0.625rem;
+  }
+
+  &__history {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.75rem;
+    background-color: var(--ui-bg);
+    padding: 0.25rem;
+  }
+
+  &__discard {
+    margin-inline-start: auto;
   }
 
   &__actions {
