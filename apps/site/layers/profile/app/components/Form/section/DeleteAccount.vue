@@ -89,7 +89,7 @@ const handleDelete = async () => {
   isDeleting.value = true;
 
   try {
-    await $fetch('/api/profile/account', {
+    await useApi('/api/profile/account', {
       method: 'DELETE'
     });
 

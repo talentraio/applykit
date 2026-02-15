@@ -11,6 +11,7 @@ import { USER_STATUS_MAP } from '@int/schema';
  */
 
 import { profileRepository, userRepository } from '../../data/repositories';
+import { toAbsoluteStorageUrl } from '../../utils/storage-url';
 
 export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
   // Session is available via auth middleware (event.context.user)
@@ -61,7 +62,7 @@ export default defineEventHandler(async (event): Promise<AuthMeResponse> => {
     ? {
         ...profile,
         phones: profile.phones ?? undefined,
-        photoUrl: resolveStorageUrl(profile.photoUrl) ?? undefined
+        photoUrl: toAbsoluteStorageUrl(event, profile.photoUrl) ?? undefined
       }
     : null;
 

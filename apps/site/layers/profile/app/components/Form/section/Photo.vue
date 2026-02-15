@@ -128,7 +128,7 @@ const handleFileSelect = async (event: Event) => {
     formData.append('file', file);
 
     // Upload photo
-    const response = await $fetch<{ photoUrl: string }>('/api/profile/photo', {
+    const response = await useApi<{ photoUrl: string }>('/api/profile/photo', {
       method: 'POST',
       body: formData
     });
@@ -155,7 +155,7 @@ const handleRemove = async () => {
   uploadError.value = null;
 
   try {
-    await $fetch('/api/profile/photo', {
+    await useApi('/api/profile/photo', {
       method: 'DELETE'
     });
 

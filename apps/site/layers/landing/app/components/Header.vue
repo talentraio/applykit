@@ -9,17 +9,12 @@
           type="button"
           @click="scrollToTop"
         >
-          <span
-            class="landing-header__brand-mark inline-flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-400/20 text-cyan-200"
-          >
-            <UIcon name="i-lucide-sparkles" class="text-lg" />
-          </span>
-          <span class="landing-header__brand-text leading-tight">
-            <span class="block text-sm font-semibold tracking-[0.12em] text-cyan-100"
-              >APPLYKIT</span
-            >
-            <span class="block text-xs text-slate-300">Resume Intelligence</span>
-          </span>
+          <NuxtImg
+            src="/img/logo.png"
+            format="webp"
+            alt="ApplyKit"
+            class="landing-header__logo h-7 w-auto md:h-8"
+          />
         </button>
 
         <nav class="landing-header__nav hidden items-center gap-2 lg:flex">
@@ -37,33 +32,23 @@
         <div class="landing-header__actions flex items-center gap-2">
           <UButton
             v-if="loggedIn"
-            color="neutral"
-            variant="outline"
+            color="primary"
             size="sm"
-            icon="i-lucide-layout-dashboard"
+            icon="i-lucide-rocket"
             @click="navigateTo(redirects.afterLandingTryIt)"
           >
-            {{ $t('landing.header.dashboard') }}
+            {{ $t('landing.header.goTailoring') }}
           </UButton>
 
-          <template v-else>
-            <UButton
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              class="hidden sm:inline-flex"
-              @click="openAuthModal('login', redirects.afterLandingTryIt)"
-            >
-              {{ $t('landing.header.signIn') }}
-            </UButton>
-            <UButton
-              size="sm"
-              color="primary"
-              @click="openAuthModal('login', redirects.afterLandingTryIt)"
-            >
-              {{ $t('landing.header.start') }}
-            </UButton>
-          </template>
+          <UButton
+            v-else
+            size="sm"
+            color="neutral"
+            variant="outline"
+            @click="openAuthModal('login', redirects.afterLandingTryIt)"
+          >
+            {{ $t('landing.header.signIn') }}
+          </UButton>
         </div>
       </div>
     </UContainer>
@@ -114,6 +99,11 @@ const scrollToTop = () => {
 
   &__nav-link {
     background: transparent;
+  }
+
+  &__logo {
+    display: block;
+    object-fit: contain;
   }
 }
 </style>
