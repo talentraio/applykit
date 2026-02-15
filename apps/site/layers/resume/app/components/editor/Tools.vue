@@ -4,6 +4,7 @@
       v-if="showTabs"
       v-model="activeTab"
       :items="items"
+      :ui="tabsUi"
       class="resume-editor-tools__tabs px-4 pt-4"
     >
       <template #content="{ item }">
@@ -95,6 +96,12 @@ const contentModel = defineModel<ResumeContent | null>('content', { default: nul
 const settingsModel = defineModel<SpacingSettings>('settings', { required: true });
 const showTabs = computed(() => props.items.length > 1);
 const singleTabValue = computed(() => props.items[0]?.value ?? RESUME_EDITOR_TABS_MAP.EDIT);
+const tabsUi = {
+  // Use trigger-based active styles instead of indicator positioning to avoid SSR-to-hydration color flash.
+  indicator: 'hidden',
+  trigger:
+    'data-[state=active]:bg-primary data-[state=active]:text-inverted data-[state=active]:shadow-xs'
+} as const;
 
 watch(
   () => props.items,
