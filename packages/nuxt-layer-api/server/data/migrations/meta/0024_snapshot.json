@@ -1,6 +1,6 @@
 {
-  "id": "8d93200d-9f7b-45e4-9170-40fe77ca4834",
-  "prevId": "c97afa42-04e9-48fd-a2c1-87de81c22530",
+  "id": "4a077bda-cc7b-43ed-a4dd-557f98a9a7d6",
+  "prevId": "8d93200d-9f7b-45e4-9170-40fe77ca4834",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1815,6 +1815,18 @@
           "notNull": true,
           "default": "'active'"
         },
+        "terms_accepted_at": {
+          "name": "terms_accepted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "legal_version": {
+          "name": "legal_version",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "last_login_at": {
           "name": "last_login_at",
           "type": "timestamp",
@@ -2048,7 +2060,7 @@
     "public.role": {
       "name": "role",
       "schema": "public",
-      "values": ["super_admin", "friend", "public"]
+      "values": ["super_admin", "friend", "promo", "public"]
     },
     "public.source_file_type": {
       "name": "source_file_type",

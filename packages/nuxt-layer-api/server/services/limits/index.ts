@@ -10,6 +10,7 @@ import { getDailyUsageCount } from '../../utils/usage';
  *
  * Daily Limits:
  * - public: 3 parse, 2 generate, 5 export
+ * - promo: 3 parse, 2 generate, 5 export
  * - friend: 10 parse, 8 generate, 20 export
  * - super_admin: unlimited
  *
@@ -21,6 +22,11 @@ import { getDailyUsageCount } from '../../utils/usage';
  */
 const DAILY_LIMITS: Record<Role, Record<Operation, number>> = {
   [USER_ROLE_MAP.PUBLIC]: {
+    parse: 3,
+    generate: 2,
+    export: 5
+  },
+  [USER_ROLE_MAP.PROMO]: {
     parse: 3,
     generate: 2,
     export: 5

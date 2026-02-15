@@ -1,12 +1,14 @@
 export const USER_ROLE_MAP = {
   SUPER_ADMIN: 'super_admin',
   FRIEND: 'friend',
+  PROMO: 'promo',
   PUBLIC: 'public'
 } as const;
 
 export const USER_ROLE_VALUES = [
   USER_ROLE_MAP.SUPER_ADMIN,
   USER_ROLE_MAP.FRIEND,
+  USER_ROLE_MAP.PROMO,
   USER_ROLE_MAP.PUBLIC
 ] as const;
 
