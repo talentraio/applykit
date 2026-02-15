@@ -1,0 +1,98 @@
+name: Preview Deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # --- Database migrations (preview DB) ---
+
+      - name: Run database migrations (preview)
+        run: pnpm --filter @int/api db:migrate
+        env:
+          NUXT_DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
+
+      # --- Site: pull → build → deploy ---
+
+      - name: Pull Vercel config (site)
+        run: cd apps/site && pnpm vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_SITE_PROJECT_ID }}
+
+      - name: Build site
+        run: cd apps/site && pnpm vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_SITE_PROJECT_ID }}
+
+      - name: Deploy site (preview)
+        id: deploy-site
+        run: |
+          URL=$(cd apps/site && pnpm vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_SITE_PROJECT_ID }}
+
+      # --- Admin: pull → build → deploy ---
+
+      - name: Pull Vercel config (admin)
+        run: cd apps/admin && pnpm vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
+
+      - name: Build admin
+        run: cd apps/admin && pnpm vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
+
+      - name: Deploy admin (preview)
+        id: deploy-admin
+        run: |
+          URL=$(cd apps/admin && pnpm vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
+
+      # --- Sticky PR comment with preview URLs ---
+
+      - name: Comment preview URLs on PR
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: vercel-preview
+          message: |
+            ### Preview Deployments
+
+            | App | URL |
+            |-----|-----|
+            | Site | ${{ steps.deploy-site.outputs.url }} |
+            | Admin | ${{ steps.deploy-admin.outputs.url }} |
+
+            **Commit**: ${{ github.sha }}

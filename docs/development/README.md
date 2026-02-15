@@ -9,7 +9,8 @@ This section is a practical onboarding path for new contributors.
 3. [Speckit flow (simplified + full)](./speckit.md)
 4. [Testing guide](./testing.md)
 5. [Database and migrations](./database-migrations.md)
-6. [Maintenance checklist](./maintenance.md)
+6. [Deployment (Vercel + GitHub Actions)](./deployment.md)
+7. [Maintenance checklist](./maintenance.md)
 
 ## Quick commands
 

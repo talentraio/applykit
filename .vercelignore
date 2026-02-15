@@ -1,0 +1,10 @@
+.git
+.github
+specs
+docs
+tests
+scripts
+.specify
+.claude
+*.md
+docker-compose*.yml

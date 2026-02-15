@@ -50,6 +50,7 @@
     "stylelint-config-recommended-vue": "catalog:",
     "stylelint-config-standard-scss": "catalog:",
     "typescript": "catalog:",
+    "vercel": "^50.15.1",
     "vitest": "catalog:",
     "vue-tsc": "catalog:"
   },
