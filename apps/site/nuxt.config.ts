@@ -74,10 +74,6 @@ export default defineNuxtConfig({
     enabled: true
   },
 
-  image: {
-    dir: dataDir
-  },
-
   i18n: {
     defaultLocale: 'en',
     strategy: 'no_prefix',

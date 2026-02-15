@@ -1,4 +1,5 @@
 import { profileRepository } from '../../data/repositories';
+import { toAbsoluteStorageUrl } from '../../utils/storage-url';
 
 /**
  * GET /api/profile
@@ -19,6 +20,6 @@ export default defineEventHandler(async event => {
 
   return {
     ...profile,
-    photoUrl: resolveStorageUrl(profile.photoUrl) ?? undefined
+    photoUrl: toAbsoluteStorageUrl(event, profile.photoUrl) ?? undefined
   };
 });

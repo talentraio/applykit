@@ -12,7 +12,15 @@ export default defineNuxtPlugin({
       // Interceptors
       async onRequest({ options }) {
         if (import.meta.server) {
-          const clientHeaders = useRequestHeaders(['cookie', 'accept-language', 'user-agent']);
+          const clientHeaders = useRequestHeaders([
+            'cookie',
+            'accept-language',
+            'user-agent',
+            'host',
+            'x-forwarded-host',
+            'x-forwarded-proto',
+            'x-forwarded-port'
+          ]);
 
           options.headers = {
             ...options.headers,

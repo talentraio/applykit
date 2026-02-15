@@ -11,17 +11,17 @@
           </h2>
           <p class="text-slate-300">{{ $t('landing.faq.subtitle') }}</p>
 
-          <UCard class="border border-white/10 bg-white/[0.03] shadow-sm">
+          <UCard class="landing-surface-card">
             <p class="text-sm text-slate-300">{{ $t('landing.faq.callout') }}</p>
           </UCard>
         </div>
 
-        <UCard class="border border-white/10 bg-white/[0.03] shadow-sm">
+        <UCard class="landing-surface-card">
           <UAccordion
             :items="faqItems"
             :ui="{
               root: 'space-y-2',
-              item: 'border border-white/10 rounded-xl bg-slate-900/70 px-2',
+              item: 'border border-slate-600/28 rounded-xl bg-slate-900/46 px-2',
               trigger: 'text-base font-semibold text-slate-100 px-3 py-3',
               body: 'px-3 pb-4 text-sm text-slate-300'
             }"
@@ -59,9 +59,6 @@ const faqItems = computed(() => [
 
 <style lang="scss">
 .landing-faq {
-  background: var(--landing-surface-1);
-  border-top: 1px solid var(--landing-border-soft);
-
   &__container {
     max-width: 1260px;
   }

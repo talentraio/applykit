@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { readFiles } from 'h3-formidable';
 import { profileRepository } from '../../data/repositories';
 import { getStorage } from '../../storage';
-import { resolveStorageUrl } from '../../utils/storage-url';
+import { normalizeStoragePath, toAbsoluteStorageUrl } from '../../utils/storage-url';
 
 /**
  * POST /api/profile/photo
@@ -83,10 +83,12 @@ export default defineEventHandler(async event => {
     });
 
     // Update profile with new photo URL
-    const normalizedUrl = resolveStorageUrl(photoUrl) ?? photoUrl;
+    const normalizedUrl = normalizeStoragePath(photoUrl) ?? photoUrl;
     await profileRepository.update(userId, { photoUrl: normalizedUrl });
 
-    return { photoUrl: normalizedUrl };
+    return {
+      photoUrl: toAbsoluteStorageUrl(event, normalizedUrl) ?? normalizedUrl
+    };
   } catch (error) {
     console.error('Failed to upload photo:', error);
     throw createError({

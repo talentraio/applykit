@@ -610,7 +610,7 @@
   },
   "landing": {
     "header": {
-      "dashboard": "Dashboard",
+      "goTailoring": "Go tailoring",
       "signIn": "Sign in",
       "start": "Start tailoring",
       "nav": {
@@ -698,33 +698,33 @@
       }
     },
     "features": {
-      "label": "Core Capabilities",
-      "title": "Everything needed for high-throughput, quality-controlled applications.",
-      "subtitle": "Designed to help individuals, coaches, and recruiting teams iterate quickly without losing resume accuracy.",
+      "label": "What You Get",
+      "title": "Everything you need to apply faster with better results.",
+      "subtitle": "Spend less time rewriting and more time applying to the roles that matter.",
       "items": {
         "parse": {
-          "title": "Structured parsing",
-          "description": "Reliable DOCX/PDF parsing into strict JSON to keep resume data consistent."
+          "title": "Start from your existing resume",
+          "description": "Upload once and reuse your profile for every vacancy."
         },
         "rewrite": {
-          "title": "Vacancy-aware rewriting",
-          "description": "Highlights relevant experience and language while preserving factual boundaries."
+          "title": "Tailored to each vacancy",
+          "description": "Your experience is reframed to match each role while staying truthful."
         },
         "score": {
-          "title": "Scoring signals",
-          "description": "See before/after fit indicators to decide when adaptation is good enough."
+          "title": "Know when it is ready",
+          "description": "See before/after fit so you can apply confidently."
         },
         "versions": {
-          "title": "Version safety",
-          "description": "Keep history per vacancy and compare outcomes without losing prior iterations."
+          "title": "Keep every version",
+          "description": "Compare drafts and improvements without losing your previous work."
         },
         "formats": {
-          "title": "Dual rendering",
-          "description": "One tailored content source rendered into ATS-safe and recruiter-friendly outputs."
+          "title": "Export for every channel",
+          "description": "Get ATS and recruiter-friendly versions from the same content."
         },
         "limits": {
-          "title": "Usage controls",
-          "description": "Role-aware model routing and limits for predictable costs and governance."
+          "title": "Stay in control",
+          "description": "Work with clear limits and a predictable flow, without surprises."
         }
       }
     },
@@ -750,25 +750,25 @@
     },
     "faq": {
       "label": "FAQ",
-      "title": "Questions teams ask before rollout.",
-      "subtitle": "Short answers for technical and non-technical stakeholders.",
-      "callout": "Need a custom setup for roles, model routing, or limits? Start with default flow and extend gradually.",
+      "title": "Questions job seekers ask most often.",
+      "subtitle": "Quick answers to help you move faster with confidence.",
+      "callout": "Start with one vacancy, compare your before/after result, and iterate only if needed.",
       "items": {
         "data": {
-          "question": "Can we control sensitive data and model usage?",
-          "answer": "Yes. Routing and model configuration are managed in admin settings, with role-based overrides when needed."
+          "question": "Will it rewrite my resume from scratch?",
+          "answer": "No. It adapts your existing resume to the vacancy, keeps your core facts, and helps you present them better."
         },
         "industries": {
           "question": "Is this only for software engineers?",
-          "answer": "No. The flow is designed for office professions in general: product, marketing, sales, operations, finance, HR, and more."
+          "answer": "No. It works for office roles across product, marketing, sales, operations, finance, HR, and more."
         },
         "model": {
-          "question": "Do we need one model for every scenario?",
-          "answer": "Not necessarily. Start with practical defaults and override only high-impact scenarios or specific user roles."
+          "question": "How long does one tailored version take?",
+          "answer": "Usually a few minutes. You can quickly review the result, make edits, and regenerate if needed."
         },
         "output": {
-          "question": "Why keep ATS and Human as separate outputs?",
-          "answer": "Because different channels need different presentation. ATS needs strict structure; humans need readability and narrative clarity."
+          "question": "Why are there ATS and Human versions?",
+          "answer": "Because application systems and people read resumes differently. You get both formats from the same content."
         }
       }
     },

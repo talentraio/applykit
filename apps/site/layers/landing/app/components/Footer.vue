@@ -3,16 +3,13 @@
     <UContainer class="landing-footer__container">
       <div class="grid gap-8 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
         <div class="space-y-3">
-          <div class="flex items-center gap-3">
-            <span
-              class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-400/15 text-cyan-200"
-            >
-              <UIcon name="i-lucide-sparkles" class="text-lg" />
-            </span>
-            <div>
-              <p class="text-sm font-semibold tracking-[0.12em] text-cyan-100">APPLYKIT</p>
-              <p class="text-xs text-slate-400">Resume Intelligence</p>
-            </div>
+          <div class="landing-footer__brand">
+            <NuxtImg
+              src="/img/logo.png"
+              format="webp"
+              alt="ApplyKit"
+              class="landing-footer__logo h-7 w-auto md:h-8"
+            />
           </div>
           <p class="max-w-sm text-sm text-slate-400">{{ $t('landing.footer.description') }}</p>
         </div>

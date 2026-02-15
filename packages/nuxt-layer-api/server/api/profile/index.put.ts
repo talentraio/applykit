@@ -1,5 +1,6 @@
 import { ProfileInputSchema } from '@int/schema';
 import { profileRepository } from '../../data/repositories';
+import { toAbsoluteStorageUrl } from '../../utils/storage-url';
 
 /**
  * PUT /api/profile
@@ -44,14 +45,14 @@ export default defineEventHandler(async event => {
     }
     return {
       ...updated,
-      photoUrl: resolveStorageUrl(updated.photoUrl) ?? undefined
+      photoUrl: toAbsoluteStorageUrl(event, updated.photoUrl) ?? undefined
     };
   } else {
     // Create new profile
     const created = await profileRepository.create(userId, data);
     return {
       ...created,
-      photoUrl: resolveStorageUrl(created.photoUrl) ?? undefined
+      photoUrl: toAbsoluteStorageUrl(event, created.photoUrl) ?? undefined
     };
   }
 });
