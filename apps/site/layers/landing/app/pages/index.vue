@@ -29,8 +29,6 @@ definePageMeta({
 </script>
 
 <style lang="scss">
-@import 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap';
-
 .landing-page {
   --landing-bg-base: rgb(4 10 25);
   --landing-surface-1: rgb(8 16 38);

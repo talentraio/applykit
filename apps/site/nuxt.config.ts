@@ -22,7 +22,28 @@ export default defineNuxtConfig({
     './layers/static'
   ],
 
-  modules: ['@pinia/nuxt', '@nuxtjs/i18n', '@nuxtjs/device', '@vueuse/nuxt'],
+  modules: ['@pinia/nuxt', '@nuxtjs/i18n', '@nuxtjs/device', '@nuxt/fonts', '@vueuse/nuxt'],
+
+  fonts: {
+    families: [
+      {
+        name: 'Manrope',
+        provider: 'google',
+        weights: [400, 500, 600, 700, 800],
+        styles: ['normal'],
+        subsets: ['latin'],
+        global: true
+      },
+      {
+        name: 'Sora',
+        provider: 'google',
+        weights: [400, 500, 600, 700, 800],
+        styles: ['normal'],
+        subsets: ['latin'],
+        global: true
+      }
+    ]
+  },
 
   runtimeConfig: {
     session: {
