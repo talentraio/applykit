@@ -12,6 +12,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -81,6 +83,7 @@ jobs:
       # --- Sticky PR comment with preview URLs ---
 
       - name: Comment preview URLs on PR
+        continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: vercel-preview
