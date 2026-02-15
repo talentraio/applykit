@@ -36,12 +36,12 @@
 
         <div class="app-layout-header__profile">
           <UDropdownMenu :items="profileMenuItems">
-            <UButton
-              icon="i-lucide-user"
-              color="neutral"
-              variant="ghost"
-              square
-              :aria-label="t('nav.profile')"
+            <UAvatar
+              :src="avatarSrc"
+              :alt="avatarAlt"
+              :text="avatarInitials"
+              size="lg"
+              class="app-layout-header__avatar cursor-pointer"
             />
           </UDropdownMenu>
         </div>
@@ -64,8 +64,48 @@ defineProps<{
 const isMobileMenuOpen = defineModel<boolean>('open', { default: false });
 
 const { t } = useI18n();
-const { logout } = useAuth();
+const authStore = useAuthStore();
+const { user, logout } = useAuth();
 const navLinks = useNavLinks();
+
+const avatarSrc = computed(() => authStore.profile?.photoUrl);
+
+const avatarAlt = computed(() => {
+  const profile = authStore.profile;
+  const fullName = [profile?.firstName?.trim(), profile?.lastName?.trim()]
+    .filter(Boolean)
+    .join(' ');
+  if (fullName.length > 0) {
+    return fullName;
+  }
+
+  const email = profile?.email?.trim() ?? user.value?.email?.trim();
+  return email && email.length > 0 ? email : t('nav.profile');
+});
+
+const avatarInitials = computed(() => {
+  const profile = authStore.profile;
+  const firstNameInitial = profile?.firstName?.trim().charAt(0).toUpperCase();
+  const lastNameInitial = profile?.lastName?.trim().charAt(0).toUpperCase();
+
+  if (firstNameInitial && lastNameInitial) {
+    return `${firstNameInitial}${lastNameInitial}`;
+  }
+
+  if (firstNameInitial) {
+    return firstNameInitial;
+  }
+
+  if (lastNameInitial) {
+    return lastNameInitial;
+  }
+
+  const emailInitial = (profile?.email?.trim() ?? user.value?.email?.trim() ?? '')
+    .charAt(0)
+    .toUpperCase();
+
+  return emailInitial || '?';
+});
 
 const profileMenuItems = computed(() => [
   [
