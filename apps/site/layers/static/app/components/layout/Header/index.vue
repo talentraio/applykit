@@ -12,8 +12,13 @@
           @click="isMobileMenuOpen = true"
         />
 
-        <NuxtLink to="/" class="static-layout-header__logo text-lg font-semibold">
-          {{ appTitle }}
+        <NuxtLink to="/" :aria-label="appTitle" class="static-layout-header__logo">
+          <NuxtImg
+            src="/img/logo.png"
+            format="webp"
+            :alt="appTitle"
+            class="static-layout-header__logo-image block h-7 w-auto object-contain md:h-8"
+          />
         </NuxtLink>
       </div>
     </div>
