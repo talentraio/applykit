@@ -56,7 +56,8 @@ export default defineNuxtConfig({
       '127.0.0.1',
       'public.blob.vercel-storage.com',
       'blob.vercel-storage.com',
-      'vercel-storage.com'
+      'vercel-storage.com',
+      'vercel.app'
     ]
   },
 

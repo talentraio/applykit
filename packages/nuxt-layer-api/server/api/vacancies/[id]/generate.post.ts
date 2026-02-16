@@ -1,5 +1,5 @@
 import type { Role } from '@int/schema';
-import { OPERATION_MAP, USER_ROLE_MAP, VACANCY_STATUS_MAP } from '@int/schema';
+import { OPERATION_MAP, VACANCY_STATUS_MAP } from '@int/schema';
 import {
   generationRepository,
   resumeRepository,
@@ -8,6 +8,7 @@ import {
 import { requireLimit } from '../../../services/limits';
 import { generateResumeWithLLM } from '../../../services/llm/generate';
 import { requireCompleteProfile } from '../../../services/profile';
+import { getEffectiveUserRole } from '../../../utils/session-helpers';
 import { logGenerateAdaptation, logGenerateScoring } from '../../../utils/usage';
 
 /**
@@ -27,7 +28,7 @@ export default defineEventHandler(async event => {
   // Require authentication
   const session = await requireUserSession(event);
   const userId = session.user.id;
-  const userRole: Role = session.user.role ?? USER_ROLE_MAP.PUBLIC;
+  const userRole: Role = await getEffectiveUserRole(event);
 
   // Require complete profile before generation
   await requireCompleteProfile(userId);

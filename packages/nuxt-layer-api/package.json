@@ -23,6 +23,7 @@
     "@mullion/ai-sdk": "catalog:",
     "@mullion/core": "catalog:",
     "@pinia/nuxt": "catalog:",
+    "@sparticuz/chromium-min": "catalog:",
     "@vercel/blob": "catalog:",
     "ai": "catalog:",
     "bcryptjs": "catalog:",
@@ -33,12 +34,12 @@
     "nuxt": "catalog:",
     "nuxt-auth-utils": "catalog:",
     "openai": "catalog:",
-    "pdf-parse": "catalog:",
     "pinia": "catalog:",
     "playwright-core": "catalog:",
     "postgres": "catalog:",
     "resend": "catalog:",
     "ufo": "catalog:",
+    "unpdf": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

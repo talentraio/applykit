@@ -105,5 +105,39 @@ export default defineNuxtConfig({
     typeCheck: false
   },
 
+  nitro: {
+    vercel: {
+      functions: {
+        maxDuration: 60,
+        memory: 1024
+      }
+    },
+    externals: {
+      inline: [
+        '@sparticuz/chromium-min',
+        'follow-redirects',
+        'tar-fs',
+        'tar-stream',
+        'pump',
+        'streamx',
+        'fast-fifo',
+        'b4a',
+        'once',
+        'end-of-stream',
+        'wrappy',
+        'text-decoder-utf8',
+        'events-universal',
+        'text-decoder'
+      ]
+    },
+    // Fix CJS→ESM interop: follow-redirects calls assert() as a function.
+    // Rollup's getDefaultExportFromNamespaceIfNotNamed returns the namespace
+    // object (non-callable) when the module has multiple named exports.
+    // This shim re-exports only the default so the helper returns the callable.
+    alias: {
+      assert: fileURLToPath(new URL('./server/utils/assert-shim.mjs', import.meta.url))
+    }
+  },
+
   alias: { '@layer/api': fileURLToPath(new URL('./', import.meta.url)) }
 });
