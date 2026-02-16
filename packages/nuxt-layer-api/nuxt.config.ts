@@ -129,6 +129,13 @@ export default defineNuxtConfig({
         'events-universal',
         'text-decoder'
       ]
+    },
+    // Fix CJS→ESM interop for Node.js builtins used by inlined packages.
+    // Rollup converts require('assert') to `import * as assert from 'assert'`
+    // which creates a non-callable namespace. The node: prefix preserves the
+    // callable default export.
+    alias: {
+      assert: 'node:assert'
     }
   },
 
