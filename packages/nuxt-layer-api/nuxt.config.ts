@@ -112,8 +112,23 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    rollupConfig: {
-      external: ['@sparticuz/chromium-min']
+    externals: {
+      inline: [
+        '@sparticuz/chromium-min',
+        'follow-redirects',
+        'tar-fs',
+        'tar-stream',
+        'pump',
+        'streamx',
+        'fast-fifo',
+        'b4a',
+        'once',
+        'end-of-stream',
+        'wrappy',
+        'text-decoder-utf8',
+        'events-universal',
+        'text-decoder'
+      ]
     }
   },
 

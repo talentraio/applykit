@@ -2,6 +2,7 @@ import type { ExportFormat } from '@int/schema';
 import type { Buffer } from 'node:buffer';
 import type { Browser, Page } from 'playwright-core';
 import { EXPORT_FORMAT_MAP } from '@int/schema';
+import chromium from '@sparticuz/chromium-min';
 import { chromium as playwrightChromium } from 'playwright-core';
 
 /**
@@ -68,7 +69,6 @@ async function launchBrowser(): Promise<Browser> {
   }
 
   // Production / serverless: use @sparticuz/chromium-min
-  const chromium = await import('@sparticuz/chromium-min').then(m => m.default);
   const executablePath = await chromium.executablePath(CHROMIUM_PACK_URL);
 
   return playwrightChromium.launch({
