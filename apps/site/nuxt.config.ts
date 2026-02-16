@@ -1,9 +1,4 @@
-import { mkdirSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-const dataDir = resolve(fileURLToPath(new URL('.', import.meta.url)), '.data');
-mkdirSync(dataDir, { recursive: true });
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-22',
@@ -22,7 +17,14 @@ export default defineNuxtConfig({
     './layers/static'
   ],
 
-  modules: ['@pinia/nuxt', '@nuxtjs/i18n', '@nuxtjs/device', '@nuxt/fonts', '@vueuse/nuxt'],
+  modules: [
+    '@pinia/nuxt',
+    '@nuxtjs/i18n',
+    '@nuxt/image',
+    '@nuxtjs/device',
+    '@nuxt/fonts',
+    '@vueuse/nuxt'
+  ],
 
   fonts: {
     families: [
@@ -42,6 +44,19 @@ export default defineNuxtConfig({
         subsets: ['latin'],
         global: true
       }
+    ]
+  },
+
+  image: {
+    densities: [1, 2],
+    format: ['webp'],
+    domains: [
+      'localhost',
+      'localhost:3002',
+      '127.0.0.1',
+      'public.blob.vercel-storage.com',
+      'blob.vercel-storage.com',
+      'vercel-storage.com'
     ]
   },
 

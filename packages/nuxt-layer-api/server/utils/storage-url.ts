@@ -10,11 +10,19 @@ import { getRequestURL } from 'h3';
 export const normalizeStoragePath = (value?: string | null): string | undefined => {
   if (!value) return undefined;
 
-  // Absolute URL → extract pathname
+  // Absolute URL:
+  // - normalize legacy local API path (/api/storage/...) to /storage/...
+  // - keep external absolute URLs (e.g. Vercel Blob) intact
   if (value.startsWith('http://') || value.startsWith('https://')) {
     try {
       const { pathname } = new URL(value);
-      return pathname.replace('/api/storage/', '/storage/');
+      if (pathname.startsWith('/api/storage/')) {
+        return pathname.replace('/api/storage/', '/storage/');
+      }
+      if (pathname.startsWith('/storage/')) {
+        return pathname;
+      }
+      return value;
     } catch {
       return value;
     }

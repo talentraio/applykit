@@ -1,11 +1,5 @@
-import { mkdirSync } from 'node:fs';
-import { resolve } from 'node:path';
-// import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 // import { applySsrHmrPort } from '@int/npm-utils';
-
-const dataDir = resolve(fileURLToPath(new URL('.', import.meta.url)), '.data');
-mkdirSync(dataDir, { recursive: true });
 // const adminHmrPort = Number(process.env.NUXT_ADMIN_HMR_PORT ?? '24679');
 // const adminSsrHmrPort = Number(process.env.NUXT_ADMIN_SSR_HMR_PORT ?? '24681');
 
@@ -24,7 +18,19 @@ export default defineNuxtConfig({
     './layers/roles'
   ],
 
-  modules: ['@pinia/nuxt', '@nuxtjs/i18n'],
+  modules: ['@pinia/nuxt', '@nuxtjs/i18n', '@nuxt/image'],
+
+  image: {
+    densities: [1, 2],
+    format: ['webp'],
+    domains: [
+      'localhost',
+      '127.0.0.1',
+      'public.blob.vercel-storage.com',
+      'blob.vercel-storage.com',
+      'vercel-storage.com'
+    ]
+  },
 
   runtimeConfig: {
     session: {
@@ -53,10 +59,6 @@ export default defineNuxtConfig({
   //     applySsrHmrPort(config, adminSsrHmrPort);
   //   }
   // },
-
-  image: {
-    dir: dataDir
-  },
 
   i18n: {
     defaultLocale: 'en',
