@@ -1,8 +1,8 @@
 import type { ExportFormat, ResumeContent, SpacingSettings } from '@int/schema';
 import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import process from 'node:process';
 import { ExportFormatSchema, ResumeContentSchema, SpacingSettingsSchema } from '@int/schema';
 import { z } from 'zod';
 
@@ -34,7 +34,7 @@ const StoredPayloadSchema = z.object({
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
 const payloadStore = new Map<string, StoredPayload>();
-const storeDir = join(process.cwd(), '.data', 'pdf');
+const storeDir = join(tmpdir(), 'pdf-store');
 
 async function ensureStoreDir(): Promise<void> {
   await fs.mkdir(storeDir, { recursive: true });
