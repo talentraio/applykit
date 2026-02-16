@@ -127,7 +127,7 @@ const contentRef = computed(() => props.content);
 const { blocks } = useResumeBlocks(contentRef);
 
 // Measure block heights (re-measure when fontSize, lineHeight, or blockSpacing change)
-const { measuredBlocks, isComplete } = useBlockMeasurer(blocks, measurerRef, {
+const { measuredBlocks, isComplete, measureAll } = useBlockMeasurer(blocks, measurerRef, {
   measurementKeys: [
     computed(() => settings.value.fontSize),
     computed(() => settings.value.lineHeight),
@@ -190,6 +190,27 @@ const pageContentStyle = computed(() => ({
   '--line-height': settings.value.lineHeight,
   '--block-spacing': `${settings.value.blockSpacing * 2}px`
 }));
+
+function remeasureAfterFontLoad() {
+  nextTick(() => {
+    measureAll();
+  });
+}
+
+onMounted(() => {
+  if (!('fonts' in document)) return;
+
+  document.fonts.ready.then(() => {
+    remeasureAfterFontLoad();
+  });
+
+  document.fonts.addEventListener('loadingdone', remeasureAfterFontLoad);
+});
+
+onBeforeUnmount(() => {
+  if (!('fonts' in document)) return;
+  document.fonts.removeEventListener('loadingdone', remeasureAfterFontLoad);
+});
 </script>
 
 <style lang="scss">
@@ -349,6 +370,9 @@ const pageContentStyle = computed(() => ({
   }
 
   &__block {
+    // Prevent child margin-collapsing so measured block heights match rendered layout.
+    display: flow-root;
+
     // Block spacing using CSS variable
     &:not(:first-child) {
       margin-top: var(--block-spacing, 10px);
