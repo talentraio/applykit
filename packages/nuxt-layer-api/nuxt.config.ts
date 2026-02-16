@@ -105,5 +105,11 @@ export default defineNuxtConfig({
     typeCheck: false
   },
 
+  nitro: {
+    rollupConfig: {
+      external: ['@sparticuz/chromium-min']
+    }
+  },
+
   alias: { '@layer/api': fileURLToPath(new URL('./', import.meta.url)) }
 });

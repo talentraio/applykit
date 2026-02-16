@@ -2,7 +2,7 @@ import type { ExportFormat } from '@int/schema';
 import type { Buffer } from 'node:buffer';
 import type { Browser, Page } from 'playwright-core';
 import { EXPORT_FORMAT_MAP } from '@int/schema';
-import { chromium } from 'playwright-core';
+import { chromium as playwrightChromium } from 'playwright-core';
 
 /**
  * PDF Export Service
@@ -10,8 +10,16 @@ import { chromium } from 'playwright-core';
  * Generates PDF resumes using Playwright (headless Chrome)
  * Prints the real preview route for visual parity with the app.
  *
+ * In production (serverless), uses @sparticuz/chromium-min to download
+ * a lightweight Chromium binary at runtime.
+ * In development, uses the system-installed Playwright browser.
+ *
  * Related: T115 (US6)
  */
+
+/** GitHub release URL for the serverless Chromium pack (x64) */
+const CHROMIUM_PACK_URL =
+  'https://github.com/Sparticuz/chromium/releases/download/v143.0.4/chromium-v143.0.4-pack.x64.tar';
 
 export type PreviewExportOptions = {
   previewUrl: string;
@@ -46,6 +54,31 @@ export class ExportError extends Error {
 }
 
 /**
+ * Launch a Chromium browser appropriate for the current environment.
+ *
+ * - Development: uses system Playwright browser
+ * - Production (serverless): uses @sparticuz/chromium-min with a downloaded binary
+ */
+async function launchBrowser(): Promise<Browser> {
+  if (import.meta.dev) {
+    return playwrightChromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+  }
+
+  // Production / serverless: use @sparticuz/chromium-min
+  const chromium = await import('@sparticuz/chromium-min').then(m => m.default);
+  const executablePath = await chromium.executablePath(CHROMIUM_PACK_URL);
+
+  return playwrightChromium.launch({
+    args: chromium.args,
+    executablePath,
+    headless: true
+  });
+}
+
+/**
  * Export resume to PDF by rendering preview route
  *
  * Uses Playwright to load the real preview page and print it as PDF.
@@ -68,10 +101,7 @@ export async function exportResumeToPDFPreview(
   let page: Page | undefined;
 
   try {
-    browser = await chromium.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    browser = await launchBrowser();
 
     page = await browser.newPage({
       viewport: { width: viewportWidth, height: viewportHeight }

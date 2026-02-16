@@ -23,6 +23,7 @@
     "@mullion/ai-sdk": "catalog:",
     "@mullion/core": "catalog:",
     "@pinia/nuxt": "catalog:",
+    "@sparticuz/chromium-min": "catalog:",
     "@vercel/blob": "catalog:",
     "ai": "catalog:",
     "bcryptjs": "catalog:",
