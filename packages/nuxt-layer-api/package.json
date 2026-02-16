@@ -33,12 +33,12 @@
     "nuxt": "catalog:",
     "nuxt-auth-utils": "catalog:",
     "openai": "catalog:",
-    "pdf-parse": "catalog:",
     "pinia": "catalog:",
     "playwright-core": "catalog:",
     "postgres": "catalog:",
     "resend": "catalog:",
     "ufo": "catalog:",
+    "unpdf": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

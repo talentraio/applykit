@@ -2,7 +2,7 @@ import type { SourceFileType } from '@int/schema';
 import type { Buffer } from 'node:buffer';
 import { SOURCE_FILE_TYPE_MAP } from '@int/schema';
 import mammoth from 'mammoth';
-import { PDFParse } from 'pdf-parse';
+import { extractText, getDocumentProxy } from 'unpdf';
 
 /**
  * Document Parser Service
@@ -11,7 +11,7 @@ import { PDFParse } from 'pdf-parse';
  *
  * Supported formats:
  * - DOCX: Uses mammoth to extract text
- * - PDF: Uses pdf-parse to extract text
+ * - PDF: Uses unpdf (serverless-compatible) to extract text
  *
  * Related: T070 (US2)
  */
@@ -107,19 +107,16 @@ async function parseDocx(buffer: Buffer): Promise<ParseResult> {
 
 /**
  * Parse PDF file to plain text
+ * Uses unpdf which is serverless-compatible (no DOMMatrix dependency)
  *
  * @param buffer - File buffer
  * @returns Extracted text
  */
 async function parsePdf(buffer: Buffer): Promise<ParseResult> {
-  let parser: InstanceType<typeof PDFParse> | null = null;
-
   try {
-    // pdf-parse v2.x uses class-based API
-    parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
-    const info = await parser.getInfo();
-    const normalizedText = normalizeExtractedText(result.text || '');
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { totalPages, text } = await extractText(pdf, { mergePages: true });
+    const normalizedText = normalizeExtractedText(text);
 
     if (normalizedText.length === 0) {
       throw new ParseError('PDF file contains no text', SOURCE_FILE_TYPE_MAP.PDF, 'EMPTY_FILE');
@@ -130,7 +127,7 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
     return {
       text: normalizedText,
       metadata: {
-        pageCount: info.total,
+        pageCount: totalPages,
         wordCount
       }
     };
@@ -144,11 +141,6 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
       SOURCE_FILE_TYPE_MAP.PDF,
       'PARSE_FAILED'
     );
-  } finally {
-    // Always destroy parser to free resources
-    if (parser) {
-      await parser.destroy();
-    }
   }
 }
 

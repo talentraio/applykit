@@ -46,7 +46,7 @@ catalog:
   nuxt: ^4.0.9
   nuxt-auth-utils: ^0.5.27
   openai: ^6.16.0
-  pdf-parse: ^2.4.5
+  unpdf: ^1.4.0
   pinia: ^3.0.4
   playwright-core: ^1.49.1
   postcss-html: ^1.8.1
