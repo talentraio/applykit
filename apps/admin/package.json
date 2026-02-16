@@ -11,11 +11,11 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@nuxt/image": "catalog:",
     "@int/api": "workspace:*",
     "@int/npm-utils": "workspace:*",
     "@int/schema": "workspace:*",
     "@int/ui": "workspace:*",
+    "@nuxt/image": "catalog:",
     "@pinia/nuxt": "catalog:",
     "date-fns": "catalog:",
     "nuxt": "catalog:",
