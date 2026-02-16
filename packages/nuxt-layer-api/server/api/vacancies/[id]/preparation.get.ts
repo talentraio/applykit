@@ -1,6 +1,6 @@
 import type { Role } from '@int/schema';
 import type { VacancyPreparationResponse } from '@layer/api/types/vacancies';
-import { LLM_SCENARIO_KEY_MAP, USER_ROLE_MAP } from '@int/schema';
+import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 import {
   generationRepository,
   generationScoreDetailRepository,
@@ -9,11 +9,12 @@ import {
 import { resolveScenarioModel } from '../../../services/llm';
 import { buildVacancyVersionMarker } from '../../../services/vacancy/version-marker';
 import { isUndefinedTableError } from '../../../utils/db-errors';
+import { getEffectiveUserRole } from '../../../utils/session-helpers';
 
 export default defineEventHandler(async (event): Promise<VacancyPreparationResponse> => {
   const session = await requireUserSession(event);
   const userId = session.user.id;
-  const userRole: Role = session.user.role ?? USER_ROLE_MAP.PUBLIC;
+  const userRole: Role = await getEffectiveUserRole(event);
 
   const vacancyId = getRouterParam(event, 'id');
   if (!vacancyId) {
