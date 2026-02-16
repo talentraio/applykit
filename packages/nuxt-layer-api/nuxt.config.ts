@@ -130,12 +130,12 @@ export default defineNuxtConfig({
         'text-decoder'
       ]
     },
-    // Fix CJS→ESM interop for Node.js builtins used by inlined packages.
-    // Rollup converts require('assert') to `import * as assert from 'assert'`
-    // which creates a non-callable namespace. The node: prefix preserves the
-    // callable default export.
+    // Fix CJS→ESM interop: follow-redirects calls assert() as a function.
+    // Rollup's getDefaultExportFromNamespaceIfNotNamed returns the namespace
+    // object (non-callable) when the module has multiple named exports.
+    // This shim re-exports only the default so the helper returns the callable.
     alias: {
-      assert: 'node:assert'
+      assert: fileURLToPath(new URL('./server/utils/assert-shim.mjs', import.meta.url))
     }
   },
 
