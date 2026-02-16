@@ -13,6 +13,10 @@
             v-if="previewUrl"
             :src="previewUrl"
             alt="Profile photo"
+            format="webp"
+            width="124"
+            height="124"
+            sizes="124px"
             class="h-full w-full object-cover"
           />
           <UIcon v-else name="i-lucide-user" class="h-12 w-12 text-muted" />

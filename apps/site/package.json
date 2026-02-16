@@ -11,6 +11,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxt/image": "catalog:",
     "@int/api": "workspace:*",
     "@int/npm-utils": "workspace:*",
     "@int/schema": "workspace:*",

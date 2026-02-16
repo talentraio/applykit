@@ -13,7 +13,8 @@ export default defineNuxtConfig({
   },
 
   image: {
-    provider: 'ipx',
+    densities: [1, 2],
+    format: ['webp'],
     domains: [
       'localhost',
       '127.0.0.1',

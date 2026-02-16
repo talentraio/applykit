@@ -17,6 +17,7 @@
             src="/img/logo.png"
             format="webp"
             :alt="appTitle"
+            sizes="120px"
             class="app-layout-header__logo-image block h-7 w-auto object-contain md:h-8"
           />
         </NuxtLink>
@@ -46,6 +47,8 @@
               :alt="avatarAlt"
               :text="avatarInitials"
               size="lg"
+              sizes="36px"
+              format="webp"
               class="app-layout-header__avatar cursor-pointer"
             />
           </UDropdownMenu>

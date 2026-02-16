@@ -258,6 +258,9 @@ importers:
       '@int/ui':
         specifier: workspace:*
         version: link:../../packages/nuxt-layer-ui
+      '@nuxt/image':
+        specifier: 'catalog:'
+        version: 2.0.0(@vercel/blob@2.0.0)(db0@0.3.4(better-sqlite3@12.6.2)(drizzle-orm@0.38.4(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.6.2)(postgres@3.4.8)))(ioredis@5.9.2)(magicast@0.5.1)
       '@pinia/nuxt':
         specifier: 'catalog:'
         version: 0.11.3(magicast@0.5.1)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.27(typescript@5.9.3)))
@@ -298,6 +301,9 @@ importers:
       '@nuxt/fonts':
         specifier: 'catalog:'
         version: 0.12.1(@vercel/blob@2.0.0)(db0@0.3.4(better-sqlite3@12.6.2)(drizzle-orm@0.38.4(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.6.2)(postgres@3.4.8)))(ioredis@5.9.2)(magicast@0.5.1)(vite@7.3.1(@types/node@25.0.10)(jiti@2.6.1)(lightningcss@1.31.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
+      '@nuxt/image':
+        specifier: 'catalog:'
+        version: 2.0.0(@vercel/blob@2.0.0)(db0@0.3.4(better-sqlite3@12.6.2)(drizzle-orm@0.38.4(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.6.2)(postgres@3.4.8)))(ioredis@5.9.2)(magicast@0.5.1)
       '@nuxtjs/device':
         specifier: 'catalog:'
         version: 4.0.0
@@ -10860,7 +10866,7 @@ snapshots:
 
   '@nuxt/image@2.0.0(@vercel/blob@2.0.0)(db0@0.3.4(better-sqlite3@12.6.2)(drizzle-orm@0.38.4(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.6.2)(postgres@3.4.8)))(ioredis@5.9.2)(magicast@0.5.1)':
     dependencies:
-      '@nuxt/kit': 4.2.2(magicast@0.5.1)
+      '@nuxt/kit': 4.3.1(magicast@0.5.1)
       consola: 3.4.2
       defu: 6.1.4
       h3: 1.15.5
@@ -17489,7 +17495,7 @@ snapshots:
     dependencies:
       '@img/colour': 1.0.0
       detect-libc: 2.1.2
-      semver: 7.7.3
+      semver: 7.7.4
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.34.5
       '@img/sharp-darwin-x64': 0.34.5
