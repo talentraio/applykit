@@ -209,6 +209,7 @@ const pageContentStyle = computed(() => ({
   &__measurer-content {
     background: white;
     color: #1f2937;
+    font-family: Manrope, 'Segoe UI', sans-serif;
 
     // Same text scaling as page content for accurate measurement
     // Must match __page-content exactly for correct pagination
@@ -284,6 +285,7 @@ const pageContentStyle = computed(() => ({
   &__page-content {
     box-sizing: border-box;
     height: 100%; // Fill the A4 page so bottom padding aligns to page bottom
+    font-family: Manrope, 'Segoe UI', sans-serif;
 
     // Override dark mode inside page
     .text-muted {
