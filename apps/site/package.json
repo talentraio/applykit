@@ -19,6 +19,7 @@
     "@nuxt/fonts": "catalog:",
     "@nuxt/image": "catalog:",
     "@nuxtjs/device": "catalog:",
+    "@nuxtjs/seo": "catalog:",
     "@pinia/nuxt": "catalog:",
     "@vueuse/nuxt": "catalog:",
     "date-fns": "catalog:",

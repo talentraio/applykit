@@ -82,7 +82,10 @@ const deltaX = ref(0);
 const deltaY = ref(0);
 const baseOffset = ref(0);
 
-const { vibrate, isSupported } = useVibrate({ pattern: HAPTIC_PATTERN });
+const { vibrate, isSupported } = useVibrate({
+  pattern: HAPTIC_PATTERN,
+  interval: 0
+});
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, value));

@@ -20,11 +20,24 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@nuxtjs/i18n',
+    '@nuxtjs/seo',
     '@nuxt/image',
     '@nuxtjs/device',
     '@nuxt/fonts',
     '@vueuse/nuxt'
   ],
+
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon/favicon.ico' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon/favicon-16x16.png' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon/favicon-32x32.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/favicon/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/favicon/site.webmanifest.json' }
+      ]
+    }
+  },
 
   fonts: {
     families: [
@@ -84,6 +97,21 @@ export default defineNuxtConfig({
         privacyLastUpdated: '13.02.2026'
       }
     }
+  },
+
+  // Temporary SEO placeholders until production launch.
+  site: {
+    url: 'https://example.com',
+    name: 'ApplyKit',
+    indexable: false
+  },
+
+  robots: {
+    disallow: ['/']
+  },
+
+  sitemap: {
+    enabled: false
   },
 
   devtools: {
