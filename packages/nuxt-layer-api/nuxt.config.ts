@@ -105,6 +105,12 @@ export default defineNuxtConfig({
     typeCheck: false
   },
 
+  routeRules: {
+    '/api/pdf/**': {
+      vercel: { maxDuration: 60, memory: 1024 }
+    }
+  },
+
   nitro: {
     rollupConfig: {
       external: ['@sparticuz/chromium-min']
