@@ -20,6 +20,7 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@nuxtjs/i18n',
+    '@nuxtjs/seo',
     '@nuxt/image',
     '@nuxtjs/device',
     '@nuxt/fonts',
@@ -84,6 +85,21 @@ export default defineNuxtConfig({
         privacyLastUpdated: '13.02.2026'
       }
     }
+  },
+
+  // Temporary SEO placeholders until production launch.
+  site: {
+    url: 'https://example.com',
+    name: 'ApplyKit',
+    indexable: false
+  },
+
+  robots: {
+    disallow: ['/']
+  },
+
+  sitemap: {
+    enabled: false
   },
 
   devtools: {
