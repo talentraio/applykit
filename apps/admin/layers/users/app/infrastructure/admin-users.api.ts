@@ -42,6 +42,16 @@ export type AdminUserInviteInput = {
   role: Role;
 };
 
+export type AdminUserInviteResponse = AdminUser & {
+  inviteEmailSent: boolean;
+  inviteEmailError?: string;
+};
+
+export type AdminUserInviteResendResponse = {
+  inviteEmailSent: boolean;
+  inviteEmailError?: string;
+};
+
 export type AdminUserStatusInput = {
   blocked: boolean;
 };
@@ -124,10 +134,18 @@ export const adminUsersApi = {
   /**
    * Invite user by email
    */
-  async inviteUser(input: AdminUserInviteInput): Promise<AdminUser> {
+  async inviteUser(input: AdminUserInviteInput): Promise<AdminUserInviteResponse> {
     return await useApi(adminUsersUrl, {
       method: 'POST',
       body: input
+    });
+  },
+  /**
+   * Resend invite email for existing invited user
+   */
+  async resendInvite(id: string): Promise<AdminUserInviteResendResponse> {
+    return await useApi(`${adminUsersUrl}/${id}/invite`, {
+      method: 'POST'
     });
   },
   /**

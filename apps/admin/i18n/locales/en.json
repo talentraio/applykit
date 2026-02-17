@@ -61,7 +61,12 @@
         "emailPlaceholder": "user at example.com",
         "role": "Role",
         "submit": "Invite user",
-        "success": "Invitation created"
+        "success": "Invitation created",
+        "sendFailed": "User created, but invitation email was not sent.",
+        "resendHint": "Use Resend to retry sending the invite email.",
+        "resendAction": "Resend",
+        "resendSuccess": "Invitation email sent",
+        "resendFailed": "Failed to resend invitation email."
       },
       "delete": {
         "button": "Delete user",

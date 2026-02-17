@@ -142,9 +142,10 @@ import { format, parseISO } from 'date-fns';
 
 defineOptions({ name: 'AdminUsersPage' });
 
-const { users, total, fetchUsers, inviteUser } = useAdminUsers();
+const { users, total, fetchUsers, inviteUser, resendInvite } = useAdminUsers();
 const { t, te } = useI18n();
 const toast = useToast();
+const resendingInviteUserIds = new Set<string>();
 
 const searchQuery = ref('');
 const roleFilter = ref<Role | 'all'>('all');
@@ -237,17 +238,84 @@ const goToUser = (id: string) => {
   navigateTo(`/users/${id}`);
 };
 
+const handleResendInvite = async (userId: string, failedToastId?: string) => {
+  if (resendingInviteUserIds.has(userId)) {
+    return;
+  }
+
+  resendingInviteUserIds.add(userId);
+
+  try {
+    const resendResult = await resendInvite(userId);
+
+    if (resendResult.inviteEmailSent) {
+      if (failedToastId) {
+        toast.remove(failedToastId);
+      }
+
+      await refresh();
+
+      toast.add({
+        title: t('admin.users.invite.resendSuccess'),
+        color: 'success'
+      });
+
+      return;
+    }
+
+    toast.add({
+      title: t('admin.users.invite.resendFailed'),
+      color: 'error'
+    });
+  } catch {
+    toast.add({
+      title: t('admin.users.invite.resendFailed'),
+      color: 'error'
+    });
+  } finally {
+    resendingInviteUserIds.delete(userId);
+  }
+};
+
+const showInviteSendFailedToast = (userId: string) => {
+  const toastId = `admin-invite-failed-${userId}-${Date.now()}`;
+
+  toast.add({
+    id: toastId,
+    title: t('admin.users.invite.sendFailed'),
+    description: t('admin.users.invite.resendHint'),
+    color: 'error',
+    duration: 0,
+    actions: [
+      {
+        label: t('admin.users.invite.resendAction'),
+        color: 'error',
+        variant: 'soft',
+        onClick: async () => {
+          await handleResendInvite(userId, toastId);
+        }
+      }
+    ]
+  });
+};
+
 const handleInvite = async (payload: { email: string; role: Role }) => {
   isInviting.value = true;
 
   try {
-    await inviteUser(payload);
+    const inviteResult = await inviteUser(payload);
     isInviteOpen.value = false;
     await refresh();
-    toast.add({
-      title: t('admin.users.invite.success'),
-      color: 'success'
-    });
+
+    if (inviteResult.inviteEmailSent) {
+      toast.add({
+        title: t('admin.users.invite.success'),
+        color: 'success'
+      });
+      return;
+    }
+
+    showInviteSendFailedToast(inviteResult.id);
   } catch {
     toast.add({
       title: t('common.error.generic'),

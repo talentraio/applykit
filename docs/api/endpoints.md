@@ -25,8 +25,10 @@
   - returns: `{ success: true }`
 - `POST /api/auth/send-verification` - Resend verification email (requires auth)
   - returns: `{ success: true }`
-- `GET /api/auth/verify-email?token=xxx` - Verify email
-  - redirects to `/profile?verified=true|false`
+- `GET /api/auth/verify-email?token=xxx&flow=verification|invite` - Verify email
+  - `flow=verification` (default): redirects to `/profile?verified=true|false`
+  - `flow=invite`: redirects to `/resume?verified=true|false`
+  - error redirects append `error=missing_token|invalid_token|expired_token`
 
 ## Resume
 
@@ -115,6 +117,11 @@
 
 - `GET /api/admin/users` (search, role filter, pagination)
 - `POST /api/admin/users` (invite user by email + role)
+  - creates invited user even if email delivery fails
+  - returns created user summary + `inviteEmailSent: boolean` + optional `inviteEmailError`
+- `POST /api/admin/users/:id/invite` (resend invite email for invited user)
+  - regenerates verification token and retries invite email delivery
+  - returns `inviteEmailSent: boolean` + optional `inviteEmailError`
 - `GET /api/admin/users/:id` (detail + profile + usage stats)
 - `PUT /api/admin/users/:id/role`
 - `PUT /api/admin/users/:id/status` (block/unblock)

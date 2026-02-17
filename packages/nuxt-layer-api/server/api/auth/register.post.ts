@@ -1,5 +1,5 @@
 import type { FormatSettingsConfig } from '../../types/format-settings-config';
-import { RegisterInputSchema, WORK_FORMAT_MAP } from '@int/schema';
+import { RegisterInputSchema, USER_STATUS_MAP, WORK_FORMAT_MAP } from '@int/schema';
 import {
   formatSettingsRepository,
   profileRepository,
@@ -54,6 +54,71 @@ export default defineEventHandler(async event => {
   // Check if email already exists
   const existingUser = await userRepository.findByEmail(email);
   if (existingUser) {
+    if (
+      existingUser.status === USER_STATUS_MAP.BLOCKED ||
+      existingUser.status === USER_STATUS_MAP.DELETED
+    ) {
+      throw createError({
+        statusCode: 403,
+        message: 'Account is not allowed to sign in'
+      });
+    }
+
+    if (existingUser.status === USER_STATUS_MAP.INVITED) {
+      if (!existingUser.emailVerified) {
+        throw createError({
+          statusCode: 403,
+          message: 'invite_email_not_verified'
+        });
+      }
+
+      const passwordHash = await hashPassword(password);
+      const activated = await userRepository.activateInvitedWithPassword({
+        id: existingUser.id,
+        passwordHash
+      });
+
+      if (!activated) {
+        throw createError({
+          statusCode: 500,
+          message: 'Failed to activate invited user'
+        });
+      }
+
+      const config = useRuntimeConfig(event);
+      const formatDefaults = (config.public.formatSettings as FormatSettingsConfig).defaults;
+      await formatSettingsRepository.seedDefaults(activated.id, formatDefaults);
+
+      const existingProfile = await profileRepository.findByUserId(activated.id);
+      if (existingProfile) {
+        await profileRepository.update(activated.id, {
+          firstName,
+          lastName,
+          email
+        });
+      } else {
+        await profileRepository.create(activated.id, {
+          firstName,
+          lastName,
+          email,
+          country: '',
+          searchRegion: '',
+          workFormat: WORK_FORMAT_MAP.REMOTE,
+          languages: []
+        });
+      }
+
+      await setUserSession(event, {
+        user: {
+          id: activated.id,
+          email: activated.email,
+          role: activated.role
+        }
+      });
+
+      return { success: true };
+    }
+
     throw createError({
       statusCode: 409,
       message: 'Email already registered'

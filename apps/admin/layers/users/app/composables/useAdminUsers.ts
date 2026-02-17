@@ -11,6 +11,8 @@ import type {
   AdminUser,
   AdminUserDetail,
   AdminUserInviteInput,
+  AdminUserInviteResendResponse,
+  AdminUserInviteResponse,
   AdminUsersQuery,
   AdminUsersResponse,
   AdminUserStatusInput
@@ -56,7 +58,12 @@ export type UseAdminUsersReturn = {
   /**
    * Invite user by email
    */
-  inviteUser: (input: AdminUserInviteInput) => Promise<AdminUser>;
+  inviteUser: (input: AdminUserInviteInput) => Promise<AdminUserInviteResponse>;
+
+  /**
+   * Resend invite email for invited user
+   */
+  resendInvite: (id: string) => Promise<AdminUserInviteResendResponse>;
 
   /**
    * Update user status
@@ -81,6 +88,7 @@ export function useAdminUsers(): UseAdminUsersReturn {
     fetchUserDetail: (id: string) => store.fetchUserDetail(id),
     updateRole: (id: string, role: AdminUser['role']) => store.updateRole(id, role),
     inviteUser: (input: AdminUserInviteInput) => store.inviteUser(input),
+    resendInvite: (id: string) => store.resendInvite(id),
     updateStatus: (id: string, input: AdminUserStatusInput) => store.updateStatus(id, input),
     deleteUser: (id: string) => store.deleteUser(id)
   };

@@ -2,6 +2,8 @@ import type {
   AdminUser,
   AdminUserDetail,
   AdminUserInviteInput,
+  AdminUserInviteResendResponse,
+  AdminUserInviteResponse,
   AdminUsersQuery,
   AdminUsersResponse,
   AdminUserStatusInput
@@ -89,12 +91,23 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
     /**
      * Invite a new user
      */
-    async inviteUser(input: AdminUserInviteInput): Promise<AdminUser> {
+    async inviteUser(input: AdminUserInviteInput): Promise<AdminUserInviteResponse> {
       try {
         const created = await adminUsersApi.inviteUser(input);
         return created;
       } catch (err) {
         throw this.toError(err, 'Failed to invite user');
+      }
+    },
+
+    /**
+     * Resend invite email for invited user
+     */
+    async resendInvite(id: string): Promise<AdminUserInviteResendResponse> {
+      try {
+        return await adminUsersApi.resendInvite(id);
+      } catch (err) {
+        throw this.toError(err, 'Failed to resend invite');
       }
     },
 

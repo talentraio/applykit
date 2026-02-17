@@ -2,6 +2,9 @@ import type { Role, UserPublic } from '@int/schema';
 import { RoleSchema } from '@int/schema';
 import { z } from 'zod';
 import { userRepository } from '../../../data/repositories';
+import { sendVerificationEmail } from '../../../services/email';
+import { generateToken, getTokenExpiry } from '../../../services/password';
+import { EMAIL_VERIFICATION_FLOW_MAP } from '../../../utils/email-verification-flow';
 import { requireSuperAdmin } from '../../../utils/session-helpers';
 
 /**
@@ -16,6 +19,11 @@ type AdminUser = Pick<
   'id' | 'email' | 'role' | 'status' | 'createdAt' | 'updatedAt' | 'lastLoginAt' | 'deletedAt'
 >;
 
+type AdminInviteCreateResponse = AdminUser & {
+  inviteEmailSent: boolean;
+  inviteEmailError?: string;
+};
+
 type AdminUserInput = {
   email: string;
   role: Role;
@@ -26,7 +34,7 @@ const AdminUserInputSchema = z.object({
   role: RoleSchema
 });
 
-export default defineEventHandler(async (event): Promise<AdminUser> => {
+export default defineEventHandler(async (event): Promise<AdminInviteCreateResponse> => {
   await requireSuperAdmin(event);
 
   const body = await readBody(event);
@@ -55,6 +63,23 @@ export default defineEventHandler(async (event): Promise<AdminUser> => {
     role: payload.role
   });
 
+  const verificationToken = generateToken();
+  const verificationExpires = getTokenExpiry(24);
+
+  await userRepository.setEmailVerificationToken(user.id, verificationToken, verificationExpires);
+
+  const firstName = user.email.split('@')[0] ?? 'User';
+  const inviteEmailSent = await sendVerificationEmail(
+    user.email,
+    firstName,
+    verificationToken,
+    EMAIL_VERIFICATION_FLOW_MAP.INVITE
+  );
+
+  const inviteEmailError = inviteEmailSent ? undefined : 'failed_to_send_invite_email';
+
+  setResponseStatus(event, 201);
+
   return {
     id: user.id,
     email: user.email,
@@ -63,6 +88,8 @@ export default defineEventHandler(async (event): Promise<AdminUser> => {
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
     lastLoginAt: user.lastLoginAt,
-    deletedAt: user.deletedAt
+    deletedAt: user.deletedAt,
+    inviteEmailSent,
+    inviteEmailError
   };
 });

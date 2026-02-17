@@ -206,6 +206,32 @@ export const userRepository = {
   },
 
   /**
+   * Activate invited user with email/password registration
+   * Preserves assigned role and marks account as active
+   */
+  async activateInvitedWithPassword(params: {
+    id: string;
+    passwordHash: string;
+  }): Promise<User | null> {
+    const result = await db
+      .update(users)
+      .set({
+        passwordHash: params.passwordHash,
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+        status: USER_STATUS_MAP.ACTIVE,
+        lastLoginAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, params.id))
+      .returning();
+    const updated = result[0];
+    if (!updated) return null;
+    return normalizeUserRow(updated);
+  },
+
+  /**
    * Update user role
    * Admin-only operation for role management
    */
