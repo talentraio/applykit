@@ -54,6 +54,20 @@ export const suppressionRepository = {
   },
 
   /**
+   * Remove suppression by email HMAC.
+   * Used by admin hard delete flow to allow future re-registration.
+   * @returns Number of deleted rows
+   */
+  async deleteByEmailHmac(emailHmac: string): Promise<number> {
+    const result = await db
+      .delete(userSuppression)
+      .where(eq(userSuppression.emailHmac, emailHmac))
+      .returning({ id: userSuppression.id });
+
+    return result.length;
+  },
+
+  /**
    * Delete expired suppression records.
    * @returns Number of deleted rows
    */

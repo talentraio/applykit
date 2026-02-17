@@ -10,7 +10,10 @@
 import type {
   AdminUser,
   AdminUserDetail,
+  AdminUserHardDeleteResponse,
   AdminUserInviteInput,
+  AdminUserInviteResendResponse,
+  AdminUserInviteResponse,
   AdminUsersQuery,
   AdminUsersResponse,
   AdminUserStatusInput
@@ -56,7 +59,12 @@ export type UseAdminUsersReturn = {
   /**
    * Invite user by email
    */
-  inviteUser: (input: AdminUserInviteInput) => Promise<AdminUser>;
+  inviteUser: (input: AdminUserInviteInput) => Promise<AdminUserInviteResponse>;
+
+  /**
+   * Resend invite email for invited user
+   */
+  resendInvite: (id: string) => Promise<AdminUserInviteResendResponse>;
 
   /**
    * Update user status
@@ -67,6 +75,16 @@ export type UseAdminUsersReturn = {
    * Delete user (mark as deleted)
    */
   deleteUser: (id: string) => Promise<AdminUser>;
+
+  /**
+   * Restore soft-deleted user
+   */
+  restoreUser: (id: string) => Promise<AdminUser>;
+
+  /**
+   * Permanently delete soft-deleted user
+   */
+  hardDeleteUser: (id: string) => Promise<AdminUserHardDeleteResponse>;
 };
 
 export function useAdminUsers(): UseAdminUsersReturn {
@@ -81,7 +99,10 @@ export function useAdminUsers(): UseAdminUsersReturn {
     fetchUserDetail: (id: string) => store.fetchUserDetail(id),
     updateRole: (id: string, role: AdminUser['role']) => store.updateRole(id, role),
     inviteUser: (input: AdminUserInviteInput) => store.inviteUser(input),
+    resendInvite: (id: string) => store.resendInvite(id),
     updateStatus: (id: string, input: AdminUserStatusInput) => store.updateStatus(id, input),
-    deleteUser: (id: string) => store.deleteUser(id)
+    deleteUser: (id: string) => store.deleteUser(id),
+    restoreUser: (id: string) => store.restoreUser(id),
+    hardDeleteUser: (id: string) => store.hardDeleteUser(id)
   };
 }

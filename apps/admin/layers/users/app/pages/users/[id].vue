@@ -30,6 +30,7 @@
             :updating-role="updatingRole"
             :blocked="blockedValue"
             :updating-status="updatingStatus"
+            :is-deleted="isDeleted"
             :status-color="statusColor"
             :status-label="statusLabel"
             :created-at="formatDate(user.createdAt)"
@@ -52,8 +53,33 @@
 
         <UsersUserCardStats class="admin-user-detail-page__card mt-6" :stats="stats" />
 
-        <div class="mt-6 flex justify-end">
-          <UButton color="error" variant="outline" @click="isDeleteOpen = true">
+        <div class="mt-6 flex justify-end gap-3">
+          <UButton
+            v-if="isDeleted"
+            color="neutral"
+            variant="soft"
+            :loading="isRestoring"
+            :disabled="isRestoring || isDeleting"
+            @click="handleRestore"
+          >
+            {{ $t('admin.users.restore.button') }}
+          </UButton>
+          <UButton
+            v-if="isDeleted"
+            color="error"
+            variant="outline"
+            :disabled="isRestoring || isDeleting"
+            @click="openHardDelete"
+          >
+            {{ $t('admin.users.hardDelete.button') }}
+          </UButton>
+          <UButton
+            v-else
+            color="error"
+            variant="outline"
+            :disabled="isDeleting"
+            @click="openSoftDelete"
+          >
             {{ $t('admin.users.delete.button') }}
           </UButton>
         </div>
@@ -63,6 +89,9 @@
     <UsersUserDeleteConfirmModal
       v-model:open="isDeleteOpen"
       :loading="isDeleting"
+      :title="deleteModalTitle"
+      :description="deleteModalDescription"
+      :confirm-label="deleteModalConfirmLabel"
       @confirm="confirmDelete"
       @cancel="closeDelete"
     />
@@ -86,7 +115,15 @@ const route = useRoute();
 const { t, te } = useI18n();
 const toast = useToast();
 
-const { detail, fetchUserDetail, updateRole, updateStatus, deleteUser } = useAdminUsers();
+const {
+  detail,
+  fetchUserDetail,
+  updateRole,
+  updateStatus,
+  deleteUser,
+  restoreUser,
+  hardDeleteUser
+} = useAdminUsers();
 
 const userId = computed(() => String(route.params.id));
 
@@ -96,6 +133,8 @@ const pendingBlocked = ref<boolean | null>(null);
 const updatingStatus = ref(false);
 const isDeleteOpen = ref(false);
 const isDeleting = ref(false);
+const isRestoring = ref(false);
+const deleteMode = ref<'soft' | 'hard'>('soft');
 
 const { pending, error: detailFetchError } = await useAsyncData(
   'admin-user-detail',
@@ -124,6 +163,10 @@ watch(userId, () => {
   updatingRole.value = false;
   pendingBlocked.value = null;
   updatingStatus.value = false;
+  isDeleteOpen.value = false;
+  isDeleting.value = false;
+  isRestoring.value = false;
+  deleteMode.value = 'soft';
 });
 
 const user = computed(() => {
@@ -176,6 +219,7 @@ const blockedValue = computed(() => {
   }
   return user.value.status === USER_STATUS_MAP.BLOCKED;
 });
+const isDeleted = computed(() => user.value.status === USER_STATUS_MAP.DELETED);
 
 const statusLabel = computed(() => {
   const key = `admin.users.status.${user.value.status}`;
@@ -284,8 +328,57 @@ const goBack = () => {
   navigateTo('/users');
 };
 
+const openSoftDelete = () => {
+  deleteMode.value = 'soft';
+  isDeleteOpen.value = true;
+};
+
+const openHardDelete = () => {
+  deleteMode.value = 'hard';
+  isDeleteOpen.value = true;
+};
+
 const closeDelete = () => {
   isDeleteOpen.value = false;
+};
+
+const deleteModalTitle = computed(() => {
+  return deleteMode.value === 'hard'
+    ? t('admin.users.hardDelete.title')
+    : t('admin.users.delete.title');
+});
+
+const deleteModalDescription = computed(() => {
+  return deleteMode.value === 'hard'
+    ? t('admin.users.hardDelete.description')
+    : t('admin.users.delete.description');
+});
+
+const deleteModalConfirmLabel = computed(() => {
+  return deleteMode.value === 'hard'
+    ? t('admin.users.hardDelete.confirm')
+    : t('admin.users.delete.confirm');
+});
+
+const handleRestore = async () => {
+  if (!detail.value) return;
+
+  isRestoring.value = true;
+
+  try {
+    await restoreUser(detail.value.user.id);
+    toast.add({
+      title: t('admin.users.restore.success'),
+      color: 'success'
+    });
+  } catch {
+    toast.add({
+      title: t('common.error.generic'),
+      color: 'error'
+    });
+  } finally {
+    isRestoring.value = false;
+  }
 };
 
 const confirmDelete = async () => {
@@ -294,7 +387,16 @@ const confirmDelete = async () => {
   isDeleting.value = true;
 
   try {
-    await deleteUser(detail.value.user.id);
+    if (deleteMode.value === 'hard') {
+      await hardDeleteUser(detail.value.user.id);
+      toast.add({
+        title: t('admin.users.hardDelete.success'),
+        color: 'success'
+      });
+    } else {
+      await deleteUser(detail.value.user.id);
+    }
+
     await navigateTo('/users');
   } catch {
     toast.add({
@@ -304,6 +406,7 @@ const confirmDelete = async () => {
   } finally {
     isDeleting.value = false;
     isDeleteOpen.value = false;
+    deleteMode.value = 'soft';
   }
 };
 </script>
