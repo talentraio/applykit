@@ -61,13 +61,29 @@
         "emailPlaceholder": "user at example.com",
         "role": "Role",
         "submit": "Invite user",
-        "success": "Invitation created"
+        "success": "Invitation created",
+        "sendFailed": "User created, but invitation email was not sent.",
+        "resendHint": "Use Resend to retry sending the invite email.",
+        "resendAction": "Resend",
+        "resendSuccess": "Invitation email sent",
+        "resendFailed": "Failed to resend invitation email."
       },
       "delete": {
         "button": "Delete user",
         "title": "Delete user",
         "description": "This will mark the user as deleted. You can’t undo this action.",
         "confirm": "Delete user"
+      },
+      "restore": {
+        "button": "Restore account",
+        "success": "Account restored"
+      },
+      "hardDelete": {
+        "button": "Delete permanently",
+        "title": "Delete user permanently",
+        "description": "This will permanently remove the user and all related data from the database. This action cannot be undone.",
+        "confirm": "Delete permanently",
+        "success": "User permanently deleted"
       },
       "status": {
         "invited": "Invited",

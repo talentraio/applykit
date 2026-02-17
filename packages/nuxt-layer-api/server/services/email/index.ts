@@ -1,4 +1,6 @@
+import type { EmailVerificationFlow } from '../../utils/email-verification-flow';
 import { Resend } from 'resend';
+import { EMAIL_VERIFICATION_FLOW_MAP } from '../../utils/email-verification-flow';
 import { getPasswordResetTemplate } from './templates/password-reset';
 import { getVerificationTemplate } from './templates/verification';
 
@@ -86,12 +88,15 @@ async function sendEmail(options: SendEmailOptions): Promise<boolean> {
 export async function sendVerificationEmail(
   email: string,
   firstName: string,
-  token: string
+  token: string,
+  flow: EmailVerificationFlow = EMAIL_VERIFICATION_FLOW_MAP.VERIFICATION
 ): Promise<boolean> {
   const appUrl = getAppUrl();
-  const verifyUrl = `${appUrl}/api/auth/verify-email?token=${token}`;
+  const verifyUrl = new URL('/api/auth/verify-email', appUrl);
+  verifyUrl.searchParams.set('token', token);
+  verifyUrl.searchParams.set('flow', flow);
 
-  const template = getVerificationTemplate(firstName, verifyUrl);
+  const template = getVerificationTemplate(firstName, verifyUrl.toString());
 
   return sendEmail({
     to: email,

@@ -206,6 +206,32 @@ export const userRepository = {
   },
 
   /**
+   * Activate invited user with email/password registration
+   * Preserves assigned role and marks account as active
+   */
+  async activateInvitedWithPassword(params: {
+    id: string;
+    passwordHash: string;
+  }): Promise<User | null> {
+    const result = await db
+      .update(users)
+      .set({
+        passwordHash: params.passwordHash,
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+        status: USER_STATUS_MAP.ACTIVE,
+        lastLoginAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, params.id))
+      .returning();
+    const updated = result[0];
+    if (!updated) return null;
+    return normalizeUserRow(updated);
+  },
+
+  /**
    * Update user role
    * Admin-only operation for role management
    */
@@ -247,6 +273,31 @@ export const userRepository = {
     const updated = result[0];
     if (!updated) return null;
     return normalizeUserRow(updated);
+  },
+
+  /**
+   * Restore previously deleted user.
+   * Clears deletedAt and restores status to invited/active.
+   */
+  async restoreDeleted(id: string, status: UserStatus): Promise<User | null> {
+    const result = await db
+      .update(users)
+      .set({ status, deletedAt: null, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    const updated = result[0];
+    if (!updated) return null;
+    return normalizeUserRow(updated);
+  },
+
+  /**
+   * Permanently remove user row from database.
+   * Related rows are removed by FK cascade.
+   */
+  async deletePermanently(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id)).returning({ id: users.id });
+
+    return result.length > 0;
   },
 
   /**

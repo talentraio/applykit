@@ -1,7 +1,10 @@
 import type {
   AdminUser,
   AdminUserDetail,
+  AdminUserHardDeleteResponse,
   AdminUserInviteInput,
+  AdminUserInviteResendResponse,
+  AdminUserInviteResponse,
   AdminUsersQuery,
   AdminUsersResponse,
   AdminUserStatusInput
@@ -89,12 +92,23 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
     /**
      * Invite a new user
      */
-    async inviteUser(input: AdminUserInviteInput): Promise<AdminUser> {
+    async inviteUser(input: AdminUserInviteInput): Promise<AdminUserInviteResponse> {
       try {
         const created = await adminUsersApi.inviteUser(input);
         return created;
       } catch (err) {
         throw this.toError(err, 'Failed to invite user');
+      }
+    },
+
+    /**
+     * Resend invite email for invited user
+     */
+    async resendInvite(id: string): Promise<AdminUserInviteResendResponse> {
+      try {
+        return await adminUsersApi.resendInvite(id);
+      } catch (err) {
+        throw this.toError(err, 'Failed to resend invite');
       }
     },
 
@@ -117,6 +131,50 @@ export const useAdminUsersStore = defineStore('AdminUsersStore', {
         return deleted;
       } catch (err) {
         throw this.toError(err, 'Failed to delete user');
+      }
+    },
+
+    /**
+     * Restore deleted user
+     */
+    async restoreUser(id: string): Promise<AdminUser> {
+      try {
+        const restored = await adminUsersApi.restoreUser(id);
+        const index = this.users.findIndex(user => user.id === restored.id);
+
+        if (index >= 0) {
+          this.users[index] = restored;
+        }
+
+        const currentDetail = this.detail;
+        if (currentDetail && currentDetail.user.id === restored.id) {
+          this.detail = {
+            ...currentDetail,
+            user: { ...currentDetail.user, ...restored }
+          };
+        }
+
+        return restored;
+      } catch (err) {
+        throw this.toError(err, 'Failed to restore user');
+      }
+    },
+
+    /**
+     * Permanently delete deleted user
+     */
+    async hardDeleteUser(id: string): Promise<AdminUserHardDeleteResponse> {
+      try {
+        const result = await adminUsersApi.hardDeleteUser(id);
+        this.users = this.users.filter(user => user.id !== id);
+
+        if (this.detail?.user.id === id) {
+          this.detail = null;
+        }
+
+        return result;
+      } catch (err) {
+        throw this.toError(err, 'Failed to hard delete user');
       }
     },
 
