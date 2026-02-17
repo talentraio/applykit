@@ -126,6 +126,8 @@
 - `PUT /api/admin/users/:id/role`
 - `PUT /api/admin/users/:id/status` (block/unblock)
 - `DELETE /api/admin/users/:id` (soft delete)
+- `POST /api/admin/users/:id/restore` (restore soft-deleted user)
+- `DELETE /api/admin/users/:id/hard` (permanent delete for soft-deleted user, clears suppression for re-registration)
 - `GET /api/admin/roles`
 - `GET /api/admin/roles/:role`
 - `PUT /api/admin/roles/:role`

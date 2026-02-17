@@ -12,7 +12,7 @@
         <UsersUserRoleSelector
           class="w-48"
           :model-value="roleValue"
-          :disabled="updatingRole"
+          :disabled="updatingRole || isDeleted"
           @update:model-value="emitRoleChange"
         />
       </div>
@@ -21,7 +21,7 @@
         <USwitch
           :model-value="blocked"
           size="sm"
-          :disabled="updatingStatus"
+          :disabled="updatingStatus || isDeleted"
           @update:model-value="emitBlockedChange"
         />
       </div>
@@ -71,6 +71,7 @@ defineProps<{
   updatingRole: boolean;
   blocked: boolean;
   updatingStatus: boolean;
+  isDeleted: boolean;
   statusColor: BadgeProps['color'];
   statusLabel: string;
   createdAt: string;

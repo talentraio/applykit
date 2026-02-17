@@ -74,6 +74,17 @@
         "description": "This will mark the user as deleted. You can’t undo this action.",
         "confirm": "Delete user"
       },
+      "restore": {
+        "button": "Restore account",
+        "success": "Account restored"
+      },
+      "hardDelete": {
+        "button": "Delete permanently",
+        "title": "Delete user permanently",
+        "description": "This will permanently remove the user and all related data from the database. This action cannot be undone.",
+        "confirm": "Delete permanently",
+        "success": "User permanently deleted"
+      },
       "status": {
         "invited": "Invited",
         "active": "Active",

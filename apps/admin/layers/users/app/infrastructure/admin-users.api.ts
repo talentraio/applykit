@@ -52,6 +52,10 @@ export type AdminUserInviteResendResponse = {
   inviteEmailError?: string;
 };
 
+export type AdminUserHardDeleteResponse = {
+  success: true;
+};
+
 export type AdminUserStatusInput = {
   blocked: boolean;
 };
@@ -153,6 +157,24 @@ export const adminUsersApi = {
    */
   async deleteUser(id: string): Promise<AdminUser> {
     return await useApi(`${adminUsersUrl}/${id}`, {
+      method: 'DELETE'
+    });
+  },
+
+  /**
+   * Restore soft-deleted user
+   */
+  async restoreUser(id: string): Promise<AdminUser> {
+    return await useApi(`${adminUsersUrl}/${id}/restore`, {
+      method: 'POST'
+    });
+  },
+
+  /**
+   * Permanently delete soft-deleted user
+   */
+  async hardDeleteUser(id: string): Promise<AdminUserHardDeleteResponse> {
+    return await useApi(`${adminUsersUrl}/${id}/hard`, {
       method: 'DELETE'
     });
   }

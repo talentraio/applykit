@@ -276,6 +276,31 @@ export const userRepository = {
   },
 
   /**
+   * Restore previously deleted user.
+   * Clears deletedAt and restores status to invited/active.
+   */
+  async restoreDeleted(id: string, status: UserStatus): Promise<User | null> {
+    const result = await db
+      .update(users)
+      .set({ status, deletedAt: null, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    const updated = result[0];
+    if (!updated) return null;
+    return normalizeUserRow(updated);
+  },
+
+  /**
+   * Permanently remove user row from database.
+   * Related rows are removed by FK cascade.
+   */
+  async deletePermanently(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id)).returning({ id: users.id });
+
+    return result.length > 0;
+  },
+
+  /**
    * Sanitize a deleted user's PII (GDPR tombstone).
    * Replaces email with a placeholder, nulls all OAuth IDs, tokens, and sensitive fields.
    */

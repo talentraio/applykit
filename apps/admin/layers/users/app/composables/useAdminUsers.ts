@@ -10,6 +10,7 @@
 import type {
   AdminUser,
   AdminUserDetail,
+  AdminUserHardDeleteResponse,
   AdminUserInviteInput,
   AdminUserInviteResendResponse,
   AdminUserInviteResponse,
@@ -74,6 +75,16 @@ export type UseAdminUsersReturn = {
    * Delete user (mark as deleted)
    */
   deleteUser: (id: string) => Promise<AdminUser>;
+
+  /**
+   * Restore soft-deleted user
+   */
+  restoreUser: (id: string) => Promise<AdminUser>;
+
+  /**
+   * Permanently delete soft-deleted user
+   */
+  hardDeleteUser: (id: string) => Promise<AdminUserHardDeleteResponse>;
 };
 
 export function useAdminUsers(): UseAdminUsersReturn {
@@ -90,6 +101,8 @@ export function useAdminUsers(): UseAdminUsersReturn {
     inviteUser: (input: AdminUserInviteInput) => store.inviteUser(input),
     resendInvite: (id: string) => store.resendInvite(id),
     updateStatus: (id: string, input: AdminUserStatusInput) => store.updateStatus(id, input),
-    deleteUser: (id: string) => store.deleteUser(id)
+    deleteUser: (id: string) => store.deleteUser(id),
+    restoreUser: (id: string) => store.restoreUser(id),
+    hardDeleteUser: (id: string) => store.hardDeleteUser(id)
   };
 }
