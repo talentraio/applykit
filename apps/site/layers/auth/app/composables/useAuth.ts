@@ -30,7 +30,7 @@ export type AuthComposable = {
 
 export function useAuth(): AuthComposable {
   const store = useAuthStore();
-  const { clear } = useUserSession();
+  const { clear, fetch: fetchSession } = useUserSession();
   const route = useRoute();
 
   const logout = async (): Promise<void> => {
@@ -66,10 +66,12 @@ export function useAuth(): AuthComposable {
 
   const register = async (input: RegisterInput): Promise<void> => {
     await store.register(input);
+    await fetchSession();
   };
 
   const login = async (input: LoginInput): Promise<void> => {
     await store.login(input);
+    await fetchSession();
   };
 
   const forgotPassword = async (email: string): Promise<void> => {
