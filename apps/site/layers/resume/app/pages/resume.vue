@@ -42,21 +42,10 @@
           :items="tabItems"
           :preview-type="previewType"
           :show-upload-new="true"
-          @upload-new="isUploadModalOpen = true"
+          @upload-new="handleOpenUploadModal"
         />
       </template>
     </ResumeEditorLayout>
-
-    <!-- Upload Modal -->
-    <ResumeModalUpload
-      v-model:open="isUploadModalOpen"
-      @success="handleUploadSuccess"
-      @error="handleUploadError"
-      @create-from-scratch="handleCreateFromScratch"
-    />
-
-    <!-- Create From Scratch Modal -->
-    <ResumeModalCreateFromScratch v-model:open="isCreateModalOpen" />
   </div>
 </template>
 
@@ -120,9 +109,8 @@ const {
 } = useResume();
 
 // UI State
-const isUploadModalOpen = ref(false);
-const isCreateModalOpen = ref(false);
 const activeTab = ref(RESUME_EDITOR_TABS_MAP.EDIT);
+const { openUploadFlow, openCreateFromScratchModal } = useResumeModals();
 const previewTypeModel = computed<PreviewType>({
   get: () => previewType.value,
   set: value => setPreviewType(value)
@@ -198,7 +186,6 @@ const pageLoading = computed(() => !hasResume.value && pending.value);
  * Handle upload success
  */
 const handleUploadSuccess = (_resume: Resume) => {
-  isUploadModalOpen.value = false;
   toast.add({
     title: t('resume.upload.success'),
     color: 'success',
@@ -222,8 +209,13 @@ const handleUploadError = (err: Error) => {
  * Handle create from scratch click
  */
 const handleCreateFromScratch = () => {
-  isUploadModalOpen.value = false;
-  isCreateModalOpen.value = true;
+  void openCreateFromScratchModal();
+};
+
+const handleOpenUploadModal = () => {
+  void openUploadFlow({
+    onError: handleUploadError
+  });
 };
 </script>
 
