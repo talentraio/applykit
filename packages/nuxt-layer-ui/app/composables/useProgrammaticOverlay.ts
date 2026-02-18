@@ -28,25 +28,10 @@ type CloseEventArgTypeSimple<T> = T extends (
 
 /**
  * Workaround for overloaded emits signatures:
- * conditional types match only one overload, so we widen to extract close payload.
+ * in overloaded `$emit`, the "close" overload may be non-last, so a simple conditional can miss it.
  */
 type CloseEventArgTypeComplex<T> = T extends {
   (event: 'close', arg_0: infer Arg, ...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
-  (...args: unknown[]): void;
   (...args: unknown[]): void;
 }
   ? Arg
