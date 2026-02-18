@@ -65,4 +65,31 @@ test.describe('Auth modals smoke', () => {
     await expect(modal).toContainText('Create Your Account');
     await expect(modal).toContainText('First Name');
   });
+
+  test('should not emit hydration mismatch warnings when opening by auth query', async ({
+    page
+  }) => {
+    const warnings: string[] = [];
+
+    page.on('console', message => {
+      if (message.type() === 'warning' || message.type() === 'error') {
+        warnings.push(message.text());
+      }
+    });
+
+    await page.goto('/?auth=login');
+    await waitForUiReady(page);
+
+    const modal = page.getByRole('dialog').last();
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText('Sign In to ApplyKit');
+
+    const hydrationWarnings = warnings.filter(
+      message =>
+        message.includes('Hydration node mismatch') ||
+        message.includes('Hydration completed but contains mismatches')
+    );
+
+    expect(hydrationWarnings).toHaveLength(0);
+  });
 });

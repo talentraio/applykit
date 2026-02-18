@@ -67,13 +67,29 @@ export function useAuth(): AuthComposable {
     getAuthModalRedirect(getCurrentQuery().redirect)
   );
 
+  const runOnClientReady = (handler: () => void): void => {
+    const nuxtApp = useNuxtApp();
+    if (nuxtApp.isHydrating) {
+      onNuxtReady(handler);
+      return;
+    }
+
+    handler();
+  };
+
   const openOverlay = (): void => {
     if (overlayOpen.value) {
       return;
     }
 
     overlayOpen.value = true;
-    void authModalOverlay.open();
+    runOnClientReady(() => {
+      if (!overlayOpen.value) {
+        return;
+      }
+
+      void authModalOverlay.open();
+    });
   };
 
   const closeOverlay = (): void => {
@@ -91,7 +107,13 @@ export function useAuth(): AuthComposable {
     }
 
     legalConsentOverlayOpen.value = true;
-    void legalConsentModalOverlay.open();
+    runOnClientReady(() => {
+      if (!legalConsentOverlayOpen.value) {
+        return;
+      }
+
+      void legalConsentModalOverlay.open();
+    });
   };
 
   const closeLegalConsentOverlay = (): void => {

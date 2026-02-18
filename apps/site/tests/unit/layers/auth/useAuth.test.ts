@@ -54,6 +54,11 @@ type StoreStub = {
   eraseSessionData: ReturnType<typeof vi.fn>;
 };
 
+type SetupUseAuthOptions = {
+  isHydrating?: boolean;
+  onNuxtReadyImmediate?: boolean;
+};
+
 function computedStub<T>(source: Getter<T> | ComputedOptions<T>) {
   if (typeof source === 'function') {
     return {
@@ -92,7 +97,8 @@ function createStoreStub(): StoreStub {
   };
 }
 
-function setupUseAuth(query: Query = {}) {
+function setupUseAuth(query: Query = {}, options: SetupUseAuthOptions = {}) {
+  const { isHydrating = false, onNuxtReadyImmediate = true } = options;
   const route: RouteStub = {
     query: { ...query }
   };
@@ -118,6 +124,11 @@ function setupUseAuth(query: Query = {}) {
   const legalOverlayOpen = vi.fn(async () => undefined);
   const legalOverlayClose = vi.fn();
   const legalOverlayPatch = vi.fn();
+  const onNuxtReady = vi.fn((callback: () => void) => {
+    if (onNuxtReadyImmediate) {
+      callback();
+    }
+  });
 
   const stateStore = new Map<string, { value: boolean }>();
 
@@ -132,6 +143,10 @@ function setupUseAuth(query: Query = {}) {
   vi.stubGlobal('useAuthStore', () => store);
   vi.stubGlobal('useUserSession', () => ({ clear, fetch }));
   vi.stubGlobal('navigateTo', navigateTo);
+  vi.stubGlobal('useNuxtApp', () => ({
+    isHydrating
+  }));
+  vi.stubGlobal('onNuxtReady', onNuxtReady);
   const createProgrammaticOverlay = (component: { name?: string } | undefined) => {
     if (component?.name === 'AuthLegalConsentModal') {
       return {
@@ -168,6 +183,7 @@ function setupUseAuth(query: Query = {}) {
     push,
     replace,
     navigateTo,
+    onNuxtReady,
     authOverlayOpen,
     authOverlayClose,
     legalOverlayOpen,
@@ -285,6 +301,21 @@ describe('useAuth modal controls', () => {
     expect(authOverlayOpen).toHaveBeenCalledTimes(1);
   });
 
+  it('defers auth overlay open until Nuxt is ready during hydration', () => {
+    const { auth, authOverlayOpen, onNuxtReady } = setupUseAuth(
+      {},
+      {
+        isHydrating: true,
+        onNuxtReadyImmediate: false
+      }
+    );
+
+    auth.syncAuthModalFromQuery({ auth: 'login' });
+
+    expect(onNuxtReady).toHaveBeenCalledTimes(1);
+    expect(authOverlayOpen).toHaveBeenCalledTimes(0);
+  });
+
   it('syncAuthModalFromQuery closes overlay for missing auth query', () => {
     const { auth, authOverlayClose } = setupUseAuth({ auth: 'login' });
 
@@ -301,6 +332,22 @@ describe('useAuth modal controls', () => {
     auth.syncLegalConsentModal();
 
     expect(legalOverlayOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('defers legal consent overlay open until Nuxt is ready during hydration', () => {
+    const { auth, store, legalOverlayOpen, onNuxtReady } = setupUseAuth(
+      {},
+      {
+        isHydrating: true,
+        onNuxtReadyImmediate: false
+      }
+    );
+
+    store.needsTermsAcceptance = true;
+    auth.syncLegalConsentModal();
+
+    expect(onNuxtReady).toHaveBeenCalledTimes(1);
+    expect(legalOverlayOpen).toHaveBeenCalledTimes(0);
   });
 
   it('syncLegalConsentModal closes overlay when terms acceptance is no longer required', () => {
