@@ -10,7 +10,6 @@ const userRepositoryMock = {
 
 const sendVerificationEmailMock = vi.fn();
 const generateTokenMock = vi.fn(() => 'verification-token');
-const getTokenExpiryMock = vi.fn(() => new Date('2026-02-18T00:00:00Z'));
 const requireSuperAdminMock = vi.fn(async () => {});
 
 const readBodyMock = vi.fn(async (event: { body: unknown }) => event.body);
@@ -35,8 +34,7 @@ vi.mock('../../../server/services/email', () => ({
 }));
 
 vi.mock('../../../server/services/password', () => ({
-  generateToken: generateTokenMock,
-  getTokenExpiry: getTokenExpiryMock
+  generateToken: generateTokenMock
 }));
 
 vi.mock('../../../server/utils/session-helpers', () => ({
@@ -51,7 +49,6 @@ beforeEach(() => {
 
   sendVerificationEmailMock.mockReset();
   generateTokenMock.mockClear();
-  getTokenExpiryMock.mockClear();
   requireSuperAdminMock.mockClear();
   readBodyMock.mockClear();
   getRouterParamMock.mockClear();
@@ -106,6 +103,11 @@ describe('admin users invite api', () => {
       'invited',
       'verification-token',
       'invite'
+    );
+    expect(userRepositoryMock.setEmailVerificationToken).toHaveBeenCalledWith(
+      'user-1',
+      'verification-token',
+      null
     );
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201);
   });
@@ -182,6 +184,11 @@ describe('admin users invite api', () => {
       inviteEmailSent: true,
       inviteEmailError: undefined
     });
+    expect(userRepositoryMock.setEmailVerificationToken).toHaveBeenCalledWith(
+      'user-4',
+      'verification-token',
+      null
+    );
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 200);
   });
 });
