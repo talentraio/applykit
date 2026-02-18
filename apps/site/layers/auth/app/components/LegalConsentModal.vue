@@ -38,14 +38,8 @@
 <script setup lang="ts">
 defineOptions({ name: 'AuthLegalConsentModal' });
 
-const { acceptTerms, needsTermsAcceptance } = useAuth();
-
-const isOpen = computed({
-  get: () => needsTermsAcceptance.value,
-  set: () => {
-    // Cannot be closed manually
-  }
-});
+const { acceptTerms } = useAuth();
+const isOpen = ref(true);
 
 const accepted = ref(false);
 const saving = ref(false);

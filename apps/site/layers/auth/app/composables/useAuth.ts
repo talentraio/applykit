@@ -7,12 +7,14 @@
 
 import type { LoginInput, Profile, RegisterInput, UserPublic } from '@int/schema';
 import type { LocationQuery } from 'vue-router';
-import { LazyAuthModal } from '#components';
+import { LazyAuthLegalConsentModal, LazyAuthModal } from '#components';
 import { FetchError } from 'ofetch';
 import { siteAuthApi } from '../infrastructure/auth.api';
 
 const AUTH_MODAL_OVERLAY_ID = 'site-auth-modal';
 const AUTH_MODAL_OVERLAY_OPEN_STATE_KEY = 'site-auth-modal-overlay-open';
+const LEGAL_CONSENT_MODAL_OVERLAY_ID = 'site-auth-legal-consent-modal';
+const LEGAL_CONSENT_MODAL_OVERLAY_OPEN_STATE_KEY = 'site-auth-legal-consent-modal-overlay-open';
 
 export type AuthModalView = 'login' | 'register' | 'forgot';
 
@@ -38,6 +40,7 @@ export type AuthComposable = {
   closeAuthModalAndRedirect: () => void;
   switchAuthModalView: (view: AuthModalView) => void;
   syncAuthModalFromQuery: (query: LocationQuery) => void;
+  syncLegalConsentModal: () => void;
 };
 
 export function useAuth(): AuthComposable {
@@ -46,8 +49,16 @@ export function useAuth(): AuthComposable {
   const route = useRoute();
   const router = useRouter();
   const overlayOpen = useState<boolean>(AUTH_MODAL_OVERLAY_OPEN_STATE_KEY, () => false);
+  const legalConsentOverlayOpen = useState<boolean>(
+    LEGAL_CONSENT_MODAL_OVERLAY_OPEN_STATE_KEY,
+    () => false
+  );
   const authModalOverlay = useProgrammaticOverlay(LazyAuthModal, {
     id: AUTH_MODAL_OVERLAY_ID,
+    destroyOnClose: true
+  });
+  const legalConsentModalOverlay = useProgrammaticOverlay(LazyAuthLegalConsentModal, {
+    id: LEGAL_CONSENT_MODAL_OVERLAY_ID,
     destroyOnClose: true
   });
 
@@ -73,7 +84,27 @@ export function useAuth(): AuthComposable {
     authModalOverlay.close();
   };
 
+  const openLegalConsentOverlay = (): void => {
+    if (legalConsentOverlayOpen.value) {
+      return;
+    }
+
+    legalConsentOverlayOpen.value = true;
+    void legalConsentModalOverlay.open();
+  };
+
+  const closeLegalConsentOverlay = (): void => {
+    if (!legalConsentOverlayOpen.value) {
+      return;
+    }
+
+    legalConsentOverlayOpen.value = false;
+    legalConsentModalOverlay.close();
+  };
+
   const logout = async (): Promise<void> => {
+    closeLegalConsentOverlay();
+
     await store.logout().catch((error: unknown) => {
       console.warn('Logout request failed, clearing local session anyway:', error);
     });
@@ -107,11 +138,13 @@ export function useAuth(): AuthComposable {
   const register = async (input: RegisterInput): Promise<void> => {
     await store.register(input);
     await fetchSession();
+    syncLegalConsentModal();
   };
 
   const login = async (input: LoginInput): Promise<void> => {
     await store.login(input);
     await fetchSession();
+    syncLegalConsentModal();
   };
 
   const forgotPassword = async (email: string): Promise<void> => {
@@ -128,10 +161,12 @@ export function useAuth(): AuthComposable {
 
   const refresh = async (): Promise<void> => {
     await store.fetchMe();
+    syncLegalConsentModal();
   };
 
   const acceptTerms = async (): Promise<void> => {
     await store.acceptTerms();
+    syncLegalConsentModal();
   };
 
   const openAuthModal = (newView: AuthModalView = 'login', redirect?: string): void => {
@@ -174,6 +209,15 @@ export function useAuth(): AuthComposable {
     closeOverlay();
   };
 
+  function syncLegalConsentModal(): void {
+    if (store.needsTermsAcceptance) {
+      openLegalConsentOverlay();
+      return;
+    }
+
+    closeLegalConsentOverlay();
+  }
+
   return {
     loggedIn: computed(() => store.isAuthenticated),
     user: computed(() => store.user),
@@ -195,7 +239,8 @@ export function useAuth(): AuthComposable {
     closeAuthModal,
     closeAuthModalAndRedirect,
     switchAuthModalView,
-    syncAuthModalFromQuery
+    syncAuthModalFromQuery,
+    syncLegalConsentModal
   };
 }
 

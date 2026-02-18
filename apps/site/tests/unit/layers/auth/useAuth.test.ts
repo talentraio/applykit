@@ -5,7 +5,8 @@ import { useAuth } from '../../../../layers/auth/app/composables/useAuth';
 vi.mock(
   '#components',
   () => ({
-    LazyAuthModal: { name: 'AuthModal' }
+    LazyAuthModal: { name: 'AuthModal' },
+    LazyAuthLegalConsentModal: { name: 'AuthLegalConsentModal' }
   }),
   { virtual: true }
 );
@@ -111,9 +112,12 @@ function setupUseAuth(query: Query = {}) {
   const clear = vi.fn(async () => undefined);
   const fetch = vi.fn(async () => undefined);
   const navigateTo = vi.fn();
-  const overlayOpen = vi.fn(async () => undefined);
-  const overlayClose = vi.fn();
-  const overlayPatch = vi.fn();
+  const authOverlayOpen = vi.fn(async () => undefined);
+  const authOverlayClose = vi.fn();
+  const authOverlayPatch = vi.fn();
+  const legalOverlayOpen = vi.fn(async () => undefined);
+  const legalOverlayClose = vi.fn();
+  const legalOverlayPatch = vi.fn();
 
   const stateStore = new Map<string, { value: boolean }>();
 
@@ -123,12 +127,21 @@ function setupUseAuth(query: Query = {}) {
   vi.stubGlobal('useAuthStore', () => store);
   vi.stubGlobal('useUserSession', () => ({ clear, fetch }));
   vi.stubGlobal('navigateTo', navigateTo);
-  vi.stubGlobal('useProgrammaticOverlay', () => ({
-    id: Symbol('overlay'),
-    open: overlayOpen,
-    close: overlayClose,
-    patch: overlayPatch
-  }));
+  vi.stubGlobal('useProgrammaticOverlay', (component: { name?: string } | undefined) =>
+    component?.name === 'AuthLegalConsentModal'
+      ? {
+          id: Symbol('legal-overlay'),
+          open: legalOverlayOpen,
+          close: legalOverlayClose,
+          patch: legalOverlayPatch
+        }
+      : {
+          id: Symbol('auth-overlay'),
+          open: authOverlayOpen,
+          close: authOverlayClose,
+          patch: authOverlayPatch
+        }
+  );
   vi.stubGlobal('useState', (key: string, init: () => boolean) => {
     const existingState = stateStore.get(key);
     if (existingState) {
@@ -142,11 +155,14 @@ function setupUseAuth(query: Query = {}) {
 
   return {
     auth: useAuth(),
+    store,
     push,
     replace,
     navigateTo,
-    overlayOpen,
-    overlayClose
+    authOverlayOpen,
+    authOverlayClose,
+    legalOverlayOpen,
+    legalOverlayClose
   };
 }
 
@@ -208,7 +224,7 @@ describe('useAuth OAuth redirects', () => {
 
 describe('useAuth modal controls', () => {
   it('opens auth modal with default login view via query only', () => {
-    const { auth, push, overlayOpen } = setupUseAuth({ foo: 'bar' });
+    const { auth, push, authOverlayOpen } = setupUseAuth({ foo: 'bar' });
 
     auth.openAuthModal();
 
@@ -218,7 +234,7 @@ describe('useAuth modal controls', () => {
         auth: 'login'
       }
     });
-    expect(overlayOpen).toHaveBeenCalledTimes(0);
+    expect(authOverlayOpen).toHaveBeenCalledTimes(0);
   });
 
   it('opens auth modal with explicit view and redirect', () => {
@@ -236,7 +252,7 @@ describe('useAuth modal controls', () => {
   });
 
   it('switches auth modal view through router.replace only', () => {
-    const { auth, replace, overlayOpen } = setupUseAuth({
+    const { auth, replace, authOverlayOpen } = setupUseAuth({
       auth: 'login',
       redirect: '/resume'
     });
@@ -249,28 +265,64 @@ describe('useAuth modal controls', () => {
         redirect: '/resume'
       }
     });
-    expect(overlayOpen).toHaveBeenCalledTimes(0);
+    expect(authOverlayOpen).toHaveBeenCalledTimes(0);
   });
 
   it('syncAuthModalFromQuery opens overlay for supported auth query', () => {
-    const { auth, overlayOpen } = setupUseAuth();
+    const { auth, authOverlayOpen } = setupUseAuth();
 
     auth.syncAuthModalFromQuery({ auth: 'register' });
 
-    expect(overlayOpen).toHaveBeenCalledTimes(1);
+    expect(authOverlayOpen).toHaveBeenCalledTimes(1);
   });
 
   it('syncAuthModalFromQuery closes overlay for missing auth query', () => {
-    const { auth, overlayClose } = setupUseAuth({ auth: 'login' });
+    const { auth, authOverlayClose } = setupUseAuth({ auth: 'login' });
 
     auth.syncAuthModalFromQuery({ auth: 'login' });
     auth.syncAuthModalFromQuery({});
 
-    expect(overlayClose).toHaveBeenCalledTimes(1);
+    expect(authOverlayClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('syncLegalConsentModal opens overlay when terms acceptance is required', () => {
+    const { auth, store, legalOverlayOpen } = setupUseAuth();
+
+    store.needsTermsAcceptance = true;
+    auth.syncLegalConsentModal();
+
+    expect(legalOverlayOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('syncLegalConsentModal closes overlay when terms acceptance is no longer required', () => {
+    const { auth, store, legalOverlayClose } = setupUseAuth();
+
+    store.needsTermsAcceptance = true;
+    auth.syncLegalConsentModal();
+    store.needsTermsAcceptance = false;
+    auth.syncLegalConsentModal();
+
+    expect(legalOverlayClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('acceptTerms syncs legal consent overlay after successful acceptance', async () => {
+    const { auth, store, legalOverlayClose } = setupUseAuth();
+
+    store.needsTermsAcceptance = true;
+    auth.syncLegalConsentModal();
+    store.acceptTerms.mockImplementationOnce(async () => {
+      store.needsTermsAcceptance = false;
+      return undefined;
+    });
+
+    await auth.acceptTerms();
+
+    expect(store.acceptTerms).toHaveBeenCalledTimes(1);
+    expect(legalOverlayClose).toHaveBeenCalledTimes(1);
   });
 
   it('closes auth modal and removes auth+redirect query params', () => {
-    const { auth, push, overlayClose } = setupUseAuth({
+    const { auth, push, authOverlayClose } = setupUseAuth({
       auth: 'login',
       redirect: '/resume',
       foo: 'bar'
@@ -284,11 +336,11 @@ describe('useAuth modal controls', () => {
         foo: 'bar'
       }
     });
-    expect(overlayClose).toHaveBeenCalledTimes(0);
+    expect(authOverlayClose).toHaveBeenCalledTimes(0);
   });
 
   it('closeAuthModalAndRedirect navigates to redirect when present', () => {
-    const { auth, navigateTo, overlayClose, push } = setupUseAuth({
+    const { auth, navigateTo, authOverlayClose, push } = setupUseAuth({
       auth: 'login',
       redirect: '/profile'
     });
@@ -298,7 +350,7 @@ describe('useAuth modal controls', () => {
 
     expect(navigateTo).toHaveBeenCalledWith('/profile');
     expect(push).toHaveBeenCalledTimes(1);
-    expect(overlayClose).toHaveBeenCalledTimes(0);
+    expect(authOverlayClose).toHaveBeenCalledTimes(0);
   });
 
   it('closeAuthModalAndRedirect falls back to close when redirect is invalid', () => {
