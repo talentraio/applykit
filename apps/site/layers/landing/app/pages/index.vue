@@ -14,8 +14,6 @@
     </main>
 
     <LandingFooter />
-
-    <AuthModal />
   </div>
 </template>
 

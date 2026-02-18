@@ -25,17 +25,16 @@
 <script setup lang="ts">
 defineOptions({ name: 'LandingCta' });
 
-const { loggedIn } = useAuth();
-const { open: openAuthModal } = useAuthModal();
+const { loggedIn, openAuthModal } = useAuth();
 const { redirects } = useAppConfig();
 
 const handlePrimaryCta = () => {
   if (loggedIn.value) {
-    navigateTo(redirects.afterLandingTryIt);
+    navigateTo(redirects.auth.landingTryIt);
     return;
   }
 
-  openAuthModal('login', redirects.afterLandingTryIt);
+  openAuthModal('login', redirects.auth.landingTryIt);
 };
 </script>
 

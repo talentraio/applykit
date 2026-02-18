@@ -6,8 +6,15 @@
  */
 
 import type { LoginInput, Profile, RegisterInput, UserPublic } from '@int/schema';
+import type { LocationQuery } from 'vue-router';
+import { LazyAuthModal } from '#components';
 import { FetchError } from 'ofetch';
 import { siteAuthApi } from '../infrastructure/auth.api';
+
+const AUTH_MODAL_OVERLAY_ID = 'site-auth-modal';
+const AUTH_MODAL_OVERLAY_OPEN_STATE_KEY = 'site-auth-modal-overlay-open';
+
+export type AuthModalView = 'login' | 'register' | 'forgot';
 
 export type AuthComposable = {
   loggedIn: ComputedRef<boolean>;
@@ -26,12 +33,45 @@ export type AuthComposable = {
   resetPassword: (token: string, password: string) => Promise<void>;
   sendVerification: () => Promise<void>;
   acceptTerms: () => Promise<void>;
+  openAuthModal: (view?: AuthModalView, redirect?: string) => void;
+  closeAuthModal: () => void;
+  closeAuthModalAndRedirect: () => void;
+  switchAuthModalView: (view: AuthModalView) => void;
+  syncAuthModalFromQuery: (query: LocationQuery) => void;
 };
 
 export function useAuth(): AuthComposable {
   const store = useAuthStore();
   const { clear, fetch: fetchSession } = useUserSession();
   const route = useRoute();
+  const router = useRouter();
+  const overlayOpen = useState<boolean>(AUTH_MODAL_OVERLAY_OPEN_STATE_KEY, () => false);
+  const authModalOverlay = useProgrammaticOverlay(LazyAuthModal, {
+    id: AUTH_MODAL_OVERLAY_ID,
+    destroyOnClose: true
+  });
+
+  const authModalRedirectUrl = computed((): string | null =>
+    getAuthModalRedirect(route.query.redirect)
+  );
+
+  const openOverlay = (): void => {
+    if (overlayOpen.value) {
+      return;
+    }
+
+    overlayOpen.value = true;
+    void authModalOverlay.open();
+  };
+
+  const closeOverlay = (): void => {
+    if (!overlayOpen.value) {
+      return;
+    }
+
+    overlayOpen.value = false;
+    authModalOverlay.close();
+  };
 
   const logout = async (): Promise<void> => {
     await store.logout().catch((error: unknown) => {
@@ -94,6 +134,46 @@ export function useAuth(): AuthComposable {
     await store.acceptTerms();
   };
 
+  const openAuthModal = (newView: AuthModalView = 'login', redirect?: string): void => {
+    const query: Record<string, string> = { ...route.query, auth: newView };
+    if (redirect) {
+      query.redirect = redirect;
+    }
+
+    router.push({ query });
+  };
+
+  const closeAuthModal = (): void => {
+    const { auth: _auth, redirect: _redirect, ...rest } = route.query;
+    router.push({ query: rest });
+  };
+
+  const closeAuthModalAndRedirect = (): void => {
+    const redirect = authModalRedirectUrl.value;
+    if (redirect) {
+      navigateTo(redirect);
+      return;
+    }
+
+    closeAuthModal();
+  };
+
+  const switchAuthModalView = (newView: AuthModalView): void => {
+    router.replace({
+      query: { ...route.query, auth: newView }
+    });
+  };
+
+  const syncAuthModalFromQuery = (query: LocationQuery): void => {
+    const view = getAuthModalView(query.auth);
+    if (view) {
+      openOverlay();
+      return;
+    }
+
+    closeOverlay();
+  };
+
   return {
     loggedIn: computed(() => store.isAuthenticated),
     user: computed(() => store.user),
@@ -110,8 +190,29 @@ export function useAuth(): AuthComposable {
     forgotPassword,
     resetPassword,
     sendVerification,
-    acceptTerms
+    acceptTerms,
+    openAuthModal,
+    closeAuthModal,
+    closeAuthModalAndRedirect,
+    switchAuthModalView,
+    syncAuthModalFromQuery
   };
+}
+
+function getAuthModalView(value: unknown): AuthModalView | null {
+  if (value === 'login' || value === 'register' || value === 'forgot') {
+    return value;
+  }
+
+  return null;
+}
+
+function getAuthModalRedirect(value: unknown): string | null {
+  if (typeof value === 'string' && value.startsWith('/')) {
+    return value;
+  }
+
+  return null;
 }
 
 function getSafeRedirect(value: unknown): string | null {

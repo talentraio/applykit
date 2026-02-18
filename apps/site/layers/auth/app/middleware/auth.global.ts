@@ -8,8 +8,10 @@
  */
 
 export default defineNuxtRouteMiddleware(to => {
+  const { redirects } = useAppConfig();
+
   // Skip middleware for auth-related routes
-  const publicRoutes = ['/login', '/'];
+  const publicRoutes = [redirects.protected.unauthenticated, '/'];
   const token = typeof to.query.token === 'string' ? to.query.token : '';
   const isPdfPreview = to.path === '/pdf/preview' && Boolean(token);
 
@@ -23,7 +25,7 @@ export default defineNuxtRouteMiddleware(to => {
   // Redirect to login if not authenticated
   if (!loggedIn.value) {
     return navigateTo({
-      path: '/login',
+      path: redirects.protected.unauthenticated,
       query: {
         redirect: to.fullPath
       }
