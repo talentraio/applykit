@@ -161,23 +161,47 @@ export function useProgrammaticOverlay<
   component: TComponent,
   options: UseProgrammaticOverlayOptions<TComponent> = {}
 ): ProgrammaticOverlayController<ExtractOverlayProps<TComponent>, TResult> {
-  const overlayFactory = resolveOverlayFactory(component, options);
+  let overlayFactory = resolveOverlayFactory(component, options);
+
+  const getFactoryForOpen = (): OverlayFactory => {
+    if (options.id) {
+      overlayFactory = resolveOverlayFactory(component, options);
+      return overlayFactory;
+    }
+
+    if (!isOverlayMountedInMemory(overlayFactory.id)) {
+      overlayFactory = createOverlayFactory(component, options);
+    }
+
+    return overlayFactory;
+  };
 
   const open = (props?: Partial<ExtractOverlayProps<TComponent>>): Promise<TResult> => {
+    const factory = getFactoryForOpen();
     const mergedProps = mergeOverlayProps(options.defaultProps, props);
-    return overlayFactory.open(mergedProps);
+    return factory.open(mergedProps);
   };
 
   const close = (value?: TResult): void => {
+    if (!isOverlayMountedInMemory(overlayFactory.id)) {
+      return;
+    }
+
     overlayFactory.close(value);
   };
 
   const patch = (props: Partial<ExtractOverlayProps<TComponent>>): void => {
+    if (!isOverlayMountedInMemory(overlayFactory.id)) {
+      return;
+    }
+
     overlayFactory.patch(props);
   };
 
   return {
-    id: overlayFactory.id,
+    get id() {
+      return overlayFactory.id;
+    },
     open,
     close,
     patch

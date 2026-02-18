@@ -161,4 +161,37 @@ describe('useProgrammaticOverlay', () => {
     expect(overlayStub.create).toHaveBeenCalledTimes(2);
     expect(first.id).not.toBe(second.id);
   });
+
+  it('reopens with the same controller after destroyOnClose for stable id', async () => {
+    const overlayStub = createOverlayStub();
+    vi.stubGlobal('useOverlay', () => overlayStub.overlay);
+
+    const useProgrammaticOverlay = await loadComposable();
+    const modal = useProgrammaticOverlay(
+      { name: 'AuthModal' },
+      { id: 'auth-modal', destroyOnClose: true }
+    );
+
+    await modal.open({ view: 'login' });
+    modal.close();
+    await modal.open({ view: 'register' });
+
+    expect(overlayStub.create).toHaveBeenCalledTimes(2);
+    expect(overlayStub.createdOverlays[1]?.open).toHaveBeenCalledWith({ view: 'register' });
+  });
+
+  it('reopens with the same controller after destroyOnClose without stable id', async () => {
+    const overlayStub = createOverlayStub();
+    vi.stubGlobal('useOverlay', () => overlayStub.overlay);
+
+    const useProgrammaticOverlay = await loadComposable();
+    const modal = useProgrammaticOverlay({ name: 'AuthModal' }, { destroyOnClose: true });
+
+    await modal.open({ view: 'login' });
+    modal.close();
+    await modal.open({ view: 'forgot' });
+
+    expect(overlayStub.create).toHaveBeenCalledTimes(2);
+    expect(overlayStub.createdOverlays[1]?.open).toHaveBeenCalledWith({ view: 'forgot' });
+  });
 });

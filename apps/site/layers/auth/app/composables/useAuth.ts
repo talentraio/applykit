@@ -46,8 +46,6 @@ export type AuthComposable = {
 export function useAuth(): AuthComposable {
   const store = useAuthStore();
   const { clear, fetch: fetchSession } = useUserSession();
-  const route = useRoute();
-  const router = useRouter();
   const overlayOpen = useState<boolean>(AUTH_MODAL_OVERLAY_OPEN_STATE_KEY, () => false);
   const legalConsentOverlayOpen = useState<boolean>(
     LEGAL_CONSENT_MODAL_OVERLAY_OPEN_STATE_KEY,
@@ -62,8 +60,11 @@ export function useAuth(): AuthComposable {
     destroyOnClose: true
   });
 
+  const getRouter = () => useRouter();
+  const getCurrentQuery = (): LocationQuery => getRouter().currentRoute.value.query;
+
   const authModalRedirectUrl = computed((): string | null =>
-    getAuthModalRedirect(route.query.redirect)
+    getAuthModalRedirect(getCurrentQuery().redirect)
   );
 
   const openOverlay = (): void => {
@@ -122,13 +123,13 @@ export function useAuth(): AuthComposable {
   };
 
   const loginWithGoogle = (): void => {
-    const redirect = getSafeRedirect(route.query.redirect);
+    const redirect = getSafeRedirect(getCurrentQuery().redirect);
     const target = redirect ? `/auth/google?state=${encodeURIComponent(redirect)}` : '/auth/google';
     navigateTo(target, { external: true });
   };
 
   const loginWithLinkedIn = (): void => {
-    const redirect = getSafeRedirect(route.query.redirect);
+    const redirect = getSafeRedirect(getCurrentQuery().redirect);
     const target = redirect
       ? `/auth/linkedin?state=${encodeURIComponent(redirect)}`
       : '/auth/linkedin';
@@ -170,16 +171,19 @@ export function useAuth(): AuthComposable {
   };
 
   const openAuthModal = (newView: AuthModalView = 'login', redirect?: string): void => {
-    const query: Record<string, string> = { ...route.query, auth: newView };
-    if (redirect) {
-      query.redirect = redirect;
-    }
+    const router = getRouter();
+    const query = {
+      ...getCurrentQuery(),
+      auth: newView,
+      ...(redirect ? { redirect } : {})
+    };
 
     router.push({ query });
   };
 
   const closeAuthModal = (): void => {
-    const { auth: _auth, redirect: _redirect, ...rest } = route.query;
+    const router = getRouter();
+    const { auth: _auth, redirect: _redirect, ...rest } = getCurrentQuery();
     router.push({ query: rest });
   };
 
@@ -194,8 +198,9 @@ export function useAuth(): AuthComposable {
   };
 
   const switchAuthModalView = (newView: AuthModalView): void => {
+    const router = getRouter();
     router.replace({
-      query: { ...route.query, auth: newView }
+      query: { ...getCurrentQuery(), auth: newView }
     });
   };
 

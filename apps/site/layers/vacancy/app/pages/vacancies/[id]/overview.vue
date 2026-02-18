@@ -26,13 +26,6 @@
         <VacancyItemOverviewContent @edit="handleToggleEdit" @delete="handleDeleteClick" />
       </template>
     </template>
-
-    <!-- Delete Confirmation Modal -->
-    <VacancyModalDeleteConfirmation
-      v-model:open="showDeleteModal"
-      :vacancy-id="vacancyId"
-      @success="handleDeleteSuccess"
-    />
   </div>
 </template>
 
@@ -59,6 +52,7 @@ defineOptions({ name: 'VacancyOverviewPage' });
 const route = useRoute();
 const { t } = useI18n();
 const toast = useToast();
+const { openDeleteConfirmationModal } = useVacancyModals();
 
 // Store
 const vacancyStore = useVacancyStore();
@@ -66,7 +60,6 @@ const vacancyStore = useVacancyStore();
 // --- State ---
 const isEditMode = ref(false);
 const isSaving = ref(false);
-const showDeleteModal = ref(false);
 
 const vacancyId = computed(() => {
   const id = route.params.id;
@@ -144,15 +137,10 @@ const handleCancel = () => {
 /**
  * Open delete confirmation modal
  */
-const handleDeleteClick = () => {
-  showDeleteModal.value = true;
-};
-
-/**
- * Handle successful vacancy delete
- */
-const handleDeleteSuccess = async () => {
-  // Navigate back to vacancies list
-  await navigateTo('/vacancies');
+const handleDeleteClick = async () => {
+  const result = await openDeleteConfirmationModal(vacancyId.value);
+  if (result?.action === 'deleted') {
+    await navigateTo('/vacancies');
+  }
 };
 </script>

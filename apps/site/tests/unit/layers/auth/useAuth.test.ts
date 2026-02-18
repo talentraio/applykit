@@ -122,26 +122,35 @@ function setupUseAuth(query: Query = {}) {
   const stateStore = new Map<string, { value: boolean }>();
 
   vi.stubGlobal('computed', computedStub);
-  vi.stubGlobal('useRoute', () => route);
-  vi.stubGlobal('useRouter', () => ({ push, replace }));
+  vi.stubGlobal('useRouter', () => ({
+    push,
+    replace,
+    currentRoute: {
+      value: route
+    }
+  }));
   vi.stubGlobal('useAuthStore', () => store);
   vi.stubGlobal('useUserSession', () => ({ clear, fetch }));
   vi.stubGlobal('navigateTo', navigateTo);
-  vi.stubGlobal('useProgrammaticOverlay', (component: { name?: string } | undefined) =>
-    component?.name === 'AuthLegalConsentModal'
-      ? {
-          id: Symbol('legal-overlay'),
-          open: legalOverlayOpen,
-          close: legalOverlayClose,
-          patch: legalOverlayPatch
-        }
-      : {
-          id: Symbol('auth-overlay'),
-          open: authOverlayOpen,
-          close: authOverlayClose,
-          patch: authOverlayPatch
-        }
-  );
+  const createProgrammaticOverlay = (component: { name?: string } | undefined) => {
+    if (component?.name === 'AuthLegalConsentModal') {
+      return {
+        id: Symbol('legal-overlay'),
+        open: legalOverlayOpen,
+        close: legalOverlayClose,
+        patch: legalOverlayPatch
+      };
+    }
+
+    return {
+      id: Symbol('auth-overlay'),
+      open: authOverlayOpen,
+      close: authOverlayClose,
+      patch: authOverlayPatch
+    };
+  };
+
+  vi.stubGlobal('useProgrammaticOverlay', createProgrammaticOverlay);
   vi.stubGlobal('useState', (key: string, init: () => boolean) => {
     const existingState = stateStore.get(key);
     if (existingState) {
