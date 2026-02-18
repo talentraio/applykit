@@ -64,10 +64,33 @@ type NormalizeOverlayClosePayload<TComponent extends Component> = [
 
 type OverlayRegistryEntry = {
   component: Component;
+  componentName: string | null;
   overlay: OverlayFactory;
 };
 
 const overlayRegistry = new Map<string, OverlayRegistryEntry>();
+
+function getComponentName(component: Component): string | null {
+  const maybeComponent = component as {
+    name?: unknown;
+    __name?: unknown;
+    displayName?: unknown;
+  };
+
+  if (typeof maybeComponent.name === 'string' && maybeComponent.name.length > 0) {
+    return maybeComponent.name;
+  }
+
+  if (typeof maybeComponent.__name === 'string' && maybeComponent.__name.length > 0) {
+    return maybeComponent.__name;
+  }
+
+  if (typeof maybeComponent.displayName === 'string' && maybeComponent.displayName.length > 0) {
+    return maybeComponent.displayName;
+  }
+
+  return null;
+}
 
 export type UseProgrammaticOverlayOptions<TComponent extends Component> = {
   defaultProps?: Partial<ExtractOverlayProps<TComponent>>;
@@ -130,19 +153,39 @@ function resolveOverlayFactory<TComponent extends Component>(
   const cachedEntry = overlayRegistry.get(stableId);
   if (!cachedEntry) {
     const createdOverlay = createOverlayFactory(component, options);
-    overlayRegistry.set(stableId, { component, overlay: createdOverlay });
+    overlayRegistry.set(stableId, {
+      component,
+      componentName: getComponentName(component),
+      overlay: createdOverlay
+    });
     return createdOverlay;
   }
 
   if (cachedEntry.component !== component) {
-    throw new Error(
-      `Programmatic overlay id "${stableId}" is already registered with a different component`
-    );
+    const cachedComponentName = cachedEntry.componentName;
+    const nextComponentName = getComponentName(component);
+    const isSameNamedComponent =
+      cachedComponentName !== null &&
+      nextComponentName !== null &&
+      cachedComponentName === nextComponentName;
+
+    if (isSameNamedComponent) {
+      cachedEntry.component = component;
+      cachedEntry.componentName = nextComponentName;
+    } else {
+      throw new Error(
+        `Programmatic overlay id "${stableId}" is already registered with a different component`
+      );
+    }
   }
 
   if (!isOverlayMountedInMemory(cachedEntry.overlay.id)) {
     const recreatedOverlay = createOverlayFactory(component, options);
-    overlayRegistry.set(stableId, { component, overlay: recreatedOverlay });
+    overlayRegistry.set(stableId, {
+      component,
+      componentName: getComponentName(component),
+      overlay: recreatedOverlay
+    });
     return recreatedOverlay;
   }
 

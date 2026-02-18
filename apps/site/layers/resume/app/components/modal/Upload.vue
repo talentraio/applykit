@@ -1,11 +1,12 @@
 <template>
-  <UModal v-model:open="isOpen" :title="$t('resume.upload.modalTitle')" class="resume-modal-upload">
+  <UModal
+    v-model:open="isOpen"
+    :title="$t('resume.upload.modalTitle')"
+    :description="$t('resume.upload.modalDescription')"
+    class="resume-modal-upload"
+  >
     <template #body>
       <div class="p-4">
-        <p class="mb-4 text-sm text-muted">
-          {{ $t('resume.upload.modalDescription') }}
-        </p>
-
         <ResumeFormUpload
           @success="handleSuccess"
           @error="handleError"
