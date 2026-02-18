@@ -40,6 +40,17 @@ function getAppUrl(): string {
   return config.public?.appUrl ?? 'http://localhost:3000';
 }
 
+function getSiteUrl(): string {
+  const config = useRuntimeConfig();
+  const configuredSiteUrl = config.public?.siteUrl;
+
+  if (typeof configuredSiteUrl === 'string' && configuredSiteUrl.length > 0) {
+    return configuredSiteUrl;
+  }
+
+  return getAppUrl();
+}
+
 export type SendEmailOptions = {
   to: string;
   subject: string;
@@ -91,12 +102,17 @@ export async function sendVerificationEmail(
   token: string,
   flow: EmailVerificationFlow = EMAIL_VERIFICATION_FLOW_MAP.VERIFICATION
 ): Promise<boolean> {
-  const appUrl = getAppUrl();
-  const verifyUrl = new URL('/api/auth/verify-email', appUrl);
+  const verifyBaseUrl = flow === EMAIL_VERIFICATION_FLOW_MAP.INVITE ? getSiteUrl() : getAppUrl();
+  const verifyUrl = new URL('/api/auth/verify-email', verifyBaseUrl);
   verifyUrl.searchParams.set('token', token);
   verifyUrl.searchParams.set('flow', flow);
 
-  const template = getVerificationTemplate(firstName, verifyUrl.toString());
+  const template = getVerificationTemplate({
+    firstName,
+    verifyUrl: verifyUrl.toString(),
+    flow,
+    siteUrl: getSiteUrl()
+  });
 
   return sendEmail({
     to: email,

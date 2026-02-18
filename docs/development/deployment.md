@@ -62,9 +62,13 @@ Settings → Environment Variables and add:
 | `NUXT_LLM_OPENAI_API_KEY`         |        same        |         same          | OpenAI                                            |
 | `NUXT_LLM_GEMINI_API_KEY`         |        same        |         same          | Gemini                                            |
 | `NUXT_PUBLIC_APP_URL`             |   production URL   |    _(leave empty)_    | Vercel sets `VERCEL_URL` for preview              |
+| `NUXT_PUBLIC_SITE_URL`            |   site prod URL    |   site preview URL    | Used in invite email copy and CTA context         |
 | `NUXT_EMAIL_RESEND_API_KEY`       |        same        |         same          | Resend email provider                             |
 
 `NUXT_STORAGE_BLOB_READ_WRITE_TOKEN` is auto-detected on Vercel — no manual setup needed.
+
+For `applykit-admin`, set `NUXT_PUBLIC_SITE_URL` to the **site app URL** (not admin URL), so
+admin-triggered invite emails mention the correct destination website.
 
 ### 4. Vercel API Token
 

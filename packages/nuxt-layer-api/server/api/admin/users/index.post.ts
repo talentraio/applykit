@@ -3,7 +3,7 @@ import { RoleSchema } from '@int/schema';
 import { z } from 'zod';
 import { userRepository } from '../../../data/repositories';
 import { sendVerificationEmail } from '../../../services/email';
-import { generateToken, getTokenExpiry } from '../../../services/password';
+import { generateToken } from '../../../services/password';
 import { EMAIL_VERIFICATION_FLOW_MAP } from '../../../utils/email-verification-flow';
 import { requireSuperAdmin } from '../../../utils/session-helpers';
 
@@ -64,9 +64,8 @@ export default defineEventHandler(async (event): Promise<AdminInviteCreateRespon
   });
 
   const verificationToken = generateToken();
-  const verificationExpires = getTokenExpiry(24);
 
-  await userRepository.setEmailVerificationToken(user.id, verificationToken, verificationExpires);
+  await userRepository.setEmailVerificationToken(user.id, verificationToken, null);
 
   const firstName = user.email.split('@')[0] ?? 'User';
   const inviteEmailSent = await sendVerificationEmail(

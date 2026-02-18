@@ -443,7 +443,11 @@ export const userRepository = {
    * Set email verification token
    * Used when user requests email verification resend
    */
-  async setEmailVerificationToken(id: string, token: string, expires: Date): Promise<User | null> {
+  async setEmailVerificationToken(
+    id: string,
+    token: string,
+    expires: Date | null
+  ): Promise<User | null> {
     const result = await db
       .update(users)
       .set({

@@ -121,6 +121,7 @@
   - returns created user summary + `inviteEmailSent: boolean` + optional `inviteEmailError`
 - `POST /api/admin/users/:id/invite` (resend invite email for invited user)
   - regenerates verification token and retries invite email delivery
+  - invite verification links do not expire while user remains in `invited` status
   - returns `inviteEmailSent: boolean` + optional `inviteEmailError`
 - `GET /api/admin/users/:id` (detail + profile + usage stats)
 - `PUT /api/admin/users/:id/role`
