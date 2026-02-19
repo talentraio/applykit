@@ -31,6 +31,7 @@ export const ResumeFormatSettingsHumanSchema = z.object({
 });
 export type ResumeFormatSettingsHuman = z.infer<typeof ResumeFormatSettingsHumanSchema>;
 
+/** @deprecated Use ResumeFormatSettingsSchema instead (feature 014) */
 export const UserFormatSettingsSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
@@ -39,7 +40,19 @@ export const UserFormatSettingsSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date()
 });
+/** @deprecated Use ResumeFormatSettings instead (feature 014) */
 export type UserFormatSettings = z.infer<typeof UserFormatSettingsSchema>;
+
+// Per-resume format settings (replaces UserFormatSettings)
+export const ResumeFormatSettingsSchema = z.object({
+  id: z.string().uuid(),
+  resumeId: z.string().uuid(),
+  ats: ResumeFormatSettingsAtsSchema,
+  human: ResumeFormatSettingsHumanSchema,
+  createdAt: z.date(),
+  updatedAt: z.date()
+});
+export type ResumeFormatSettings = z.infer<typeof ResumeFormatSettingsSchema>;
 
 export const PatchFormatSettingsBodySchema = z.object({
   ats: z

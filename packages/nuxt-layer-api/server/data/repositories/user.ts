@@ -21,6 +21,7 @@ type UserRow = {
   legalVersion: string | null;
   role: Role;
   status: UserStatus;
+  defaultResumeId: string | null;
   createdAt: Date | string | null;
   updatedAt: Date | string | null;
   lastLoginAt?: Date | string | null;
@@ -42,6 +43,7 @@ const baseSelectFields = {
   legalVersion: users.legalVersion,
   role: users.role,
   status: users.status,
+  defaultResumeId: users.defaultResumeId,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
   lastLoginAt: users.lastLoginAt,
@@ -77,6 +79,7 @@ const normalizeUserRow = (row: UserRow): User => {
     passwordResetExpires: normalizeOptionalDate(row.passwordResetExpires),
     termsAcceptedAt: normalizeOptionalDate(row.termsAcceptedAt),
     legalVersion: row.legalVersion,
+    defaultResumeId: row.defaultResumeId ?? null,
     createdAt: normalizeRequiredDate(row.createdAt),
     updatedAt: normalizeRequiredDate(row.updatedAt),
     lastLoginAt: normalizeOptionalDate(row.lastLoginAt ?? null),

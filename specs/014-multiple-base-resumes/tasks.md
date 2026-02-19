@@ -29,11 +29,11 @@
 
 **Purpose**: Schema changes, migration, and Zod schemas that all user stories depend on.
 
-- [ ] T001 Add `name` column to `resumes` table and `defaultResumeId` column to `users` table in Drizzle schema at `packages/nuxt-layer-api/server/data/schema.ts`
-- [ ] T002 Add `resumeFormatSettings` table definition to Drizzle schema and remove `userFormatSettings` table definition at `packages/nuxt-layer-api/server/data/schema.ts`
-- [ ] T003 Generate Drizzle migration via `pnpm --filter @int/api db:generate`, then manually add data-migration SQL (backfill `name`, set `defaultResumeId`, copy `user_format_settings` to `resume_format_settings`, drop `user_format_settings`) per `specs/014-multiple-base-resumes/data-model.md` Migration Plan
-- [ ] T004 [P] Add Zod schemas to `packages/nuxt-layer-schema/`: extend resume schema with `name` and `isDefault`; add `resumeListItemSchema`, `setDefaultResumeRequestSchema`, `updateResumeNameSchema` in appropriate schema files under `packages/nuxt-layer-schema/app/schemas/`
-- [ ] T005 [P] Update `UserRow` type and `normalizeUserRow` in user repository at `packages/nuxt-layer-api/server/data/repositories/user.ts` to include `defaultResumeId` in `baseSelectFields` and normalization
+- [x] T001 Add `name` column to `resumes` table and `defaultResumeId` column to `users` table in Drizzle schema at `packages/nuxt-layer-api/server/data/schema.ts`
+- [x] T002 Add `resumeFormatSettings` table definition to Drizzle schema (kept deprecated `userFormatSettings` for build compat until Phase 2) at `packages/nuxt-layer-api/server/data/schema.ts`
+- [x] T003 Generate Drizzle migration `0025_messy_exiles.sql` with data-migration SQL (backfill `name`, set `defaultResumeId`, copy `user_format_settings` to `resume_format_settings`). Drop deferred to Phase 2.
+- [x] T004 [P] Add Zod schemas to `packages/schema/schemas/`: extended `ResumeSchema` with `name` and `isDefault`; added `ResumeListItemSchema`, `SetDefaultResumeRequestSchema`, `UpdateResumeNameSchema` in `resume.ts`; added `ResumeFormatSettingsSchema` in `format-settings.ts`
+- [x] T005 [P] Update `UserRow` type and `normalizeUserRow` in user repository at `packages/nuxt-layer-api/server/data/repositories/user.ts` to include `defaultResumeId` in `baseSelectFields` and normalization
 
 ---
 
