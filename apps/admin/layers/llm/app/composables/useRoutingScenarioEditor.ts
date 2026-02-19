@@ -5,7 +5,7 @@ import type {
 } from '../components/routing/Scenarios/types';
 import { LazyModalRoutingScenariosEdit } from '#components';
 import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
-import { computed, defineAsyncComponent, ref } from 'vue';
+import { computed, defineAsyncComponent, markRaw, ref } from 'vue';
 import {
   cloneRoutingScenarioDraft,
   createEmptyRoutingScenarioDraft
@@ -35,17 +35,25 @@ type UseRoutingScenarioEditorReturn = {
 };
 
 const scenarioFormComponents: Record<EditableScenarioKey, Component> = {
-  [LLM_SCENARIO_KEY_MAP.RESUME_PARSE]: defineAsyncComponent(
-    () => import('@admin/llm/app/components/routing/Scenarios/form/ResumeParse.vue')
+  [LLM_SCENARIO_KEY_MAP.RESUME_PARSE]: markRaw(
+    defineAsyncComponent(
+      () => import('@admin/llm/app/components/routing/Scenarios/form/ResumeParse.vue')
+    )
   ),
-  [LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION]: defineAsyncComponent(
-    () => import('@admin/llm/app/components/routing/Scenarios/form/ResumeAdaptation.vue')
+  [LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION]: markRaw(
+    defineAsyncComponent(
+      () => import('@admin/llm/app/components/routing/Scenarios/form/ResumeAdaptation.vue')
+    )
   ),
-  [LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL]: defineAsyncComponent(
-    () => import('@admin/llm/app/components/routing/Scenarios/form/ResumeDetailedScoring.vue')
+  [LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL]: markRaw(
+    defineAsyncComponent(
+      () => import('@admin/llm/app/components/routing/Scenarios/form/ResumeDetailedScoring.vue')
+    )
   ),
-  [LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION]: defineAsyncComponent(
-    () => import('@admin/llm/app/components/routing/Scenarios/form/CoverLetter.vue')
+  [LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION]: markRaw(
+    defineAsyncComponent(
+      () => import('@admin/llm/app/components/routing/Scenarios/form/CoverLetter.vue')
+    )
   )
 };
 
@@ -174,11 +182,13 @@ export function useRoutingScenarioEditor(
     overlayOpen.value = true;
 
     void (async () => {
+      const formComponent = activeFormComponent.value;
+
       try {
         await editScenarioOverlay.open({
           title: modalTitle.value,
           description: modalDescription.value,
-          formComponent: activeFormComponent.value,
+          formComponent: formComponent ? markRaw(formComponent) : null,
           formProps: () => activeFormProps.value,
           loading: () => options.isSaving?.value ?? false,
           canSave: () => modalCanSave.value,

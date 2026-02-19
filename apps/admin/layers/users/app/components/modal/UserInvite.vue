@@ -2,14 +2,11 @@
   <UModal
     v-model:open="open"
     :title="$t('admin.users.invite.title')"
+    :description="$t('admin.users.invite.description')"
     class="users-user-invite-modal"
   >
     <template #body>
       <div class="space-y-4">
-        <p class="text-sm text-muted">
-          {{ $t('admin.users.invite.description') }}
-        </p>
-
         <UAlert
           v-if="localError"
           color="error"
