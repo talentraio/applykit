@@ -80,6 +80,7 @@ Thumbs.db
 # =========================
 .codex/**/*.local.*
 .claude/**/*.local.*
+.claude/worktrees/
 .cursor/**/*.local.*
 
 # =========================
