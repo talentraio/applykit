@@ -2,13 +2,10 @@
   <UModal
     v-model:open="isOpen"
     :title="$t('resume.page.createTitle')"
+    :description="$t('resume.page.createDescription')"
     class="resume-modal-create-from-scratch"
   >
     <template #body>
-      <p class="mb-4 text-sm text-muted">
-        {{ $t('resume.page.createDescription') }}
-      </p>
-
       <UButton color="primary" block :loading="isCreating" @click="handleConfirm">
         {{ $t('resume.page.createButton') }}
       </UButton>

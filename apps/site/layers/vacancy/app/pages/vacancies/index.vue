@@ -56,20 +56,6 @@
         />
       </template>
     </div>
-
-    <!-- Delete Confirmation Modal (single) -->
-    <VacancyModalDeleteConfirmation
-      v-model:open="isDeleteModalOpen"
-      :vacancy-id="vacancyToDelete?.id ?? null"
-      @success="handleDeleteSuccess"
-    />
-
-    <!-- Bulk Delete Confirmation Modal -->
-    <VacancyModalBulkDeleteConfirmation
-      v-model:open="isBulkDeleteModalOpen"
-      :vacancy-ids="selectedIdsToDelete"
-      @success="handleDeleteSuccess"
-    />
   </div>
 </template>
 
@@ -92,6 +78,7 @@ defineOptions({ name: 'VacancyListPage' });
 
 const toast = useToast();
 const { t } = useI18n();
+const { openDeleteConfirmationModal, openBulkDeleteConfirmationModal } = useVacancyModals();
 
 // =========================================
 // Store & State
@@ -140,24 +127,8 @@ const runQuery = async (nextQuery: VacancyListQuery) => {
 // =========================================
 
 const listContentRef = ref<VacancyListContentExposed | null>(null);
-const isDeleteModalOpen = ref(false);
-const isBulkDeleteModalOpen = ref(false);
-const vacancyToDelete = ref<Vacancy | null>(null);
-const selectedIdsToDelete = ref<string[]>([]);
-
-const confirmDelete = (vacancy: Vacancy) => {
-  vacancyToDelete.value = vacancy;
-  isDeleteModalOpen.value = true;
-};
-
-const confirmBulkDelete = (ids: string[]) => {
-  selectedIdsToDelete.value = ids;
-  isBulkDeleteModalOpen.value = true;
-};
 
 const handleDeleteSuccess = async () => {
-  vacancyToDelete.value = null;
-  selectedIdsToDelete.value = [];
   listContentRef.value?.resetSelection();
 
   try {
@@ -170,5 +141,23 @@ const handleDeleteSuccess = async () => {
       color: 'error'
     });
   }
+};
+
+const confirmDelete = async (vacancy: Vacancy) => {
+  const result = await openDeleteConfirmationModal(vacancy.id);
+  if (result?.action !== 'deleted') {
+    return;
+  }
+
+  await handleDeleteSuccess();
+};
+
+const confirmBulkDelete = async (ids: string[]) => {
+  const result = await openBulkDeleteConfirmationModal([...ids]);
+  if (result?.action !== 'deleted') {
+    return;
+  }
+
+  await handleDeleteSuccess();
 };
 </script>

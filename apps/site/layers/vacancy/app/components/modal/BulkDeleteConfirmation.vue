@@ -1,6 +1,11 @@
 <template>
   <ClientOnly>
-    <UModal :open="open" @update:open="handleUpdateOpen">
+    <UModal
+      :open="open"
+      :title="modalTitle"
+      :description="modalDescription"
+      @update:open="handleUpdateOpen"
+    >
       <template #content>
         <UCard>
           <template #header>
@@ -46,11 +51,7 @@
 
 defineOptions({ name: 'VacancyModalBulkDeleteConfirmation' });
 
-const props = defineProps<Props>();
-
-const emit = defineEmits<Emits>();
-
-type Props = {
+const props = defineProps<{
   /**
    * Controls modal open state
    */
@@ -60,19 +61,19 @@ type Props = {
    * Selected vacancy ids for deletion
    */
   vacancyIds: string[];
-};
+}>();
 
-type Emits = {
+const emit = defineEmits<{
   /**
    * Emitted when modal open state changes
    */
   'update:open': [value: boolean];
 
   /**
-   * Emitted when vacancies are deleted successfully
+   * Emitted when modal flow is finished
    */
-  success: [vacancyIds: string[]];
-};
+  close: [payload: { action: 'deleted'; vacancyIds: string[] } | { action: 'cancelled' }];
+}>();
 
 const { t } = useI18n();
 const toast = useToast();
@@ -81,13 +82,17 @@ const vacancyStore = useVacancyStore();
 const isDeleting = ref(false);
 const selectedCount = computed(() => props.vacancyIds.length);
 const isDeleteDisabled = computed(() => selectedCount.value === 0 || isDeleting.value);
+const modalTitle = computed(() =>
+  t('vacancy.list.bulkActions.confirmTitle', { count: selectedCount.value })
+);
+const modalDescription = computed(() => t('vacancy.list.bulkActions.confirmDescription'));
 
 const handleUpdateOpen = (value: boolean) => {
   emit('update:open', value);
 };
 
 const handleCancel = () => {
-  emit('update:open', false);
+  emit('close', { action: 'cancelled' });
 };
 
 const handleConfirm = async () => {
@@ -100,8 +105,10 @@ const handleConfirm = async () => {
 
   try {
     await vacancyStore.bulkDeleteVacancies(idsToDelete);
-    emit('update:open', false);
-    emit('success', idsToDelete);
+    emit('close', {
+      action: 'deleted',
+      vacancyIds: idsToDelete
+    });
 
     toast.add({
       title: t('vacancy.list.bulkActions.success', { count: idsToDelete.length }),

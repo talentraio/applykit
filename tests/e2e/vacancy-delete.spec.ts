@@ -52,6 +52,21 @@ const waitForUiReady = async (page: Page): Promise<void> => {
   await page.waitForTimeout(700);
 };
 
+const acceptLegalConsentIfVisible = async (page: Page): Promise<void> => {
+  const acceptButton = page.getByRole('button', { name: 'Accept & Continue' });
+  for (let attempt = 1; attempt <= 15; attempt++) {
+    if (await acceptButton.isVisible().catch(() => false)) {
+      const consentCheckbox = page.getByRole('checkbox').first();
+      await consentCheckbox.check();
+      await acceptButton.click();
+      await expect(acceptButton).toBeHidden({ timeout: 10000 });
+      return;
+    }
+
+    await page.waitForTimeout(200);
+  }
+};
+
 const openSingleDeleteModalFromRow = async (page: Page, company: string): Promise<void> => {
   const row = page.locator('tr', { hasText: company }).first();
   await expect(row).toBeVisible();
@@ -86,8 +101,42 @@ const confirmModalAction = async (page: Page, buttonName: RegExp): Promise<void>
   await confirmButton.click();
 };
 
+const cancelModalAction = async (page: Page): Promise<void> => {
+  const dialog = page.getByRole('dialog').last();
+  await expect(dialog).toBeVisible({ timeout: 15000 });
+
+  const cancelButton = dialog.getByRole('button', { name: /cancel/i });
+  await expect(cancelButton).toBeVisible();
+  await cancelButton.click();
+  await expect(dialog).toBeHidden({ timeout: 10000 });
+};
+
 test.describe('Vacancy deletion', () => {
   test.describe.configure({ mode: 'serial' });
+
+  test('should reopen single delete modal after cancel', async ({ page }) => {
+    const suffix = createUniqueSuffix();
+    const targetCompany = `Cancel Reopen Co ${suffix}`;
+
+    await registerTestUser(page);
+    await createVacancy(page, {
+      company: targetCompany,
+      jobPosition: 'Engineer',
+      description: 'Cancel and reopen delete modal'
+    });
+
+    await page.goto('/vacancies');
+    await waitForUiReady(page);
+    await acceptLegalConsentIfVisible(page);
+
+    await openSingleDeleteModalFromRow(page, targetCompany);
+    await cancelModalAction(page);
+    await openSingleDeleteModalFromRow(page, targetCompany);
+
+    const dialog = page.getByRole('dialog').last();
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText('Are you sure you want to delete this vacancy?');
+  });
 
   test('should delete a vacancy from list page', async ({ page }) => {
     const suffix = createUniqueSuffix();
@@ -102,6 +151,7 @@ test.describe('Vacancy deletion', () => {
 
     await page.goto('/vacancies');
     await waitForUiReady(page);
+    await acceptLegalConsentIfVisible(page);
     await openSingleDeleteModalFromRow(page, targetCompany);
 
     const deleteRequest = page.waitForResponse(response => {
@@ -135,6 +185,7 @@ test.describe('Vacancy deletion', () => {
 
     await page.goto('/vacancies');
     await waitForUiReady(page);
+    await acceptLegalConsentIfVisible(page);
 
     await expect(page.locator('tr', { hasText: companyA })).toHaveCount(1);
     await expect(page.locator('tr', { hasText: companyB })).toHaveCount(1);
@@ -174,6 +225,7 @@ test.describe('Vacancy deletion', () => {
 
     await page.goto(`/vacancies/${vacancy.id}/overview`);
     await waitForUiReady(page);
+    await acceptLegalConsentIfVisible(page);
     await expect(page.getByRole('heading', { name: targetCompany })).toBeVisible();
 
     await page.getByRole('button', { name: /^delete$/i }).click();

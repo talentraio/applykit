@@ -1,6 +1,11 @@
 <template>
   <ClientOnly>
-    <UModal :open="open" @update:open="handleUpdateOpen">
+    <UModal
+      :open="open"
+      :title="modalTitle"
+      :description="modalDescription"
+      @update:open="handleUpdateOpen"
+    >
       <template #content>
         <UCard>
           <template #header>
@@ -49,11 +54,7 @@
 
 defineOptions({ name: 'VacancyModalDeleteConfirmation' });
 
-const props = defineProps<Props>();
-
-const emit = defineEmits<Emits>();
-
-type Props = {
+const props = defineProps<{
   /**
    * Controls modal open state
    */
@@ -63,38 +64,34 @@ type Props = {
    * Vacancy id to delete
    */
   vacancyId: string | null;
-};
+}>();
 
-type Emits = {
+const emit = defineEmits<{
   /**
    * Emitted when modal open state changes
    */
   'update:open': [value: boolean];
 
   /**
-   * Emitted when vacancy is deleted successfully
+   * Emitted when modal flow is finished
    */
-  success: [vacancyId: string];
-
-  /**
-   * Emitted when user cancels deletion
-   */
-  cancel: [];
-};
+  close: [payload: { action: 'deleted'; vacancyId: string } | { action: 'cancelled' }];
+}>();
 
 const { t } = useI18n();
 const toast = useToast();
 const vacancyStore = useVacancyStore();
 
 const isDeleting = ref(false);
+const modalTitle = computed(() => t('vacancy.delete.confirm'));
+const modalDescription = computed(() => t('vacancy.delete.description'));
 
 const handleUpdateOpen = (value: boolean) => {
   emit('update:open', value);
 };
 
 const handleCancel = () => {
-  emit('update:open', false);
-  emit('cancel');
+  emit('close', { action: 'cancelled' });
 };
 
 const handleConfirm = async () => {
@@ -106,8 +103,10 @@ const handleConfirm = async () => {
 
   try {
     await vacancyStore.deleteVacancy(props.vacancyId);
-    emit('update:open', false);
-    emit('success', props.vacancyId);
+    emit('close', {
+      action: 'deleted',
+      vacancyId: props.vacancyId
+    });
 
     toast.add({
       title: t('vacancy.delete.success'),

@@ -1,7 +1,17 @@
 export default defineAppConfig({
   redirects: {
-    afterLogin: '/after-login',
-    afterLandingTryIt: '/after-login'
+    auth: {
+      landingTryIt: '/auth/post-login'
+    },
+    postLogin: {
+      resolver: '/auth/post-login',
+      hasVacancies: '/vacancies',
+      noVacancies: '/resume',
+      fallback: '/resume'
+    },
+    protected: {
+      unauthenticated: '/login'
+    }
   },
   resume: {
     autosaveDelay: 2000

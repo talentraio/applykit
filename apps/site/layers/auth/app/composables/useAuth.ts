@@ -6,8 +6,17 @@
  */
 
 import type { LoginInput, Profile, RegisterInput, UserPublic } from '@int/schema';
+import type { LocationQuery } from 'vue-router';
+import { LazyAuthLegalConsentModal, LazyAuthModal } from '#components';
 import { FetchError } from 'ofetch';
 import { siteAuthApi } from '../infrastructure/auth.api';
+
+const AUTH_MODAL_OVERLAY_ID = 'site-auth-modal';
+const AUTH_MODAL_OVERLAY_OPEN_STATE_KEY = 'site-auth-modal-overlay-open';
+const LEGAL_CONSENT_MODAL_OVERLAY_ID = 'site-auth-legal-consent-modal';
+const LEGAL_CONSENT_MODAL_OVERLAY_OPEN_STATE_KEY = 'site-auth-legal-consent-modal-overlay-open';
+
+export type AuthModalView = 'login' | 'register' | 'forgot';
 
 export type AuthComposable = {
   loggedIn: ComputedRef<boolean>;
@@ -26,14 +35,99 @@ export type AuthComposable = {
   resetPassword: (token: string, password: string) => Promise<void>;
   sendVerification: () => Promise<void>;
   acceptTerms: () => Promise<void>;
+  openAuthModal: (view?: AuthModalView, redirect?: string) => void;
+  closeAuthModal: () => void;
+  closeAuthModalAndRedirect: () => void;
+  switchAuthModalView: (view: AuthModalView) => void;
+  syncAuthModalFromQuery: (query: LocationQuery) => void;
+  syncLegalConsentModal: () => void;
 };
 
 export function useAuth(): AuthComposable {
   const store = useAuthStore();
   const { clear, fetch: fetchSession } = useUserSession();
-  const route = useRoute();
+  const overlayOpen = useState<boolean>(AUTH_MODAL_OVERLAY_OPEN_STATE_KEY, () => false);
+  const legalConsentOverlayOpen = useState<boolean>(
+    LEGAL_CONSENT_MODAL_OVERLAY_OPEN_STATE_KEY,
+    () => false
+  );
+  const authModalOverlay = useProgrammaticOverlay(LazyAuthModal, {
+    id: AUTH_MODAL_OVERLAY_ID,
+    destroyOnClose: true
+  });
+  const legalConsentModalOverlay = useProgrammaticOverlay(LazyAuthLegalConsentModal, {
+    id: LEGAL_CONSENT_MODAL_OVERLAY_ID,
+    destroyOnClose: true
+  });
+
+  const getRouter = () => useRouter();
+  const getCurrentQuery = (): LocationQuery => getRouter().currentRoute.value.query;
+
+  const authModalRedirectUrl = computed((): string | null =>
+    getAuthModalRedirect(getCurrentQuery().redirect)
+  );
+
+  const runOnClientReady = (handler: () => void): void => {
+    const nuxtApp = useNuxtApp();
+    if (nuxtApp.isHydrating) {
+      onNuxtReady(handler);
+      return;
+    }
+
+    handler();
+  };
+
+  const openOverlay = (): void => {
+    if (overlayOpen.value) {
+      return;
+    }
+
+    overlayOpen.value = true;
+    runOnClientReady(() => {
+      if (!overlayOpen.value) {
+        return;
+      }
+
+      void authModalOverlay.open();
+    });
+  };
+
+  const closeOverlay = (): void => {
+    if (!overlayOpen.value) {
+      return;
+    }
+
+    overlayOpen.value = false;
+    authModalOverlay.close();
+  };
+
+  const openLegalConsentOverlay = (): void => {
+    if (legalConsentOverlayOpen.value) {
+      return;
+    }
+
+    legalConsentOverlayOpen.value = true;
+    runOnClientReady(() => {
+      if (!legalConsentOverlayOpen.value) {
+        return;
+      }
+
+      void legalConsentModalOverlay.open();
+    });
+  };
+
+  const closeLegalConsentOverlay = (): void => {
+    if (!legalConsentOverlayOpen.value) {
+      return;
+    }
+
+    legalConsentOverlayOpen.value = false;
+    legalConsentModalOverlay.close();
+  };
 
   const logout = async (): Promise<void> => {
+    closeLegalConsentOverlay();
+
     await store.logout().catch((error: unknown) => {
       console.warn('Logout request failed, clearing local session anyway:', error);
     });
@@ -51,13 +145,13 @@ export function useAuth(): AuthComposable {
   };
 
   const loginWithGoogle = (): void => {
-    const redirect = getSafeRedirect(route.query.redirect);
+    const redirect = getSafeRedirect(getCurrentQuery().redirect);
     const target = redirect ? `/auth/google?state=${encodeURIComponent(redirect)}` : '/auth/google';
     navigateTo(target, { external: true });
   };
 
   const loginWithLinkedIn = (): void => {
-    const redirect = getSafeRedirect(route.query.redirect);
+    const redirect = getSafeRedirect(getCurrentQuery().redirect);
     const target = redirect
       ? `/auth/linkedin?state=${encodeURIComponent(redirect)}`
       : '/auth/linkedin';
@@ -67,11 +161,13 @@ export function useAuth(): AuthComposable {
   const register = async (input: RegisterInput): Promise<void> => {
     await store.register(input);
     await fetchSession();
+    syncLegalConsentModal();
   };
 
   const login = async (input: LoginInput): Promise<void> => {
     await store.login(input);
     await fetchSession();
+    syncLegalConsentModal();
   };
 
   const forgotPassword = async (email: string): Promise<void> => {
@@ -88,11 +184,66 @@ export function useAuth(): AuthComposable {
 
   const refresh = async (): Promise<void> => {
     await store.fetchMe();
+    syncLegalConsentModal();
   };
 
   const acceptTerms = async (): Promise<void> => {
     await store.acceptTerms();
+    syncLegalConsentModal();
   };
+
+  const openAuthModal = (newView: AuthModalView = 'login', redirect?: string): void => {
+    const router = getRouter();
+    const query = {
+      ...getCurrentQuery(),
+      auth: newView,
+      ...(redirect ? { redirect } : {})
+    };
+
+    router.push({ query });
+  };
+
+  const closeAuthModal = (): void => {
+    const router = getRouter();
+    const { auth: _auth, redirect: _redirect, ...rest } = getCurrentQuery();
+    router.push({ query: rest });
+  };
+
+  const closeAuthModalAndRedirect = (): void => {
+    const redirect = authModalRedirectUrl.value;
+    if (redirect) {
+      navigateTo(redirect);
+      return;
+    }
+
+    closeAuthModal();
+  };
+
+  const switchAuthModalView = (newView: AuthModalView): void => {
+    const router = getRouter();
+    router.replace({
+      query: { ...getCurrentQuery(), auth: newView }
+    });
+  };
+
+  const syncAuthModalFromQuery = (query: LocationQuery): void => {
+    const view = getAuthModalView(query.auth);
+    if (view) {
+      openOverlay();
+      return;
+    }
+
+    closeOverlay();
+  };
+
+  function syncLegalConsentModal(): void {
+    if (store.needsTermsAcceptance) {
+      openLegalConsentOverlay();
+      return;
+    }
+
+    closeLegalConsentOverlay();
+  }
 
   return {
     loggedIn: computed(() => store.isAuthenticated),
@@ -110,8 +261,30 @@ export function useAuth(): AuthComposable {
     forgotPassword,
     resetPassword,
     sendVerification,
-    acceptTerms
+    acceptTerms,
+    openAuthModal,
+    closeAuthModal,
+    closeAuthModalAndRedirect,
+    switchAuthModalView,
+    syncAuthModalFromQuery,
+    syncLegalConsentModal
   };
+}
+
+function getAuthModalView(value: unknown): AuthModalView | null {
+  if (value === 'login' || value === 'register' || value === 'forgot') {
+    return value;
+  }
+
+  return null;
+}
+
+function getAuthModalRedirect(value: unknown): string | null {
+  if (typeof value === 'string' && value.startsWith('/')) {
+    return value;
+  }
+
+  return null;
 }
 
 function getSafeRedirect(value: unknown): string | null {

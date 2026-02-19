@@ -35,7 +35,7 @@
             color="primary"
             size="sm"
             icon="i-lucide-rocket"
-            @click="navigateTo(redirects.afterLandingTryIt)"
+            @click="navigateTo(redirects.auth.landingTryIt)"
           >
             {{ $t('landing.header.goTailoring') }}
           </UButton>
@@ -45,7 +45,7 @@
             size="sm"
             color="neutral"
             variant="outline"
-            @click="openAuthModal('login', redirects.afterLandingTryIt)"
+            @click="openAuthModal('login', redirects.auth.landingTryIt)"
           >
             {{ $t('landing.header.signIn') }}
           </UButton>
@@ -59,8 +59,7 @@
 defineOptions({ name: 'LandingHeader' });
 
 const { t } = useI18n();
-const { loggedIn } = useAuth();
-const { open: openAuthModal } = useAuthModal();
+const { loggedIn, openAuthModal } = useAuth();
 const { redirects } = useAppConfig();
 
 const navItems = computed(() => [
