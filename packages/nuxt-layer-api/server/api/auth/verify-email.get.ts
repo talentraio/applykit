@@ -1,8 +1,10 @@
+import { USER_STATUS_MAP } from '@int/schema';
 import { getQuery } from 'h3';
 import { userRepository } from '../../data/repositories';
 import { isTokenExpired } from '../../services/password';
 import {
   buildEmailVerificationRedirectPath,
+  EMAIL_VERIFICATION_FLOW_MAP,
   resolveEmailVerificationFlow
 } from '../../utils/email-verification-flow';
 
@@ -47,8 +49,12 @@ export default defineEventHandler(async event => {
     );
   }
 
+  const shouldCheckExpiry = !(
+    flow === EMAIL_VERIFICATION_FLOW_MAP.INVITE && user.status === USER_STATUS_MAP.INVITED
+  );
+
   // Check if token is expired
-  if (isTokenExpired(user.emailVerificationExpires)) {
+  if (shouldCheckExpiry && isTokenExpired(user.emailVerificationExpires)) {
     return sendRedirect(
       event,
       buildEmailVerificationRedirectPath({

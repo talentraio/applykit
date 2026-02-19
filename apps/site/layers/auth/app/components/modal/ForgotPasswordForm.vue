@@ -54,7 +54,7 @@
  *
  * Feature: 003-auth-expansion
  */
-import type { AuthModalView } from '../../composables/useAuthModal';
+import type { AuthModalView } from './useAuthModal';
 import { z } from 'zod';
 
 defineOptions({ name: 'AuthModalForgotPasswordForm' });

@@ -17,7 +17,8 @@
  *
  * Feature: 003-auth-expansion
  */
-import type { AuthModalView } from '../../composables/useAuthModal';
+import type { AuthModalView } from './useAuthModal';
+import { useAuthModal } from './useAuthModal';
 
 defineOptions({ name: 'AuthModal' });
 

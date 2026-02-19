@@ -118,6 +118,18 @@ defineOptions({ name: 'AuthFormRegistration' });
 - If programmatic navigation is required, use `navigateTo(...)`.
 - Do not use `router.push(...)` for app navigation.
 
+## Modals and slideovers
+
+- Do not mount new modal/slideover components directly in page/layout templates just to control open
+  state.
+- For new flows, open them programmatically via `useProgrammaticOverlay` from `@int/ui`
+  (`packages/nuxt-layer-ui/app/composables/useProgrammaticOverlay.ts`).
+- Keep orchestration in layer composables (for example `useAuth`, `useResumeModals`,
+  `useVacancyModals`), and keep modal components focused on internal form/UI logic.
+- Prefer stable overlay ids for reusable flows and pass `destroyOnClose` explicitly based on flow
+  lifecycle requirements.
+- For `UModal`/`USlideover`, always provide accessible labeling (`title` and `description`).
+
 ## Styling: Tailwind-first + BEM encapsulation (no `scoped`)
 
 We use a hybrid approach:

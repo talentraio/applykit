@@ -1,11 +1,12 @@
 <template>
-  <UModal v-model:open="isOpen" :title="$t('resume.upload.modalTitle')" class="resume-modal-upload">
+  <UModal
+    v-model:open="isOpen"
+    :title="$t('resume.upload.modalTitle')"
+    :description="$t('resume.upload.modalDescription')"
+    class="resume-modal-upload"
+  >
     <template #body>
       <div class="p-4">
-        <p class="mb-4 text-sm text-muted">
-          {{ $t('resume.upload.modalDescription') }}
-        </p>
-
         <ResumeFormUpload
           @success="handleSuccess"
           @error="handleError"
@@ -28,22 +29,26 @@
 
 import type { Resume } from '@int/schema';
 
+type ResumeUploadModalClosePayload =
+  | { action: 'uploaded'; resume: Resume }
+  | { action: 'create-from-scratch' };
+
 defineOptions({ name: 'ResumeModalUpload' });
 
 const emit = defineEmits<{
-  /** Upload completed successfully */
-  success: [resume: Resume];
+  /** Close modal with action payload */
+  close: [payload: ResumeUploadModalClosePayload];
   /** Upload failed */
   error: [error: Error];
-  /** User chose to create from scratch */
-  createFromScratch: [];
 }>();
 
 const isOpen = defineModel<boolean>('open', { default: false });
 
 function handleSuccess(resume: Resume) {
-  isOpen.value = false;
-  emit('success', resume);
+  emit('close', {
+    action: 'uploaded',
+    resume
+  });
 }
 
 function handleError(error: Error) {
@@ -51,7 +56,8 @@ function handleError(error: Error) {
 }
 
 function handleCreateFromScratch() {
-  isOpen.value = false;
-  emit('createFromScratch');
+  emit('close', {
+    action: 'create-from-scratch'
+  });
 }
 </script>

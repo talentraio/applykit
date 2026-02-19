@@ -94,6 +94,7 @@ export default defineNuxtConfig({
     public: {
       apiCallTimeoutMs: 120000,
       appUrl: 'http://localhost:3000',
+      siteUrl: '',
       formatSettings: {
         defaults: createFormatSettingsDefaults()
       }

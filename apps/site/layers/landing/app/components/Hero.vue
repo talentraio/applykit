@@ -51,8 +51,7 @@
 defineOptions({ name: 'LandingHero' });
 
 const { t } = useI18n();
-const { loggedIn } = useAuth();
-const { open: openAuthModal } = useAuthModal();
+const { loggedIn, openAuthModal } = useAuth();
 const { redirects } = useAppConfig();
 
 const metaItems = computed(() => [
@@ -63,11 +62,11 @@ const metaItems = computed(() => [
 
 const handlePrimaryCta = () => {
   if (loggedIn.value) {
-    navigateTo(redirects.afterLandingTryIt);
+    navigateTo(redirects.auth.landingTryIt);
     return;
   }
 
-  openAuthModal('login', redirects.afterLandingTryIt);
+  openAuthModal('login', redirects.auth.landingTryIt);
 };
 
 const scrollToFlow = () => {

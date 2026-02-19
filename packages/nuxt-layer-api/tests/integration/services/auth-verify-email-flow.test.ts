@@ -1,3 +1,4 @@
+import { USER_STATUS_MAP } from '@int/schema';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const userRepositoryMock = {
@@ -54,10 +55,14 @@ describe('verify email endpoint flow redirects', () => {
     expect(userRepositoryMock.findByEmailVerificationToken).toHaveBeenCalledWith('token-1');
   });
 
-  it('redirects expired invite token to resume error path', async () => {
+  it('allows expired invite token when flow=invite and user is invited', async () => {
     userRepositoryMock.findByEmailVerificationToken.mockResolvedValueOnce({
       id: 'user-1',
+      status: USER_STATUS_MAP.INVITED,
       emailVerificationExpires: new Date(Date.now() - 60_000)
+    });
+    userRepositoryMock.verifyEmail.mockResolvedValueOnce({
+      id: 'user-1'
     });
 
     const handlerModule = await import('../../../server/api/auth/verify-email.get');
@@ -69,13 +74,14 @@ describe('verify email endpoint flow redirects', () => {
       }
     } as never);
 
-    expect(response).toBe('/resume?verified=false&error=expired_token');
-    expect(userRepositoryMock.verifyEmail).not.toHaveBeenCalled();
+    expect(response).toBe('/resume?verified=true');
+    expect(userRepositoryMock.verifyEmail).toHaveBeenCalledWith('user-1');
   });
 
   it('verifies invite token and redirects to resume success', async () => {
     userRepositoryMock.findByEmailVerificationToken.mockResolvedValueOnce({
       id: 'user-2',
+      status: USER_STATUS_MAP.INVITED,
       emailVerificationExpires: new Date(Date.now() + 60_000)
     });
     userRepositoryMock.verifyEmail.mockResolvedValueOnce({
@@ -95,9 +101,30 @@ describe('verify email endpoint flow redirects', () => {
     expect(userRepositoryMock.verifyEmail).toHaveBeenCalledWith('user-2');
   });
 
+  it('keeps expiry check for non-invite flow', async () => {
+    userRepositoryMock.findByEmailVerificationToken.mockResolvedValueOnce({
+      id: 'user-5',
+      status: USER_STATUS_MAP.ACTIVE,
+      emailVerificationExpires: new Date(Date.now() - 60_000)
+    });
+
+    const handlerModule = await import('../../../server/api/auth/verify-email.get');
+
+    const response = await handlerModule.default({
+      query: {
+        token: 'token-5',
+        flow: 'verification'
+      }
+    } as never);
+
+    expect(response).toBe('/profile?verified=false&error=expired_token');
+    expect(userRepositoryMock.verifyEmail).not.toHaveBeenCalled();
+  });
+
   it('falls back unknown flow to profile redirect', async () => {
     userRepositoryMock.findByEmailVerificationToken.mockResolvedValueOnce({
       id: 'user-3',
+      status: USER_STATUS_MAP.ACTIVE,
       emailVerificationExpires: new Date(Date.now() + 60_000)
     });
     userRepositoryMock.verifyEmail.mockResolvedValueOnce({

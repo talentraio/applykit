@@ -1,9 +1,5 @@
 <template>
   <div v-if="vacancy" class="vacancy-overview-content">
-    <ProfileIncompleteModal
-      v-model:open="showProfileModal"
-      :return-to="`/vacancies/${vacancyId}`"
-    />
     <VacancyItemOverviewContentTitle
       :vacancy="vacancy"
       @edit="emit('edit')"
@@ -70,11 +66,11 @@ const toast = useToast();
 const route = useRoute();
 const vacancyStore = useVacancyStore();
 const authStore = useAuthStore();
+const { openProfileIncompleteModal } = useProfileIncompleteModal();
 const { currentVacancy, overviewLatestGeneration, overviewCanGenerateResume } =
   storeToRefs(vacancyStore);
 const isGenerating = ref(false);
 const isUpdatingStatus = ref(false);
-const showProfileModal = ref(false);
 
 const vacancyId = computed(() => {
   const id = route.params.id;
@@ -92,7 +88,9 @@ const handleGenerate = async () => {
 
   // Check profile completeness before generating
   if (!authStore.isProfileComplete) {
-    showProfileModal.value = true;
+    await openProfileIncompleteModal({
+      returnTo: `/vacancies/${vacancyId.value}`
+    });
     return;
   }
 

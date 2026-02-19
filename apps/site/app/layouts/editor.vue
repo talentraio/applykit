@@ -16,10 +16,6 @@
 
     <!-- Mobile Navigation Drawer -->
     <AppLayoutMobileNav v-model:open="isMobileMenuOpen" />
-
-    <!-- Auth Modal -->
-    <AuthModal />
-    <AuthLegalConsentModal />
   </div>
 </template>
 

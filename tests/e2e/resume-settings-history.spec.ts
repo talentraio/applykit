@@ -14,6 +14,21 @@ const parseRequestBody = (request: Request): Record<string, unknown> => {
   return JSON.parse(payload) as Record<string, unknown>;
 };
 
+const acceptLegalConsentIfVisible = async (page: Page): Promise<void> => {
+  const acceptButton = page.getByRole('button', { name: 'Accept & Continue' });
+  for (let attempt = 1; attempt <= 15; attempt++) {
+    if (await acceptButton.isVisible().catch(() => false)) {
+      const consentCheckbox = page.getByRole('checkbox').first();
+      await consentCheckbox.check();
+      await acceptButton.click();
+      await expect(acceptButton).toBeHidden({ timeout: 10000 });
+      return;
+    }
+
+    await page.waitForTimeout(200);
+  }
+};
+
 const registerAndOpenResumeEditor = async (page: Page) => {
   const uid = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
   const email = `playwright-resume-${uid}@example.com`;
@@ -85,6 +100,7 @@ const registerAndOpenResumeEditor = async (page: Page) => {
   await page.goto('/resume');
   await page.waitForURL('**/resume', { timeout: 20000 });
   await page.waitForTimeout(700);
+  await acceptLegalConsentIfVisible(page);
 
   await expect(page.getByRole('tab', { name: 'Settings' })).toBeVisible({ timeout: 20000 });
 };
