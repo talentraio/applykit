@@ -3,6 +3,7 @@ import type {
   EditableScenarioKey,
   RoutingScenarioDraft
 } from '../components/routing/Scenarios/types';
+import { LazyModalRoutingScenariosEdit } from '#components';
 import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 import { computed, defineAsyncComponent, ref } from 'vue';
 import {
@@ -10,24 +11,27 @@ import {
   createEmptyRoutingScenarioDraft
 } from '../components/routing/Scenarios/types';
 
+const ROUTING_SCENARIO_EDITOR_OVERLAY_ID = 'admin-routing-scenarios-edit-modal';
+const ROUTING_SCENARIO_EDITOR_OVERLAY_OPEN_STATE_KEY =
+  'admin-routing-scenarios-edit-modal-overlay-open';
+
 type UseRoutingScenarioEditorOptions = {
   getSavedDraft: (scenarioKey: EditableScenarioKey) => RoutingScenarioDraft;
   getDescription: (scenarioKey: EditableScenarioKey) => string;
   getFormProps: (scenarioKey: EditableScenarioKey) => Record<string, unknown>;
   hasRequiredValues?: (scenarioKey: EditableScenarioKey, draft: RoutingScenarioDraft) => boolean;
+  isSaving?: Ref<boolean> | ComputedRef<boolean>;
+  onSave: () => Promise<void> | void;
 };
 
+type RoutingScenariosEditModalClosePayload = { action: 'cancelled' } | { action: 'submitted' };
+
 type UseRoutingScenarioEditorReturn = {
-  modalOpen: Ref<boolean>;
   modalScenarioKey: Ref<EditableScenarioKey | null>;
   modalDraft: Ref<RoutingScenarioDraft>;
-  modalTitle: ComputedRef<string>;
-  modalDescription: ComputedRef<string>;
-  activeFormComponent: ComputedRef<Component | null>;
-  activeFormProps: ComputedRef<Record<string, unknown> | null>;
   modalCanSave: ComputedRef<boolean>;
   openScenarioEditor: (scenarioKey: EditableScenarioKey) => void;
-  closeScenarioEditor: () => void;
+  closeScenarioEditor: (payload?: RoutingScenariosEditModalClosePayload) => void;
 };
 
 const scenarioFormComponents: Record<EditableScenarioKey, Component> = {
@@ -49,23 +53,23 @@ export function useRoutingScenarioEditor(
   options: UseRoutingScenarioEditorOptions
 ): UseRoutingScenarioEditorReturn {
   const { t } = useI18n();
+  const overlayOpen = useState<boolean>(
+    ROUTING_SCENARIO_EDITOR_OVERLAY_OPEN_STATE_KEY,
+    () => false
+  );
+  const editScenarioOverlay = useProgrammaticOverlay<
+    typeof LazyModalRoutingScenariosEdit,
+    RoutingScenariosEditModalClosePayload | undefined
+  >(LazyModalRoutingScenariosEdit, {
+    id: ROUTING_SCENARIO_EDITOR_OVERLAY_ID,
+    destroyOnClose: true
+  });
 
-  const modalOpen = ref(false);
   const modalScenarioKey = ref<EditableScenarioKey | null>(null);
   const modalDraft = ref<RoutingScenarioDraft>(createEmptyRoutingScenarioDraft());
   const savedDraft = ref<RoutingScenarioDraft>(createEmptyRoutingScenarioDraft());
 
-  const openScenarioEditor = (scenarioKey: EditableScenarioKey) => {
-    const nextSavedDraft = options.getSavedDraft(scenarioKey);
-
-    modalScenarioKey.value = scenarioKey;
-    savedDraft.value = cloneRoutingScenarioDraft(nextSavedDraft);
-    modalDraft.value = cloneRoutingScenarioDraft(nextSavedDraft);
-    modalOpen.value = true;
-  };
-
-  const closeScenarioEditor = () => {
-    modalOpen.value = false;
+  const resetEditorState = () => {
     modalScenarioKey.value = null;
     modalDraft.value = createEmptyRoutingScenarioDraft();
     savedDraft.value = createEmptyRoutingScenarioDraft();
@@ -157,14 +161,57 @@ export function useRoutingScenarioEditor(
     return modalHasChanges.value && modalHasRequiredValues.value;
   });
 
+  const openScenarioEditor = (scenarioKey: EditableScenarioKey) => {
+    if (overlayOpen.value) {
+      return;
+    }
+
+    const nextSavedDraft = options.getSavedDraft(scenarioKey);
+
+    modalScenarioKey.value = scenarioKey;
+    savedDraft.value = cloneRoutingScenarioDraft(nextSavedDraft);
+    modalDraft.value = cloneRoutingScenarioDraft(nextSavedDraft);
+    overlayOpen.value = true;
+
+    void (async () => {
+      try {
+        await editScenarioOverlay.open({
+          title: modalTitle.value,
+          description: modalDescription.value,
+          formComponent: activeFormComponent.value,
+          formProps: () => activeFormProps.value,
+          loading: () => options.isSaving?.value ?? false,
+          canSave: () => modalCanSave.value,
+          draft: modalDraft.value,
+          onSave: () => {
+            if (options.isSaving?.value || !modalCanSave.value) {
+              return;
+            }
+
+            void options.onSave();
+          }
+        });
+      } finally {
+        overlayOpen.value = false;
+        resetEditorState();
+      }
+    })();
+  };
+
+  const closeScenarioEditor = (
+    payload: RoutingScenariosEditModalClosePayload = { action: 'cancelled' }
+  ) => {
+    if (overlayOpen.value) {
+      overlayOpen.value = false;
+      editScenarioOverlay.close(payload);
+    }
+
+    resetEditorState();
+  };
+
   return {
-    modalOpen,
     modalScenarioKey,
     modalDraft,
-    modalTitle,
-    modalDescription,
-    activeFormComponent,
-    activeFormProps,
     modalCanSave,
     openScenarioEditor,
     closeScenarioEditor

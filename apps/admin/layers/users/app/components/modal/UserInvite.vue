@@ -71,7 +71,10 @@ const _props = withDefaults(
 
 const emit = defineEmits<{
   submit: [payload: { email: string; role: Role }];
+  close: [payload: UsersInviteModalClosePayload];
 }>();
+
+type UsersInviteModalClosePayload = { action: 'cancelled' } | { action: 'submitted' };
 
 const open = defineModel<boolean>('open', { required: true });
 
@@ -83,6 +86,7 @@ const { t } = useI18n();
 
 const close = () => {
   open.value = false;
+  emit('close', { action: 'cancelled' });
 };
 
 const resetForm = () => {
