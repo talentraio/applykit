@@ -95,12 +95,36 @@ export type ResumeContent = z.infer<typeof ResumeContentSchema>;
 export const ResumeSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
+  name: z.string().min(1).max(255),
   title: z.string().min(1).max(255),
   content: ResumeContentSchema,
   sourceFileName: z.string().min(1).max(255),
   sourceFileType: SourceFileTypeSchema,
+  isDefault: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date()
 });
 
 export type Resume = z.infer<typeof ResumeSchema>;
+
+// Lightweight resume item for selectors/dropdowns (no content payload)
+export const ResumeListItemSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  isDefault: z.boolean(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date()
+});
+export type ResumeListItem = z.infer<typeof ResumeListItemSchema>;
+
+// Request: set default resume
+export const SetDefaultResumeRequestSchema = z.object({
+  resumeId: z.string().uuid()
+});
+export type SetDefaultResumeRequest = z.infer<typeof SetDefaultResumeRequestSchema>;
+
+// Request: update resume name
+export const UpdateResumeNameSchema = z.object({
+  name: z.string().min(1).max(255)
+});
+export type UpdateResumeName = z.infer<typeof UpdateResumeNameSchema>;
