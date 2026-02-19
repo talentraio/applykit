@@ -2,30 +2,13 @@
 @import '@nuxt/ui';
 
 @layer base {
-  :where(
-    button:not(:disabled),
-    a[href]:not([aria-disabled='true']),
-    [role='button']:not([aria-disabled='true'])
-  ) {
+  :where(button:enabled, :is(a[href], [role='button']):not([aria-disabled='true'])) {
     cursor: pointer !important;
   }
 
-  :where(
-    button:not(:disabled),
-    a[href]:not([aria-disabled='true']),
-    [role='button']:not([aria-disabled='true'])
-  )::before,
-  :where(
-    button:not(:disabled),
-    a[href]:not([aria-disabled='true']),
-    [role='button']:not([aria-disabled='true'])
-  )::after,
-  :where(
-      button:not(:disabled),
-      a[href]:not([aria-disabled='true']),
-      [role='button']:not([aria-disabled='true'])
-    )
-    * {
+  :where(button:enabled, :is(a[href], [role='button']):not([aria-disabled='true']))::before,
+  :where(button:enabled, :is(a[href], [role='button']):not([aria-disabled='true']))::after,
+  :where(button:enabled, :is(a[href], [role='button']):not([aria-disabled='true'])) * {
     cursor: pointer !important;
   }
 
