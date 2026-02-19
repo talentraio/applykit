@@ -10,42 +10,38 @@ import {
   USAGE_CONTEXT_MAP,
   USER_ROLE_MAP
 } from '@int/schema';
+import { format } from 'date-fns';
 import { readFiles } from 'h3-formidable';
-import { resumeRepository } from '../../data/repositories';
+import { resumeRepository, userRepository } from '../../data/repositories';
 import { parseResumeWithLLM } from '../../services/llm/parse';
 import { parseDocument } from '../../services/parser';
 import { checkRateLimit } from '../../utils/rate-limiter';
 import { logUsage } from '../../utils/usage';
 
+const RESUME_LIMIT = 10;
+
 /**
  * POST /api/resume
  *
- * Create user's single resume by uploading and parsing a file
- * Or by providing JSON resume content directly
+ * Create a new resume by uploading and parsing a file, or by providing JSON content.
+ * Always creates new resume (no upsert).
+ * Auto-sets as default if first resume.
+ * Generates name from dd.MM.yyyy.
+ * Enforces 10-resume limit.
+ * Response includes name and isDefault.
  *
- * Single resume per user: if resume already exists, replaces base resume data
+ * Deprecated: Callers should migrate to multi-resume flows.
  *
  * Request (file upload):
  * - Content-Type: multipart/form-data
- * - Fields:
- *   - file: File (DOCX or PDF)
- *   - title: string (optional, defaults to filename)
+ * - Fields: file (DOCX/PDF), title (optional)
  *
  * Request (JSON):
  * - Content-Type: application/json
- * - Fields:
- *   - content: ResumeContent (validated JSON)
- *   - title: string (required)
- *   - sourceFileName: string (optional)
- *   - sourceFileType: 'docx' | 'pdf' (optional)
+ * - Fields: content, title, sourceFileName?, sourceFileType?
  *
- * Response:
- * - Resume object with parsed content
- * - 422: Parsing failed
- *
- * Rate limiting: Enforces daily parse limits per role (only for file upload)
- *
- * Related: T011 (US1)
+ * Response: Resume with name and isDefault
+ * Errors: 400, 409 (limit), 422
  */
 const hasStatusCode = (value: unknown): value is { statusCode: number } => {
   return (
@@ -56,14 +52,26 @@ const hasStatusCode = (value: unknown): value is { statusCode: number } => {
 };
 
 export default defineEventHandler(async event => {
-  // Require authentication
+  // Deprecation headers
+  setHeader(event, 'Deprecation', 'true');
+  setHeader(event, 'Link', '</api/resumes>; rel="successor-version"');
+
   const session = await requireUserSession(event);
   const userId = (session.user as { id: string }).id;
   const roleValidation = RoleSchema.safeParse(session.user?.role);
   const userRole: Role = roleValidation.success ? roleValidation.data : USER_ROLE_MAP.PUBLIC;
 
-  // Check if user already has a resume (single resume per user)
-  const existingResume = await resumeRepository.findLatestByUserId(userId);
+  // Check resume limit
+  const currentCount = await resumeRepository.countByUserIdExact(userId);
+  if (currentCount >= RESUME_LIMIT) {
+    throw createError({
+      statusCode: 409,
+      message: `Resume limit reached. Maximum ${RESUME_LIMIT} resumes allowed.`
+    });
+  }
+
+  const isFirstResume = currentCount === 0;
+  const generatedName = format(new Date(), 'dd.MM.yyyy');
 
   const contentType = getHeader(event, 'content-type');
 
@@ -71,7 +79,6 @@ export default defineEventHandler(async event => {
   if (contentType?.includes('multipart/form-data')) {
     const { files, fields } = await readFiles(event);
 
-    // Validate file upload
     const fileArray = files.file;
     if (!fileArray || fileArray.length === 0) {
       throw createError({
@@ -82,7 +89,6 @@ export default defineEventHandler(async event => {
 
     const file = fileArray[0];
 
-    // Determine file type from mimetype
     let fileType: SourceFileType;
     if (
       file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -97,7 +103,6 @@ export default defineEventHandler(async event => {
       });
     }
 
-    // Validate file type with schema
     const fileTypeValidation = SourceFileTypeSchema.safeParse(fileType);
     if (!fileTypeValidation.success) {
       throw createError({
@@ -106,23 +111,16 @@ export default defineEventHandler(async event => {
       });
     }
 
-    // Check rate limit
     await checkRateLimit(userId, OPERATION_MAP.PARSE, { maxRequests: 10, windowSeconds: 60 });
 
     try {
-      // Read file buffer
       const buffer = await readFile(file.filepath);
-
-      // Parse document to plain text
       const parseResult = await parseDocument(buffer, fileType);
-
-      // Parse with LLM
       const llmResult = await parseResumeWithLLM(parseResult.text, {
         userId,
         role: userRole
       });
 
-      // Determine title (use provided or default to filename without extension)
       const titleArray = fields.title;
       const title =
         (Array.isArray(titleArray) && titleArray[0]) ||
@@ -131,29 +129,21 @@ export default defineEventHandler(async event => {
 
       const sourceFileName = file.originalFilename || 'unknown';
 
-      const resume = existingResume
-        ? await resumeRepository.replaceBaseData(existingResume.id, userId, {
-            title,
-            content: llmResult.content,
-            sourceFileName,
-            sourceFileType: fileType
-          })
-        : await resumeRepository.create({
-            userId,
-            title,
-            content: llmResult.content,
-            sourceFileName,
-            sourceFileType: fileType
-          });
+      // Always create new resume (no upsert)
+      const resume = await resumeRepository.create({
+        userId,
+        title,
+        content: llmResult.content,
+        sourceFileName,
+        sourceFileType: fileType,
+        name: generatedName
+      });
 
-      if (!resume) {
-        throw createError({
-          statusCode: 404,
-          message: 'Resume not found for replacement'
-        });
+      // Auto-set as default if first resume
+      if (isFirstResume) {
+        await userRepository.updateDefaultResumeId(userId, resume.id);
       }
 
-      // Log usage
       await logUsage(
         userId,
         OPERATION_MAP.PARSE,
@@ -163,13 +153,15 @@ export default defineEventHandler(async event => {
         llmResult.cost
       );
 
-      return resume;
+      return {
+        ...resume,
+        isDefault: isFirstResume
+      };
     } catch (error) {
       if (hasStatusCode(error)) {
         throw error;
       }
 
-      // Handle parsing errors
       if (error instanceof Error) {
         throw createError({
           statusCode: 422,
@@ -193,7 +185,6 @@ export default defineEventHandler(async event => {
       sourceFileType?: SourceFileType;
     }>(event);
 
-    // Validate content with Zod
     const contentValidation = ResumeContentSchema.safeParse(body.content);
     if (!contentValidation.success) {
       throw createError({
@@ -212,29 +203,25 @@ export default defineEventHandler(async event => {
     const sourceFileName = body.sourceFileName || 'import.json';
     const sourceFileType = body.sourceFileType || SOURCE_FILE_TYPE_MAP.PDF;
 
-    const resume = existingResume
-      ? await resumeRepository.replaceBaseData(existingResume.id, userId, {
-          title: body.title,
-          content: contentValidation.data,
-          sourceFileName,
-          sourceFileType
-        })
-      : await resumeRepository.create({
-          userId,
-          title: body.title,
-          content: contentValidation.data,
-          sourceFileName,
-          sourceFileType
-        });
+    // Always create new resume (no upsert)
+    const resume = await resumeRepository.create({
+      userId,
+      title: body.title,
+      content: contentValidation.data,
+      sourceFileName,
+      sourceFileType,
+      name: generatedName
+    });
 
-    if (!resume) {
-      throw createError({
-        statusCode: 404,
-        message: 'Resume not found for replacement'
-      });
+    // Auto-set as default if first resume
+    if (isFirstResume) {
+      await userRepository.updateDefaultResumeId(userId, resume.id);
     }
 
-    return resume;
+    return {
+      ...resume,
+      isDefault: isFirstResume
+    };
   }
 
   throw createError({

@@ -28,6 +28,7 @@ const isOpen = defineModel<boolean>('open', { default: false });
 const isCreating = ref(false);
 const { t } = useI18n();
 const toast = useToast();
+const router = useRouter();
 const { profile } = useProfile();
 const resumeStore = useResumeStore();
 
@@ -55,13 +56,15 @@ async function handleConfirm() {
 
   isCreating.value = true;
   try {
-    await resumeStore.createFromContent(emptyContent, 'My Resume');
+    const resume = await resumeStore.createFromContent(emptyContent, 'My Resume');
     isOpen.value = false;
     toast.add({
       title: t('resume.success.created'),
       color: 'success',
       icon: 'i-lucide-check'
     });
+    // Navigate to the newly created resume
+    await router.push(`/resume/${resume.id}`);
   } catch (error) {
     toast.add({
       title: t('resume.error.createFailed'),

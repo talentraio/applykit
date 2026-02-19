@@ -43,25 +43,25 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T006 Create `resume-format-settings` repository at `packages/nuxt-layer-api/server/data/repositories/resume-format-settings.ts` with methods: `findByResumeId()`, `create()`, `update()`, `seedDefaults()`, `duplicateFrom()`
-- [ ] T007 Extend resume repository at `packages/nuxt-layer-api/server/data/repositories/resume.ts` with methods: `duplicate()`, `updateName()`, `findListByUserId()`. Modify `create()` to accept optional `name` parameter
-- [ ] T008 Add `updateDefaultResumeId()` and `getDefaultResumeId()` methods to user repository at `packages/nuxt-layer-api/server/data/repositories/user.ts`
-- [ ] T009 [P] Implement `GET /api/resumes` (list resumes) at `packages/nuxt-layer-api/server/api/resumes/index.get.ts` — returns lightweight list sorted by default first then `createdAt DESC`, computing `isDefault` per contracts
-- [ ] T010 [P] Implement `GET /api/resumes/:id` (get resume by ID with ownership check) at `packages/nuxt-layer-api/server/api/resumes/[id].get.ts` — includes computed `isDefault`
-- [ ] T011 [P] Implement `POST /api/resumes/:id/duplicate` at `packages/nuxt-layer-api/server/api/resumes/[id]/duplicate.post.ts` — clones content + format settings, sets name to `copy <source.name>`, enforces 10-resume limit (409)
-- [ ] T012 [P] Implement `DELETE /api/resumes/:id` at `packages/nuxt-layer-api/server/api/resumes/[id].delete.ts` — prevents deletion of default resume (409), ownership check, cascades format settings via FK
-- [ ] T013 [P] Implement `PUT /api/resumes/:id/name` at `packages/nuxt-layer-api/server/api/resumes/[id]/name.put.ts` — validates 1-255 chars, ownership check
-- [ ] T014 [P] Implement `PUT /api/user/default-resume` at `packages/nuxt-layer-api/server/api/user/default-resume.put.ts` — validates resume exists and belongs to user, updates `users.default_resume_id`
-- [ ] T015 [P] Implement `GET /api/resumes/:id/format-settings` at `packages/nuxt-layer-api/server/api/resumes/[id]/format-settings.get.ts` — auto-seeds defaults if no settings exist
-- [ ] T016 [P] Implement `PATCH /api/resumes/:id/format-settings` at `packages/nuxt-layer-api/server/api/resumes/[id]/format-settings.patch.ts` — same deep-partial merge logic as former user format settings
-- [ ] T017 Modify `GET /api/resume` at `packages/nuxt-layer-api/server/api/resume/index.get.ts` — return default resume (via `users.defaultResumeId`), add `Deprecation` header, include `name` and `isDefault` in response
-- [ ] T018 Modify `POST /api/resume` at `packages/nuxt-layer-api/server/api/resume/index.post.ts` — always create new resume (no upsert), auto-set as default if first resume, generate name from `dd.MM.yyyy`, enforce 10-resume limit, include `name` and `isDefault` in response
-- [ ] T019 Remove old format-settings endpoints: delete `packages/nuxt-layer-api/server/api/user/format-settings.get.ts`, `format-settings.patch.ts`, `format-settings.put.ts`
-- [ ] T020 Remove old format-settings repository: delete `packages/nuxt-layer-api/server/data/repositories/format-settings.ts` and update any imports
-- [ ] T021 Add new API methods to resume API client at `apps/site/layers/resume/app/infrastructure/resume.api.ts`: `fetchList()`, `fetchById()`, `duplicate()`, `deleteResume()`, `updateName()`, `setDefault()`, `fetchFormatSettings()`, `patchFormatSettings()`
-- [ ] T022 Refactor format-settings store at `apps/site/layers/_base/app/stores/format-settings.ts` to accept `resumeId` parameter in `fetchSettings()` and `patchSettings()`, change API paths from `/api/user/format-settings` to `/api/resumes/:id/format-settings`
-- [ ] T023 Refactor resume store at `apps/site/layers/resume/app/stores/index.ts`: add `activeResumeId` state, add `resumeList` state, fix `_upsertCachedResume()` for proper multi-resume cache, add actions: `fetchResumeList()`, `fetchResumeById()`, `duplicateResume()`, `deleteResume()`, `setDefaultResume()`, `updateResumeName()`
-- [ ] T024 Refactor `useResume` composable at `apps/site/layers/resume/app/composables/useResume.ts` to be resume-id-aware (use `activeResumeId` instead of hardcoded `cachedResumesList[0]`), wire format settings to per-resume endpoints
+- [x] T006 Create `resume-format-settings` repository at `packages/nuxt-layer-api/server/data/repositories/resume-format-settings.ts` with methods: `findByResumeId()`, `create()`, `update()`, `seedDefaults()`, `duplicateFrom()`
+- [x] T007 Extend resume repository at `packages/nuxt-layer-api/server/data/repositories/resume.ts` with methods: `duplicate()`, `updateName()`, `findListByUserId()`, `countByUserIdExact()`. Modify `create()` to accept optional `name` parameter
+- [x] T008 Add `updateDefaultResumeId()` and `getDefaultResumeId()` methods to user repository at `packages/nuxt-layer-api/server/data/repositories/user.ts`
+- [x] T009 [P] Implement `GET /api/resumes` (list resumes) at `packages/nuxt-layer-api/server/api/resumes/index.get.ts` — returns lightweight list sorted by default first then `createdAt DESC`, computing `isDefault` per contracts
+- [x] T010 [P] Implement `GET /api/resumes/:id` (get resume by ID with ownership check) at `packages/nuxt-layer-api/server/api/resumes/[id].get.ts` — includes computed `isDefault`
+- [x] T011 [P] Implement `POST /api/resumes/:id/duplicate` at `packages/nuxt-layer-api/server/api/resumes/[id]/duplicate.post.ts` — clones content + format settings, sets name to `copy <source.name>`, enforces 10-resume limit (409)
+- [x] T012 [P] Implement `DELETE /api/resumes/:id` at `packages/nuxt-layer-api/server/api/resumes/[id].delete.ts` — prevents deletion of default resume (409), ownership check, cascades format settings via FK
+- [x] T013 [P] Implement `PUT /api/resumes/:id/name` at `packages/nuxt-layer-api/server/api/resumes/[id]/name.put.ts` — validates 1-255 chars, ownership check
+- [x] T014 [P] Implement `PUT /api/user/default-resume` at `packages/nuxt-layer-api/server/api/user/default-resume.put.ts` — validates resume exists and belongs to user, updates `users.default_resume_id`
+- [x] T015 [P] Implement `GET /api/resumes/:id/format-settings` at `packages/nuxt-layer-api/server/api/resumes/[id]/format-settings.get.ts` — auto-seeds defaults if no settings exist
+- [x] T016 [P] Implement `PATCH /api/resumes/:id/format-settings` at `packages/nuxt-layer-api/server/api/resumes/[id]/format-settings.patch.ts` — same deep-partial merge logic as former user format settings
+- [x] T017 Modify `GET /api/resume` at `packages/nuxt-layer-api/server/api/resume/index.get.ts` — return default resume (via `users.defaultResumeId`), add `Deprecation` header, include `name` and `isDefault` in response
+- [x] T018 Modify `POST /api/resume` at `packages/nuxt-layer-api/server/api/resume/index.post.ts` — always create new resume (no upsert), auto-set as default if first resume, generate name from `dd.MM.yyyy`, enforce 10-resume limit, include `name` and `isDefault` in response
+- [x] T019 Remove old format-settings endpoints: deleted `packages/nuxt-layer-api/server/api/user/format-settings.get.ts`, `format-settings.patch.ts`, `format-settings.put.ts`
+- [x] T020 Deprecated old format-settings repository (kept for auth flows that seed user-level defaults). Added `@deprecated` JSDoc to `packages/nuxt-layer-api/server/data/repositories/format-settings.ts`
+- [x] T021 Add new API methods to resume API client at `apps/site/layers/resume/app/infrastructure/resume.api.ts`: `fetchList()`, `fetchById()`, `duplicate()`, `deleteResume()`, `updateName()`, `setDefault()`, `fetchFormatSettings()`, `patchFormatSettings()`
+- [x] T022 Refactor format-settings store at `apps/site/layers/_base/app/stores/format-settings.ts` to accept `resumeId` parameter in `fetchSettings()` and `patchSettings()`, change API paths from `/api/user/format-settings` to `/api/resumes/:id/format-settings`
+- [x] T023 Refactor resume store at `apps/site/layers/resume/app/stores/index.ts`: add `activeResumeId` state, add `resumeList` state, fix `_upsertCachedResume()` for proper multi-resume cache, add actions: `fetchResumeList()`, `fetchResumeById()`, `duplicateResume()`, `deleteResume()`, `setDefaultResume()`, `updateResumeName()`
+- [x] T024 Refactor `useResume` composable at `apps/site/layers/resume/app/composables/useResume.ts` to be resume-id-aware (use `activeResumeId` via `store.activeResume`), wire format settings to per-resume endpoints
 
 **Checkpoint**: Foundation ready — all backend APIs operational, client infrastructure updated. User story UI implementation can now begin.
 
@@ -75,9 +75,9 @@
 
 ### Implementation for User Story 1
 
-- [ ] T025 [US1] Create dynamic route page at `apps/site/layers/resume/app/pages/resume/[id].vue` — loads specific resume by ID, sets `activeResumeId` in store, handles 404 with redirect to `/resume`
-- [ ] T026 [US1] Modify `/resume` page at `apps/site/layers/resume/app/pages/resume.vue` — if user has resumes, redirect to `/resume/[defaultResumeId]`. If no resumes, show `ResumeFormUpload` as currently
-- [ ] T027 [US1] Modify `POST /api/resume` flow to auto-set `defaultResumeId` on first resume creation and generate name from `dd.MM.yyyy` (using `date-fns` `format()`) — ensure post-upload navigates to `/resume/[newId]` in the client
+- [x] T025 [US1] Create dynamic route page at `apps/site/layers/resume/app/pages/resume/[id].vue` — loads specific resume by ID, sets `activeResumeId` in store, handles 404 with redirect to `/resume`
+- [x] T026 [US1] Modify `/resume` page at `apps/site/layers/resume/app/pages/resume/index.vue` (moved from `resume.vue`) — if user has resumes, redirect to `/resume/[defaultResumeId]`. If no resumes, show `ResumeFormUpload` as currently
+- [x] T027 [US1] Modify `POST /api/resume` flow — post-upload and create-from-scratch navigate to `/resume/[newId]` in the client (server-side auto-default + name generation was done in T018)
 
 **Checkpoint**: User Story 1 is functional — first resume creation, routing, and redirect all work.
 
@@ -91,8 +91,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T028 [US2] Add duplicate button to editor tools at `apps/site/layers/resume/app/components/editor/Tools.vue` — placed left of "Clear and create new" button, calls `resumeStore.duplicateResume()`, navigates to new resume, shows success toast
-- [ ] T029 [US2] Add i18n key `resume.page.duplicateResume` and `resume.page.resumeDuplicated` to locale files
+- [x] T028 [US2] Add duplicate button to editor tools at `apps/site/layers/resume/app/components/editor/Tools.vue` — placed left of "Clear and create new" button, emits `duplicate` event handled by `[id].vue`, shows success toast
+- [x] T029 [US2] Add i18n keys `resume.page.duplicateResume`, `resume.page.resumeDuplicated`, `resume.page.selectResume`, `resume.page.defaultBadge` to locale files
 
 **Checkpoint**: Duplicate flow works end-to-end.
 
@@ -106,9 +106,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T030 [US3] Create resume selector component at `apps/site/layers/resume/app/components/editor/Selector.vue` — uses `USelectMenu`, shows resume names, marks default, on change flushes autosave and navigates to `/resume/[selectedId]`
-- [ ] T031 [US3] Integrate `Selector.vue` into `/resume/[id].vue` page (below tabs, above content area), conditionally rendered only when `resumeList.length > 1`
-- [ ] T032 [US3] Add i18n key `resume.page.selectResume` to locale files
+- [x] T030 [US3] Create resume selector component at `apps/site/layers/resume/app/components/editor/Selector.vue` — uses `USelectMenu` with `value-key="id"`, shows resume names, marks default with badge, on change navigates to `/resume/[selectedId]`
+- [x] T031 [US3] Integrate `Selector.vue` into `/resume/[id].vue` page (above editor tools in left slot), conditionally rendered only when `resumeList.length > 1`
+- [x] T032 [US3] Add i18n key `resume.page.selectResume` and `resume.page.defaultBadge` to locale files (combined with T029)
 
 **Checkpoint**: Resume switching works, autosave flushes before navigation.
 

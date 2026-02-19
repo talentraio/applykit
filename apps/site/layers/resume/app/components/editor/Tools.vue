@@ -15,6 +15,15 @@
           <ResumeForm v-if="contentModel" v-model="contentModel" />
 
           <div v-if="contentModel && showUploadNew" class="resume-editor-tools__tab-actions mt-10">
+            <UButton
+              variant="outline"
+              color="neutral"
+              size="lg"
+              icon="i-lucide-copy"
+              @click="emit('duplicate')"
+            >
+              {{ $t('resume.page.duplicateResume') }}
+            </UButton>
             <UButton variant="outline" color="warning" size="lg" @click="emit('uploadNew')">
               {{ $t('resume.page.clearAndCreateNew') }}
             </UButton>
@@ -89,6 +98,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   uploadNew: [];
+  duplicate: [];
 }>();
 
 const activeTab = defineModel<string>({ required: true });
@@ -140,6 +150,8 @@ watch(
   &__tab-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
   }
 }
 </style>
