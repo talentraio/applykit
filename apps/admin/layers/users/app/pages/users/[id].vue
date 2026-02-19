@@ -85,16 +85,6 @@
         </div>
       </template>
     </div>
-
-    <UsersUserDeleteConfirmModal
-      v-model:open="isDeleteOpen"
-      :loading="isDeleting"
-      :title="deleteModalTitle"
-      :description="deleteModalDescription"
-      :confirm-label="deleteModalConfirmLabel"
-      @confirm="confirmDelete"
-      @cancel="closeDelete"
-    />
   </div>
 </template>
 
@@ -114,6 +104,7 @@ defineOptions({ name: 'AdminUserDetailPage' });
 const route = useRoute();
 const { t, te } = useI18n();
 const toast = useToast();
+const { openDeleteConfirmModal } = useUsersDeleteModal();
 
 const {
   detail,
@@ -131,10 +122,8 @@ const pendingRole = ref<Role | null>(null);
 const updatingRole = ref(false);
 const pendingBlocked = ref<boolean | null>(null);
 const updatingStatus = ref(false);
-const isDeleteOpen = ref(false);
 const isDeleting = ref(false);
 const isRestoring = ref(false);
-const deleteMode = ref<'soft' | 'hard'>('soft');
 
 const { pending, error: detailFetchError } = await useAsyncData(
   'admin-user-detail',
@@ -163,10 +152,8 @@ watch(userId, () => {
   updatingRole.value = false;
   pendingBlocked.value = null;
   updatingStatus.value = false;
-  isDeleteOpen.value = false;
   isDeleting.value = false;
   isRestoring.value = false;
-  deleteMode.value = 'soft';
 });
 
 const user = computed(() => {
@@ -328,38 +315,6 @@ const goBack = () => {
   navigateTo('/users');
 };
 
-const openSoftDelete = () => {
-  deleteMode.value = 'soft';
-  isDeleteOpen.value = true;
-};
-
-const openHardDelete = () => {
-  deleteMode.value = 'hard';
-  isDeleteOpen.value = true;
-};
-
-const closeDelete = () => {
-  isDeleteOpen.value = false;
-};
-
-const deleteModalTitle = computed(() => {
-  return deleteMode.value === 'hard'
-    ? t('admin.users.hardDelete.title')
-    : t('admin.users.delete.title');
-});
-
-const deleteModalDescription = computed(() => {
-  return deleteMode.value === 'hard'
-    ? t('admin.users.hardDelete.description')
-    : t('admin.users.delete.description');
-});
-
-const deleteModalConfirmLabel = computed(() => {
-  return deleteMode.value === 'hard'
-    ? t('admin.users.hardDelete.confirm')
-    : t('admin.users.delete.confirm');
-});
-
 const handleRestore = async () => {
   if (!detail.value) return;
 
@@ -381,13 +336,13 @@ const handleRestore = async () => {
   }
 };
 
-const confirmDelete = async () => {
-  if (!detail.value) return;
+const runDeleteByMode = async (mode: 'soft' | 'hard'): Promise<boolean> => {
+  if (!detail.value) return false;
 
   isDeleting.value = true;
 
   try {
-    if (deleteMode.value === 'hard') {
+    if (mode === 'hard') {
       await hardDeleteUser(detail.value.user.id);
       toast.add({
         title: t('admin.users.hardDelete.success'),
@@ -398,16 +353,30 @@ const confirmDelete = async () => {
     }
 
     await navigateTo('/users');
+    return true;
   } catch {
     toast.add({
       title: t('common.error.generic'),
       color: 'error'
     });
+    return false;
   } finally {
     isDeleting.value = false;
-    isDeleteOpen.value = false;
-    deleteMode.value = 'soft';
   }
+};
+
+const openSoftDelete = async () => {
+  await openDeleteConfirmModal({
+    mode: 'soft',
+    onConfirm: () => runDeleteByMode('soft')
+  });
+};
+
+const openHardDelete = async () => {
+  await openDeleteConfirmModal({
+    mode: 'hard',
+    onConfirm: () => runDeleteByMode('hard')
+  });
 };
 </script>
 

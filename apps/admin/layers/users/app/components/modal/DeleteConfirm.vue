@@ -51,7 +51,10 @@ const props = withDefaults(
 const emit = defineEmits<{
   confirm: [];
   cancel: [];
+  close: [payload: UsersDeleteConfirmModalClosePayload];
 }>();
+
+type UsersDeleteConfirmModalClosePayload = { action: 'cancelled' } | { action: 'confirmed' };
 
 const open = defineModel<boolean>('open', { required: true });
 const { t } = useI18n();
@@ -65,6 +68,7 @@ const resolvedConfirmLabel = computed(() => props.confirmLabel ?? t('admin.users
 const handleCancel = () => {
   open.value = false;
   emit('cancel');
+  emit('close', { action: 'cancelled' });
 };
 
 const handleConfirm = () => {

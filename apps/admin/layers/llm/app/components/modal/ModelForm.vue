@@ -175,6 +175,8 @@ type UpdatePayload = {
   input: LlmModelUpdateInput;
 };
 
+type LlmModelFormClosePayload = { action: 'cancelled' } | { action: 'submitted' };
+
 type NumericFieldValue = string | number;
 
 type FormState = {
@@ -203,6 +205,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   create: [input: LlmModelCreateInput];
   update: [payload: UpdatePayload];
+  close: [payload: LlmModelFormClosePayload];
 }>();
 
 const open = defineModel<boolean>('open', { required: true });
@@ -299,6 +302,7 @@ watch(
 const handleCancel = () => {
   validationError.value = null;
   open.value = false;
+  emit('close', { action: 'cancelled' });
 };
 
 const handleSubmit = () => {

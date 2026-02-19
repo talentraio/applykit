@@ -10,19 +10,6 @@
     class="roles-item-scenarios"
     @edit="openScenarioEditor"
   />
-
-  <LlmRoutingScenariosEditModal
-    v-model:open="modalOpen"
-    v-model:draft="modalDraft"
-    :title="modalTitle"
-    :description="modalDescription"
-    :form-component="activeFormComponent"
-    :form-props="activeFormProps"
-    :loading="isRoutingDisabled"
-    :can-save="modalCanSave"
-    @cancel="closeScenarioEditor"
-    @save="saveScenario"
-  />
 </template>
 
 <script setup lang="ts">
@@ -671,24 +658,18 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
   };
 };
 
-const {
-  modalOpen,
-  modalScenarioKey,
-  modalDraft,
-  modalTitle,
-  modalDescription,
-  activeFormComponent,
-  activeFormProps,
-  modalCanSave,
-  openScenarioEditor,
-  closeScenarioEditor
-} = useRoutingScenarioEditor({
-  getSavedDraft: getSavedDraftForScenario,
-  getDescription: getModalDescriptionByScenario,
-  getFormProps: getModalFormPropsByScenario
-});
+const { modalScenarioKey, modalDraft, modalCanSave, openScenarioEditor, closeScenarioEditor } =
+  useRoutingScenarioEditor({
+    getSavedDraft: getSavedDraftForScenario,
+    getDescription: getModalDescriptionByScenario,
+    getFormProps: getModalFormPropsByScenario,
+    isSaving: isRoutingDisabled,
+    onSave: () => {
+      void saveScenario();
+    }
+  });
 
-const saveScenario = async () => {
+async function saveScenario() {
   const scenarioKey = modalScenarioKey.value;
   if (!scenarioKey || !modalCanSave.value) return;
 
@@ -801,11 +782,11 @@ const saveScenario = async () => {
     }
 
     await fetchRouting();
-    closeScenarioEditor();
+    closeScenarioEditor({ action: 'submitted' });
   } catch (error) {
     notifyError(error);
   }
-};
+}
 
 watch(
   () => props.role,

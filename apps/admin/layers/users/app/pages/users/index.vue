@@ -19,7 +19,7 @@
           >
             {{ $t('common.clear') }}
           </UButton>
-          <UButton size="sm" @click="isInviteOpen = true">
+          <UButton size="sm" @click="openInviteModalFlow">
             {{ $t('admin.users.invite.button') }}
           </UButton>
         </div>
@@ -121,12 +121,6 @@
         />
       </div>
     </div>
-
-    <UsersUserInviteModal
-      v-model:open="isInviteOpen"
-      :loading="isInviting"
-      @submit="handleInvite"
-    />
   </div>
 </template>
 
@@ -145,15 +139,13 @@ defineOptions({ name: 'AdminUsersPage' });
 const { users, total, fetchUsers, inviteUser, resendInvite } = useAdminUsers();
 const { t, te } = useI18n();
 const toast = useToast();
+const { openInviteModal } = useUsersInviteModal();
 const resendingInviteUserIds = new Set<string>();
 
 const searchQuery = ref('');
 const roleFilter = ref<Role | 'all'>('all');
 const pageSize = ref(25);
 const page = ref(1);
-
-const isInviteOpen = ref(false);
-const isInviting = ref(false);
 
 const query = computed(() => ({
   search: searchQuery.value.trim() || undefined,
@@ -299,12 +291,9 @@ const showInviteSendFailedToast = (userId: string) => {
   });
 };
 
-const handleInvite = async (payload: { email: string; role: Role }) => {
-  isInviting.value = true;
-
+const handleInvite = async (payload: { email: string; role: Role }): Promise<boolean> => {
   try {
     const inviteResult = await inviteUser(payload);
-    isInviteOpen.value = false;
     await refresh();
 
     if (inviteResult.inviteEmailSent) {
@@ -312,18 +301,24 @@ const handleInvite = async (payload: { email: string; role: Role }) => {
         title: t('admin.users.invite.success'),
         color: 'success'
       });
-      return;
+      return true;
     }
 
     showInviteSendFailedToast(inviteResult.id);
+    return true;
   } catch {
     toast.add({
       title: t('common.error.generic'),
       color: 'error'
     });
-  } finally {
-    isInviting.value = false;
+    return false;
   }
+};
+
+const openInviteModalFlow = async () => {
+  await openInviteModal({
+    onSubmit: handleInvite
+  });
 };
 </script>
 
