@@ -41,6 +41,6 @@ Set role for local testing:
 pnpm --filter @int/api db:set-role -- --email you@example.com --role super_admin
 ```
 
-Roles: `super_admin`, `friend`, `public`.
+Roles: `super_admin`, `friend`, `promo`, `public`.
 
 After role change, log out/in to refresh session role.

@@ -24,7 +24,9 @@ Implementation follows standard Nitro/Nuxt server structure under:
 
 ## Conventions (high-level)
 
-- Endpoints are documented in `endpoints.md` (grouped by domain: auth, resume, vacancies, export, etc.)
+- Endpoints are documented in `endpoints.md` (grouped by domain: auth, profile, resume,
+  vacancies/generation, PDF export, admin, etc.)
 - Data contracts and entities live in `schemas.md`
 - Server returns strictly typed responses; client should rely on inferred types (no manual generics on `$fetch`)
-- Runtime validation is done in services (LLM parsing/generation, external IO), not duplicated in endpoint handlers
+- Runtime validation is enforced in both endpoint handlers (request/query parsing) and services
+  (LLM/external IO safety)

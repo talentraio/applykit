@@ -1,117 +1,122 @@
-# Data flow & lifecycle
+# Data flow and lifecycle
 
 ## Core entities
 
-- **User**
-- **Profile** (contact data, locales, job preferences)
-- **Base Resume** (strict JSON content only; derived from DOCX/PDF via LLM; editable by user)
-- **UserFormatSettings** (user-level formatting preferences; separate from resume; lazy-loaded)
-  - `ats: { spacing, localization }`
-  - `human: { spacing, localization }`
-  - Auto-seeded from `runtimeConfig.formatSettings.defaults` on user creation
-  - Persisted via `PATCH /api/user/format-settings` (immediate save, no debounce)
-- **Vacancy** (company required; optional jobPosition; description text; optional URL; notes)
-- **Generated Resume Versions** (array; keep only the latest in UI for MVP, but store as array to avoid refactor later)
+- `User`
+- `Profile` (contact and job-search preferences)
+- `Resume` (single base resume per user)
+- `ResumeVersion` (snapshot history when base content changes)
+- `UserFormatSettings` (user-level ATS/Human formatting preferences)
+- `Vacancy` (user-owned target job)
+- `Generation` (tailored resume output per vacancy)
+- `GenerationScoreDetail` (on-demand detailed scoring payload)
 
-## Resume parsing (DOCX primary, PDF supported)
+## Resume creation and parsing
 
-1. User uploads DOCX/PDF
-2. Server calls LLM parsing service
-3. Service validates output with Zod and returns strictly typed JSON
-4. Store JSON as the canonical “source of truth” for the resume
-5. User reviews/edits JSON and saves
+`POST /api/resume` supports two modes:
 
-## Vacancy tailoring
+1. Multipart upload (DOCX/PDF)
+2. JSON import (`ResumeContent`)
 
-1. User creates vacancy (company required; jobPosition optional)
-2. User provides vacancy description text (MVP) + optional link
-3. Server generates adapted resume version + stores it under vacancy
+Upload flow:
 
-### Generation pipeline (strategy + lightweight baseline score)
+1. User uploads DOCX/PDF.
+2. Server parses document text.
+3. LLM parse service returns structured `ResumeContent`.
+4. Output is validated and persisted as the user's base resume.
 
-`POST /api/vacancies/:id/generate` executes:
+Single-resume behavior:
 
-1. Resolve adaptation routing (`resume_adaptation`) with precedence:
-   `role override -> default -> runtime fallback`.
-2. Build shared context once (base resume + vacancy + optional profile).
-3. Adaptation call using selected strategy (`economy` or `quality`).
-4. Baseline scoring call (`resume_adaptation_scoring`) for lightweight `before/after` score.
-5. Persist generation with `matchScoreBefore`, `matchScoreAfter`, `scoreBreakdown`.
-6. If baseline scoring fails, persist generation with fallback deterministic breakdown.
+- The user keeps one base resume.
+- New uploads/imports replace base resume data.
 
-For full scenario-level behavior and admin routing semantics, see
-[`llm-scenarios.md`](./llm-scenarios.md).
+## Vacancy lifecycle
 
-### On-demand detailed scoring pipeline
+1. User creates vacancy (`POST /api/vacancies`).
+2. User edits vacancy (`PUT /api/vacancies/:id`) as needed.
+3. User generates tailored resume (`POST /api/vacancies/:id/generate`).
 
-Detailed scoring is decoupled from generation and triggered only on demand.
+Generation behavior:
 
-`POST /api/vacancies/:id/generations/:generationId/score-details`:
+- Requires complete profile.
+- Uses base resume + vacancy context.
+- Persists `Generation` with baseline score fields and breakdown.
+- Locks `vacancy.canGenerateResume = false` after successful generation.
+- Re-enables generation when unlocking vacancy fields change (`company`, `jobPosition`, `description`).
 
-1. Reuses persisted details by default when fresh for current vacancy version.
-2. On regenerate/invalidated state, executes detailed scoring (`resume_adaptation_scoring_detail`):
-   - `extractSignals` from vacancy text,
-   - `mapEvidence` against base/tailored resume,
-   - deterministic score/breakdown calculation in code.
-3. Persists details in `generation_score_details` with vacancy version marker.
-4. `GET /api/vacancies/:id/preparation` returns details + flags for request/regenerate CTA state.
+## Scoring lifecycle
 
-## Re-generation (important)
+### Baseline score (inline with generation)
 
-If base resume changes, user can re-run generation for an existing vacancy.
-We support:
+- Produced during `POST /api/vacancies/:id/generate`.
+- Stored on `Generation` (`matchScoreBefore`, `matchScoreAfter`, `scoreBreakdown`).
 
-- `POST /api/vacancies/:id/generate` (create a new version, append to versions array)
+### Detailed score (on-demand)
 
-Generation availability can be locked per vacancy after success and re-enabled by vacancy edits according
-to business rules.
+- Triggered by `POST /api/vacancies/:id/generations/:generationId/score-details`.
+- Reuse-first behavior:
+  - returns persisted details if fresh,
+  - regenerates only when requested/eligible.
+- `GET /api/vacancies/:id/preparation` returns:
+  - vacancy meta,
+  - latest generation summary,
+  - optional detailed scoring payload,
+  - UI flags for request/regenerate state.
 
-## Rendering & export
+## Resume editing and generation editing
 
-- Views:
-  - ATS: `/vacancies/:id/ats`
-  - Human: `/vacancies/:id/human`
-- Rendering is server-side (`*.server.vue` islands), fully static HTML per request.
-- Export:
-  - `POST /api/vacancies/:id/export?type=ats|human`
-  - Cache exports (Nitro storage / FS / Redis) and invalidate cache on re-generation
+- Base resume update: `PUT /api/resume`.
+  - Content updates create version snapshots.
+- Tailored generation update: `PUT /api/vacancies/:id/generation`.
+  - Allows manual edits to generated content.
+- Score alert dismissal: `PATCH /api/vacancies/:id/generation/dismiss-score-alert`.
 
-## Store-init pattern (Nuxt)
+## Rendering and PDF export
 
-On server app start:
+Current export pipeline is tokenized:
 
-- preload global "dictionary" data (countries, etc.)
-- if user session exists, load user + profile + current resume list
+1. `POST /api/pdf/prepare` stores a short-lived payload and returns a token.
+2. Preview page reads payload by token (`/pdf/preview` + `GET /api/pdf/payload`).
+3. `GET /api/pdf/file?token=...` renders and streams PDF, then deletes token payload.
 
-This runs in `app/plugins/store-init.ts` with:
+## Store initialization (Nuxt)
 
+App plugin: `apps/site/layers/_base/app/plugins/init-data.ts`
+
+- `name: 'init-data'`
 - `enforce: 'pre'`
 - `parallel: false`
 - `dependsOn: ['pinia']`
 
-## Format settings lazy-loading flow
+Behavior:
 
-**Initial load** (on `/resume` or `/vacancies/:id/resume` page):
+- Tries to fetch authenticated user session/profile (`authStore.fetchMe()`).
+- Public visitors proceed without auth errors.
+- Leaves hooks for loading global dictionaries.
 
-1. `useFormatSettingsStore.fetchSettings()` called
-2. Store checks `loaded` flag — skip if already fetched
-3. `GET /api/user/format-settings` fetches user's settings
-4. Server auto-seeds defaults if no row exists
-5. Store caches settings (`ats`, `human`, `loaded: true`)
+## Format settings lifecycle
 
-**Immediate save on change**:
+Entity:
 
-1. User adjusts slider in Settings panel
-2. Component emits new `SpacingSettings`
-3. Store's `updateSettings()` updates local state immediately (instant UI feedback)
-4. Store's `patchSettings()` throttled (150ms) PATCH to server
-5. Server deep-merges, validates, saves, returns full settings
-6. Store updates with server response (source of truth)
+- Stored separately from resume in `user_format_settings`.
+- Shape: `{ ats, human }` where each branch has `spacing + localization`.
 
-**Undo/Redo with unified history**:
+Flow:
 
-1. History composable tracks tagged entries (`type: 'content' | 'settings'`)
-2. Ctrl+Z undoes most recent change (content or settings)
-3. Undo/Redo dispatches correct save handler based on entry tag:
-   - `type: 'content'` → immediate `PUT /api/resume` (cancel pending debounce)
-   - `type: 'settings'` → immediate `PATCH /api/user/format-settings` (bypass throttle)
+1. UI requests `GET /api/user/format-settings`.
+2. Server auto-seeds defaults if row is missing.
+3. UI saves incremental changes via `PATCH /api/user/format-settings`.
+4. Full replace path exists via `PUT /api/user/format-settings`.
+
+## Preferences lifecycle
+
+Vacancy list UI preferences:
+
+- `PATCH /api/user/preferences/vacancy-list`
+- Upserts `columnVisibility` per user.
+
+## Related docs
+
+- LLM scenario model: [`./llm-scenarios.md`](./llm-scenarios.md)
+- Security/privacy: [`./security-privacy.md`](./security-privacy.md)
+- API endpoints: [`../api/endpoints.md`](../api/endpoints.md)
