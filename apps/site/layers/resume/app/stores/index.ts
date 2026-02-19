@@ -1,15 +1,15 @@
-import type { Resume, ResumeContent } from '@int/schema';
+import type { Resume, ResumeContent, ResumeListItem } from '@int/schema';
 import { resumeApi } from '@site/resume/app/infrastructure/resume.api';
 import { RESUME_EDITOR_TABS_MAP } from '../constants';
 
 /**
  * Resume Store
  *
- * Manages user's resume with editing state.
+ * Manages user's resumes with editing state.
  * Format settings are managed by useFormatSettingsStore in _base layer.
  * Undo/redo history is managed by useResumeEditHistory composable.
  *
- * Single resume architecture: one resume per user.
+ * Multi-resume architecture: up to 10 resumes per user.
  */
 
 /**
@@ -31,6 +31,12 @@ export const useResumeStore = defineStore('ResumeStore', {
     isContentSaveInProgress: boolean;
     contentSaveEpoch: number;
 
+    // Active resume ID (currently being edited)
+    activeResumeId: string | null;
+
+    // Lightweight resume list for selector
+    resumeList: ResumeListItem[];
+
     // Cached resumes for editing (max 20)
     cachedResumes: CachedResume[];
 
@@ -41,6 +47,12 @@ export const useResumeStore = defineStore('ResumeStore', {
     isContentSaveInProgress: false,
     contentSaveEpoch: 0,
 
+    // Active resume
+    activeResumeId: null,
+
+    // Resume list
+    resumeList: [],
+
     // Cached resumes for editing
     cachedResumes: [],
 
@@ -50,7 +62,31 @@ export const useResumeStore = defineStore('ResumeStore', {
 
   getters: {
     cachedResumesList: (state): CachedResume[] => state.cachedResumes,
-    getActiveTab: (state): EditorTab => state.activeTab
+    getActiveTab: (state): EditorTab => state.activeTab,
+
+    /**
+     * Get the active cached resume (by activeResumeId)
+     */
+    activeResume(state): Resume | null {
+      if (!state.activeResumeId) return null;
+      const cached = state.cachedResumes.find(c => c.id === state.activeResumeId);
+      return cached?.resume ?? null;
+    },
+
+    /**
+     * Whether there are multiple resumes
+     */
+    hasMultipleResumes(state): boolean {
+      return state.resumeList.length > 1;
+    },
+
+    /**
+     * Get the default resume ID from the resume list
+     */
+    defaultResumeId(state): string | null {
+      const defaultItem = state.resumeList.find(r => r.isDefault);
+      return defaultItem?.id ?? null;
+    }
   },
 
   actions: {
@@ -59,13 +95,33 @@ export const useResumeStore = defineStore('ResumeStore', {
     // =========================================
 
     /**
-     * Fetch user's single resume
+     * Fetch resume list (lightweight, for selector)
+     */
+    async fetchResumeList(): Promise<ResumeListItem[]> {
+      const data = await resumeApi.fetchList();
+      this.resumeList = data.items;
+      return data.items;
+    },
+
+    /**
+     * Fetch a specific resume by ID and cache it
+     */
+    async fetchResumeById(id: string): Promise<Resume> {
+      const resume = await resumeApi.fetchById(id);
+      this._upsertCachedResume(resume);
+      this.activeResumeId = resume.id;
+      return resume;
+    },
+
+    /**
+     * Fetch user's default/latest resume (legacy, uses singular endpoint)
      */
     async fetchResume(): Promise<Resume | null> {
       const resume = await resumeApi.fetch();
 
       if (resume) {
         this._upsertCachedResume(resume);
+        this.activeResumeId = resume.id;
       }
 
       return resume;
@@ -77,6 +133,11 @@ export const useResumeStore = defineStore('ResumeStore', {
     async uploadResume(file: File, title?: string): Promise<Resume> {
       const resume = await resumeApi.upload(file, title);
       this._upsertCachedResume(resume);
+      this.activeResumeId = resume.id;
+
+      // Refresh resume list after upload
+      await this.fetchResumeList();
+
       return resume;
     },
 
@@ -86,7 +147,97 @@ export const useResumeStore = defineStore('ResumeStore', {
     async createFromContent(content: ResumeContent, title?: string): Promise<Resume> {
       const resume = await resumeApi.createFromContent(content, title);
       this._upsertCachedResume(resume);
+      this.activeResumeId = resume.id;
+
+      // Refresh resume list after creation
+      await this.fetchResumeList();
+
       return resume;
+    },
+
+    // =========================================
+    // Multi-Resume Actions
+    // =========================================
+
+    /**
+     * Duplicate the current or specified resume
+     */
+    async duplicateResume(sourceId: string): Promise<Resume> {
+      const resume = await resumeApi.duplicate(sourceId);
+      this._upsertCachedResume(resume);
+
+      // Refresh resume list to include new resume
+      await this.fetchResumeList();
+
+      return resume;
+    },
+
+    /**
+     * Delete a non-default resume
+     */
+    async deleteResume(id: string): Promise<void> {
+      await resumeApi.deleteResume(id);
+
+      // Remove from cache
+      this.cachedResumes = this.cachedResumes.filter(c => c.id !== id);
+
+      // Refresh resume list
+      await this.fetchResumeList();
+
+      // If deleted resume was active, clear active
+      if (this.activeResumeId === id) {
+        this.activeResumeId = null;
+      }
+    },
+
+    /**
+     * Set a resume as the default
+     */
+    async setDefaultResume(resumeId: string): Promise<void> {
+      await resumeApi.setDefault(resumeId);
+
+      // Update resume list to reflect new default
+      this.resumeList = this.resumeList.map(r => ({
+        ...r,
+        isDefault: r.id === resumeId
+      }));
+
+      // Update cached resume isDefault if present
+      for (const cached of this.cachedResumes) {
+        cached.resume = {
+          ...cached.resume,
+          isDefault: cached.id === resumeId
+        };
+      }
+    },
+
+    /**
+     * Update resume name
+     */
+    async updateResumeName(id: string, name: string): Promise<void> {
+      const result = await resumeApi.updateName(id, name);
+
+      // Update in resume list
+      const listItem = this.resumeList.find(r => r.id === id);
+      if (listItem) {
+        listItem.name = result.name;
+      }
+
+      // Update in cache
+      const cached = this.cachedResumes.find(c => c.id === id);
+      if (cached) {
+        cached.resume = {
+          ...cached.resume,
+          name: result.name
+        };
+      }
+    },
+
+    /**
+     * Set active resume ID
+     */
+    setActiveResumeId(id: string | null): void {
+      this.activeResumeId = id;
     },
 
     // =========================================
@@ -166,16 +317,25 @@ export const useResumeStore = defineStore('ResumeStore', {
     // =========================================
 
     /**
-     * Upsert resume in cache
+     * Upsert resume in cache (multi-resume aware)
      */
     _upsertCachedResume(resume: Resume): void {
-      this.cachedResumes = this.cachedResumes.filter(c => c.id !== resume.id);
-      this.cachedResumes = [
-        {
+      const index = this.cachedResumes.findIndex(c => c.id === resume.id);
+      if (index >= 0) {
+        this.cachedResumes[index] = {
           id: resume.id,
           resume: structuredClone(resume)
+        };
+      } else {
+        // Keep max 20 cached resumes
+        if (this.cachedResumes.length >= 20) {
+          this.cachedResumes.pop();
         }
-      ];
+        this.cachedResumes.unshift({
+          id: resume.id,
+          resume: structuredClone(resume)
+        });
+      }
     },
 
     // =========================================
@@ -194,6 +354,8 @@ export const useResumeStore = defineStore('ResumeStore', {
      */
     $reset(): void {
       this.cachedResumes = [];
+      this.resumeList = [];
+      this.activeResumeId = null;
       this.isContentSaveInProgress = false;
       this.contentSaveEpoch = 0;
       this.activeTab = RESUME_EDITOR_TABS_MAP.EDIT;

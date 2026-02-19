@@ -581,5 +581,31 @@ export const userRepository = {
     const result = await query.where(eq(users.email, email)).limit(1);
     const user = result[0];
     return user ? normalizeUserRow(user) : null;
+  },
+
+  // ============================================================================
+  // Default Resume Methods
+  // ============================================================================
+
+  /**
+   * Get user's default resume ID
+   */
+  async getDefaultResumeId(userId: string): Promise<string | null> {
+    const result = await db
+      .select({ defaultResumeId: users.defaultResumeId })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return result[0]?.defaultResumeId ?? null;
+  },
+
+  /**
+   * Update user's default resume ID
+   */
+  async updateDefaultResumeId(userId: string, resumeId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ defaultResumeId: resumeId, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 };

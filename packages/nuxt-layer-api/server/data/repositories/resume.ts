@@ -1,6 +1,6 @@
 import type { ResumeContent, SourceFileType } from '@int/schema';
 import type { Resume } from '../schema';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { resumes } from '../schema';
 
@@ -44,8 +44,7 @@ export const resumeRepository = {
   },
 
   /**
-   * Create new resume (single per user)
-   * Enforces single-resume-per-user constraint
+   * Create new resume
    * Called after parsing uploaded file
    */
   async create(data: {
@@ -54,11 +53,13 @@ export const resumeRepository = {
     content: ResumeContent;
     sourceFileName: string;
     sourceFileType: SourceFileType;
+    name?: string;
   }): Promise<Resume> {
     const result = await db
       .insert(resumes)
       .values({
         userId: data.userId,
+        name: data.name ?? '',
         title: data.title,
         content: data.content,
         sourceFileName: data.sourceFileName,
@@ -165,5 +166,72 @@ export const resumeRepository = {
    */
   async deleteByUserId(userId: string): Promise<void> {
     await db.delete(resumes).where(eq(resumes.userId, userId));
+  },
+
+  /**
+   * Find lightweight resume list for a user (id, name, createdAt, updatedAt)
+   * Sorted by createdAt DESC. Caller is responsible for sorting default first.
+   */
+  async findListByUserId(
+    userId: string
+  ): Promise<Array<{ id: string; name: string; createdAt: Date; updatedAt: Date }>> {
+    return await db
+      .select({
+        id: resumes.id,
+        name: resumes.name,
+        createdAt: resumes.createdAt,
+        updatedAt: resumes.updatedAt
+      })
+      .from(resumes)
+      .where(eq(resumes.userId, userId))
+      .orderBy(desc(resumes.createdAt));
+  },
+
+  /**
+   * Update resume name
+   */
+  async updateName(id: string, userId: string, name: string): Promise<Resume | null> {
+    const result = await db
+      .update(resumes)
+      .set({
+        name,
+        updatedAt: new Date()
+      })
+      .where(and(eq(resumes.id, id), eq(resumes.userId, userId)))
+      .returning();
+    return result[0] ?? null;
+  },
+
+  /**
+   * Duplicate a resume (deep clone content, title, source metadata)
+   * Sets new name and returns the newly created resume.
+   */
+  async duplicate(sourceId: string, userId: string, newName: string): Promise<Resume | null> {
+    const source = await this.findByIdAndUserId(sourceId, userId);
+    if (!source) return null;
+
+    const result = await db
+      .insert(resumes)
+      .values({
+        userId,
+        name: newName,
+        title: source.title,
+        content: source.content,
+        sourceFileName: source.sourceFileName,
+        sourceFileType: source.sourceFileType
+      })
+      .returning();
+    return result[0]!;
+  },
+
+  /**
+   * Count resumes for user using SQL COUNT for efficiency
+   */
+  async countByUserIdExact(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(resumes)
+      .where(eq(resumes.userId, userId));
+    return result[0]?.count ?? 0;
   }
 };

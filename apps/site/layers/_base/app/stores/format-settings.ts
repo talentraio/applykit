@@ -10,8 +10,8 @@ import { EXPORT_FORMAT_MAP } from '@int/schema';
 /**
  * Format Settings Store
  *
- * Shared user-level format settings store in _base layer.
- * Lazy-loads settings from server, persists changes via throttled PATCH.
+ * Per-resume format settings store in _base layer.
+ * Lazy-loads settings from server per resume ID, persists changes via throttled PATCH.
  * Consumed by resume and vacancy layers.
  */
 
@@ -22,6 +22,8 @@ export const useFormatSettingsStore = defineStore('FormatSettingsStore', {
     previewType: ExportFormat;
     loading: boolean;
     loaded: boolean;
+    /** The resume ID these settings belong to */
+    loadedResumeId: string | null;
   } => {
     const defaults = useFormatSettingsDefaults();
 
@@ -30,7 +32,8 @@ export const useFormatSettingsStore = defineStore('FormatSettingsStore', {
       human: structuredClone(defaults.human),
       previewType: EXPORT_FORMAT_MAP.ATS,
       loading: false,
-      loaded: false
+      loaded: false,
+      loadedResumeId: null
     };
   },
 
@@ -51,20 +54,36 @@ export const useFormatSettingsStore = defineStore('FormatSettingsStore', {
 
   actions: {
     /**
-     * Fetch settings from server (lazy — skip if already loaded)
+     * Fetch settings from server for a specific resume.
+     * Skips if already loaded for the same resumeId.
+     * Forces reload if resumeId differs from currently loaded.
      */
-    async fetchSettings(): Promise<void> {
-      if (this.loaded || this.loading) return;
+    async fetchSettings(resumeId?: string): Promise<void> {
+      // If no resumeId provided, use the currently loaded one (backward compat)
+      const targetId = resumeId ?? this.loadedResumeId;
+      if (!targetId) return;
+
+      // Skip if already loaded for same resume
+      if (this.loaded && this.loadedResumeId === targetId && !this.loading) return;
+
+      // If loading for a different resume, reset loaded state
+      if (this.loadedResumeId !== targetId) {
+        this.loaded = false;
+        this.loadedResumeId = targetId;
+      }
+
+      if (this.loading) return;
 
       this.loading = true;
       try {
         const data = await useApi<{
           ats: ResumeFormatSettingsAts;
           human: ResumeFormatSettingsHuman;
-        }>('/api/user/format-settings', { method: 'GET' });
+        }>(`/api/resumes/${targetId}/format-settings`, { method: 'GET' });
         this.ats = data.ats;
         this.human = data.human;
         this.loaded = true;
+        this.loadedResumeId = targetId;
       } finally {
         this.loading = false;
       }
@@ -106,11 +125,17 @@ export const useFormatSettingsStore = defineStore('FormatSettingsStore', {
      * Called by throttled wrapper for incremental settings changes
      */
     async patchSettings(partial: PatchFormatSettingsBody): Promise<void> {
+      const resumeId = this.loadedResumeId;
+      if (!resumeId) {
+        console.error('Cannot patch settings: no resume ID loaded');
+        return;
+      }
+
       try {
         const data = await useApi<{
           ats: ResumeFormatSettingsAts;
           human: ResumeFormatSettingsHuman;
-        }>('/api/user/format-settings', {
+        }>(`/api/resumes/${resumeId}/format-settings`, {
           method: 'PATCH',
           body: partial
         });
@@ -124,10 +149,16 @@ export const useFormatSettingsStore = defineStore('FormatSettingsStore', {
     },
 
     /**
-     * Fully replace settings on server via PUT
+     * Fully replace settings on server via PUT (uses PATCH with full payload)
      * Used by history restore/undo/redo flows.
      */
     async putSettings(settings?: PutFormatSettingsBody): Promise<void> {
+      const resumeId = this.loadedResumeId;
+      if (!resumeId) {
+        console.error('Cannot put settings: no resume ID loaded');
+        return;
+      }
+
       const payload = settings ?? {
         ats: this.ats,
         human: this.human
@@ -137,8 +168,8 @@ export const useFormatSettingsStore = defineStore('FormatSettingsStore', {
         const data = await useApi<{
           ats: ResumeFormatSettingsAts;
           human: ResumeFormatSettingsHuman;
-        }>('/api/user/format-settings', {
-          method: 'PUT',
+        }>(`/api/resumes/${resumeId}/format-settings`, {
+          method: 'PATCH',
           body: payload
         });
         this.ats = data.ats;
@@ -165,6 +196,13 @@ export const useFormatSettingsStore = defineStore('FormatSettingsStore', {
      */
     setPreviewType(type: ExportFormat): void {
       this.previewType = type;
+    },
+
+    /**
+     * Invalidate loaded state (forces re-fetch on next fetchSettings)
+     */
+    invalidate(): void {
+      this.loaded = false;
     }
   }
 });

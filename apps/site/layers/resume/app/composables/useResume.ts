@@ -5,9 +5,11 @@
  * Provides reactive state, auto-save with debounce, and undo/redo via shared history.
  * Settings are sourced from the shared format settings store in _base layer.
  *
+ * Multi-resume aware: uses activeResumeId instead of hardcoded index 0.
+ *
  * Features:
  * - Auto-save on content changes (via useResumeEditHistory)
- * - Settings managed by useFormatSettingsStore (throttled PATCH)
+ * - Settings managed by useFormatSettingsStore (throttled PATCH, per-resume)
  * - Undo/redo via useResumeEditHistory with tagged entries
  * - Reactive computed properties
  */
@@ -47,7 +49,7 @@ export function useResume(options: UseResumeOptions = {}) {
   const { setActiveTab, createFromContent, fetchResume, invalidateContentSaves } = store;
   const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
     storeToRefs(formatSettingsStore);
-  const { fetchSettings, setPreviewType } = formatSettingsStore;
+  const { setPreviewType } = formatSettingsStore;
   const toast = useToast();
   const { t } = useI18n();
 
@@ -56,14 +58,24 @@ export function useResume(options: UseResumeOptions = {}) {
   };
 
   // =========================================
-  // Reactive State
+  // Reactive State (resume-id-aware)
   // =========================================
 
-  const resume = computed(() => store.cachedResumesList[0]?.resume ?? null);
+  const resume = computed(() => store.activeResume);
   const resumeId = computed(() => resume.value?.id ?? null);
   const hasResume = computed(() => resume.value !== null);
   const content = computed(() => resume.value?.content ?? null);
   const editingContent = computed(() => resume.value?.content ?? null);
+
+  /**
+   * Fetch settings for the active resume
+   */
+  const fetchSettings = async () => {
+    const id = resumeId.value;
+    if (id) {
+      await formatSettingsStore.fetchSettings(id);
+    }
+  };
 
   // =========================================
   // Undo/Redo + Auto-save via shared history

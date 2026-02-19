@@ -1,23 +1,42 @@
-import type { FormatSettingsConfig } from '../../types/format-settings-config';
+import type { FormatSettingsConfig } from '../../../types/format-settings-config';
 import {
   PatchFormatSettingsBodySchema,
   ResumeFormatSettingsAtsSchema,
   ResumeFormatSettingsHumanSchema
 } from '@int/schema';
-import { formatSettingsRepository } from '../../data/repositories/format-settings';
+import { resumeFormatSettingsRepository, resumeRepository } from '../../../data/repositories';
 
 /**
- * PATCH /api/user/format-settings
+ * PATCH /api/resumes/:id/format-settings
  *
- * Partially update the authenticated user's format settings.
- * Deep-merges patch with existing settings, validates merged result.
+ * Patch per-resume format settings (deep partial merge).
+ * Same deep-partial merge logic as former PATCH /api/user/format-settings.
  *
+ * Params: id — resume UUID
  * Body: Deep partial of { ats, human }
- * Response: Full settings after merge (same shape as GET)
+ * Response 200: Full settings after merge
+ * Errors: 401, 404, 422
  */
 export default defineEventHandler(async event => {
   const session = await requireUserSession(event);
   const userId = (session.user as { id: string }).id;
+
+  const resumeId = getRouterParam(event, 'id');
+  if (!resumeId) {
+    throw createError({
+      statusCode: 400,
+      message: 'Resume ID is required'
+    });
+  }
+
+  // Verify resume exists and belongs to user
+  const resume = await resumeRepository.findByIdAndUserId(resumeId, userId);
+  if (!resume) {
+    throw createError({
+      statusCode: 404,
+      message: 'Resume not found'
+    });
+  }
 
   const body = await readBody(event);
 
@@ -43,11 +62,11 @@ export default defineEventHandler(async event => {
   }
 
   // Load existing settings (or seed defaults)
-  let existing = await formatSettingsRepository.findByUserId(userId);
+  let existing = await resumeFormatSettingsRepository.findByResumeId(resumeId);
   if (!existing) {
     const config = useRuntimeConfig(event);
     const defaults = (config.public.formatSettings as FormatSettingsConfig).defaults;
-    existing = await formatSettingsRepository.seedDefaults(userId, defaults);
+    existing = await resumeFormatSettingsRepository.seedDefaults(resumeId, defaults);
   }
 
   // Deep-merge: existing + patch
@@ -85,7 +104,7 @@ export default defineEventHandler(async event => {
   }
 
   // Save merged settings
-  const updated = await formatSettingsRepository.update(userId, {
+  const updated = await resumeFormatSettingsRepository.update(resumeId, {
     ats: atsValidation.data,
     human: humanValidation.data
   });

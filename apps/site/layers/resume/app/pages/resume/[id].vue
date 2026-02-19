@@ -3,25 +3,9 @@
     <!-- Loading State -->
     <BasePageLoading v-if="pageLoading" show-text wrapper-class="resume-page__loading" />
 
-    <!-- No Resume: Show Upload Form -->
-    <div v-else-if="!hasResume" class="resume-page__upload">
-      <div class="resume-page__upload-container">
-        <h1 class="resume-page__title">{{ $t('resume.page.title') }}</h1>
-
-        <p class="resume-page__description">{{ $t('resume.page.description') }}</p>
-
-        <ResumeFormUpload
-          class="mt-8"
-          @success="handleUploadSuccess"
-          @error="handleUploadError"
-          @create-from-scratch="handleCreateFromScratch"
-        />
-      </div>
-    </div>
-
     <!-- Has Resume: Show Editor Layout -->
     <ResumeEditorLayout
-      v-else
+      v-else-if="hasResume"
       v-model:preview-type="previewTypeModel"
       :preview-content="content"
       :preview-settings="currentSettings"
@@ -33,8 +17,14 @@
       @redo="redo"
       @discard="discardChanges"
     >
-      <!-- Left: Editor Tabs -->
+      <!-- Left: Resume Selector + Editor Tabs -->
       <template #left>
+        <ResumeEditorSelector
+          v-if="showSelector"
+          :resume-id="resumeId"
+          :resume-list="store.resumeList"
+        />
+
         <ResumeEditorTools
           v-model="activeTab"
           v-model:content="contentModel"
@@ -43,6 +33,7 @@
           :preview-type="previewType"
           :show-upload-new="true"
           @upload-new="handleOpenUploadModal"
+          @duplicate="handleDuplicate"
         />
       </template>
     </ResumeEditorLayout>
@@ -51,40 +42,47 @@
 
 <script setup lang="ts">
 /**
- * Resume Page
+ * Resume Editor Page (dynamic route)
  *
- * Single resume page with conditional rendering:
- * - No resume: Show upload form
- * - Has resume: Show EditorLayout with tabs (Edit, Settings, AI)
+ * Loads a specific resume by ID and shows the editor layout.
+ * If resume not found (404), redirects to /resume.
  *
  * Features:
- * - Upload/create resume
+ * - Load resume by ID
  * - Edit with live preview
  * - Format settings (ATS/Human)
  * - Undo/redo history
  * - Auto-save with debounce
- * - Mobile preview float button and overlay (T053)
+ * - Duplicate resume
  *
- * Related: T038 (US3), T053 (US5)
+ * Related: T025 (US1)
  */
 
-import type { Resume, ResumeContent, SpacingSettings } from '@int/schema';
+import type { ResumeContent, SpacingSettings } from '@int/schema';
 import type { ResumeEditorTabItem } from '@site/resume/app/types/editor';
 import type { PreviewType } from '@site/resume/app/types/preview';
 import { EXPORT_FORMAT_MAP } from '@int/schema';
 import { RESUME_EDITOR_TABS_MAP } from '@site/resume/app/constants';
 
-defineOptions({ name: 'ResumePage' });
+defineOptions({ name: 'ResumeIdPage' });
 
 // Use editor layout (no footer) for full-screen editing experience
 definePageMeta({
   layout: 'editor'
 });
 
-// Auth is handled by global middleware (auth.global.ts)
-
+const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
 const toast = useToast();
+
+const resumeId = computed(() => {
+  const id = route.params.id;
+  if (Array.isArray(id)) return id[0] ?? '';
+  return id ?? '';
+});
+
+const store = useResumeStore();
 
 // Resume composable with auto-save
 const {
@@ -98,7 +96,6 @@ const {
   humanSettings,
   canUndo,
   canRedo,
-  fetchResume,
   fetchSettings,
   updateContent,
   undo,
@@ -110,7 +107,8 @@ const {
 
 // UI State
 const activeTab = ref(RESUME_EDITOR_TABS_MAP.EDIT);
-const { openUploadFlow, openCreateFromScratchModal } = useResumeModals();
+const { openUploadModal, openCreateFromScratchModal } = useResumeModals();
+const showSelector = computed(() => store.resumeList.length > 1);
 const previewTypeModel = computed<PreviewType>({
   get: () => previewType.value,
   set: value => setPreviewType(value)
@@ -166,32 +164,42 @@ const showErrorToast = (title: string, error: unknown) => {
   });
 };
 
-// Fetch resume and settings on mount
-const { pending } = await useAsyncData('resume-page', async () => {
-  const [resumeResult, settingsResult] = await Promise.allSettled([fetchResume(), fetchSettings()]);
+// Fetch resume by ID, then settings
+const { pending } = await useAsyncData(`resume-page-${resumeId.value}`, async () => {
+  try {
+    await store.fetchResumeById(resumeId.value);
+  } catch (error) {
+    // If resume not found or access denied, redirect to /resume
+    if (
+      error &&
+      typeof error === 'object' &&
+      'statusCode' in error &&
+      (error.statusCode === 404 || error.statusCode === 403)
+    ) {
+      await navigateTo('/resume', { replace: true });
+      return false;
+    }
 
-  if (resumeResult.status === 'rejected') {
-    showErrorToast(t('resume.error.fetchFailed'), resumeResult.reason);
+    showErrorToast(t('resume.error.fetchFailed'), error);
+    return false;
   }
 
-  if (settingsResult.status === 'rejected') {
-    showErrorToast(t('resume.error.settingsUpdateFailed'), settingsResult.reason);
+  try {
+    await fetchSettings();
+  } catch (error) {
+    showErrorToast(t('resume.error.settingsUpdateFailed'), error);
   }
 
-  return resumeResult.status === 'fulfilled' && settingsResult.status === 'fulfilled';
+  // Also fetch resume list for the selector
+  try {
+    await store.fetchResumeList();
+  } catch {
+    // Non-critical: selector won't show but editor still works
+  }
+
+  return true;
 });
 const pageLoading = computed(() => !hasResume.value && pending.value);
-
-/**
- * Handle upload success
- */
-const handleUploadSuccess = (_resume: Resume) => {
-  toast.add({
-    title: t('resume.upload.success'),
-    color: 'success',
-    icon: 'i-lucide-check'
-  });
-};
 
 /**
  * Handle upload error
@@ -205,17 +213,38 @@ const handleUploadError = (err: Error) => {
   });
 };
 
-/**
- * Handle create from scratch click
- */
-const handleCreateFromScratch = () => {
-  void openCreateFromScratchModal();
-};
-
-const handleOpenUploadModal = () => {
-  void openUploadFlow({
+const handleOpenUploadModal = async () => {
+  const result = await openUploadModal({
     onError: handleUploadError
   });
+
+  if (result?.action === 'uploaded') {
+    // Navigate to the newly uploaded resume
+    await router.push(`/resume/${result.resume.id}`);
+  } else if (result?.action === 'create-from-scratch') {
+    // CreateFromScratch modal handles its own navigation
+    await openCreateFromScratchModal();
+  }
+};
+
+/**
+ * Handle duplicate resume
+ */
+const handleDuplicate = async () => {
+  const currentId = resumeId.value;
+  if (!currentId) return;
+
+  try {
+    const newResume = await store.duplicateResume(currentId);
+    toast.add({
+      title: t('resume.page.resumeDuplicated'),
+      color: 'success',
+      icon: 'i-lucide-check'
+    });
+    await router.push(`/resume/${newResume.id}`);
+  } catch (error) {
+    showErrorToast(t('resume.error.createFailed'), error);
+  }
 };
 </script>
 
@@ -230,31 +259,6 @@ const handleOpenUploadModal = () => {
     align-items: center;
     justify-content: center;
     min-height: 400px;
-  }
-
-  &__upload {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: calc(100vh - 200px);
-    padding: 2rem;
-  }
-
-  &__upload-container {
-    max-width: 600px;
-    width: 100%;
-    text-align: center;
-  }
-
-  &__title {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-  }
-
-  &__description {
-    font-size: 1rem;
-    color: var(--color-neutral-500);
   }
 }
 </style>

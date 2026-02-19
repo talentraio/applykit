@@ -1,24 +1,36 @@
-import { resumeRepository } from '../../data/repositories';
+import { resumeRepository, userRepository } from '../../data/repositories';
 
 /**
  * GET /api/resume
  *
- * Get the current user's single resume
- * Single resume architecture: one resume per user
+ * Get the user's default resume.
+ * Falls back to most recent if defaultResumeId is null/stale.
+ * Includes `name` and `isDefault` in response.
  *
- * Response:
- * - Resume object with content
- * - Returns 404 if user has no resume yet
+ * Deprecated: Callers should migrate to GET /api/resumes/:id
  *
- * Related: T010 (US1)
+ * Response: Resume object with name and isDefault
+ * Errors: 401, 404
  */
 export default defineEventHandler(async event => {
-  // Require authentication
+  // Deprecation headers
+  setHeader(event, 'Deprecation', 'true');
+  setHeader(event, 'Link', '</api/resumes/:id>; rel="successor-version"');
+
   const session = await requireUserSession(event);
   const userId = (session.user as { id: string }).id;
 
-  // Get user's single resume (most recent)
-  const resume = await resumeRepository.findLatestByUserId(userId);
+  // Try to get default resume
+  const defaultResumeId = await userRepository.getDefaultResumeId(userId);
+
+  let resume = defaultResumeId
+    ? await resumeRepository.findByIdAndUserId(defaultResumeId, userId)
+    : null;
+
+  // Fallback to most recent if default is null or stale
+  if (!resume) {
+    resume = await resumeRepository.findLatestByUserId(userId);
+  }
 
   if (!resume) {
     throw createError({
@@ -27,5 +39,8 @@ export default defineEventHandler(async event => {
     });
   }
 
-  return resume;
+  return {
+    ...resume,
+    isDefault: resume.id === defaultResumeId
+  };
 });

@@ -39,7 +39,11 @@
       "clearAndCreateNew": "Clear and create new",
       "createTitle": "Create Resume",
       "createDescription": "Start with a blank resume and fill in your details manually.",
-      "createButton": "Create Empty Resume"
+      "createButton": "Create Empty Resume",
+      "duplicateResume": "Duplicate",
+      "resumeDuplicated": "Resume duplicated successfully",
+      "selectResume": "Select resume",
+      "defaultBadge": "Default"
     },
     "list": {
       "title": "My Resumes",

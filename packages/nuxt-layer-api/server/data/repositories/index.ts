@@ -11,6 +11,7 @@ export { llmModelRepository } from './llm-model';
 export { llmRoutingRepository } from './llm-routing';
 export { profileRepository } from './profile';
 export { resumeRepository } from './resume';
+export { resumeFormatSettingsRepository } from './resume-format-settings';
 export { roleBudgetWindowRepository } from './role-budget-window';
 export { roleSettingsRepository } from './role-settings';
 export { suppressionRepository } from './suppression';
