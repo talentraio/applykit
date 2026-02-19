@@ -1,161 +1,259 @@
-# Endpoints (MVP)
+# Endpoints (Current)
+
+This document reflects the current HTTP API implemented under
+`packages/nuxt-layer-api/server/api/*` and `packages/nuxt-layer-api/server/routes/*`.
+
+## Access and auth rules
+
+- By default, `/api/*` requires authenticated session.
+- Public API exceptions: `/api/auth/*`.
+- Admin routes (`/api/admin/*`) require `super_admin`.
+- Some routes are outside `/api/*` and live in `server/routes/*`.
+
+## OAuth and non-API routes
+
+- `GET /auth/google`
+  - OAuth entry + callback handler (Google).
+  - Creates/links/activates user, sets session, redirects.
+- `GET /auth/linkedin`
+  - OAuth entry + callback handler (LinkedIn).
+  - Creates/links/activates user, sets session, redirects.
+- `GET /storage/:path` (dev-only)
+  - Serves local storage files only in development.
 
 ## Authentication
 
-### OAuth Routes (server/routes/)
+- `GET /api/auth/me`
+  - Returns `{ user, profile, isProfileComplete }`.
+- `POST /api/auth/logout`
+  - Clears session.
+  - Response: `{ success: true }`.
+- `POST /api/auth/register`
+  - Body: `RegisterInput` (`email`, `password`, `firstName`, `lastName`).
+  - Creates account or activates invited account (if invite flow), sets session.
+  - Response: `{ success: true }`.
+- `POST /api/auth/login`
+  - Body: `LoginInput` (`email`, `password`).
+  - Sets session.
+  - Response: `{ success: true }`.
+- `POST /api/auth/forgot-password`
+  - Body: `ForgotPasswordInput` (`email`).
+  - Always returns success (anti-enumeration).
+  - Response: `{ success: true }`.
+- `POST /api/auth/reset-password`
+  - Body: `ResetPasswordInput` (`token`, `password`).
+  - Response: `{ success: true }`.
+- `POST /api/auth/send-verification`
+  - Requires auth.
+  - Resends verification email unless already verified.
+  - Response: `{ success: true }` or `{ success: true, message }`.
+- `GET /api/auth/verify-email?token=...&flow=verification|invite`
+  - Verifies email by token, then redirects.
+  - `flow=verification` -> profile redirect.
+  - `flow=invite` -> invite redirect (expiry bypass while user stays `invited`).
 
-- `GET /auth/google` - Google OAuth flow (redirect + callback)
-- `GET /auth/linkedin` - LinkedIn OAuth flow (redirect + callback)
+## User and profile
 
-### Auth API Endpoints
-
-- `GET /api/auth/me` - Get current user and profile
-- `POST /api/auth/logout` - Logout current session
-- `POST /api/auth/register` - Register with email/password
-  - body: `{ email, password, firstName, lastName }`
-  - returns: `{ success: true }` + auto-login
-- `POST /api/auth/login` - Login with email/password
-  - body: `{ email, password }`
-  - returns: `{ success: true }` + session cookie
-- `POST /api/auth/forgot-password` - Request password reset
-  - body: `{ email }`
-  - returns: `{ success: true }` (always, to prevent enumeration)
-- `POST /api/auth/reset-password` - Reset password with token
-  - body: `{ token, password }`
-  - returns: `{ success: true }`
-- `POST /api/auth/send-verification` - Resend verification email (requires auth)
-  - returns: `{ success: true }`
-- `GET /api/auth/verify-email?token=xxx&flow=verification|invite` - Verify email
-  - `flow=verification` (default): redirects to `/profile?verified=true|false`
-  - `flow=invite`: redirects to `/resume?verified=true|false`
-  - error redirects append `error=missing_token|invalid_token|expired_token`
+- `POST /api/user/accept-terms`
+  - Body: `AcceptTermsInput` (`legalVersion` as `dd.MM.yyyy`).
+  - Response: `{ termsAcceptedAt, legalVersion }`.
+- `GET /api/profile`
+  - Returns current profile or `null`.
+- `PUT /api/profile`
+  - Body: `ProfileInput`.
+  - Creates profile if missing, otherwise updates.
+- `GET /api/profile/complete`
+  - Response: `{ complete: boolean }`.
+- `POST /api/profile/photo`
+  - Multipart upload (`file`).
+  - Supports JPEG/PNG/WebP, max 5MB.
+  - Response: `{ photoUrl }`.
+- `DELETE /api/profile/photo`
+  - Deletes profile photo(s).
+  - Response: `{ success: true, deletedCount }`.
+- `DELETE /api/profile/account`
+  - GDPR-style account deletion flow.
+  - Deletes user content, sanitizes account, clears session.
+  - Response: `{ success: true }`.
 
 ## Resume
 
-- `POST /api/resume`
-  - supports multipart upload (DOCX/PDF) and JSON payload
-  - parses uploaded resume content via platform-managed LLM
-  - returns current base resume
-- `POST /api/resumes` (deprecated alias for upload+parse flow)
-- `GET /api/resume`
-  - returns current base resume (content only, no format settings)
-- `PUT /api/resume`
-  - body: `{ content?: ResumeContent, title?: string }`
-  - returns saved resume (content only, no format settings)
+### Primary single-resume API
 
-## Format Settings (User-Level)
+- `GET /api/resume`
+  - Returns current base resume.
+  - `404` if no resume.
+- `POST /api/resume`
+  - Two modes:
+    - `multipart/form-data` with `file` (DOCX/PDF) + optional `title`.
+    - `application/json` with `{ content, title, sourceFileName?, sourceFileType? }`.
+  - Creates or replaces user base resume.
+- `PUT /api/resume`
+  - Body: `{ content?: ResumeContent, title?: string }`.
+  - Updates base resume; creates version snapshot when content changes.
+
+### Deprecated aliases (`/api/resumes*`)
+
+All endpoints below set deprecation headers:
+
+- `GET /api/resumes`
+- `POST /api/resumes` (multipart upload + parse)
+- `GET /api/resumes/:id`
+- `PUT /api/resumes/:id`
+- `DELETE /api/resumes/:id`
+
+Use `/api/resume` instead.
+
+## User preferences and format settings
 
 - `GET /api/user/format-settings`
-  - returns: `{ ats: ResumeFormatSettingsAts, human: ResumeFormatSettingsHuman }`
-  - auto-seeds defaults if no settings exist
+  - Returns `{ ats, human }`.
+  - Auto-seeds defaults if missing.
 - `PATCH /api/user/format-settings`
-  - body: deep partial of `{ ats?: { spacing?, localization? }, human?: { spacing?, localization? } }`
-  - returns: full settings after merge
-  - validates merged result with schemas
-  - requires at least one of `ats` or `human`
+  - Body: deep partial patch of `{ ats?, human? }`.
+  - Deep-merges + validates, returns full `{ ats, human }`.
+- `PUT /api/user/format-settings`
+  - Body: full replacement `{ ats, human }`.
+  - Returns full `{ ats, human }`.
+- `PATCH /api/user/preferences/vacancy-list`
+  - Body: `{ columnVisibility: Record<string, boolean> }`.
+  - Upsert behavior.
+  - Returns `{ columnVisibility }`.
 
-## Vacancies
+## Vacancies and generations
 
 - `POST /api/vacancies`
-  - body: `{ company: string, jobPosition?: string, description: string, url?: string, notes?: string }`
-  - returns: vacancy
+  - Body: `VacancyInput` (`company`, optional `jobPosition`, `description`, optional `url`, `notes`, optional `status`).
 - `GET /api/vacancies`
-  - query: `{ currentPage?, pageSize?, sortBy?, sortOrder?, status?, search? }`
-  - returns: `{ items: Vacancy[], pagination: { totalItems, totalPages }, columnVisibility: Record<string, boolean> }`
-  - supports server-side pagination, sorting (updatedAt, createdAt), status filter (array), ILIKE search on company+jobPosition
-  - default sort: status-group ordering + updatedAt DESC
-- `GET /api/vacancies/:id`
-  - returns vacancy details
-- `GET /api/vacancies/:id/meta`
-  - returns minimal vacancy metadata for layout/header
-- `GET /api/vacancies/:id/overview`
-  - returns overview payload: vacancy + latest generation summary + canGenerateResume flag
+  - Query: `currentPage`, `pageSize`, `sortBy`, `sortOrder`, `status`, `search`.
+  - Response: `{ items, pagination, columnVisibility }`.
 - `PUT /api/vacancies/:id`
-  - update vacancy fields
+  - Body: partial `VacancyInput`.
+  - Applies status-transition validation.
+  - Unlocks generation if `company` / `jobPosition` / `description` changed.
 - `DELETE /api/vacancies/:id`
-  - delete single vacancy (cascade deletes generations)
-  - returns: 204 No Content
+  - Deletes vacancy (and related generations via cascade).
+  - Response: `204`.
 - `DELETE /api/vacancies/bulk`
-  - body: `{ ids: string[] }` (1-100 UUIDs)
-  - verifies all IDs belong to current user (403 if not)
-  - returns: 204 No Content
+  - Body: `{ ids: string[] }` (1-100 UUIDs).
+  - Response: `204`.
+- `GET /api/vacancies/:id/meta`
+  - Returns minimal vacancy meta + score-detail action flags.
+- `GET /api/vacancies/:id/overview`
+  - Returns `{ vacancy, latestGeneration, canGenerateResume }`.
 - `POST /api/vacancies/:id/generate`
-  - generates a new adapted version from current base resume + vacancy
-  - executes two-step pipeline:
-    - adaptation (`resume_adaptation`, strategy-aware, retry model optional)
-    - lightweight baseline scoring (`resume_adaptation_scoring`)
-  - if baseline scoring fails, generation is still persisted with deterministic fallback scoring
-  - platform-managed execution path only
-  - returns created generation (`matchScoreBefore`, `matchScoreAfter`, `scoreBreakdown`)
-- `POST /api/vacancies/:id/generations/:generationId/score-details`
-  - sync endpoint for on-demand detailed scoring
-  - default behavior reuses latest stored details for the generation
-  - `?regenerate=true` forces recompute when details are stale/eligible
-  - uses dedicated scenario routing key `resume_adaptation_scoring_detail`
-  - returns `{ generationId, vacancyId, reused, stale, details }`
+  - Optional body: `{ resumeId?, provider? }`.
+  - Requires complete profile + generation limit.
+  - Creates new generation and locks `canGenerateResume=false` until unlock conditions.
+- `PUT /api/vacancies/:id/generation`
+  - Body: `{ content, generationId? }`.
+  - Updates generation content.
+- `PATCH /api/vacancies/:id/generation/dismiss-score-alert`
+  - Body: `{ generationId? }`.
+  - Marks score alert dismissed.
+- `GET /api/vacancies/:id/generations`
+  - Returns all generations for vacancy.
+- `GET /api/vacancies/:id/generations/latest`
+  - Returns `{ isValid, generation }` (null if none/expired).
+- `POST /api/vacancies/:id/generations/:generationId/score-details?regenerate=true|false`
+  - Reuse-first detailed scoring endpoint.
+  - Response: `{ generationId, vacancyId, reused, stale, details }`.
 - `GET /api/vacancies/:id/preparation`
-  - returns preparation payload:
+  - Returns preparation payload:
     - vacancy meta
     - latest generation summary
-    - optional detailed scoring payload
-    - flags for `canRequestDetails` / `canRegenerateDetails`
+    - optional score details
+    - detailed-scoring availability flags
 
-## Vacancy List Preferences
+## PDF export flow
 
-- `PATCH /api/user/preferences/vacancy-list`
-  - body: `{ columnVisibility: Record<string, boolean> }`
-  - returns: `{ columnVisibility }`
-  - upserts column visibility preferences for the current user
+Current export flow is tokenized and route-based:
 
-## Export
+- `POST /api/pdf/prepare`
+  - Body: `{ format, content, settings?, photoUrl?, filename? }`.
+  - Response: `{ token, expiresAt }`.
+- `GET /api/pdf/payload?token=...`
+  - Returns stored payload for preview.
+- `GET /api/pdf/file?token=...`
+  - Generates and streams downloadable PDF.
+  - Deletes token payload after use.
 
-- `POST /api/vacancies/:id/export?type=ats|human`
-  - returns: `{ url: string }` or streams a PDF
-  - uses caching and invalidates cache on regeneration
+## Admin: users
 
-## Admin (MVP)
-
-- `GET /api/admin/users` (search, role filter, pagination)
-- `POST /api/admin/users` (invite user by email + role)
-  - creates invited user even if email delivery fails
-  - returns created user summary + `inviteEmailSent: boolean` + optional `inviteEmailError`
-- `POST /api/admin/users/:id/invite` (resend invite email for invited user)
-  - regenerates verification token and retries invite email delivery
-  - invite verification links do not expire while user remains in `invited` status
-  - returns `inviteEmailSent: boolean` + optional `inviteEmailError`
-- `GET /api/admin/users/:id` (detail + profile + usage stats)
+- `GET /api/admin/users`
+  - Query: `search`, `role`, `status`, `limit`, `offset`.
+  - Response: `{ users, total }`.
+- `POST /api/admin/users`
+  - Body: `{ email, role }`.
+  - Creates invited user + sends invite email.
+  - Response includes `inviteEmailSent` and optional `inviteEmailError`.
+- `GET /api/admin/users/:id`
+  - User detail + profile + usage metrics.
 - `PUT /api/admin/users/:id/role`
-- `PUT /api/admin/users/:id/status` (block/unblock)
-- `DELETE /api/admin/users/:id` (soft delete)
-- `POST /api/admin/users/:id/restore` (restore soft-deleted user)
-- `DELETE /api/admin/users/:id/hard` (permanent delete for soft-deleted user, clears suppression for re-registration)
+  - Body: `{ role }`.
+- `PUT /api/admin/users/:id/status`
+  - Body: `{ blocked: boolean }`.
+- `DELETE /api/admin/users/:id`
+  - Soft delete.
+- `POST /api/admin/users/:id/restore`
+  - Restore soft-deleted user.
+- `DELETE /api/admin/users/:id/hard`
+  - Hard delete (allowed only for soft-deleted users).
+- `POST /api/admin/users/:id/invite`
+  - Resend invite email for invited user.
+
+## Admin: roles, system, usage
+
 - `GET /api/admin/roles`
 - `GET /api/admin/roles/:role`
 - `PUT /api/admin/roles/:role`
-- `GET /api/admin/system` (budget + usage)
+  - Body supports partial updates:
+    - `platformLlmEnabled?`, `dailyBudgetCap?`, `weeklyBudgetCap?`, `monthlyBudgetCap?`.
+- `GET /api/admin/system`
+  - Returns `{ globalBudgetCap, globalBudgetUsed }`.
 - `PUT /api/admin/system`
-- `GET /api/admin/usage`
+  - Body: `{ globalBudgetCap? }`.
+  - Returns `{ globalBudgetCap, globalBudgetUsed }`.
+- `GET /api/admin/usage?period=day|week|month`
+  - Returns aggregate usage/cost/user metrics.
+
+## Admin: LLM models and routing
+
+### Model catalog
+
 - `GET /api/admin/llm/models`
+  - Response: `{ items }`.
 - `POST /api/admin/llm/models`
+  - Body: `LlmModelCreateInput`.
 - `PUT /api/admin/llm/models/:id`
+  - Body: `LlmModelUpdateInput` (at least one field).
 - `DELETE /api/admin/llm/models/:id`
+  - `204` on success.
+  - `409` when model is referenced in routing.
+
+### Scenario routing
+
 - `GET /api/admin/llm/routing`
+  - Response: `{ items }`.
 - `PUT /api/admin/llm/routing/:scenarioKey/default`
-  - body: `RoutingAssignmentInput`
-  - normalization rules:
-    - `retryModelId` is persisted only for `resume_parse`, `resume_adaptation`, and
-      `resume_adaptation_scoring_detail`
-    - `strategyKey` is persisted only for `resume_adaptation`
+  - Body: `RoutingAssignmentInput`.
+  - Normalization:
+    - `retryModelId` kept only for `resume_parse`, `resume_adaptation`, `resume_adaptation_scoring_detail`.
+    - `reasoningEffort` kept only for `resume_adaptation`.
+    - `strategyKey` kept only for `resume_adaptation`.
+- `PUT /api/admin/llm/routing/:scenarioKey/enabled`
+  - Body: `{ enabled: boolean }`.
 - `PUT /api/admin/llm/routing/:scenarioKey/roles/:role`
-  - body: `RoutingAssignmentInput`
-  - normalization rules:
-    - `retryModelId` is persisted only for `resume_parse`, `resume_adaptation`, and
-      `resume_adaptation_scoring_detail`
-    - `strategyKey` is persisted only for `resume_adaptation`
+  - Body: `RoutingAssignmentInput` with same normalization rules.
 - `DELETE /api/admin/llm/routing/:scenarioKey/roles/:role`
+  - Removes role override (`204`).
+- `PUT /api/admin/llm/routing/:scenarioKey/roles/:role/enabled`
+  - Body: `{ enabled: boolean }`.
+- `DELETE /api/admin/llm/routing/:scenarioKey/roles/:role/enabled`
+  - Removes role enabled override (`204`).
 
-Notes:
+## Related docs
 
-- All admin endpoints require `super_admin`
-- Blocked users receive `403` on protected endpoints
-- Runtime uses platform-managed provider credentials only
+- Contracts and schemas: `./schemas.md`
+- Data flow: `../architecture/data-flow.md`
+- LLM scenarios: `../architecture/llm-scenarios.md`

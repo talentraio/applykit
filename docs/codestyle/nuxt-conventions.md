@@ -29,10 +29,11 @@ Recommended:
 
 ## API calls
 
-- Centralize client calls in a small set of API modules.
-- Use a single `apiFetch()` wrapper:
-  - minimal: forward headers/cookies on server, attach required headers
-  - no extra magic in MVP
+- Use `useApi()` for all backend API calls.
+- Prefer domain wrappers in `infrastructure/*.api.ts` files per layer.
+- Keep reusable/stateful data flows in store actions.
+- Direct page/component `useApi()` is acceptable only for localized one-off actions that do not
+  require shared store orchestration.
 
 ## Environment variables (runtimeConfig)
 

@@ -9,8 +9,10 @@ A scenario is a specific AI task in the product. Each scenario has:
 - a business purpose,
 - a dedicated routing key,
 - configurable model selection (default + role override),
+- scenario-level enable flag (with optional role-level enable override),
 - optional retry model,
-- strategy controls (`economy` / `quality`) where relevant.
+- strategy controls (`economy` / `quality`) where relevant,
+- optional reasoning effort control where relevant.
 
 ## Routing model (high level)
 
@@ -60,7 +62,7 @@ This gives product teams controlled defaults plus optional per-role customizatio
 - Input: base resume JSON + vacancy fields + optional profile hints.
 - Output: tailored resume JSON persisted as generation.
 - Uses shared context assembly and scenario model resolution.
-- Supports strategy (`economy` / `quality`) from routing config.
+- Supports strategy (`economy` / `quality`) and reasoning effort from routing config.
 
 ### `resume_adaptation_scoring`
 
@@ -103,9 +105,8 @@ This gives product teams controlled defaults plus optional per-role customizatio
 
 **Technical view**
 
-- Input: vacancy + resume context.
-- Output: generated letter text.
-- Routed and priced via the same admin-managed LLM configuration model.
+- Scenario key is available in routing/configuration.
+- Dedicated runtime endpoint/flow is currently not exposed in the user API (coming-soon surface).
 
 ## Strategies: `economy` vs `quality`
 
@@ -124,7 +125,7 @@ predictability in quality/cost outcomes.
 ## Where to configure
 
 - Admin page: scenario defaults (`/llm/routing`)
-- Admin page: role-specific overrides (`/roles/[id]`)
+- Admin page: role-specific overrides (`/roles/[role]`)
 
 ## Related docs
 

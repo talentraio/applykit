@@ -1,116 +1,78 @@
 # MVP Design Contract (ApplyKit)
 
-Last updated: 2026-01-22
+Last updated: 2026-02-19
 
-This document is the **single source of truth** for MVP UI decisions.
-Goal: ship fast with a **consistent, glossy B2C look** using **Nuxt UI Pro** templates and tokens.
+This document captures the current UI contract for MVP.
 
----
+## 1) Design system source of truth
 
-## 1) Sources of truth (do not deviate)
+- Shared UI/theme tokens are defined in `@int/ui`.
+- Product apps (`apps/site`, `apps/admin`) consume shared tokens and layer-specific components.
+- Reuse existing Nuxt UI v4 patterns before creating custom patterns.
 
-- **apps/site** follows **Nuxt UI Pro – SaaS** template look & feel.
-- **apps/admin** follows **Nuxt UI Pro – Dashboard** template look & feel.
+## 2) Theme and tokens
 
-Rules:
+Configured in `packages/nuxt-layer-ui/app/app.config.ts`:
 
-- Do not invent new UI patterns if a Nuxt UI Pro pattern exists.
-- Reuse the templates’ layout rhythm: spacing, typography hierarchy, card styles, button styles.
-- Landing may use “glossy” effects; admin should remain clean and utilitarian.
+- `ui.colors.primary = 'violet'`
+- `ui.colors.neutral = 'slate'`
+- `theme.radius = 0.9`
 
----
+Token usage rules:
 
-## 2) Theme & color mode
+- avoid ad-hoc color values for repeated patterns,
+- keep theme decisions centralized in `@int/ui`.
 
-### Color mode
+## 3) Visual direction
 
-- Prefer **system** color mode.
-- Fallback default is **dark** (if system preference is not available).
+### Site (`apps/site`)
 
-### Tokens (global)
+- Marketing surfaces are dark-first with gradient atmosphere.
+- Product surfaces keep readability and consistency with shared tokens.
+- Strong CTA hierarchy and clear section rhythm.
 
-These tokens must be set in `packages/nuxt-layer-ui/app/app.config.ts` and used everywhere:
+### Admin (`apps/admin`)
 
-- `ui.colors.primary = "violet"`
-- `ui.colors.neutral = "slate"`
-- `theme.radius = 0.9` (soft, B2C-friendly)
+- Utility-first dashboard style.
+- Focus on clarity for tables, filters, and management actions.
+- Avoid marketing-heavy visual effects.
 
-No ad-hoc hex colors in components unless explicitly justified.
+## 4) Current landing composition
 
----
+Landing page (`apps/site/layers/landing/app/pages/index.vue`) currently uses:
 
-## 3) Visual style goals (B2C glossy)
+1. Header
+2. Hero
+3. Proof
+4. Flow
+5. Features
+6. Modes (ATS + Human)
+7. Comparison
+8. FAQ
+9. CTA
+10. Footer
 
-### Site (marketing + app pages under apps/site)
+## 5) App architecture and consistency
 
-- **High-contrast dark mode** by default; light mode should also look premium.
-- Big hero typography, generous spacing, large radius cards.
-- Subtle gradients/glow are allowed **only** on marketing surfaces (homepage sections, hero).
-- Primary CTA should be prominent and consistent across the site.
+- Layer UIs must not define competing global themes.
+- Shared theme decisions belong to `@int/ui`.
+- Keep app pages SSR-friendly and compatible with server-side rendering requirements.
 
-### Admin (apps/admin)
+## 6) Content and i18n
 
-- No glow/marketing gradients.
-- Use Dashboard template patterns: sidebar, page header, tables, filters, panels.
+- All user-visible strings must use i18n keys.
+- Tone should be clear, practical, and product-focused.
 
----
+## 7) Accessibility and responsive behavior
 
-## 4) Layout and structure rules
+- Maintain heading hierarchy.
+- Keep focus states visible.
+- Ensure mobile-first usability for actions, forms, and tables.
 
-### Site landing (`apps/site/layers/landing`)
+## 8) Implementation rule for contributors
 
-Homepage should be composed of these sections (in this order):
+Before introducing a new pattern:
 
-1. Hero (headline, subheadline, primary + secondary CTA, visual/mock area)
-2. Steps (3–5 steps explaining the flow)
-3. ATS vs Human explanation (clear comparison)
-4. Metric tiles placeholders (future dashboards)
-5. FAQ (short and practical)
-6. Footer
-
-### App shell (`apps/site/layers/*`)
-
-- Reuse the SaaS template navigation/app shell patterns.
-- Keep pages SSR-friendly and compatible with server-side islands rendering.
-
-### Internal app layers
-
-- `apps/site/layers/*` and `apps/admin/layers/*` should not define competing themes.
-- All styling decisions (tokens/theme) must live in `@int/ui`.
-
----
-
-## 5) Components and composition guidelines
-
-- Prefer Nuxt UI (Pro) components first; wrap them only when needed for consistency.
-- Create minimal “composition components” in `@int/ui` to standardize page structure:
-  - `AppShell`, `PageHeader`, `Section`, `MetricTile`, `EmptyState`, etc.
-- Avoid one-off styling. If a pattern repeats twice, promote it to `@int/ui`.
-
----
-
-## 6) Content, tone, i18n
-
-- All visible strings must use i18n keys (no hardcoded text).
-- Tone: friendly, simple, product-oriented (B2C), not “developer tooling”.
-
----
-
-## 7) Accessibility & responsiveness
-
-- Use proper heading order (H1/H2/H3).
-- Ensure focus states are visible.
-- Ensure mobile layout is not an afterthought:
-  - buttons tappable,
-  - cards stack properly,
-  - tables in admin degrade gracefully.
-
----
-
-## 8) Implementation notes for agents
-
-When implementing UI tasks, always:
-
-- Start from the relevant Nuxt UI Pro template pattern (SaaS or Dashboard).
-- Keep tokens consistent with Section 2.
-- If unsure about a Nuxt UI / Nuxt UI Pro API: verify using MCP docs (do not guess).
+1. Check existing project components/patterns in the same layer.
+2. Check shared UI primitives in `@int/ui`.
+3. Add new pattern only when reuse is not feasible.

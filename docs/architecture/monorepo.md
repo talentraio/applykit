@@ -2,71 +2,62 @@
 
 ## Apps
 
-- `apps/site` – user-facing product
-- `apps/admin` – minimal admin UI (roles, limits, allowlists), separate login
+- `apps/site` - user-facing product
+- `apps/admin` - admin UI
 
-## Internal workspace packages (layers)
+## Internal workspace packages (Nuxt layers)
 
-We use a dedicated internal scope to make it obvious these are not public packages.
-Example: `@int/api`, `@int/ui`, `@int/schema`.
+Internal packages use:
 
-Each layer package is a Nuxt layer with:
+- path convention: `packages/nuxt-layer-*/`
+- package name convention: `@int/*`
 
-- `app/` and `server/` (Nuxt conventions)
-- `nuxt.config.ts` as entrypoint (`"main": "./nuxt.config.ts"` in package.json)
-- `.playground/` for isolated testing (buttons, simple pages, manual QA)
-
-### Recommended packages for MVP
+Primary packages:
 
 - `packages/schema` (`@int/schema`)
-  - Zod schemas + inferred TS types
-  - Central place for enums, shared DTO shapes, and validation helpers
-- `packages/layer-api` (`@int/api`)
-  - REST endpoints (server/)
-  - Server utilities (server/utils)
-  - LLM adapter + parsing/generation services
-  - Shared client composables (app/composables) and shared server-aware fetch client (app/plugins/apiFetch.ts)
-- `packages/layer-ui` (`@int/ui`)
-  - Nuxt UI setup + shared tokens/styles (theme variables, SCSS mixins)
-  - Base components
-  - Minimal design system that both apps reuse
+  - shared Zod schemas, enums, and inferred TS contracts
+- `packages/nuxt-layer-api` (`@int/api`)
+  - API endpoints (`server/api`)
+  - route handlers (`server/routes`)
+  - repositories/services/utilities
+  - client API composable and plugin (`app/composables/useApi.ts`, `app/plugins/create-api.ts`)
+- `packages/nuxt-layer-ui` (`@int/ui`)
+  - shared UI setup/theme/tokens/components
 
-### Site-specific internal layers
+## Site app layers
 
 Located in `apps/site/layers/`:
 
-- `_base` – shared utilities, composables, middleware for the site
-- `auth` – login/logout pages, auth guards
-- `profile` – user profile management
-- `resume` – resume upload, parsing, editing
-- `landing` – marketing landing page
-- `vacancy` – vacancy CRUD, generation, export
-- `static` – static content pages (Privacy Policy, Terms of Service)
+- `_base`
+- `auth`
+- `landing`
+- `profile`
+- `resume`
+- `static`
+- `vacancy`
 
-### Admin-specific internal layers
+## Admin app layers
 
 Located in `apps/admin/layers/`:
 
-- `_base` – shared utilities for admin
-- `auth` – admin login
-- `users` – user search and role management
-- `system` – system controls, budget display
+- `_base`
+- `auth`
+- `users`
+- `roles`
+- `llm`
+- `system`
 
 ## How apps consume layers
 
-In `apps/site/nuxt.config.ts`:
+Both apps consume workspace layers via dependencies and `extends` in Nuxt config.
 
-- add to dependencies in package.json: `@int/api`, `@int/ui`, `@int/schema`
-- then:
-  - `extends: ['@int/ui', '@int/api']`
-  - `alias` + `components` prefixes per layer to avoid naming collisions
+Typical setup:
 
-Same for `apps/admin`.
+- dependencies include `@int/api`, `@int/ui`, `@int/schema`
+- app Nuxt config extends shared layers
+- aliases/components prefixes are configured to avoid naming collisions
 
-## Brands (post-MVP)
+## Notes
 
-We can add `/brands/<brand-name>` as another abstraction level:
-
-- each brand extends `apps/site`
-- can override theme and content
-- MVP: keep only one brand
+- Legacy references to `packages/layer-api` are outdated; use `packages/nuxt-layer-api`.
+- The monorepo intentionally keeps business domains split by app layer and shared package.
