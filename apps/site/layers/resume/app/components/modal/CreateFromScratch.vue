@@ -24,6 +24,11 @@ import type { ResumeContent } from '@int/schema';
 
 defineOptions({ name: 'ResumeModalCreateFromScratch' });
 
+const props = defineProps<{
+  replaceResumeId?: string;
+  title?: string;
+}>();
+
 const isOpen = defineModel<boolean>('open', { default: false });
 const isCreating = ref(false);
 const { t } = useI18n();
@@ -55,13 +60,18 @@ async function handleConfirm() {
 
   isCreating.value = true;
   try {
-    await resumeStore.createFromContent(emptyContent, 'My Resume');
+    const titleFromInput = props.title?.trim();
+    const title = titleFromInput || (props.replaceResumeId ? undefined : 'My Resume');
+    const resume = await resumeStore.createFromContent(emptyContent, title, props.replaceResumeId);
     isOpen.value = false;
     toast.add({
       title: t('resume.success.created'),
       color: 'success',
       icon: 'i-lucide-check'
     });
+    if (!props.replaceResumeId || props.replaceResumeId !== resume.id) {
+      await navigateTo(`/resume/${resume.id}`);
+    }
   } catch (error) {
     toast.add({
       title: t('resume.error.createFailed'),

@@ -81,6 +81,8 @@
  * Handles profile photo upload for human resume
  */
 
+import { profileApi } from '@site/profile/app/infrastructure/profile.api';
+
 defineOptions({ name: 'ProfileFormSectionPhoto' });
 
 const props = defineProps<{
@@ -127,15 +129,7 @@ const handleFileSelect = async (event: Event) => {
   isUploading.value = true;
 
   try {
-    // Create form data
-    const formData = new FormData();
-    formData.append('file', file);
-
-    // Upload photo
-    const response = await useApi<{ photoUrl: string }>('/api/profile/photo', {
-      method: 'POST',
-      body: formData
-    });
+    const response = await profileApi.uploadPhotoApi(file);
 
     // Emit new URL
     emit('update:modelValue', response.photoUrl);
@@ -159,9 +153,7 @@ const handleRemove = async () => {
   uploadError.value = null;
 
   try {
-    await useApi('/api/profile/photo', {
-      method: 'DELETE'
-    });
+    await profileApi.deletePhotoApi();
 
     emit('update:modelValue', undefined);
   } catch (error) {

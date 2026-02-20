@@ -7,6 +7,9 @@ import { userFormatSettings } from '../schema';
 /**
  * Format Settings Repository
  *
+ * @deprecated Use resumeFormatSettingsRepository for per-resume settings (feature 014).
+ * Kept only for auth flows that seed user-level defaults during registration.
+ *
  * Data access layer for user_format_settings table
  * Handles per-user resume formatting preferences
  */

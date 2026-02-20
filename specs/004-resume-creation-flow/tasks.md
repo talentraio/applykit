@@ -51,17 +51,17 @@
 
 ## Phase 2: User Story 1 - Single Resume API (Priority: P1)
 
-**Goal**: New singular `/api/resume` endpoints replacing `/api/resumes/*`
+**Goal**: Implement `/api/resumes` create/get/update endpoints with version history support
 
-**Independent Test**: Can create single resume, update with version history, settings persist
+**Independent Test**: Can create resume, update with version history, settings persist
 
 ### Implementation for US1
 
-- [x] T010 [US1] Create GET `/api/resume` endpoint in `packages/nuxt-layer-api/server/api/resume/index.get.ts` returning user's single resume with settings
-- [x] T011 [US1] Create POST `/api/resume` endpoint in `packages/nuxt-layer-api/server/api/resume/index.post.ts` for creating resume (file upload or JSON body), 400 if already exists
-- [x] T012 [US1] Create PUT `/api/resume` endpoint in `packages/nuxt-layer-api/server/api/resume/index.put.ts` for updating content/settings with version creation
+- [x] T010 [US1] Create GET `/api/resumes/:id` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].get.ts` returning requested resume with settings
+- [x] T011 [US1] Create POST `/api/resumes` endpoint in `packages/nuxt-layer-api/server/api/resumes/index.post.ts` for creating resume (file upload or JSON body)
+- [x] T012 [US1] Create PUT `/api/resumes/:id` endpoint in `packages/nuxt-layer-api/server/api/resumes/[id].put.ts` for updating content/title with version creation
 - [x] T013 [US1] Create PUT `/api/vacancies/[id]/generation` endpoint in `packages/nuxt-layer-api/server/api/vacancies/[id]/generation.put.ts` for updating generation content
-- [x] T014 [US1] Add deprecation headers to existing `/api/resumes/*` endpoints in `packages/nuxt-layer-api/server/api/resumes/`
+- [x] T014 [US1] Remove legacy singular resume endpoints and migrate callers to `/api/resumes/*`
 - [x] T015 [US1] [P] Add resume API i18n keys to `packages/nuxt-layer-ui/i18n/locales/en.json` (resume.error._, resume.success._)
 
 **Checkpoint**: API endpoints functional, version history works

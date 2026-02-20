@@ -46,17 +46,17 @@ Examples of acceptable local calls in current codebase:
 Example:
 
 ```ts
-const resume = await useApi('/api/resume', { method: 'GET' });
+const resumes = await useApi('/api/resumes', { method: 'GET' });
 ```
 
 ## Forbidden patterns
 
 ```ts
 // Forbidden: bypassing configured transport
-await $fetch('/api/resume');
+await $fetch('/api/resumes');
 
 // Forbidden: typed $fetch workaround instead of fixing endpoint typing
-await $fetch<MyType>('/api/resume');
+await $fetch<MyType>('/api/resumes');
 ```
 
 ## Infrastructure file locations
@@ -73,6 +73,6 @@ Shared API transport primitives live in:
 
 ## Endpoint naming note
 
-Prefer current singular endpoints for new code:
+Prefer current plural endpoints for new code:
 
-- use `/api/resume` over deprecated `/api/resumes*`.
+- use `/api/resumes*` for resume CRUD flows.

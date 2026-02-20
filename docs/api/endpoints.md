@@ -78,43 +78,38 @@ This document reflects the current HTTP API implemented under
 
 ## Resume
 
-### Primary single-resume API
-
-- `GET /api/resume`
-  - Returns current base resume.
-  - `404` if no resume.
-- `POST /api/resume`
-  - Two modes:
-    - `multipart/form-data` with `file` (DOCX/PDF) + optional `title`.
-    - `application/json` with `{ content, title, sourceFileName?, sourceFileType? }`.
-  - Creates or replaces user base resume.
-- `PUT /api/resume`
-  - Body: `{ content?: ResumeContent, title?: string }`.
-  - Updates base resume; creates version snapshot when content changes.
-
-### Deprecated aliases (`/api/resumes*`)
-
-All endpoints below set deprecation headers:
+### Primary multi-resume API
 
 - `GET /api/resumes`
+  - Returns lightweight resume list for current user.
+  - Sort: default first, then `createdAt DESC`.
 - `POST /api/resumes` (multipart upload + parse)
+  - Two modes:
+    - `multipart/form-data` with `file` (DOCX/PDF), optional `title`, optional `replaceResumeId`.
+    - `application/json` with `{ content, title, sourceFileName?, sourceFileType?, replaceResumeId? }`.
+  - Creates a new resume by default.
+  - If `replaceResumeId` is passed, replaces base data for that owned resume.
+  - Enforces per-user resume limit.
 - `GET /api/resumes/:id`
+  - Returns full resume by ID with ownership check.
 - `PUT /api/resumes/:id`
+  - Body: `{ content?: ResumeContent, title?: string }`.
+  - Updates a specific resume.
+  - Creates version snapshot when content changes.
+- `PUT /api/resumes/:id/name`
+  - Body: `{ name }`.
+  - Updates resume display name.
+- `POST /api/resumes/:id/duplicate`
+  - Duplicates an existing resume.
 - `DELETE /api/resumes/:id`
+  - Deletes non-default resume.
+- `GET /api/resumes/:id/format-settings`
+  - Returns per-resume format settings (`{ ats, human }`).
+- `PATCH /api/resumes/:id/format-settings`
+  - Deep partial patch of per-resume format settings.
 
-Use `/api/resume` instead.
+## User preferences
 
-## User preferences and format settings
-
-- `GET /api/user/format-settings`
-  - Returns `{ ats, human }`.
-  - Auto-seeds defaults if missing.
-- `PATCH /api/user/format-settings`
-  - Body: deep partial patch of `{ ats?, human? }`.
-  - Deep-merges + validates, returns full `{ ats, human }`.
-- `PUT /api/user/format-settings`
-  - Body: full replacement `{ ats, human }`.
-  - Returns full `{ ats, human }`.
 - `PATCH /api/user/preferences/vacancy-list`
   - Body: `{ columnVisibility: Record<string, boolean> }`.
   - Upsert behavior.

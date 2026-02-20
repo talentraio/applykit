@@ -46,7 +46,7 @@ export type UseVacancyGenerationReturn = {
   content: ComputedRef<ResumeContent | null>;
   isDirty: ComputedRef<boolean>;
 
-  // Settings (from format settings store)
+  // Settings (from generation format settings store)
   previewType: ComputedRef<ExportFormat>;
   currentSettings: ComputedRef<ResumeFormatSettingsAts | ResumeFormatSettingsHuman>;
   atsSettings: ComputedRef<ResumeFormatSettingsAts>;
@@ -59,7 +59,6 @@ export type UseVacancyGenerationReturn = {
 
   // Actions
   fetchGeneration: () => Promise<VacanciesResumeGeneration>;
-  fetchSettings: () => Promise<void>;
   updateContent: (newContent: ResumeContent) => void;
   updateSettings: (partial: PatchFormatSettingsBody) => void;
   setPreviewType: (type: ExportFormat) => void;
@@ -85,13 +84,18 @@ export function useVacancyGeneration(
   const settingsAutoSaveDelay = 200;
 
   const store = useVacancyStore();
-  const { getCurrentGeneration, getDisplayGenerationContent, getSavingGeneration } =
-    storeToRefs(store);
-  const formatSettingsStore = useFormatSettingsStore();
+  const {
+    getCurrentGeneration,
+    getCurrentGenerationId,
+    getDisplayGenerationContent,
+    getSavingGeneration
+  } = storeToRefs(store);
+  const generationFormatSettingsStore = useGenerationFormatSettingsStore();
   const { saveGenerationContent, updateGenerationContent, invalidateGenerationSaves } = store;
-  const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
-    storeToRefs(formatSettingsStore);
-  const { fetchSettings, setPreviewType } = formatSettingsStore;
+  const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } = storeToRefs(
+    generationFormatSettingsStore
+  );
+  const { setPreviewType } = generationFormatSettingsStore;
 
   // =========================================
   // Undo/Redo + Auto-save via shared history
@@ -104,19 +108,30 @@ export function useVacancyGeneration(
   };
 
   const history = useResumeEditHistory({
-    resumeId: () => store.currentGenerationId,
+    resumeId: () => getCurrentGenerationId.value,
     getContent: () => store.getDisplayGenerationContent,
-    getSettings: () => ({ ats: formatSettingsStore.ats, human: formatSettingsStore.human }),
+    getSettings: () => ({
+      ats: getAtsSettings.value,
+      human: getHumanSettings.value
+    }),
     setContent: newContent => store.updateGenerationContent(newContent),
-    setSettings: newSettings => formatSettingsStore.setFullSettings(newSettings),
+    setSettings: newSettings => generationFormatSettingsStore.setFullSettings(newSettings),
     debounceDelay: autoSaveDelay,
     settingsDebounceDelay: settingsAutoSaveDelay,
     autoSnapshot: autoSave,
     autoSave: autoSave
       ? {
           save: () => store.saveGenerationContent(vacancyId),
-          saveSettingsPatch: partial => formatSettingsStore.patchSettings(partial),
-          saveSettingsFull: () => formatSettingsStore.putSettings(),
+          saveSettingsPatch: partial => {
+            const generationId = getCurrentGenerationId.value;
+            if (!generationId) return Promise.resolve();
+            return generationFormatSettingsStore.patchSettings(vacancyId, generationId, partial);
+          },
+          saveSettingsFull: () => {
+            const generationId = getCurrentGenerationId.value;
+            if (!generationId) return Promise.resolve();
+            return generationFormatSettingsStore.putSettings(vacancyId, generationId);
+          },
           isSaving: () => getSavingGeneration.value,
           onError: error => {
             toast.add({
@@ -138,9 +153,16 @@ export function useVacancyGeneration(
    */
   async function fetchGeneration(): Promise<VacanciesResumeGeneration> {
     const payload = await store.fetchLatestGeneration(vacancyId);
-    if (payload.generation) {
-      store.setCurrentGeneration(payload.generation);
+    const generation = payload.generation;
+
+    if (!generation || !payload.formatSettings) {
+      store.setCurrentGeneration(null);
+      generationFormatSettingsStore.resetSettings();
+      return payload;
     }
+
+    store.setCurrentGeneration(generation);
+    generationFormatSettingsStore.setFullSettings(payload.formatSettings);
     return payload;
   }
 
@@ -157,7 +179,7 @@ export function useVacancyGeneration(
   };
 
   const updateSettings = (partial: PatchFormatSettingsBody): void => {
-    formatSettingsStore.updateSettings(partial);
+    generationFormatSettingsStore.updateSettings(partial);
     history.queueSettingsAutosave(partial);
   };
 
@@ -171,9 +193,12 @@ export function useVacancyGeneration(
 
     const restored = history.restoreInitialSnapshot();
     if (restored) {
+      const generationId = getCurrentGenerationId.value;
       const results = await Promise.allSettled([
         store.saveGenerationContent(vacancyId),
-        formatSettingsStore.putSettings()
+        generationId
+          ? generationFormatSettingsStore.putSettings(vacancyId, generationId)
+          : Promise.resolve()
       ]);
 
       const rejectedResult = results.find(
@@ -195,7 +220,7 @@ export function useVacancyGeneration(
     content: getDisplayGenerationContent,
     isDirty: history.isDirty,
 
-    // Settings (from format settings store)
+    // Settings (from generation format settings store)
     previewType: getPreviewType,
     currentSettings: getCurrentSettings,
     atsSettings: getAtsSettings,
@@ -208,7 +233,6 @@ export function useVacancyGeneration(
 
     // Actions
     fetchGeneration,
-    fetchSettings,
     updateContent,
     updateSettings,
     setPreviewType,

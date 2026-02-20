@@ -14,8 +14,9 @@
 </template>
 
 <script setup lang="ts">
-import type { ExportFormat, ResumeContent, SpacingSettings } from '@int/schema';
+import type { PdfPayload } from '../../infrastructure/pdf.api';
 import { EXPORT_FORMAT_MAP } from '@int/schema';
+import { pdfApi } from '../../infrastructure/pdf.api';
 
 defineOptions({ name: 'PdfPreviewPage' });
 
@@ -23,23 +24,13 @@ definePageMeta({
   layout: false
 });
 
-type PdfPayload = {
-  format: ExportFormat;
-  content: ResumeContent;
-  settings?: Partial<SpacingSettings>;
-  photoUrl?: string;
-  filename?: string;
-};
-
 const route = useRoute();
 const token = computed(() => (typeof route.query.token === 'string' ? route.query.token : ''));
 
 const { data, pending } = await useAsyncData<PdfPayload | true>('pdf-preview', async () => {
   if (!token.value) return true;
 
-  return await useApi('/api/pdf/payload', {
-    query: { token: token.value }
-  });
+  return await pdfApi.fetchPayload(token.value);
 });
 
 const payload = computed(() => {

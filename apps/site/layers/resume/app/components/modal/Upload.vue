@@ -8,6 +8,9 @@
     <template #body>
       <div class="p-4">
         <ResumeFormUpload
+          :replace-resume-id="replaceResumeId"
+          :show-title-input="isAddNewFlow"
+          :require-title="isAddNewFlow"
           @success="handleSuccess"
           @error="handleError"
           @create-from-scratch="handleCreateFromScratch"
@@ -31,9 +34,13 @@ import type { Resume } from '@int/schema';
 
 type ResumeUploadModalClosePayload =
   | { action: 'uploaded'; resume: Resume }
-  | { action: 'create-from-scratch' };
+  | { action: 'create-from-scratch'; title?: string };
 
 defineOptions({ name: 'ResumeModalUpload' });
+
+const props = defineProps<{
+  replaceResumeId?: string;
+}>();
 
 const emit = defineEmits<{
   /** Close modal with action payload */
@@ -43,6 +50,7 @@ const emit = defineEmits<{
 }>();
 
 const isOpen = defineModel<boolean>('open', { default: false });
+const isAddNewFlow = computed(() => !props.replaceResumeId);
 
 function handleSuccess(resume: Resume) {
   emit('close', {
@@ -55,9 +63,10 @@ function handleError(error: Error) {
   emit('error', error);
 }
 
-function handleCreateFromScratch() {
+function handleCreateFromScratch(payload: { title?: string }) {
   emit('close', {
-    action: 'create-from-scratch'
+    action: 'create-from-scratch',
+    title: payload.title
   });
 }
 </script>

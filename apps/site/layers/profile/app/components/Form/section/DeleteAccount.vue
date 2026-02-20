@@ -73,6 +73,8 @@
  * Deletes all user data and marks user as deleted.
  */
 
+import { profileApi } from '@site/profile/app/infrastructure/profile.api';
+
 defineOptions({ name: 'ProfileFormSectionDeleteAccount' });
 
 const emit = defineEmits<{
@@ -89,9 +91,7 @@ const handleDelete = async () => {
   isDeleting.value = true;
 
   try {
-    await useApi('/api/profile/account', {
-      method: 'DELETE'
-    });
+    await profileApi.deleteAccountApi();
 
     showConfirmModal.value = false;
     emit('deleted');

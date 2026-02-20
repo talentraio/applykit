@@ -2,6 +2,8 @@ import type {
   Generation,
   GenerationScoreDetail,
   GenerationScoreDetailPayload,
+  ResumeFormatSettingsAts,
+  ResumeFormatSettingsHuman,
   Vacancy
 } from '@int/schema';
 
@@ -24,6 +26,10 @@ export type VacancyOverview = {
 export type VacanciesResumeGeneration = {
   isValid: boolean;
   generation: Generation | null;
+  formatSettings: {
+    ats: ResumeFormatSettingsAts;
+    human: ResumeFormatSettingsHuman;
+  } | null;
 };
 
 export type VacanciesScoreDetailsResponse = {

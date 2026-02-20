@@ -48,8 +48,8 @@
    - `server/routes/auth/linkedin.ts`
 
 9. **Simplify resume endpoints**:
-   - `server/api/resume/index.put.ts` — remove settings handling
-   - `server/api/resume/index.get.ts` — remove settings from response
+   - `server/api/resumes/[id].put.ts` — remove settings handling
+   - `server/api/resumes/[id].get.ts` — remove settings from response
 
 ### Phase 3: Client stores + composables
 
@@ -92,8 +92,8 @@ packages/nuxt-layer-api/server/data/schema.ts        # MODIFY
 packages/nuxt-layer-api/server/data/repositories/format-settings.ts  # NEW
 packages/nuxt-layer-api/server/api/user/format-settings.get.ts       # NEW
 packages/nuxt-layer-api/server/api/user/format-settings.patch.ts     # NEW
-packages/nuxt-layer-api/server/api/resume/index.put.ts               # MODIFY
-packages/nuxt-layer-api/server/api/resume/index.get.ts               # MODIFY
+packages/nuxt-layer-api/server/api/resumes/[id].put.ts               # MODIFY
+packages/nuxt-layer-api/server/api/resumes/[id].get.ts               # MODIFY
 packages/nuxt-layer-api/server/api/auth/register.post.ts             # MODIFY
 packages/nuxt-layer-api/server/routes/auth/google.ts                 # MODIFY
 packages/nuxt-layer-api/server/routes/auth/linkedin.ts               # MODIFY

@@ -169,6 +169,20 @@
       "when": 1771852800000,
       "tag": "0024_add_promo_role",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1771939200000,
+      "tag": "0025_messy_exiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1772025600000,
+      "tag": "0026_generation_format_settings",
+      "breakpoints": true
     }
   ]
 }

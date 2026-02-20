@@ -205,19 +205,19 @@ Implementation in `packages/nuxt-layer-api/` (package: `@int/api`).
 
 ### Modified endpoints
 
-#### `PUT /api/resume` (simplified)
+#### `PUT /api/resumes/:id` (simplified)
 
 - **Remove**: `atsSettings`, `humanSettings` from accepted body
 - **Keep**: `content`, `title` fields
 
-#### `GET /api/resume`
+#### `GET /api/resumes/:id`
 
 - **Remove**: `atsSettings`, `humanSettings` from response
 - **Note**: client fetches settings lazily via `useFormatSettingsStore` on pages that need them (`/resume`, `/vacancies/[id]/resume`)
 
 ### Deferred
 
-- `PATCH /api/resume` for content — evaluate in future iteration
+- `PATCH /api/resumes/:id` for content — evaluate in future iteration
 
 ## LLM workflows
 
@@ -267,7 +267,7 @@ No hardcoded UI strings.
 4. **Seeding**: new users get default settings on creation (from runtimeConfig)
 5. **API GET**: `GET /api/user/format-settings` returns user settings
 6. **API PATCH**: `PATCH /api/user/format-settings` accepts partial updates, deep-merges, validates, persists
-7. **Resume API**: `PUT /api/resume` and `GET /api/resume` no longer include settings fields
+7. **Resume API**: `PUT /api/resumes/:id` and `GET /api/resumes/:id` no longer include settings fields
 8. **Store**: `useFormatSettingsStore` in `_base` layer provides reactive settings to both resume and vacancy layers
 9. **Immediate save**: every settings change updates store immediately; PATCH is throttled (100-150ms)
 10. **Content auto-save**: content still auto-saves with debounce (unchanged behavior)
@@ -306,7 +306,7 @@ No hardcoded UI strings.
 
 - `GET /api/user/format-settings` — returns settings for authenticated user; 401 for unauthenticated
 - `PATCH /api/user/format-settings` — partial update merges correctly; invalid values return 422
-- `PUT /api/resume` — no longer accepts/returns settings fields
+- `PUT /api/resumes/:id` — no longer accepts/returns settings fields
 - Migration script — verifies data integrity post-migration
 
 ### E2E tests (if applicable)

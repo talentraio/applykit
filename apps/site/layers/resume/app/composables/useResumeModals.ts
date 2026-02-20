@@ -1,17 +1,33 @@
 import type { Resume } from '@int/schema';
-import { LazyResumeModalCreateFromScratch, LazyResumeModalUpload } from '#components';
+import {
+  LazyResumeEditorModalDeleteConfirm,
+  LazyResumeModalCreateFromScratch,
+  LazyResumeModalUpload
+} from '#components';
 
 const RESUME_UPLOAD_MODAL_OVERLAY_ID = 'site-resume-upload-modal';
 const RESUME_UPLOAD_MODAL_OVERLAY_OPEN_STATE_KEY = 'site-resume-upload-modal-overlay-open';
 const RESUME_CREATE_MODAL_OVERLAY_ID = 'site-resume-create-modal';
 const RESUME_CREATE_MODAL_OVERLAY_OPEN_STATE_KEY = 'site-resume-create-modal-overlay-open';
+const RESUME_DELETE_CONFIRM_MODAL_OVERLAY_ID = 'site-resume-delete-confirm-modal';
+const RESUME_DELETE_CONFIRM_MODAL_OVERLAY_OPEN_STATE_KEY =
+  'site-resume-delete-confirm-modal-overlay-open';
 
 export type ResumeUploadModalClosePayload =
   | { action: 'uploaded'; resume: Resume }
-  | { action: 'create-from-scratch' };
+  | { action: 'create-from-scratch'; title?: string };
+export type ResumeDeleteConfirmModalClosePayload =
+  | { action: 'confirmed' }
+  | { action: 'cancelled' };
 
 export type OpenResumeUploadModalOptions = {
   onError?: (error: Error) => void;
+  replaceResumeId?: string;
+};
+
+export type OpenCreateFromScratchModalOptions = {
+  replaceResumeId?: string;
+  title?: string;
 };
 
 export type UseResumeModalsComposable = {
@@ -20,8 +36,10 @@ export type UseResumeModalsComposable = {
   ) => Promise<ResumeUploadModalClosePayload | undefined>;
   openUploadFlow: (options?: OpenResumeUploadModalOptions) => Promise<void>;
   closeUploadModal: () => void;
-  openCreateFromScratchModal: () => Promise<void>;
+  openCreateFromScratchModal: (options?: OpenCreateFromScratchModalOptions) => Promise<void>;
   closeCreateFromScratchModal: () => void;
+  openDeleteConfirmModal: () => Promise<ResumeDeleteConfirmModalClosePayload | undefined>;
+  closeDeleteConfirmModal: () => void;
 };
 
 export function useResumeModals(): UseResumeModalsComposable {
@@ -33,6 +51,10 @@ export function useResumeModals(): UseResumeModalsComposable {
     RESUME_CREATE_MODAL_OVERLAY_OPEN_STATE_KEY,
     () => false
   );
+  const deleteConfirmOverlayOpen = useState<boolean>(
+    RESUME_DELETE_CONFIRM_MODAL_OVERLAY_OPEN_STATE_KEY,
+    () => false
+  );
   const uploadModalOverlay = useProgrammaticOverlay<
     typeof LazyResumeModalUpload,
     ResumeUploadModalClosePayload | undefined
@@ -42,6 +64,13 @@ export function useResumeModals(): UseResumeModalsComposable {
   });
   const createModalOverlay = useProgrammaticOverlay(LazyResumeModalCreateFromScratch, {
     id: RESUME_CREATE_MODAL_OVERLAY_ID,
+    destroyOnClose: true
+  });
+  const deleteConfirmOverlay = useProgrammaticOverlay<
+    typeof LazyResumeEditorModalDeleteConfirm,
+    ResumeDeleteConfirmModalClosePayload | undefined
+  >(LazyResumeEditorModalDeleteConfirm, {
+    id: RESUME_DELETE_CONFIRM_MODAL_OVERLAY_ID,
     destroyOnClose: true
   });
 
@@ -63,6 +92,15 @@ export function useResumeModals(): UseResumeModalsComposable {
     createModalOverlay.close();
   };
 
+  const closeDeleteConfirmModal = (): void => {
+    if (!deleteConfirmOverlayOpen.value) {
+      return;
+    }
+
+    deleteConfirmOverlayOpen.value = false;
+    deleteConfirmOverlay.close();
+  };
+
   const openUploadModal = async (
     options: OpenResumeUploadModalOptions = {}
   ): Promise<ResumeUploadModalClosePayload | undefined> => {
@@ -74,14 +112,17 @@ export function useResumeModals(): UseResumeModalsComposable {
 
     try {
       return await uploadModalOverlay.open({
-        onError: options.onError
+        onError: options.onError,
+        replaceResumeId: options.replaceResumeId
       });
     } finally {
       uploadOverlayOpen.value = false;
     }
   };
 
-  const openCreateFromScratchModal = async (): Promise<void> => {
+  const openCreateFromScratchModal = async (
+    options: OpenCreateFromScratchModalOptions = {}
+  ): Promise<void> => {
     if (createOverlayOpen.value) {
       return;
     }
@@ -89,16 +130,38 @@ export function useResumeModals(): UseResumeModalsComposable {
     createOverlayOpen.value = true;
 
     try {
-      await createModalOverlay.open();
+      await createModalOverlay.open({
+        replaceResumeId: options.replaceResumeId,
+        title: options.title
+      });
     } finally {
       createOverlayOpen.value = false;
+    }
+  };
+
+  const openDeleteConfirmModal = async (): Promise<
+    ResumeDeleteConfirmModalClosePayload | undefined
+  > => {
+    if (deleteConfirmOverlayOpen.value) {
+      return undefined;
+    }
+
+    deleteConfirmOverlayOpen.value = true;
+
+    try {
+      return await deleteConfirmOverlay.open();
+    } finally {
+      deleteConfirmOverlayOpen.value = false;
     }
   };
 
   const openUploadFlow = async (options: OpenResumeUploadModalOptions = {}): Promise<void> => {
     const result = await openUploadModal(options);
     if (result?.action === 'create-from-scratch') {
-      await openCreateFromScratchModal();
+      await openCreateFromScratchModal({
+        replaceResumeId: options.replaceResumeId,
+        title: result.title
+      });
     }
   };
 
@@ -107,6 +170,8 @@ export function useResumeModals(): UseResumeModalsComposable {
     openUploadFlow,
     closeUploadModal,
     openCreateFromScratchModal,
-    closeCreateFromScratchModal
+    closeCreateFromScratchModal,
+    openDeleteConfirmModal,
+    closeDeleteConfirmModal
   };
 }

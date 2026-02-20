@@ -37,5 +37,36 @@ export const profileApi = {
     });
 
     return response.complete;
+  },
+
+  /**
+   * Upload profile photo.
+   */
+  async uploadPhotoApi(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return await useApi(`${profileUrl}/photo`, {
+      method: 'POST',
+      body: formData
+    });
+  },
+
+  /**
+   * Delete profile photo.
+   */
+  async deletePhotoApi() {
+    return await useApi(`${profileUrl}/photo`, {
+      method: 'DELETE'
+    });
+  },
+
+  /**
+   * Delete current account and related data.
+   */
+  async deleteAccountApi() {
+    return await useApi(`${profileUrl}/account`, {
+      method: 'DELETE'
+    });
   }
 };

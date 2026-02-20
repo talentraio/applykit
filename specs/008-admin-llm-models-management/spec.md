@@ -234,7 +234,7 @@ All endpoints follow Nuxt/Nitro conventions under `packages/nuxt-layer-api/serve
 ### Runtime impact
 
 - Existing parse/generate endpoints remain stable:
-  - `POST /api/resume`
+  - `POST /api/resumes`
   - `POST /api/vacancies/:id/generate`
 - BYOK request contract is removed:
   - no `x-api-key` handling in parse/generate flows

@@ -1,20 +1,21 @@
-/**
- * Typed API client composable
- *
- * Thin wrapper around $api plugin that preserves full type inference from Nitro API routes.
- *
- * Usage:
- * ```ts
- * const data = await useApi('/api/resumes') // infers Resume[] from endpoint
- * ```
- */
-export const useApi = <
+import type {
+  ExtractedRouteMethod,
+  NitroFetchOptions,
+  NitroFetchRequest,
+  TypedInternalResponse
+} from 'nitropack';
+
+export const useApi = async <
   T = unknown,
-  R extends string = string,
-  O extends Record<string, any> = Record<string, any>
+  R extends NitroFetchRequest = NitroFetchRequest,
+  O extends NitroFetchOptions<R> = NitroFetchOptions<R>
 >(
-  ...args: Parameters<typeof $fetch<T, R, O>>
-): ReturnType<typeof $fetch<T, R, O>> => {
+  request: R,
+  opts?: O
+): Promise<
+  TypedInternalResponse<R, T, NitroFetchOptions<R> extends O ? 'get' : ExtractedRouteMethod<R, O>>
+> => {
   const nuxtApp = useNuxtApp();
-  return nuxtApp.$api(...args);
+
+  return await nuxtApp.$api(request, opts);
 };

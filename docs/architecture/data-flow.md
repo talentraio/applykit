@@ -4,16 +4,16 @@
 
 - `User`
 - `Profile` (contact and job-search preferences)
-- `Resume` (single base resume per user)
+- `Resume` (multiple base resumes per user, one default)
 - `ResumeVersion` (snapshot history when base content changes)
-- `UserFormatSettings` (user-level ATS/Human formatting preferences)
+- `ResumeFormatSettings` (per-resume ATS/Human formatting preferences)
 - `Vacancy` (user-owned target job)
 - `Generation` (tailored resume output per vacancy)
 - `GenerationScoreDetail` (on-demand detailed scoring payload)
 
 ## Resume creation and parsing
 
-`POST /api/resume` supports two modes:
+`POST /api/resumes` supports two modes:
 
 1. Multipart upload (DOCX/PDF)
 2. JSON import (`ResumeContent`)
@@ -23,12 +23,13 @@ Upload flow:
 1. User uploads DOCX/PDF.
 2. Server parses document text.
 3. LLM parse service returns structured `ResumeContent`.
-4. Output is validated and persisted as the user's base resume.
+4. Output is validated and persisted as a base resume.
 
-Single-resume behavior:
+Multi-resume behavior:
 
-- The user keeps one base resume.
-- New uploads/imports replace base resume data.
+- A user can keep multiple base resumes.
+- New uploads/imports create a new resume by default.
+- `replaceResumeId` can replace base data for an existing owned resume.
 
 ## Vacancy lifecycle
 
@@ -65,7 +66,7 @@ Generation behavior:
 
 ## Resume editing and generation editing
 
-- Base resume update: `PUT /api/resume`.
+- Base resume update: `PUT /api/resumes/:id`.
   - Content updates create version snapshots.
 - Tailored generation update: `PUT /api/vacancies/:id/generation`.
   - Allows manual edits to generated content.
@@ -98,15 +99,14 @@ Behavior:
 
 Entity:
 
-- Stored separately from resume in `user_format_settings`.
+- Stored separately from resume in `resume_format_settings`.
 - Shape: `{ ats, human }` where each branch has `spacing + localization`.
 
 Flow:
 
-1. UI requests `GET /api/user/format-settings`.
+1. UI requests `GET /api/resumes/:id/format-settings`.
 2. Server auto-seeds defaults if row is missing.
-3. UI saves incremental changes via `PATCH /api/user/format-settings`.
-4. Full replace path exists via `PUT /api/user/format-settings`.
+3. UI saves incremental changes via `PATCH /api/resumes/:id/format-settings`.
 
 ## Preferences lifecycle
 

@@ -44,21 +44,21 @@ Locations:
 ```ts
 // apps/site/layers/resume/app/infrastructure/resume.api.ts
 export const resumeApi = {
-  async getCurrent() {
-    return await useApi('/api/resume', { method: 'GET' });
+  async fetchList() {
+    return await useApi('/api/resumes', { method: 'GET' });
   },
-  async update(payload: { content?: unknown; title?: string }) {
-    return await useApi('/api/resume', { method: 'PUT', body: payload });
+  async fetchById(id: string) {
+    return await useApi(`/api/resumes/${id}`, { method: 'GET' });
   }
 };
 
 // store action
 export const useResumeStore = defineStore('ResumeStore', {
   actions: {
-    async fetchResume() {
-      const data = await resumeApi.getCurrent();
-      this.resume = data;
-      return data;
+    async fetchResumeList() {
+      const data = await resumeApi.fetchList();
+      this.resumeList = data.items;
+      return data.items;
     }
   }
 });
@@ -92,7 +92,7 @@ Avoid `onMounted` for data required on first paint.
 
 ```ts
 // Bad: bypassing transport conventions
-await $fetch('/api/resume');
+await $fetch('/api/resumes');
 
 // Bad: duplicating shared domain state in local refs
 const resume = ref(null);

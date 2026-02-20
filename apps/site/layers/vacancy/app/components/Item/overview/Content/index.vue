@@ -19,6 +19,7 @@
       :can-generate-resume="canGenerateResume"
       :resume-to="resumeTo"
       :cover-to="coverTo"
+      :resume-picker-items="resumePickerItems"
       @generate="handleGenerate"
     />
 
@@ -65,10 +66,12 @@ const { t } = useI18n();
 const toast = useToast();
 const route = useRoute();
 const vacancyStore = useVacancyStore();
+const resumeStore = useResumeStore();
 const authStore = useAuthStore();
 const { openProfileIncompleteModal } = useProfileIncompleteModal();
-const { currentVacancy, overviewLatestGeneration, overviewCanGenerateResume } =
+const { getCurrentVacancy, getOverviewLatestGeneration, getCanGenerateResume } =
   storeToRefs(vacancyStore);
+const { resumeList } = storeToRefs(resumeStore);
 const isGenerating = ref(false);
 const isUpdatingStatus = ref(false);
 
@@ -77,13 +80,23 @@ const vacancyId = computed(() => {
   return Array.isArray(id) ? (id[0] ?? '') : (id ?? '');
 });
 
-const vacancy = computed(() => currentVacancy.value);
+const vacancy = computed(() => getCurrentVacancy.value);
+const overviewLatestGeneration = computed(() => getOverviewLatestGeneration.value);
 const hasGeneration = computed(() => overviewLatestGeneration.value !== null);
-const canGenerateResume = computed(() => overviewCanGenerateResume.value);
+const canGenerateResume = computed(() => getCanGenerateResume.value);
 const resumeTo = computed(() => `/vacancies/${vacancyId.value}/resume`);
 const coverTo = computed(() => `/vacancies/${vacancyId.value}/cover`);
+const resumePickerItems = computed(() => {
+  return [...resumeList.value]
+    .sort((first, second) => Number(second.isDefault) - Number(first.isDefault))
+    .map(item => ({
+      id: item.id,
+      label: item.name,
+      isDefault: item.isDefault
+    }));
+});
 
-const handleGenerate = async () => {
+const handleGenerate = async (selectedResumeId?: string) => {
   if (!vacancyId.value) return;
 
   // Check profile completeness before generating
@@ -97,7 +110,10 @@ const handleGenerate = async () => {
   isGenerating.value = true;
 
   try {
-    await vacancyStore.generateResume(vacancyId.value);
+    await vacancyStore.generateResume(
+      vacancyId.value,
+      selectedResumeId ? { resumeId: selectedResumeId } : undefined
+    );
     await navigateTo(`/vacancies/${vacancyId.value}/resume`);
   } catch {
     toast.add({

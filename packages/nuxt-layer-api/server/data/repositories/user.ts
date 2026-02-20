@@ -21,6 +21,7 @@ type UserRow = {
   legalVersion: string | null;
   role: Role;
   status: UserStatus;
+  defaultResumeId: string | null;
   createdAt: Date | string | null;
   updatedAt: Date | string | null;
   lastLoginAt?: Date | string | null;
@@ -42,6 +43,7 @@ const baseSelectFields = {
   legalVersion: users.legalVersion,
   role: users.role,
   status: users.status,
+  defaultResumeId: users.defaultResumeId,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
   lastLoginAt: users.lastLoginAt,
@@ -77,6 +79,7 @@ const normalizeUserRow = (row: UserRow): User => {
     passwordResetExpires: normalizeOptionalDate(row.passwordResetExpires),
     termsAcceptedAt: normalizeOptionalDate(row.termsAcceptedAt),
     legalVersion: row.legalVersion,
+    defaultResumeId: row.defaultResumeId ?? null,
     createdAt: normalizeRequiredDate(row.createdAt),
     updatedAt: normalizeRequiredDate(row.updatedAt),
     lastLoginAt: normalizeOptionalDate(row.lastLoginAt ?? null),
@@ -578,5 +581,31 @@ export const userRepository = {
     const result = await query.where(eq(users.email, email)).limit(1);
     const user = result[0];
     return user ? normalizeUserRow(user) : null;
+  },
+
+  // ============================================================================
+  // Default Resume Methods
+  // ============================================================================
+
+  /**
+   * Get user's default resume ID
+   */
+  async getDefaultResumeId(userId: string): Promise<string | null> {
+    const result = await db
+      .select({ defaultResumeId: users.defaultResumeId })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return result[0]?.defaultResumeId ?? null;
+  },
+
+  /**
+   * Update user's default resume ID
+   */
+  async updateDefaultResumeId(userId: string, resumeId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ defaultResumeId: resumeId, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 };

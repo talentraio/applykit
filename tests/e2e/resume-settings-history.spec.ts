@@ -1,9 +1,12 @@
 import type { Page, Request } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
-const waitForFormatSettingsRequest = (page: Page, method: 'PATCH' | 'PUT') =>
+const waitForFormatSettingsRequest = (page: Page, method: 'PATCH') =>
   page.waitForRequest(
-    request => request.url().includes('/api/user/format-settings') && request.method() === method,
+    request =>
+      request.url().includes('/api/resumes/') &&
+      request.url().includes('/format-settings') &&
+      request.method() === method,
     { timeout: 10000 }
   );
 
@@ -66,7 +69,7 @@ const registerAndOpenResumeEditor = async (page: Page) => {
   ).toBe(true);
 
   const createResumeResult = await page.evaluate(async resumeEmail => {
-    const response = await fetch('/api/resume', {
+    const response = await fetch('/api/resumes', {
       method: 'POST',
       headers: {
         'content-type': 'application/json'
@@ -106,7 +109,7 @@ const registerAndOpenResumeEditor = async (page: Page) => {
 };
 
 test.describe('Resume settings autosave and history', () => {
-  test('should keep PATCH/PUT semantics for autosave, undo/redo and cancel', async ({ page }) => {
+  test('should keep PATCH semantics for autosave, undo/redo and cancel', async ({ page }) => {
     await registerAndOpenResumeEditor(page);
 
     const toolsPanel = page.locator('.resume-editor-tools');
@@ -145,32 +148,32 @@ test.describe('Resume settings autosave and history', () => {
     const redoButton = page.getByRole('button', { name: 'Redo' });
 
     await expect(undoButton).toBeEnabled();
-    const undoPutRequestPromise = waitForFormatSettingsRequest(page, 'PUT');
+    const undoPatchRequestPromise = waitForFormatSettingsRequest(page, 'PATCH');
     await undoButton.click();
-    const undoPutBody = parseRequestBody(await undoPutRequestPromise);
+    const undoPatchBody = parseRequestBody(await undoPatchRequestPromise);
 
-    expect(undoPutBody).toHaveProperty('ats');
-    expect(undoPutBody).toHaveProperty('human');
+    expect(undoPatchBody).toHaveProperty('ats');
+    expect(undoPatchBody).toHaveProperty('human');
     await expect(slider).toHaveAttribute('aria-valuenow', initialValue ?? '');
 
     await expect(redoButton).toBeEnabled();
-    const redoPutRequestPromise = waitForFormatSettingsRequest(page, 'PUT');
+    const redoPatchRequestPromise = waitForFormatSettingsRequest(page, 'PATCH');
     await redoButton.click();
-    const redoPutBody = parseRequestBody(await redoPutRequestPromise);
+    const redoPatchBody = parseRequestBody(await redoPatchRequestPromise);
 
-    expect(redoPutBody).toHaveProperty('ats');
-    expect(redoPutBody).toHaveProperty('human');
+    expect(redoPatchBody).toHaveProperty('ats');
+    expect(redoPatchBody).toHaveProperty('human');
     await expect(slider).toHaveAttribute('aria-valuenow', changedValue ?? '');
 
     const cancelButton = page.getByRole('button', { name: 'Cancel' });
     await expect(cancelButton).toBeVisible();
 
-    const cancelPutRequestPromise = waitForFormatSettingsRequest(page, 'PUT');
+    const cancelPatchRequestPromise = waitForFormatSettingsRequest(page, 'PATCH');
     await cancelButton.click();
-    const cancelPutBody = parseRequestBody(await cancelPutRequestPromise);
+    const cancelPatchBody = parseRequestBody(await cancelPatchRequestPromise);
 
-    expect(cancelPutBody).toHaveProperty('ats');
-    expect(cancelPutBody).toHaveProperty('human');
+    expect(cancelPatchBody).toHaveProperty('ats');
+    expect(cancelPatchBody).toHaveProperty('human');
     await expect(slider).toHaveAttribute('aria-valuenow', initialValue ?? '');
     await expect(undoButton).toBeDisabled();
   });

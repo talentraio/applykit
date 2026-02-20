@@ -92,13 +92,12 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 const queryParamsModel = defineModel<VacancyListQuery>('queryParams', { required: true });
 const vacancyStore = useVacancyStore();
+const { getColumnVisibility } = storeToRefs(vacancyStore);
 const { isMobile } = useDevice();
 
 const rowSelectionModel = ref<RowSelectionState>({});
 const columnVisibilityModel = ref<VisibilityState>(
-  vacancyStore.vacancyListResponse?.columnVisibility
-    ? { ...vacancyStore.vacancyListResponse.columnVisibility }
-    : {}
+  getColumnVisibility.value ? { ...getColumnVisibility.value } : {}
 );
 const mobileVacancies = ref<Vacancy[]>([...vacancyStore.vacancies]);
 const isLoadingMoreMobile = ref(false);

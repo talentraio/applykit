@@ -74,18 +74,19 @@ import type { ResumeContent, SpacingSettings } from '@int/schema';
 import type { ResumeEditorTabItem } from '@site/resume/app/types/editor';
 import type { PreviewType } from '@site/resume/app/types/preview';
 import { EXPORT_FORMAT_MAP } from '@int/schema';
+import { generationApi } from '@site/vacancy/app/infrastructure/generation.api';
 
 defineOptions({ name: 'VacancyResumePage' });
 
 // Use editor layout for full-screen editing experience (no footer)
 definePageMeta({
-  layout: 'editor'
+  layout: 'editor',
+  key: 'vacancy-resume'
 });
 
 const route = useRoute();
 const { t } = useI18n();
 const toast = useToast();
-const _vacancyStore = useVacancyStore();
 
 // Extract vacancy ID
 const vacancyId = computed(() => {
@@ -105,7 +106,6 @@ const {
   canUndo,
   canRedo,
   fetchGeneration,
-  fetchSettings,
   updateContent,
   updateSettings,
   setPreviewType,
@@ -189,10 +189,7 @@ const handleDismissAlert = async (): Promise<void> => {
   if (!generation.value) return;
 
   try {
-    await useApi(`/api/vacancies/${vacancyId.value}/generation/dismiss-score-alert`, {
-      method: 'PATCH',
-      body: { generationId: generation.value.id }
-    });
+    await generationApi.dismissScoreAlert(vacancyId.value, generation.value.id);
 
     // Refresh generation to get updated scoreAlertDismissedAt
     await fetchGeneration();
@@ -201,23 +198,20 @@ const handleDismissAlert = async (): Promise<void> => {
   }
 };
 
-// Fetch generation and settings on mount
-const { pending } = await useAsyncData(`vacancy-resume-${vacancyId.value}`, async () => {
-  const [generationResult, settingsResult] = await Promise.allSettled([
-    fetchGeneration(),
-    fetchSettings()
-  ]);
-
-  if (generationResult.status === 'rejected') {
-    showErrorToast(t('vacancy.resume.fetchFailed'), generationResult.reason);
-  }
-
-  if (settingsResult.status === 'rejected') {
-    showErrorToast(t('resume.error.settingsUpdateFailed'), settingsResult.reason);
-  }
-
-  return generationResult.status === 'fulfilled' && settingsResult.status === 'fulfilled';
-});
+// Fetch generation (with generation-specific settings) on mount
+const { pending } = await useAsyncData(
+  'vacancy-resume',
+  async () => {
+    try {
+      await fetchGeneration();
+      return true;
+    } catch (error) {
+      showErrorToast(t('vacancy.resume.fetchFailed'), error);
+      return false;
+    }
+  },
+  { watch: [vacancyId] }
+);
 const pageLoading = computed(() => !generation.value && pending.value);
 </script>
 
