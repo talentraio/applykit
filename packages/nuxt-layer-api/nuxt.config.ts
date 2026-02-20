@@ -27,6 +27,7 @@ export default defineNuxtConfig({
     llm: {
       openaiApiKey: '',
       geminiApiKey: '',
+      debugLogs: false,
       openaiPromptCache: {
         enabled: process.env.NUXT_LLM_OPENAI_PROMPT_CACHE_ENABLED !== 'false',
         minPrefixTokens: Number(
