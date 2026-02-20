@@ -1,7 +1,7 @@
 -- Feature 014: Multiple Base Resumes
 -- DDL: create resume_format_settings, add name to resumes, add default_resume_id to users
 
-CREATE TABLE "resume_format_settings" (
+CREATE TABLE IF NOT EXISTS "resume_format_settings" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"resume_id" uuid NOT NULL,
 	"ats" jsonb NOT NULL,
@@ -11,13 +11,28 @@ CREATE TABLE "resume_format_settings" (
 	CONSTRAINT "resume_format_settings_resume_id_unique" UNIQUE("resume_id")
 );
 --> statement-breakpoint
-ALTER TABLE "resumes" ADD COLUMN "name" varchar(255) DEFAULT '' NOT NULL;--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "default_resume_id" uuid;--> statement-breakpoint
-ALTER TABLE "resume_format_settings" ADD CONSTRAINT "resume_format_settings_resume_id_resumes_id_fk" FOREIGN KEY ("resume_id") REFERENCES "public"."resumes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "idx_resume_format_settings_resume_id" ON "resume_format_settings" USING btree ("resume_id");--> statement-breakpoint
+ALTER TABLE "resumes" ADD COLUMN IF NOT EXISTS "name" varchar(255) DEFAULT '' NOT NULL;--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "default_resume_id" uuid;--> statement-breakpoint
+DO $$ BEGIN
+	IF NOT EXISTS (
+		SELECT 1
+		FROM pg_constraint
+		WHERE conname = 'resume_format_settings_resume_id_resumes_id_fk'
+	) THEN
+		ALTER TABLE "resume_format_settings"
+		ADD CONSTRAINT "resume_format_settings_resume_id_resumes_id_fk"
+		FOREIGN KEY ("resume_id")
+		REFERENCES "public"."resumes"("id")
+		ON DELETE cascade
+		ON UPDATE no action;
+	END IF;
+END $$;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_resume_format_settings_resume_id" ON "resume_format_settings" USING btree ("resume_id");--> statement-breakpoint
 
 -- Data migration: backfill resume name from created_at date
-UPDATE "resumes" SET "name" = TO_CHAR("created_at", 'DD.MM.YYYY') WHERE "name" = '';--> statement-breakpoint
+UPDATE "resumes"
+SET "name" = TO_CHAR("created_at", 'DD.MM.YYYY')
+WHERE COALESCE("name", '') = '';--> statement-breakpoint
 
 -- Data migration: set default_resume_id to most recent resume per user
 UPDATE "users" u SET "default_resume_id" = (
