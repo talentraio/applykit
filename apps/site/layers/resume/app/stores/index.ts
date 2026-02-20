@@ -12,6 +12,8 @@ import { EXPORT_FORMAT_MAP } from '@int/schema';
 import { resumeApi } from '@site/resume/app/infrastructure/resume.api';
 import { RESUME_EDITOR_TABS_MAP } from '../constants';
 
+const DEFAULT_RESUME_UPLOAD_TITLE = 'My Resume';
+
 /**
  * Resume Store
  *
@@ -170,7 +172,18 @@ export const useResumeStore = defineStore('ResumeStore', {
       title?: string,
       replaceResumeId?: string
     ): Promise<ResumeWithFormatSettings> {
-      const resume = await resumeApi.upload(file, title, replaceResumeId);
+      let uploadTitle = typeof title === 'string' ? title.trim() : '';
+
+      if (!replaceResumeId && uploadTitle.length === 0) {
+        await this.fetchResumeList();
+        uploadTitle = this._buildUniqueUploadTitle(file.name);
+      }
+
+      const resume = await resumeApi.upload(
+        file,
+        uploadTitle.length > 0 ? uploadTitle : undefined,
+        replaceResumeId
+      );
       const fullResume = await this.fetchResumeById(resume.id, { force: true });
 
       // Refresh resume list after upload
@@ -512,6 +525,53 @@ export const useResumeStore = defineStore('ResumeStore', {
           resume: structuredClone(resume)
         });
       }
+    },
+
+    /**
+     * Build unique resume title for upload flow.
+     * Uses file name (without extension) and appends numeric suffix on collisions.
+     */
+    _buildUniqueUploadTitle(fileName: string): string {
+      const baseName = this._extractTitleFromFileName(fileName);
+      const normalizedBaseName = baseName.trim();
+
+      if (normalizedBaseName.length === 0) {
+        return DEFAULT_RESUME_UPLOAD_TITLE;
+      }
+
+      const existingNames = new Set(
+        this.resumeList
+          .map(item => item.name.trim().toLocaleLowerCase())
+          .filter(name => name.length > 0)
+      );
+
+      const baseNameLower = normalizedBaseName.toLocaleLowerCase();
+      if (!existingNames.has(baseNameLower)) {
+        return normalizedBaseName;
+      }
+
+      let suffix = 1;
+      let candidate = `${normalizedBaseName} (${suffix})`;
+
+      while (existingNames.has(candidate.toLocaleLowerCase())) {
+        suffix += 1;
+        candidate = `${normalizedBaseName} (${suffix})`;
+      }
+
+      return candidate;
+    },
+
+    /**
+     * Extract file name without extension for default resume title.
+     */
+    _extractTitleFromFileName(fileName: string): string {
+      const normalizedFileName = fileName.trim();
+      if (normalizedFileName.length === 0) {
+        return DEFAULT_RESUME_UPLOAD_TITLE;
+      }
+
+      const withoutExtension = normalizedFileName.replace(/\.[^.]+$/u, '').trim();
+      return withoutExtension.length > 0 ? withoutExtension : DEFAULT_RESUME_UPLOAD_TITLE;
     },
 
     // =========================================
