@@ -13,38 +13,6 @@
           class="resume-editor-tools__tab-content"
         >
           <ResumeForm v-if="contentModel" v-model="contentModel" />
-
-          <ResumeEditorDefaultToggle
-            v-if="showDefaultToggle"
-            :resume-id="resolvedResumeId"
-            :is-default="isDefaultResume"
-            class="mt-6"
-          />
-
-          <div v-if="contentModel && showUploadNew" class="resume-editor-tools__tab-actions mt-10">
-            <UButton
-              v-if="showDeleteButton"
-              variant="outline"
-              color="error"
-              size="lg"
-              icon="i-lucide-trash-2"
-              square
-              :aria-label="$t('resume.page.deleteResume')"
-              @click="emit('delete')"
-            />
-            <UButton
-              variant="outline"
-              color="neutral"
-              size="lg"
-              icon="i-lucide-copy"
-              @click="emit('duplicate')"
-            >
-              {{ $t('resume.page.duplicateResume') }}
-            </UButton>
-            <UButton variant="outline" color="warning" size="lg" @click="emit('uploadNew')">
-              {{ $t('resume.page.clearAndCreateNew') }}
-            </UButton>
-          </div>
         </div>
 
         <div
@@ -74,38 +42,6 @@
         class="resume-editor-tools__tab-content"
       >
         <ResumeForm v-if="contentModel" v-model="contentModel" />
-
-        <ResumeEditorDefaultToggle
-          v-if="showDefaultToggle"
-          :resume-id="resolvedResumeId"
-          :is-default="isDefaultResume"
-          class="mt-6"
-        />
-
-        <div v-if="contentModel && showUploadNew" class="resume-editor-tools__tab-actions mt-10">
-          <UButton
-            v-if="showDeleteButton"
-            variant="outline"
-            color="error"
-            size="lg"
-            icon="i-lucide-trash-2"
-            square
-            :aria-label="$t('resume.page.deleteResume')"
-            @click="emit('delete')"
-          />
-          <UButton
-            variant="outline"
-            color="neutral"
-            size="lg"
-            icon="i-lucide-copy"
-            @click="emit('duplicate')"
-          >
-            {{ $t('resume.page.duplicateResume') }}
-          </UButton>
-          <UButton variant="outline" color="warning" size="lg" @click="emit('uploadNew')">
-            {{ $t('resume.page.clearAndCreateNew') }}
-          </UButton>
-        </div>
       </div>
 
       <div
@@ -142,35 +78,20 @@ const props = withDefaults(
   defineProps<{
     items: ResumeEditorTabItem[];
     previewType: PreviewType;
-    showUploadNew?: boolean;
     resumeId?: string;
     resumeName?: string | null;
-    isDefaultResume?: boolean;
   }>(),
   {
-    showUploadNew: false,
     resumeId: undefined,
-    resumeName: null,
-    isDefaultResume: false
+    resumeName: null
   }
 );
-
-const emit = defineEmits<{
-  uploadNew: [];
-  duplicate: [];
-  delete: [];
-}>();
 
 const activeTab = defineModel<string>({ required: true });
 const contentModel = defineModel<ResumeContent | null>('content', { default: null });
 const settingsModel = defineModel<SpacingSettings>('settings', { required: true });
 const showTabs = computed(() => props.items.length > 1);
 const singleTabValue = computed(() => props.items[0]?.value ?? RESUME_EDITOR_TABS_MAP.EDIT);
-const showDefaultToggle = computed(
-  () => props.showUploadNew && !!props.resumeId && contentModel.value !== null
-);
-const showDeleteButton = computed(() => showDefaultToggle.value && !props.isDefaultResume);
-const resolvedResumeId = computed(() => props.resumeId ?? '');
 const tabsUi = {
   // Use trigger-based active styles instead of indicator positioning to avoid SSR-to-hydration color flash.
   indicator: 'hidden',
@@ -228,13 +149,6 @@ watch(
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-  }
-
-  &__tab-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    flex-wrap: wrap;
   }
 }
 </style>

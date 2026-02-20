@@ -1,20 +1,27 @@
 <template>
   <div class="resume-editor-selector">
-    <USelectMenu
-      v-model="selectedResumeId"
-      :items="selectorItems"
-      value-key="id"
-      :placeholder="$t('resume.page.selectResume')"
-      :search-input="false"
-      icon="i-lucide-file-text"
-      class="resume-editor-selector__select"
-    >
-      <template #item-trailing="{ item }">
-        <UBadge v-if="item.isDefault" variant="subtle" color="primary" size="xs">
-          {{ $t('resume.page.defaultBadge') }}
-        </UBadge>
-      </template>
-    </USelectMenu>
+    <div class="resume-editor-selector__row">
+      <USelectMenu
+        v-model="selectedResumeId"
+        :items="selectorItems"
+        value-key="id"
+        :placeholder="$t('resume.page.selectResume')"
+        :search-input="false"
+        :disabled="isSelectorDisabled"
+        icon="i-lucide-file-text"
+        class="resume-editor-selector__select"
+      >
+        <template #item-trailing="{ item }">
+          <UBadge v-if="item.isDefault" variant="subtle" color="primary" size="xs">
+            {{ $t('resume.page.defaultBadge') }}
+          </UBadge>
+        </template>
+      </USelectMenu>
+
+      <div v-if="$slots.actions" class="resume-editor-selector__actions">
+        <slot name="actions" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -38,6 +45,8 @@ const props = defineProps<{
   resumeId: string;
   /** List of user's resumes */
   resumeList: ResumeListItem[];
+  /** Disable selector explicitly */
+  disabled?: boolean;
 }>();
 
 const router = useRouter();
@@ -56,10 +65,14 @@ const selectorItems = computed<SelectorItem[]>(() => {
   }));
 });
 
+const isSelectorDisabled = computed(
+  () => (props.disabled ?? false) || props.resumeList.length <= 1
+);
+
 const selectedResumeId = computed({
   get: () => props.resumeId,
   set: (newId: string) => {
-    if (newId && newId !== props.resumeId) {
+    if (!isSelectorDisabled.value && newId && newId !== props.resumeId) {
       void router.push(`/resume/${newId}`);
     }
   }
@@ -70,8 +83,19 @@ const selectedResumeId = computed({
 .resume-editor-selector {
   padding: 0.5rem 1rem 0;
 
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   &__select {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__actions {
+    flex-shrink: 0;
   }
 }
 </style>

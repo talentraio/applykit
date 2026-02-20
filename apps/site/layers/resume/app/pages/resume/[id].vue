@@ -21,11 +21,18 @@
       <template #left>
         <div class="resume-page__left-panel">
           <ResumeEditorSelector
-            v-if="showSelector"
             :resume-id="resumeId"
             :resume-list="store.resumeList"
+            :disabled="isSelectorDisabled"
             class="resume-page__selector"
-          />
+          >
+            <template #actions>
+              <ResumeEditorSelectorMenu
+                :resume-id="resumeId"
+                :is-default-resume="isDefaultResume"
+              />
+            </template>
+          </ResumeEditorSelector>
 
           <ResumeEditorTools
             v-model="activeTab"
@@ -33,14 +40,9 @@
             v-model:settings="settingsModel"
             :items="tabItems"
             :preview-type="previewType"
-            :show-upload-new="true"
             :resume-id="resumeId"
             :resume-name="activeResumeName"
-            :is-default-resume="isDefaultResume"
             class="resume-page__tools"
-            @upload-new="handleOpenUploadModal"
-            @duplicate="handleDuplicate"
-            @delete="handleDeleteResume"
           />
         </div>
       </template>
@@ -115,7 +117,6 @@ const {
 
 // UI State
 const activeTab = ref(RESUME_EDITOR_TABS_MAP.EDIT);
-const { openUploadModal, openCreateFromScratchModal, openDeleteConfirmModal } = useResumeModals();
 const activeResumeName = computed(() => store.activeResume?.name ?? null);
 const isDefaultResume = computed(() => store.activeResume?.isDefault ?? false);
 const previewTypeModel = computed<PreviewType>({
@@ -202,88 +203,7 @@ const { pending } = await useAsyncData(
 );
 
 const pageLoading = computed(() => !hasResume.value && pending.value);
-const showSelector = computed(() => store.resumeList.length > 1);
-
-/**
- * Handle upload error
- */
-const handleUploadError = (err: Error) => {
-  toast.add({
-    title: t('resume.error.uploadFailed'),
-    description: err.message,
-    color: 'error',
-    icon: 'i-lucide-alert-circle'
-  });
-};
-
-const handleOpenUploadModal = async () => {
-  const result = await openUploadModal({
-    onError: handleUploadError,
-    replaceResumeId: resumeId.value
-  });
-
-  if (result?.action === 'uploaded') {
-    if (result.resume.id !== resumeId.value) {
-      await navigateTo(`/resume/${result.resume.id}`);
-    }
-  } else if (result?.action === 'create-from-scratch') {
-    await openCreateFromScratchModal({
-      replaceResumeId: resumeId.value
-    });
-  }
-};
-
-/**
- * Handle duplicate resume
- */
-const handleDuplicate = async () => {
-  const currentId = resumeId.value;
-  if (!currentId) return;
-
-  try {
-    const newResume = await store.duplicateResume(currentId);
-    toast.add({
-      title: t('resume.page.resumeDuplicated'),
-      color: 'success',
-      icon: 'i-lucide-check'
-    });
-    await navigateTo(`/resume/${newResume.id}`);
-  } catch (error) {
-    showErrorToast(t('resume.error.createFailed'), error);
-  }
-};
-
-/**
- * Handle delete non-default resume
- */
-const handleDeleteResume = async () => {
-  const currentId = resumeId.value;
-  if (!currentId) return;
-
-  const result = await openDeleteConfirmModal();
-  if (result?.action !== 'confirmed') {
-    return;
-  }
-
-  try {
-    await store.deleteResume(currentId);
-    toast.add({
-      title: t('resume.page.resumeDeleted'),
-      color: 'success',
-      icon: 'i-lucide-check'
-    });
-
-    const nextResumeId = store.defaultResumeId ?? store.resumeList[0]?.id;
-    if (nextResumeId) {
-      await navigateTo(`/resume/${nextResumeId}`, { replace: true });
-      return;
-    }
-
-    await navigateTo('/resume', { replace: true });
-  } catch (error) {
-    showErrorToast(t('resume.error.deleteFailed'), error);
-  }
-};
+const isSelectorDisabled = computed(() => store.resumeList.length <= 1);
 </script>
 
 <style lang="scss">
