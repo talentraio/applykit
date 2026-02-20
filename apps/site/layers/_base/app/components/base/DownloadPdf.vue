@@ -32,6 +32,7 @@ import type {
   ResumeFormatSettingsHuman
 } from '@int/schema';
 import { EXPORT_FORMAT_MAP } from '@int/schema';
+import { pdfApi } from '../../infrastructure/pdf.api';
 
 defineOptions({ name: 'BaseDownloadPdf' });
 
@@ -97,11 +98,6 @@ const getErrorMessage = (error: unknown) => {
   return t('export.error.generic');
 };
 
-type PdfPrepareResponse = {
-  token: string;
-  expiresAt: number;
-};
-
 const downloadPdf = async (url: string, filename: string) => {
   if (!import.meta.client) return;
 
@@ -139,10 +135,7 @@ const handleExport = async (format: ExportFormat) => {
       filename: getFilename(format)
     };
 
-    const result = await useApi<PdfPrepareResponse>('/api/pdf/prepare', {
-      method: 'POST',
-      body: payload
-    });
+    const result = await pdfApi.prepare(payload);
 
     const downloadUrl = `/api/pdf/file?token=${encodeURIComponent(result.token)}`;
     await downloadPdf(downloadUrl, getFilename(format));

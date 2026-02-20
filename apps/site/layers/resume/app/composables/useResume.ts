@@ -3,11 +3,13 @@
  *
  * High-level composable wrapping the resume store for page use.
  * Provides reactive state, auto-save with debounce, and undo/redo via shared history.
- * Settings are sourced from the shared format settings store in _base layer.
+ * Settings are sourced from resume store (bound to active resume).
+ *
+ * Multi-resume aware: uses activeResumeId instead of hardcoded index 0.
  *
  * Features:
  * - Auto-save on content changes (via useResumeEditHistory)
- * - Settings managed by useFormatSettingsStore (throttled PATCH)
+ * - Settings managed by useResumeStore (throttled PATCH, per-resume)
  * - Undo/redo via useResumeEditHistory with tagged entries
  * - Reactive computed properties
  */
@@ -42,12 +44,18 @@ export function useResume(options: UseResumeOptions = {}) {
   const settingsAutoSaveDelay = 200;
 
   const store = useResumeStore();
-  const formatSettingsStore = useFormatSettingsStore();
-  const { getActiveTab } = storeToRefs(store);
-  const { setActiveTab, createFromContent, fetchResume, invalidateContentSaves } = store;
-  const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
-    storeToRefs(formatSettingsStore);
-  const { fetchSettings, setPreviewType } = formatSettingsStore;
+  const { getActiveTab, getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } =
+    storeToRefs(store);
+  const {
+    setActiveTab,
+    createFromContent,
+    invalidateContentSaves,
+    setPreviewType,
+    setFullSettings,
+    updateSettings: updateStoreSettings,
+    patchSettings: patchStoreSettings,
+    putSettings: putStoreSettings
+  } = store;
   const toast = useToast();
   const { t } = useI18n();
 
@@ -56,10 +64,10 @@ export function useResume(options: UseResumeOptions = {}) {
   };
 
   // =========================================
-  // Reactive State
+  // Reactive State (resume-id-aware)
   // =========================================
 
-  const resume = computed(() => store.cachedResumesList[0]?.resume ?? null);
+  const resume = computed(() => store.activeResume);
   const resumeId = computed(() => resume.value?.id ?? null);
   const hasResume = computed(() => resume.value !== null);
   const content = computed(() => resume.value?.content ?? null);
@@ -72,21 +80,21 @@ export function useResume(options: UseResumeOptions = {}) {
   const history = useResumeEditHistory({
     resumeId: () => resumeId.value,
     getContent: () => content.value,
-    getSettings: () => ({ ats: formatSettingsStore.ats, human: formatSettingsStore.human }),
+    getSettings: () => ({ ats: getAtsSettings.value, human: getHumanSettings.value }),
     setContent: newContent => {
       if (resumeId.value) {
         store.updateContent(newContent, resumeId.value);
       }
     },
-    setSettings: newSettings => formatSettingsStore.setFullSettings(newSettings),
+    setSettings: newSettings => setFullSettings(newSettings),
     debounceDelay: autoSaveDelay,
     settingsDebounceDelay: settingsAutoSaveDelay,
     autoSnapshot: autoSave,
     autoSave: autoSave
       ? {
           save: () => (resumeId.value ? store.saveContent(resumeId.value) : Promise.resolve(null)),
-          saveSettingsPatch: partial => formatSettingsStore.patchSettings(partial),
-          saveSettingsFull: () => formatSettingsStore.putSettings(),
+          saveSettingsPatch: partial => patchStoreSettings(partial),
+          saveSettingsFull: () => putStoreSettings(),
           isSaving: () => store.isContentSaveInProgress,
           onError: error => {
             toast.add({
@@ -104,8 +112,8 @@ export function useResume(options: UseResumeOptions = {}) {
   // Actions
   // =========================================
 
-  const uploadResume = async (file: File, title?: string) => {
-    const result = await store.uploadResume(file, title);
+  const uploadResume = async (file: File, title?: string, replaceResumeId?: string) => {
+    const result = await store.uploadResume(file, title, replaceResumeId);
     toast.add({
       title: t('resume.upload.success'),
       color: 'success',
@@ -121,7 +129,7 @@ export function useResume(options: UseResumeOptions = {}) {
   };
 
   const updateSettings = (partial: PatchFormatSettingsBody) => {
-    formatSettingsStore.updateSettings(partial);
+    updateStoreSettings(partial);
     history.queueSettingsAutosave(partial);
   };
 
@@ -158,7 +166,7 @@ export function useResume(options: UseResumeOptions = {}) {
 
   const patchSettings = async (partial: PatchFormatSettingsBody) => {
     try {
-      await formatSettingsStore.patchSettings(partial);
+      await patchStoreSettings(partial);
     } catch {
       toast.add({
         title: t('resume.error.settingsUpdateFailed'),
@@ -176,10 +184,7 @@ export function useResume(options: UseResumeOptions = {}) {
 
       const restored = history.restoreInitialSnapshot();
       if (restored && id) {
-        const results = await Promise.allSettled([
-          store.saveContent(id),
-          formatSettingsStore.putSettings()
-        ]);
+        const results = await Promise.allSettled([store.saveContent(id), putStoreSettings()]);
 
         const rejectedResult = results.find(
           (result): result is PromiseRejectedResult => result.status === 'rejected'
@@ -187,8 +192,8 @@ export function useResume(options: UseResumeOptions = {}) {
         if (rejectedResult) {
           throw rejectedResult.reason;
         }
-      } else {
-        await store.fetchResume();
+      } else if (id) {
+        await store.fetchResumeById(id, { force: true });
       }
 
       history.clearHistory();
@@ -216,7 +221,7 @@ export function useResume(options: UseResumeOptions = {}) {
     editingContent,
     isDirty: history.isDirty,
 
-    // Preview state (from format settings store)
+    // Preview state
     previewType: getPreviewType,
     currentSettings: getCurrentSettings,
     atsSettings: getAtsSettings,
@@ -229,8 +234,6 @@ export function useResume(options: UseResumeOptions = {}) {
     historyLength: history.historyLength,
 
     // Actions
-    fetchResume,
-    fetchSettings,
     uploadResume,
     createFromContent,
     updateContent,

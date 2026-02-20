@@ -13,19 +13,18 @@
           class="resume-editor-tools__tab-content"
         >
           <ResumeForm v-if="contentModel" v-model="contentModel" />
-
-          <div v-if="contentModel && showUploadNew" class="resume-editor-tools__tab-actions mt-10">
-            <UButton variant="outline" color="warning" size="lg" @click="emit('uploadNew')">
-              {{ $t('resume.page.clearAndCreateNew') }}
-            </UButton>
-          </div>
         </div>
 
         <div
           v-else-if="item.value === RESUME_EDITOR_TABS_MAP.SETTINGS"
           class="resume-editor-tools__tab-content"
         >
-          <ResumeSettings v-model:settings="settingsModel" :preview-type="previewType" />
+          <ResumeSettings
+            v-model:settings="settingsModel"
+            :preview-type="previewType"
+            :resume-id="resumeId"
+            :resume-name="resumeName"
+          />
         </div>
 
         <div
@@ -43,19 +42,18 @@
         class="resume-editor-tools__tab-content"
       >
         <ResumeForm v-if="contentModel" v-model="contentModel" />
-
-        <div v-if="contentModel && showUploadNew" class="resume-editor-tools__tab-actions mt-10">
-          <UButton variant="outline" color="warning" size="lg" @click="emit('uploadNew')">
-            {{ $t('resume.page.clearAndCreateNew') }}
-          </UButton>
-        </div>
       </div>
 
       <div
         v-else-if="singleTabValue === RESUME_EDITOR_TABS_MAP.SETTINGS"
         class="resume-editor-tools__tab-content"
       >
-        <ResumeSettings v-model:settings="settingsModel" :preview-type="previewType" />
+        <ResumeSettings
+          v-model:settings="settingsModel"
+          :preview-type="previewType"
+          :resume-id="resumeId"
+          :resume-name="resumeName"
+        />
       </div>
 
       <div
@@ -80,16 +78,14 @@ const props = withDefaults(
   defineProps<{
     items: ResumeEditorTabItem[];
     previewType: PreviewType;
-    showUploadNew?: boolean;
+    resumeId?: string;
+    resumeName?: string | null;
   }>(),
   {
-    showUploadNew: false
+    resumeId: undefined,
+    resumeName: null
   }
 );
-
-const emit = defineEmits<{
-  uploadNew: [];
-}>();
 
 const activeTab = defineModel<string>({ required: true });
 const contentModel = defineModel<ResumeContent | null>('content', { default: null });
@@ -118,28 +114,41 @@ watch(
 
 <style lang="scss">
 .resume-editor-tools {
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 
   &__tabs {
-    height: 100%;
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 
   &__single {
-    height: 100%;
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  &__tabs > [role='tabpanel'] {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
   }
 
   &__tab-content {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
-  }
-
-  &__tab-actions {
-    display: flex;
-    justify-content: flex-end;
   }
 }
 </style>

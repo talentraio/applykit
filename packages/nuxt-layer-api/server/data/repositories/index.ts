@@ -6,11 +6,13 @@
 
 export { formatSettingsRepository } from './format-settings';
 export { generationRepository } from './generation';
+export { generationFormatSettingsRepository } from './generation-format-settings';
 export { generationScoreDetailRepository } from './generation-score-detail';
 export { llmModelRepository } from './llm-model';
 export { llmRoutingRepository } from './llm-routing';
 export { profileRepository } from './profile';
 export { resumeRepository } from './resume';
+export { resumeFormatSettingsRepository } from './resume-format-settings';
 export { roleBudgetWindowRepository } from './role-budget-window';
 export { roleSettingsRepository } from './role-settings';
 export { suppressionRepository } from './suppression';

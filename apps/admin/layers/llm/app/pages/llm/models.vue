@@ -16,7 +16,7 @@
       />
 
       <div class="flex justify-end">
-        <UButton icon="i-lucide-plus" :disabled="saving" @click="openCreateModal">
+        <UButton icon="i-lucide-plus" :disabled="saving" @click="openCreateModalFlow">
           {{ $t('admin.llm.models.create') }}
         </UButton>
       </div>
@@ -36,16 +36,8 @@
         :key="model.id"
         :model="model"
         :saving="saving"
-        @edit="openEditModal"
+        @edit="openEditModalFlow"
         @deactivate="handleDeactivate"
-      />
-
-      <LlmModalModelForm
-        v-model:open="modelFormOpen"
-        :loading="saving"
-        :model="editingModel"
-        @create="handleCreate"
-        @update="handleUpdate"
       />
     </div>
   </div>
@@ -65,34 +57,9 @@ type UpdatePayload = {
 const { items, saving, fetchAll, create, update } = useAdminLlmModels();
 const { t } = useI18n();
 const toast = useToast();
+const { openCreateModelFormModal, openEditModelFormModal } = useLlmModelFormModal();
 
 const hasItems = computed(() => items.value.length > 0);
-const isFormOpen = ref(false);
-const editingModel = ref<LlmModel | null>(null);
-
-const modelFormOpen = computed({
-  get: () => isFormOpen.value,
-  set: value => {
-    isFormOpen.value = value;
-    if (!value) {
-      editingModel.value = null;
-    }
-  }
-});
-
-const openCreateModal = () => {
-  editingModel.value = null;
-  modelFormOpen.value = true;
-};
-
-const openEditModal = (model: LlmModel) => {
-  editingModel.value = model;
-  modelFormOpen.value = true;
-};
-
-const closeModelForm = () => {
-  modelFormOpen.value = false;
-};
 
 type ApiErrorWithMessage = {
   data?: {
@@ -113,30 +80,45 @@ const errorMessage = (error: unknown): string => {
   return t('common.error.generic');
 };
 
-const handleCreate = async (input: LlmModelCreateInput) => {
+const handleCreate = async (input: LlmModelCreateInput): Promise<boolean> => {
   try {
     await create(input);
-    closeModelForm();
+    return true;
   } catch (error) {
     toast.add({
       title: t('common.error.generic'),
       description: errorMessage(error),
       color: 'error'
     });
+    return false;
   }
 };
 
-const handleUpdate = async (payload: UpdatePayload) => {
+const handleUpdate = async (payload: UpdatePayload): Promise<boolean> => {
   try {
     await update(payload.id, payload.input);
-    closeModelForm();
+    return true;
   } catch (error) {
     toast.add({
       title: t('common.error.generic'),
       description: errorMessage(error),
       color: 'error'
     });
+    return false;
   }
+};
+
+const openCreateModalFlow = async () => {
+  await openCreateModelFormModal({
+    onCreate: handleCreate
+  });
+};
+
+const openEditModalFlow = async (model: LlmModel) => {
+  await openEditModelFormModal({
+    model,
+    onUpdate: handleUpdate
+  });
 };
 
 const handleDeactivate = async (model: LlmModel) => {

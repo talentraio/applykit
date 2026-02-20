@@ -1,27 +1,65 @@
-import type { FormatSettingsConfig } from '../../types/format-settings-config';
+import type { FormatSettingsConfig } from '@layer/api/server/types/format-settings-config';
 import {
   PatchFormatSettingsBodySchema,
   ResumeFormatSettingsAtsSchema,
   ResumeFormatSettingsHumanSchema
 } from '@int/schema';
-import { formatSettingsRepository } from '../../data/repositories/format-settings';
+import {
+  generationRepository,
+  resumeFormatSettingsRepository,
+  vacancyRepository
+} from '@layer/api/server/data/repositories';
 
 /**
- * PATCH /api/user/format-settings
+ * PATCH /api/vacancies/:id/generations/:generationId/format-settings
  *
- * Partially update the authenticated user's format settings.
- * Deep-merges patch with existing settings, validates merged result.
- *
- * Body: Deep partial of { ats, human }
- * Response: Full settings after merge (same shape as GET)
+ * Patch generation editor format settings.
+ * Settings are persisted per resume (generation.resumeId).
  */
 export default defineEventHandler(async event => {
   const session = await requireUserSession(event);
   const userId = (session.user as { id: string }).id;
 
-  const body = await readBody(event);
+  const vacancyId = getRouterParam(event, 'id');
+  if (!vacancyId) {
+    throw createError({
+      statusCode: 400,
+      message: 'Vacancy ID is required'
+    });
+  }
 
-  // Validate patch body
+  const generationId = getRouterParam(event, 'generationId');
+  if (!generationId) {
+    throw createError({
+      statusCode: 400,
+      message: 'Generation ID is required'
+    });
+  }
+
+  const vacancy = await vacancyRepository.findById(vacancyId);
+  if (!vacancy) {
+    throw createError({
+      statusCode: 404,
+      message: 'Vacancy not found'
+    });
+  }
+
+  if (vacancy.userId !== userId) {
+    throw createError({
+      statusCode: 403,
+      message: 'Access denied'
+    });
+  }
+
+  const generation = await generationRepository.findById(generationId);
+  if (!generation || generation.vacancyId !== vacancyId) {
+    throw createError({
+      statusCode: 404,
+      message: 'Generation not found'
+    });
+  }
+
+  const body = await readBody(event);
   const parsed = PatchFormatSettingsBodySchema.safeParse(body);
   if (!parsed.success) {
     throw createError({
@@ -32,8 +70,6 @@ export default defineEventHandler(async event => {
   }
 
   const patch = parsed.data;
-
-  // At least one of ats or human must be present
   if (!patch.ats && !patch.human) {
     throw createError({
       statusCode: 422,
@@ -42,15 +78,12 @@ export default defineEventHandler(async event => {
     });
   }
 
-  // Load existing settings (or seed defaults)
-  let existing = await formatSettingsRepository.findByUserId(userId);
-  if (!existing) {
-    const config = useRuntimeConfig(event);
-    const defaults = (config.public.formatSettings as FormatSettingsConfig).defaults;
-    existing = await formatSettingsRepository.seedDefaults(userId, defaults);
-  }
+  const config = useRuntimeConfig(event);
+  const defaults = (config.public.formatSettings as FormatSettingsConfig).defaults;
+  const existing =
+    (await resumeFormatSettingsRepository.findByResumeId(generation.resumeId)) ??
+    (await resumeFormatSettingsRepository.seedDefaults(generation.resumeId, defaults));
 
-  // Deep-merge: existing + patch
   const mergedAts = patch.ats
     ? {
         spacing: { ...existing.ats.spacing, ...patch.ats.spacing },
@@ -65,7 +98,6 @@ export default defineEventHandler(async event => {
       }
     : existing.human;
 
-  // Validate merged results
   const atsValidation = ResumeFormatSettingsAtsSchema.safeParse(mergedAts);
   if (!atsValidation.success) {
     throw createError({
@@ -84,8 +116,7 @@ export default defineEventHandler(async event => {
     });
   }
 
-  // Save merged settings
-  const updated = await formatSettingsRepository.update(userId, {
+  const updated = await resumeFormatSettingsRepository.update(generation.resumeId, {
     ats: atsValidation.data,
     human: humanValidation.data
   });
@@ -93,7 +124,7 @@ export default defineEventHandler(async event => {
   if (!updated) {
     throw createError({
       statusCode: 500,
-      message: 'Failed to update format settings'
+      message: 'Failed to update resume format settings'
     });
   }
 

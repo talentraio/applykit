@@ -1,28 +1,20 @@
-import { resumeRepository } from '../../data/repositories';
+import { resumeRepository, userRepository } from '../../data/repositories';
 
 /**
  * DELETE /api/resumes/:id
  *
- * DEPRECATED: Use DELETE /api/resume instead (once implemented)
+ * Delete a non-default resume.
+ * Cascades: deletes resume_format_settings (FK cascade).
+ * Prevents deletion of default resume (409).
  *
- * Delete a resume
- * Only deletes if it belongs to the current user
- * Cascades to delete associated generations
- *
- * This endpoint is deprecated and will be removed in a future version.
- *
- * Related: T077 (US2)
+ * Params: id — resume UUID
+ * Response 204: No Content
+ * Errors: 401, 404, 409
  */
 export default defineEventHandler(async event => {
-  // Add deprecation header
-  setHeader(event, 'Deprecation', 'true');
-  setHeader(event, 'Sunset', new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toUTCString());
-  setHeader(event, 'Link', '</api/resume>; rel="successor-version"');
-
-  // Require authentication
   const session = await requireUserSession(event);
+  const userId = (session.user as { id: string }).id;
 
-  // Get resume ID from route params
   const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
@@ -31,8 +23,8 @@ export default defineEventHandler(async event => {
     });
   }
 
-  // Check if resume exists and belongs to user
-  const resume = await resumeRepository.findByIdAndUserId(id, (session.user as { id: string }).id);
+  // Verify resume exists and belongs to user
+  const resume = await resumeRepository.findByIdAndUserId(id, userId);
   if (!resume) {
     throw createError({
       statusCode: 404,
@@ -40,11 +32,18 @@ export default defineEventHandler(async event => {
     });
   }
 
-  // Delete resume
-  await resumeRepository.delete(id, (session.user as { id: string }).id);
+  // Prevent deletion of default resume
+  const defaultResumeId = await userRepository.getDefaultResumeId(userId);
+  if (id === defaultResumeId) {
+    throw createError({
+      statusCode: 409,
+      message: 'Cannot delete the default resume. Set a different resume as default first.'
+    });
+  }
 
-  return {
-    success: true,
-    message: 'Resume deleted successfully'
-  };
+  // Delete resume (FK cascade handles format settings)
+  await resumeRepository.delete(id, userId);
+
+  setResponseStatus(event, 204);
+  return null;
 });

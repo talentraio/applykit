@@ -2,14 +2,11 @@
   <UModal
     v-model:open="open"
     :title="$t('admin.users.invite.title')"
+    :description="$t('admin.users.invite.description')"
     class="users-user-invite-modal"
   >
     <template #body>
       <div class="space-y-4">
-        <p class="text-sm text-muted">
-          {{ $t('admin.users.invite.description') }}
-        </p>
-
         <UAlert
           v-if="localError"
           color="error"
@@ -71,7 +68,10 @@ const _props = withDefaults(
 
 const emit = defineEmits<{
   submit: [payload: { email: string; role: Role }];
+  close: [payload: UsersInviteModalClosePayload];
 }>();
+
+type UsersInviteModalClosePayload = { action: 'cancelled' } | { action: 'submitted' };
 
 const open = defineModel<boolean>('open', { required: true });
 
@@ -83,6 +83,7 @@ const { t } = useI18n();
 
 const close = () => {
   open.value = false;
+  emit('close', { action: 'cancelled' });
 };
 
 const resetForm = () => {

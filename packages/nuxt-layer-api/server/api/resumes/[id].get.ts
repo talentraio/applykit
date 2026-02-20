@@ -1,28 +1,24 @@
-import { resumeRepository } from '../../data/repositories';
+import type { FormatSettingsConfig } from '../../types/format-settings-config';
+import {
+  resumeFormatSettingsRepository,
+  resumeRepository,
+  userRepository
+} from '../../data/repositories';
 
 /**
  * GET /api/resumes/:id
  *
- * DEPRECATED: Use GET /api/resume instead
+ * Get full resume by ID with ownership check.
+ * Includes computed isDefault field and per-resume format settings.
  *
- * Get a single resume by ID
- * Only returns resume if it belongs to the current user
- *
- * This endpoint is deprecated and will be removed in a future version.
- * Migrate to the new singular /api/resume endpoint.
- *
- * Related: T075 (US2)
+ * Params: id — resume UUID
+ * Response: Full resume object with isDefault and formatSettings
+ * Errors: 401, 404
  */
 export default defineEventHandler(async event => {
-  // Add deprecation header
-  setHeader(event, 'Deprecation', 'true');
-  setHeader(event, 'Sunset', new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toUTCString());
-  setHeader(event, 'Link', '</api/resume>; rel="successor-version"');
-
-  // Require authentication
   const session = await requireUserSession(event);
+  const userId = (session.user as { id: string }).id;
 
-  // Get resume ID from route params
   const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
@@ -31,8 +27,10 @@ export default defineEventHandler(async event => {
     });
   }
 
-  // Get resume with ownership check
-  const resume = await resumeRepository.findByIdAndUserId(id, (session.user as { id: string }).id);
+  const [resume, defaultResumeId] = await Promise.all([
+    resumeRepository.findByIdAndUserId(id, userId),
+    userRepository.getDefaultResumeId(userId)
+  ]);
 
   if (!resume) {
     throw createError({
@@ -41,5 +39,26 @@ export default defineEventHandler(async event => {
     });
   }
 
-  return resume;
+  const config = useRuntimeConfig(event);
+  const defaults = (config.public.formatSettings as FormatSettingsConfig).defaults;
+  const settings =
+    (await resumeFormatSettingsRepository.findByResumeId(resume.id)) ??
+    (await resumeFormatSettingsRepository.seedDefaults(resume.id, defaults));
+
+  return {
+    id: resume.id,
+    userId: resume.userId,
+    name: resume.name,
+    title: resume.title,
+    content: resume.content,
+    sourceFileName: resume.sourceFileName,
+    sourceFileType: resume.sourceFileType,
+    isDefault: resume.id === defaultResumeId,
+    formatSettings: {
+      ats: settings.ats,
+      human: settings.human
+    },
+    createdAt: resume.createdAt.toISOString(),
+    updatedAt: resume.updatedAt.toISOString()
+  };
 });

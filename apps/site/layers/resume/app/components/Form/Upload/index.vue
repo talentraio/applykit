@@ -119,6 +119,10 @@ import type { Resume } from '@int/schema';
 
 defineOptions({ name: 'ResumeFormUpload' });
 
+const props = defineProps<{
+  replaceResumeId?: string;
+}>();
+
 const emit = defineEmits<{
   /** File upload started */
   upload: [file: File];
@@ -182,7 +186,7 @@ async function processFile(file: File) {
 
   try {
     isUploading.value = true;
-    const resume = await uploadResume(file);
+    const resume = await uploadResume(file, undefined, props.replaceResumeId);
     emit('success', resume);
     selectedFile.value = null;
 

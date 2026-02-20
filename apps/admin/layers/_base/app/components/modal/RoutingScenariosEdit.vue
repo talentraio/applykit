@@ -22,7 +22,7 @@
           color="neutral"
           variant="ghost"
           class="min-w-[120px] justify-center"
-          :disabled="loading"
+          :disabled="resolvedLoading"
           @click="handleCancel"
         >
           {{ $t('admin.llm.common.cancel') }}
@@ -30,8 +30,8 @@
 
         <UButton
           class="min-w-[120px] justify-center"
-          :loading="loading"
-          :disabled="loading || !canSave"
+          :loading="resolvedLoading"
+          :disabled="resolvedLoading || !resolvedCanSave"
           @click="handleSave"
         >
           {{ $t('admin.llm.common.save') }}
@@ -42,16 +42,16 @@
 </template>
 
 <script setup lang="ts">
+import type { RoutingScenarioDraft } from '@admin/llm/app/components/routing/Scenarios/types';
 import type { Component } from 'vue';
-import type { RoutingScenarioDraft } from './types';
 
 type Props = {
   title: string;
   description?: string;
   formComponent: Component | null;
-  formProps?: Record<string, unknown> | null;
-  loading?: boolean;
-  canSave?: boolean;
+  formProps?: Record<string, unknown> | (() => Record<string, unknown> | null) | null;
+  loading?: boolean | (() => boolean);
+  canSave?: boolean | (() => boolean);
 };
 
 defineOptions({ name: 'LlmRoutingScenariosEditModal' });
@@ -66,14 +66,40 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   save: [];
   cancel: [];
+  close: [payload: RoutingScenariosEditModalClosePayload];
 }>();
+
+type RoutingScenariosEditModalClosePayload = { action: 'cancelled' } | { action: 'submitted' };
 
 const open = defineModel<boolean>('open', { required: true });
 const draft = defineModel<RoutingScenarioDraft>('draft', { required: true });
 
+const isGetter = <T,>(value: T | (() => T)): value is () => T => {
+  return typeof value === 'function';
+};
+
+const resolveMaybeGetter = <T,>(value: T | (() => T)): T => {
+  if (isGetter(value)) {
+    return value();
+  }
+
+  return value;
+};
+
+const resolvedLoading = computed<boolean>(() => {
+  return resolveMaybeGetter(props.loading);
+});
+
+const resolvedCanSave = computed<boolean>(() => {
+  return resolveMaybeGetter(props.canSave);
+});
+
 const resolvedFormProps = computed<Record<string, unknown>>(() => {
+  const formPropsValue = props.formProps;
+  const resolvedFormProps = formPropsValue ? resolveMaybeGetter(formPropsValue) : null;
+
   return (
-    props.formProps ?? {
+    resolvedFormProps ?? {
       modelOptions: [],
       strategyOptions: [],
       reasoningOptions: []
@@ -83,6 +109,7 @@ const resolvedFormProps = computed<Record<string, unknown>>(() => {
 
 const handleCancel = () => {
   emit('cancel');
+  emit('close', { action: 'cancelled' });
   open.value = false;
 };
 

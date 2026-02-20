@@ -29,7 +29,7 @@ const registerTestUser = async (page: Page): Promise<string> => {
 };
 
 const createResume = async (page: Page, email: string): Promise<void> => {
-  const createResponse = await page.request.post('/api/resume', {
+  const createResponse = await page.request.post('/api/resumes', {
     data: {
       title: 'Playwright Resume',
       content: {

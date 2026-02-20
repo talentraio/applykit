@@ -2,8 +2,28 @@
   <div
     class="vacancy-item-overview-content-actions mb-8 flex flex-col gap-3 sm:flex-row sm:items-center"
   >
+    <UDropdownMenu
+      v-if="showPickerButton"
+      :items="generateDropdownItems"
+      :ui="{
+        content:
+          'w-[var(--reka-dropdown-menu-trigger-width)] min-w-[var(--reka-dropdown-menu-trigger-width)]'
+      }"
+    >
+      <UButton
+        class="w-full justify-center sm:min-w-[220px] sm:w-auto"
+        :loading="isGenerating"
+        :disabled="isGenerating"
+        :icon="generateActionIcon"
+        trailing-icon="i-lucide-chevron-down"
+        size="lg"
+      >
+        {{ generateActionLabel }}
+      </UButton>
+    </UDropdownMenu>
+
     <UButton
-      v-if="canGenerateButton"
+      v-else-if="canGenerateButton"
       class="w-full justify-center sm:min-w-[220px] sm:w-auto"
       :loading="isGenerating"
       :disabled="isGenerating"
@@ -38,6 +58,14 @@
 </template>
 
 <script setup lang="ts">
+import type { DropdownMenuItem } from '#ui/types';
+
+type ResumePickerItem = {
+  id: string;
+  label: string;
+  isDefault: boolean;
+};
+
 defineOptions({ name: 'VacancyItemOverviewContentActions' });
 
 const props = defineProps<{
@@ -46,15 +74,19 @@ const props = defineProps<{
   canGenerateResume: boolean;
   resumeTo: string;
   coverTo: string;
+  resumePickerItems?: ResumePickerItem[];
 }>();
 
 const emit = defineEmits<{
-  generate: [];
+  generate: [resumeId?: string];
 }>();
 
 const { t } = useI18n();
 const canGenerateButton = computed(() => props.canGenerateResume);
 const showResumeButton = computed(() => props.hasGeneration);
+const showPickerButton = computed(
+  () => canGenerateButton.value && (props.resumePickerItems?.length ?? 0) > 1
+);
 
 const generateActionLabel = computed(() => {
   if (props.isGenerating) {
@@ -69,6 +101,27 @@ const generateActionLabel = computed(() => {
 const generateActionIcon = computed(() =>
   props.hasGeneration ? 'i-lucide-refresh-cw' : 'i-lucide-sparkles'
 );
+
+const generateDropdownItems = computed<DropdownMenuItem[][]>(() => {
+  const pickerItems = props.resumePickerItems ?? [];
+
+  const options: DropdownMenuItem[] = pickerItems.map(item => ({
+    label: item.label,
+    icon: item.isDefault ? 'i-lucide-star' : 'i-lucide-file-text',
+    disabled: props.isGenerating,
+    onSelect: () => emit('generate', item.id)
+  }));
+
+  return [
+    [
+      {
+        label: t('vacancy.generation.selectBaseResume'),
+        disabled: true
+      },
+      ...options
+    ]
+  ];
+});
 </script>
 
 <style lang="scss">

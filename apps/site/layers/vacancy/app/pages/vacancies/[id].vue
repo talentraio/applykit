@@ -2,8 +2,8 @@
   <div class="vacancy-detail-layout">
     <VacancyItemLayoutHeader
       :vacancy-id="vacancyId"
-      :company="currentVacancyMeta?.company ?? ''"
-      :job-position="currentVacancyMeta?.jobPosition"
+      :company="getCurrentVacancyMeta?.company ?? ''"
+      :job-position="getCurrentVacancyMeta?.jobPosition"
     />
 
     <main class="vacancy-detail-layout__content">
@@ -33,7 +33,7 @@ defineOptions({ name: 'VacancyDetailLayout' });
 const route = useRoute();
 const { t } = useI18n();
 const vacancyStore = useVacancyStore();
-const { currentVacancyMeta } = storeToRefs(vacancyStore);
+const { getCurrentVacancyMeta } = storeToRefs(vacancyStore);
 
 const vacancyId = computed(() => {
   const id = route.params.id;
@@ -47,7 +47,7 @@ const { error: vacancyMetaError } = await useAsyncData(
   () => vacancyStore.fetchVacancyMeta(vacancyId.value)
 );
 
-if (vacancyMetaError.value || !currentVacancyMeta.value) {
+if (vacancyMetaError.value || !getCurrentVacancyMeta.value) {
   throw createError({
     statusCode: 404,
     statusMessage: t('vacancy.error.fetchDetailFailed')
@@ -57,7 +57,7 @@ if (vacancyMetaError.value || !currentVacancyMeta.value) {
 // Page meta
 useHead({
   title: computed(() => {
-    const meta = currentVacancyMeta.value;
+    const meta = getCurrentVacancyMeta.value;
     const baseTitle = meta ? meta.company : t('vacancy.detail.title');
     return meta?.jobPosition ? `${baseTitle} – ${meta.jobPosition}` : baseTitle;
   })

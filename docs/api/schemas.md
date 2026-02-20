@@ -1,224 +1,225 @@
-# Schemas (high level)
+# Schemas and Contracts (Current)
 
-All schema definitions live in `@int/schema` (Zod + inferred TS types).
+Canonical schema source: `@int/schema` (`packages/schema/*`).
 
-## Resume root
+This page summarizes the contracts used by current endpoints.
 
-**Content** (`ResumeContent`):
+## Auth contracts
 
-- `personalInfo` (fullName, email, phone, location, etc.)
-- `summary` (optional)
-- `skills[]`
-- `experience[]`
-- `education[]`
-- `projects[]` (optional)
-- `certifications[]` (optional)
-- `languages[]` (optional)
+From `packages/schema/schemas/auth.ts`:
 
-**Note**: Format settings (atsSettings/humanSettings) were removed from Resume entity. See UserFormatSettings below.
+- `RegisterInput`
+  - `{ email, password, firstName, lastName }`
+- `LoginInput`
+  - `{ email, password }`
+- `ForgotPasswordInput`
+  - `{ email }`
+- `ResetPasswordInput`
+  - `{ token, password }`
+- `AcceptTermsInput`
+  - `{ legalVersion }` where `legalVersion` is `dd.MM.yyyy`
+- `AuthMeResponse`
+  - `{ user: UserPublic, profile: Profile | null, isProfileComplete: boolean }`
 
-Dates:
+## User and profile contracts
 
-- Use `YYYY-MM` format
+### User
 
-## Pagination (Base)
+- `UserPublic` includes:
+  - identity + account fields: `id`, `email`, `role`, `status`
+  - verification/legal fields: `emailVerified`, `emailVerificationExpires`, `termsAcceptedAt`, `legalVersion`
+  - timestamps: `createdAt`, `updatedAt`, `lastLoginAt`, `deletedAt`
 
-Reusable schemas for any paginated endpoint.
+### Profile
 
-**Request** (`PaginationQuery`):
+From `packages/schema/schemas/profile.ts`:
 
-- `currentPage: number` (default 1, min 1)
-- `pageSize: number` (default 10, min 1, max 100)
+- `ProfileInput` (PUT `/api/profile`)
+  - `firstName`, `lastName`, `email`, `country`, `searchRegion`, `workFormat`
+  - optional: `languages[]`, `phones[]`, `photoUrl`
+- `PhoneEntry`
+  - `{ number, label? }`
+- `LanguageEntry`
+  - `{ language, level }`
 
-**Response** (`PaginationResponse`):
+Profile completeness gate (runtime repository logic) currently requires:
 
-- `totalItems: number`
-- `totalPages: number`
+- `firstName`, `lastName`, `email`, `country`, `searchRegion`
 
-## Vacancy
+`languages` is temporarily not required in completeness check.
 
-- company: required
-- jobPosition: optional
-- description: string (MVP)
-- url: optional
-- notes: optional
-- status: VacancyStatus enum (created, generated, screening, rejected, interview, offer)
-- generatedVersions: array (store as array even if UI shows only latest)
+## Resume contracts
 
-## VacancyList
+From `packages/schema/schemas/resume.ts`:
 
-**Query** (`VacancyListQuery` extends `PaginationQuery`):
+- `ResumeContent`
+  - `personalInfo`
+  - optional `summary`
+  - `experience[]`
+  - `education[]`
+  - `skills[]` as **skill groups** (`{ type, skills[] }`)
+  - optional `certifications[]`
+  - optional `languages[]`
+  - optional `customSections[]`
+- date fields inside resume entries use `YYYY-MM` format.
 
-- `sortBy?: 'updatedAt' | 'createdAt'`
-- `sortOrder?: 'asc' | 'desc'`
-- `status?: VacancyStatus[]` (accepts string or array, transforms to array)
-- `search?: string` (min 3, max 255)
+Resume entity (`Resume`):
 
-**Response** (`VacancyListResponse`):
+- `id`, `userId`, `name`, `title`, `content`, `sourceFileName`, `sourceFileType`, `isDefault`,
+  `createdAt`, `updatedAt`
 
-- `items: Vacancy[]`
-- `pagination: PaginationResponse`
-- `columnVisibility: VacancyListColumnVisibility` (Record<string, boolean>)
+Primary endpoint payloads:
 
-**Column Visibility** (`VacancyListColumnVisibility`): `Record<string, boolean>`
+- `POST /api/resumes` (JSON mode)
+  - `{ content: ResumeContent, title, sourceFileName?, sourceFileType?, replaceResumeId? }`
+- `PUT /api/resumes/:id`
+  - `{ content?: ResumeContent, title?: string }`
+- `PUT /api/resumes/:id/name`
+  - `{ name: string }`
 
-**Preferences Patch** (`VacancyListPreferencesPatch`): `{ columnVisibility }`
+## Format settings contracts
 
-**Bulk Delete** (`VacancyBulkDelete`): `{ ids: string[] }` (1-100 UUIDs)
+From `packages/schema/schemas/format-settings.ts`:
 
-## Relevance metrics (store now, visualize later)
+- `ResumeFormatSettings`
+  - `{ ats, human }`
+- `ats` and `human` each contain:
+  - `spacing`: `marginX`, `marginY`, `fontSize`, `lineHeight`, `blockSpacing`
+  - `localization`: `language`, `dateFormat`, `pageFormat`
+- `PatchFormatSettingsBody`
+  - deep partial patch of `{ ats?, human? }`
 
-Inside `generatedVersions[n].metrics`:
+## Vacancy contracts
 
-- `matchBefore: number` (0..100)
-- `matchAfter: number` (0..100)
-- `delta: number`
-- `tuning: number` (0..100, user-controlled “push closer to vacancy”)
+From `packages/schema/schemas/vacancy.ts` and `vacancy-list.ts`:
 
-MVP UI: show a simple percentage number.
-Backlog: dashboards and visualisations.
+- `VacancyInput`
+  - required: `company`, `description`
+  - optional/nullable: `jobPosition`, `url`, `notes`
+  - optional status field (validated by `VacancyStatus` enum)
+- `VacancyListQuery`
+  - pagination: `currentPage`, `pageSize`
+  - sorting: `sortBy`, `sortOrder`
+  - filters: `status[]`, `search`
+- `VacancyListResponse`
+  - `{ items, pagination, columnVisibility }`
+- `VacancyBulkDelete`
+  - `{ ids: string[] }` (1..100 UUID)
+- `VacancyListPreferencesPatch`
+  - `{ columnVisibility: Record<string, boolean> }`
 
-## UserFormatSettings (User-Level Entity)
+## Generation and scoring contracts
 
-Separate from Resume. Persisted per-user in `user_format_settings` table.
+From `packages/schema/schemas/generation.ts`:
 
-**Structure**:
+- `Generation`
+  - `id`, `vacancyId`, `resumeId`, `content`
+  - `matchScoreBefore`, `matchScoreAfter`
+  - `scoreBreakdown`
+  - `generatedAt`, `expiresAt`, `scoreAlertDismissedAt`
+- `ScoreBreakdown`
+  - `version`
+  - weighted components (`core`, `mustHave`, `niceToHave`, `responsibilities`, `human`)
+  - `gateStatus` (`schemaValid`, `identityStable`, `hallucinationFree`)
+- `GenerationScoreDetailPayload`
+  - `summary`, `matched[]`, `gaps[]`, `recommendations[]`, `scoreBreakdown`
+- `GenerationScoreDetail`
+  - persisted details with vacancy version marker, provider/model metadata
 
-- `ats: ResumeFormatSettingsAts`
-  - `spacing: SpacingSettings` (marginX, marginY, fontSize, lineHeight, blockSpacing)
-  - `localization: LocalizationSettings` (language, dateFormat, pageFormat)
-- `human: ResumeFormatSettingsHuman`
-  - `spacing: SpacingSettings`
-  - `localization: LocalizationSettings`
+Vacancy response helper types (from `packages/nuxt-layer-api/types/vacancies.ts`):
 
-**Types**:
+- `VacancyMeta`
+- `VacancyOverview`
+- `VacanciesResumeGeneration`
+- `VacanciesScoreDetailsResponse`
+- `VacancyPreparationResponse`
 
-- `SpacingSettings`: marginX (10-26mm), marginY (10-26mm), fontSize (9-13pt), lineHeight (1.1-1.5), blockSpacing (1-9)
-- `LocalizationSettings`: language (ISO like "en-US"), dateFormat (date-fns pattern like "MMM yyyy"), pageFormat ("A4" | "us_letter")
-- `ResumeFormatSettingsAts`: { spacing, localization }
-- `ResumeFormatSettingsHuman`: { spacing, localization }
-- `UserFormatSettings`: { ats, human }
+## PDF export contracts
 
-**Notes**:
+Runtime payload for tokenized PDF export (`/api/pdf/*`):
 
-- ATS and Human are separate types (will diverge in future)
-- Defaults stored in `runtimeConfig.formatSettings.defaults`
-- Auto-seeded on user creation
-- Managed by `useFormatSettingsStore` in `_base` layer
-- Lazy-loaded on first access to `/resume` or `/vacancies/:id/resume`
+- prepare request:
+  - `{ format, content, settings?, photoUrl?, filename? }`
+  - `format`: `ats | human`
+  - `content`: `ResumeContent`
+  - `settings`: partial spacing settings
+- prepare response:
+  - `{ token, expiresAt }`
+- payload/file endpoints use query `token`.
 
-## RoleSettings (Admin)
+## LLM model contracts
 
-Role-level platform controls stored in `role_settings`:
+From `packages/schema/schemas/llm-model.ts`:
 
-- `role: Role`
-- `platformLlmEnabled: boolean`
-- `dailyBudgetCap: number`
-- `weeklyBudgetCap: number`
-- `monthlyBudgetCap: number`
-- `updatedAt: Date`
+- `LlmModel`
+  - provider/model identity
+  - status (`active | disabled | archived`)
+  - pricing (`input/output/cached` per 1M tokens)
+  - capabilities (`supportsJson`, `supportsTools`, `supportsStreaming`)
+  - optional context/output token limits
+- `LlmModelCreateInput`
+- `LlmModelUpdateInput`
 
-## LLM Model Catalog
+## LLM routing contracts
 
-`LlmModel` (admin-managed source of truth for model metadata/pricing):
+From `packages/schema/schemas/llm-routing.ts`:
 
-- `id: uuid`
-- `provider: 'openai' | 'gemini'`
-- `modelKey: string`
-- `displayName: string`
-- `status: 'active' | 'disabled' | 'archived'`
-- `inputPricePer1mUsd: number`
-- `outputPricePer1mUsd: number`
-- `cachedInputPricePer1mUsd?: number | null`
-- `maxContextTokens?: number | null`
-- `maxOutputTokens?: number | null`
-- `supportsJson: boolean`
-- `supportsTools: boolean`
-- `supportsStreaming: boolean`
-- `notes?: string | null`
-- `createdAt`, `updatedAt`
+- `RoutingAssignmentInput`
+  - `modelId`
+  - optional: `retryModelId`, `temperature`, `maxTokens`, `responseFormat`, `reasoningEffort`, `strategyKey`
+- `RoutingScenarioEnabledInput`
+  - `{ enabled: boolean }`
+- `LlmRoutingItem`
+  - `scenarioKey`, `enabled`, `enabledOverrides[]`, `default`, `overrides[]`
 
-## LLM Scenario Routing
+Normalization rules are enforced server-side by scenario:
 
-`LlmScenarioKey` enum:
+- `retryModelId` applies only to selected scenarios.
+- `reasoningEffort` applies only to `resume_adaptation`.
+- `strategyKey` applies only to `resume_adaptation`.
 
-- `resume_parse`
-- `resume_adaptation`
-- `resume_adaptation_scoring`
-- `resume_adaptation_scoring_detail`
-- `cover_letter_generation`
+## Role, system, and usage contracts
 
-Routing schemas:
+### Role settings
 
-- `RoutingAssignmentInput`:
-  - `modelId: uuid`
-  - `retryModelId?: uuid | null`
-  - `temperature?: number | null`
-  - `maxTokens?: number | null`
-  - `responseFormat?: 'text' | 'json' | null`
-  - `strategyKey?: 'economy' | 'quality' | null`
-  - persistence rules by scenario:
-    - `retryModelId` is used for `resume_parse`, `resume_adaptation`, and
-      `resume_adaptation_scoring_detail`
-    - `strategyKey` is used only for `resume_adaptation`
-- `LlmRoutingItem`:
-  - `scenarioKey`
-  - `default?: RoutingAssignmentInput & { updatedAt } | null`
-  - `overrides: Array<RoutingAssignmentInput & { role, updatedAt }>`
+From `packages/schema/schemas/role-settings.ts`:
 
-`LlmStrategyKey` enum:
+- `RoleSettings`
+  - `platformLlmEnabled`
+  - `dailyBudgetCap`, `weeklyBudgetCap`, `monthlyBudgetCap`
 
-- `economy`
-- `quality`
+### System config
 
-## Generation Score Breakdown
+From `packages/schema/schemas/system.ts`:
 
-`Generation` includes baseline scoring metadata:
+- keys: `global_budget_cap`, `global_budget_used`
+- admin API exposes mapped fields:
+  - `globalBudgetCap`, `globalBudgetUsed`
 
-- `matchScoreBefore: number (0..100)`
-- `matchScoreAfter: number (0..100)`
-- `scoreBreakdown`:
-  - `version: string`
-  - `components`:
-    - `core: { before, after, weight }`
-    - `mustHave: { before, after, weight }`
-    - `niceToHave: { before, after, weight }`
-    - `responsibilities: { before, after, weight }`
-    - `human: { before, after, weight }`
-  - `gateStatus`:
-    - `schemaValid: boolean`
-    - `identityStable: boolean`
-    - `hallucinationFree: boolean`
+### Usage
 
-`scoreBreakdown.version`:
+From `packages/schema/schemas/usage.ts`:
 
-- baseline / fallback path: `fallback-keyword-v1`
-- deterministic detailed path: `deterministic-v1`
+- `UsageLog`
+  - `operation`: `parse | generate | export`
+  - `providerType`: currently `platform`
+  - optional context/tokens/cost
 
-## Generation Detailed Scoring
+## Enums referenced by contracts
 
-Detailed scoring is stored separately and requested on-demand.
+From `packages/schema/constants/enums.ts`:
 
-`GenerationScoreDetailPayload`:
+- Roles: `super_admin`, `friend`, `promo`, `public`
+- User status: `invited`, `active`, `blocked`, `deleted`
+- Vacancy status: `created`, `generated`, `screening`, `rejected`, `interview`, `offer`
+- LLM scenarios:
+  - `resume_parse`
+  - `resume_adaptation`
+  - `resume_adaptation_scoring`
+  - `resume_adaptation_scoring_detail`
+  - `cover_letter_generation`
 
-- `summary`: `{ before, after, improvement }` (0..100 integers)
-- `matched[]`: weighted matched signals with evidence refs
-- `gaps[]`: weighted missing/weak signals with evidence refs
-- `recommendations[]`: short actionable recommendations
-- `scoreBreakdown`: deterministic component breakdown snapshot used for the details output
+## Notes
 
-`GenerationScoreDetail`:
-
-- `id: uuid`
-- `generationId: uuid`
-- `vacancyId: uuid`
-- `vacancyVersionMarker: string` (used to detect stale details when vacancy changes)
-- `details: GenerationScoreDetailPayload`
-- `provider: 'openai' | 'gemini'`
-- `model: string`
-- `strategyKey: 'economy' | 'quality' | null`
-- `createdAt`, `updatedAt`
-
-## Usage Provider Type
-
-Runtime writes platform-only usage records.
+- `/api/resumes*` contracts are primary for resume CRUD and editing flows.
+- Prefer `/api/resumes*` and `/api/pdf/*` export flow for new code.

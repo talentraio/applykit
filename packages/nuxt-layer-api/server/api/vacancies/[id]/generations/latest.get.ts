@@ -1,5 +1,10 @@
+import type { FormatSettingsConfig } from '@layer/api/server/types/format-settings-config';
 import type { VacanciesResumeGeneration } from '@layer/api/types/vacancies';
-import { generationRepository, vacancyRepository } from '@layer/api/server/data/repositories';
+import {
+  generationRepository,
+  resumeFormatSettingsRepository,
+  vacancyRepository
+} from '@layer/api/server/data/repositories';
 
 /**
  * GET /api/vacancies/:id/generations/latest
@@ -44,8 +49,26 @@ export default defineEventHandler(async event => {
   const generation = await generationRepository.findLatestByVacancyId(vacancyId);
 
   // Return null if no valid generation exists (valid state for new vacancies)
+  if (!generation) {
+    return {
+      isValid: false,
+      generation: null,
+      formatSettings: null
+    } satisfies VacanciesResumeGeneration;
+  }
+
+  const config = useRuntimeConfig(event);
+  const defaults = (config.public.formatSettings as FormatSettingsConfig).defaults;
+  const settings =
+    (await resumeFormatSettingsRepository.findByResumeId(generation.resumeId)) ??
+    (await resumeFormatSettingsRepository.seedDefaults(generation.resumeId, defaults));
+
   return {
-    isValid: !!generation,
-    generation
+    isValid: true,
+    generation,
+    formatSettings: {
+      ats: settings.ats,
+      human: settings.human
+    }
   } satisfies VacanciesResumeGeneration;
 });

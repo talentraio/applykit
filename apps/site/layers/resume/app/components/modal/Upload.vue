@@ -8,6 +8,7 @@
     <template #body>
       <div class="p-4">
         <ResumeFormUpload
+          :replace-resume-id="replaceResumeId"
           @success="handleSuccess"
           @error="handleError"
           @create-from-scratch="handleCreateFromScratch"
@@ -34,6 +35,10 @@ type ResumeUploadModalClosePayload =
   | { action: 'create-from-scratch' };
 
 defineOptions({ name: 'ResumeModalUpload' });
+
+defineProps<{
+  replaceResumeId?: string;
+}>();
 
 const emit = defineEmits<{
   /** Close modal with action payload */

@@ -28,7 +28,7 @@ import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
  * Vacancy Store
  *
  * Manages vacancy data and operations.
- * Format settings are managed by useFormatSettingsStore in _base layer.
+ * Generation format settings are managed by useGenerationFormatSettingsStore.
  * Undo/redo history is managed by useResumeEditHistory composable.
  */
 
@@ -128,6 +128,38 @@ export const useVacancyStore = defineStore('VacancyStore', {
     totalPages: (state): number => state.vacancyListResponse?.pagination.totalPages ?? 0,
 
     /**
+     * Get persisted column visibility preferences.
+     */
+    getColumnVisibility: (state): VacancyListColumnVisibility | null =>
+      state.vacancyListResponse?.columnVisibility ?? null,
+
+    /**
+     * Get vacancy meta for current detail route.
+     */
+    getCurrentVacancyMeta: (state): VacancyMeta | null => state.currentVacancyMeta,
+
+    /**
+     * Get current vacancy entity.
+     */
+    getCurrentVacancy: (state): Vacancy | null => state.currentVacancy,
+
+    /**
+     * Get latest generation summary for overview screens.
+     */
+    getOverviewLatestGeneration: (state): VacancyOverviewGeneration | null =>
+      state.overviewLatestGeneration,
+
+    /**
+     * Get whether generation action is enabled.
+     */
+    getCanGenerateResume: (state): boolean => state.overviewCanGenerateResume,
+
+    /**
+     * Get score details request loading state.
+     */
+    getScoreDetailsLoading: (state): boolean => state.scoreDetailsLoading,
+
+    /**
      * Check if user has any vacancies
      */
     getHasVacancies(): boolean {
@@ -169,6 +201,11 @@ export const useVacancyStore = defineStore('VacancyStore', {
      * Get generation saving state
      */
     getSavingGeneration: (state): boolean => state.savingGeneration,
+
+    /**
+     * Get current generation ID selected for editing.
+     */
+    getCurrentGenerationId: (state): string | null => state.currentGenerationId,
 
     /**
      * Get content for display from current generation

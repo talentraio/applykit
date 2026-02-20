@@ -86,7 +86,7 @@ const emit = defineEmits<{
   &__content {
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
   &__footer {

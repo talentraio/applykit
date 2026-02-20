@@ -25,19 +25,6 @@
         @edit="openScenarioEditor"
       />
     </div>
-
-    <LlmRoutingScenariosEditModal
-      v-model:open="modalOpen"
-      v-model:draft="modalDraft"
-      :title="modalTitle"
-      :description="modalDescription"
-      :form-component="activeFormComponent"
-      :form-props="activeFormProps"
-      :loading="routingSaving"
-      :can-save="modalCanSave"
-      @cancel="closeScenarioEditor"
-      @save="saveScenario"
-    />
   </div>
 </template>
 
@@ -522,23 +509,17 @@ const hasRequiredValuesForScenario = (
   return Boolean(draft.primaryModelId);
 };
 
-const {
-  modalOpen,
-  modalScenarioKey,
-  modalDraft,
-  modalTitle,
-  modalDescription,
-  activeFormComponent,
-  activeFormProps,
-  modalCanSave,
-  openScenarioEditor,
-  closeScenarioEditor
-} = useRoutingScenarioEditor({
-  getSavedDraft: getSavedDraftForScenario,
-  getDescription: getModalDescriptionByScenario,
-  getFormProps: getModalFormPropsByScenario,
-  hasRequiredValues: hasRequiredValuesForScenario
-});
+const { modalScenarioKey, modalDraft, modalCanSave, openScenarioEditor, closeScenarioEditor } =
+  useRoutingScenarioEditor({
+    getSavedDraft: getSavedDraftForScenario,
+    getDescription: getModalDescriptionByScenario,
+    getFormProps: getModalFormPropsByScenario,
+    hasRequiredValues: hasRequiredValuesForScenario,
+    isSaving: routingSaving,
+    onSave: () => {
+      void saveScenario();
+    }
+  });
 
 const errorMessage = (error: unknown): string => {
   const apiError = error as ApiErrorWithMessage;
@@ -553,7 +534,7 @@ const errorMessage = (error: unknown): string => {
   return t('common.error.generic');
 };
 
-const saveScenario = async () => {
+async function saveScenario() {
   const scenarioKey = modalScenarioKey.value;
   if (!scenarioKey || !modalCanSave.value) return;
 
@@ -600,7 +581,7 @@ const saveScenario = async () => {
     }
 
     await fetchRouting();
-    closeScenarioEditor();
+    closeScenarioEditor({ action: 'submitted' });
   } catch (error) {
     toast.add({
       title: t('common.error.generic'),
@@ -608,7 +589,7 @@ const saveScenario = async () => {
       color: 'error'
     });
   }
-};
+}
 </script>
 
 <style lang="scss">

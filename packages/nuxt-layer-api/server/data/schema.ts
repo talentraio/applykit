@@ -100,6 +100,10 @@ export const users = pgTable('users', {
   role: roleEnum('role').notNull().default(USER_ROLE_MAP.PUBLIC),
   status: userStatusEnum('status').notNull().default('active'),
 
+  // Default resume (FK added after resumes table definition, set via addForeignKeyConstraint)
+  // Defined here for column, actual FK reference deferred to avoid circular dependency
+  defaultResumeId: uuid('default_resume_id'),
+
   // Legal consent
   termsAcceptedAt: timestamp('terms_accepted_at', { mode: 'date' }),
   legalVersion: varchar('legal_version', { length: 20 }),
@@ -181,8 +185,8 @@ export const profiles = pgTable('profiles', {
 
 /**
  * User Format Settings table
- * Per-user resume formatting preferences (spacing, localization)
- * One-to-one with users
+ * @deprecated Will be removed after data migration to resume_format_settings (feature 014).
+ * Kept temporarily so existing code compiles during incremental migration.
  */
 export const userFormatSettings = pgTable('user_format_settings', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -226,6 +230,7 @@ export const resumes = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 255 }).notNull().default(''),
     title: varchar('title', { length: 255 }).notNull(),
     content: jsonb('content').$type<ResumeContent>().notNull(),
     sourceFileName: varchar('source_file_name', { length: 255 }).notNull(),
@@ -236,6 +241,29 @@ export const resumes = pgTable(
   table => ({
     userIdIdx: index('idx_resumes_user_id').on(table.userId),
     createdAtIdx: index('idx_resumes_created_at').on(table.createdAt)
+  })
+);
+
+/**
+ * Resume Format Settings table
+ * Per-resume formatting preferences (spacing, localization)
+ * One-to-one with resumes (replaces user_format_settings)
+ */
+export const resumeFormatSettings = pgTable(
+  'resume_format_settings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    resumeId: uuid('resume_id')
+      .notNull()
+      .references(() => resumes.id, { onDelete: 'cascade' })
+      .unique(),
+    ats: jsonb('ats').$type<ResumeFormatSettingsAts>().notNull(),
+    human: jsonb('human').$type<ResumeFormatSettingsHuman>().notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => ({
+    resumeIdIdx: index('idx_resume_format_settings_resume_id').on(table.resumeId)
   })
 );
 
@@ -319,6 +347,29 @@ export const generations = pgTable(
     scoreAlertDismissedAtIdx: index('idx_generations_score_alert_dismissed_at').on(
       table.scoreAlertDismissedAt
     )
+  })
+);
+
+/**
+ * Generation Format Settings table
+ * Snapshot of formatting preferences for each generated resume.
+ * One-to-one with generations.
+ */
+export const generationFormatSettings = pgTable(
+  'generation_format_settings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    generationId: uuid('generation_id')
+      .notNull()
+      .references(() => generations.id, { onDelete: 'cascade' })
+      .unique(),
+    ats: jsonb('ats').$type<ResumeFormatSettingsAts>().notNull(),
+    human: jsonb('human').$type<ResumeFormatSettingsHuman>().notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => ({
+    generationIdIdx: index('idx_generation_format_settings_generation_id').on(table.generationId)
   })
 );
 
@@ -561,8 +612,13 @@ export type NewRoleBudgetWindow = typeof roleBudgetWindows.$inferInsert;
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
 
+/** @deprecated Use ResumeFormatSettingsRow instead (feature 014) */
 export type UserFormatSettingsRow = typeof userFormatSettings.$inferSelect;
+/** @deprecated Use NewResumeFormatSettingsRow instead (feature 014) */
 export type NewUserFormatSettingsRow = typeof userFormatSettings.$inferInsert;
+
+export type ResumeFormatSettingsRow = typeof resumeFormatSettings.$inferSelect;
+export type NewResumeFormatSettingsRow = typeof resumeFormatSettings.$inferInsert;
 
 export type UserVacancyListPreferencesRow = typeof userVacancyListPreferences.$inferSelect;
 export type NewUserVacancyListPreferencesRow = typeof userVacancyListPreferences.$inferInsert;
@@ -578,6 +634,9 @@ export type NewVacancy = typeof vacancies.$inferInsert;
 
 export type Generation = typeof generations.$inferSelect;
 export type NewGeneration = typeof generations.$inferInsert;
+
+export type GenerationFormatSettingsRow = typeof generationFormatSettings.$inferSelect;
+export type NewGenerationFormatSettingsRow = typeof generationFormatSettings.$inferInsert;
 
 export type GenerationScoreDetail = typeof generationScoreDetails.$inferSelect;
 export type NewGenerationScoreDetail = typeof generationScoreDetails.$inferInsert;

@@ -1,46 +1,136 @@
-import type { Resume, ResumeContent } from '@int/schema';
+import type {
+  PatchFormatSettingsBody,
+  PutFormatSettingsBody,
+  Resume,
+  ResumeContent,
+  ResumeFormatSettingsAts,
+  ResumeFormatSettingsHuman,
+  ResumeListItem
+} from '@int/schema';
+
+export type ResumeWithFormatSettings = Resume & {
+  formatSettings: {
+    ats: ResumeFormatSettingsAts;
+    human: ResumeFormatSettingsHuman;
+  };
+};
 
 /**
  * Resume API
  *
- * Handles resume operations using the new singular /api/resume endpoint.
- * Single resume architecture: one resume per user.
- *
- * Legacy /api/resumes/* endpoints are deprecated.
- *
- * Related: T028 (US3)
+ * Handles resume operations for multi-resume architecture.
+ * Uses /api/resumes/* endpoints.
  */
 export const resumeApi = {
+  // ============================================
+  // Multi-Resume Endpoints (primary)
+  // ============================================
+
   /**
-   * Get the current user's single resume
-   * Returns null if user has no resume
+   * List all resumes for the current user (lightweight)
+   * Sorted: default first, then createdAt DESC
    */
-  async fetch(): Promise<Resume | null> {
-    try {
-      return await useApi('/api/resume', {
-        method: 'GET'
-      });
-    } catch (error) {
-      // 404 means no resume exists yet
-      if ((error as { statusCode?: number }).statusCode === 404) {
-        return null;
-      }
-      throw error;
-    }
+  async fetchList(): Promise<{ items: ResumeListItem[] }> {
+    return await useApi('/api/resumes', {
+      method: 'GET'
+    });
+  },
+
+  /**
+   * Get full resume by ID with ownership check
+   * Includes computed isDefault and formatSettings
+   */
+  async fetchById(id: string): Promise<ResumeWithFormatSettings> {
+    return await useApi(`/api/resumes/${id}`, {
+      method: 'GET'
+    });
+  },
+
+  /**
+   * Duplicate an existing resume
+   * Clones content + format settings, sets name to "copy <source.name>"
+   */
+  async duplicate(sourceId: string): Promise<Resume> {
+    return await useApi(`/api/resumes/${sourceId}/duplicate`, {
+      method: 'POST'
+    });
+  },
+
+  /**
+   * Delete a non-default resume
+   */
+  async deleteResume(id: string): Promise<void> {
+    await useApi(`/api/resumes/${id}`, {
+      method: 'DELETE'
+    });
+  },
+
+  /**
+   * Update resume name
+   */
+  async updateName(
+    id: string,
+    name: string
+  ): Promise<{ id: string; name: string; updatedAt: string }> {
+    return await useApi(`/api/resumes/${id}/name`, {
+      method: 'PUT',
+      body: { name }
+    });
+  },
+
+  /**
+   * Set which resume is the user's default
+   */
+  async setDefault(resumeId: string): Promise<{ success: true }> {
+    return await useApi('/api/user/default-resume', {
+      method: 'PUT',
+      body: { resumeId }
+    });
+  },
+
+  /**
+   * Patch per-resume format settings (deep partial merge)
+   */
+  async patchSettings(
+    resumeId: string,
+    patch: PatchFormatSettingsBody
+  ): Promise<{ ats: ResumeFormatSettingsAts; human: ResumeFormatSettingsHuman }> {
+    return await useApi(`/api/resumes/${resumeId}/format-settings`, {
+      method: 'PATCH',
+      body: patch
+    });
+  },
+
+  /**
+   * Replace per-resume format settings
+   * Server endpoint accepts PATCH with full payload.
+   */
+  async putSettings(
+    resumeId: string,
+    settings: PutFormatSettingsBody
+  ): Promise<{ ats: ResumeFormatSettingsAts; human: ResumeFormatSettingsHuman }> {
+    return await useApi(`/api/resumes/${resumeId}/format-settings`, {
+      method: 'PATCH',
+      body: settings
+    });
   },
 
   /**
    * Upload and parse a resume file
-   * Creates or replaces the user's single resume
+   * Creates a new resume by default.
+   * If replaceResumeId is passed, replaces base data for that resume.
    */
-  async upload(file: File, title?: string): Promise<Resume> {
+  async upload(file: File, title?: string, replaceResumeId?: string): Promise<Resume> {
     const formData = new FormData();
     formData.append('file', file);
     if (title) {
       formData.append('title', title);
     }
+    if (replaceResumeId) {
+      formData.append('replaceResumeId', replaceResumeId);
+    }
 
-    return await useApi('/api/resume', {
+    return await useApi('/api/resumes', {
       method: 'POST',
       body: formData
     });
@@ -49,19 +139,25 @@ export const resumeApi = {
   /**
    * Create a resume from JSON content (manual creation)
    */
-  async createFromContent(content: ResumeContent, title?: string): Promise<Resume> {
-    return await useApi('/api/resume', {
+  async createFromContent(
+    content: ResumeContent,
+    title?: string,
+    replaceResumeId?: string
+  ): Promise<Resume> {
+    return await useApi('/api/resumes', {
       method: 'POST',
-      body: { content, title }
+      body: { content, title, replaceResumeId }
     });
   },
 
   /**
-   * Update resume content
-   * Creates a version snapshot on content change
+   * Update resume content and/or title
    */
-  async update(data: { content?: ResumeContent; title?: string }): Promise<Resume> {
-    return await useApi('/api/resume', {
+  async update(
+    resumeId: string,
+    data: { content?: ResumeContent; title?: string }
+  ): Promise<Resume> {
+    return await useApi(`/api/resumes/${resumeId}`, {
       method: 'PUT',
       body: data
     });
@@ -70,51 +166,7 @@ export const resumeApi = {
   /**
    * Update resume content only
    */
-  async updateContent(content: ResumeContent): Promise<Resume> {
-    return resumeApi.update({ content });
-  },
-
-  // ============================================
-  // DEPRECATED: Legacy /api/resumes/* endpoints
-  // ============================================
-
-  /**
-   * @deprecated Use fetch() instead
-   */
-  async fetchAll(): Promise<Resume[]> {
-    return await useApi('/api/resumes', {
-      method: 'GET'
-    });
-  },
-
-  /**
-   * @deprecated Use fetch() instead
-   */
-  async fetchById(id: string): Promise<Resume> {
-    return await useApi(`/api/resumes/${id}`, {
-      method: 'GET'
-    });
-  },
-
-  /**
-   * @deprecated Use update() instead
-   */
-  async updateLegacy(
-    id: string,
-    data: { content?: ResumeContent; title?: string }
-  ): Promise<Resume> {
-    return await useApi(`/api/resumes/${id}`, {
-      method: 'PUT',
-      body: data
-    });
-  },
-
-  /**
-   * @deprecated Resume deletion not supported in single-resume architecture
-   */
-  async delete(id: string): Promise<void> {
-    await useApi(`/api/resumes/${id}`, {
-      method: 'DELETE'
-    });
+  async updateContent(resumeId: string, content: ResumeContent): Promise<Resume> {
+    return resumeApi.update(resumeId, { content });
   }
 };

@@ -1,119 +1,78 @@
 # API fetching guide (selective)
 
-Use this guide when touching API transport / composables.
+Use this guide when touching API transport or client-side request patterns.
 
-## Architecture overview
+## Core rule
 
+- Always use `useApi()` for client-side calls.
+- Do not call raw `$fetch` directly for backend API requests.
+
+Why:
+
+- shared `$api` plugin handles SSR header forwarding,
+- auth error behavior is centralized,
+- timeout and transport behavior stays consistent.
+
+## Request path
+
+Typical flow:
+
+```text
+UI (component/page/store)
+  -> infrastructure/*.api.ts (preferred for reusable domain calls)
+  -> useApi()
+  -> $api plugin (@int/api/app/plugins/create-api.ts)
+  -> server endpoint
 ```
-Store Action
-    ↓
-infrastructure/*.api.ts (typed methods)
-    ↓
-useApi() composable
-    ↓
-$api plugin (configured $fetch)
-    ↓
-Server endpoint
-```
 
-## `$api` plugin (single source of truth)
+## Where to place API calls
 
-- Located at: `@int/api/app/plugins/create-api.ts`
-- Creates a configured `$fetch` instance with:
-  - `credentials: 'include'`
-  - Timeout from config
-  - SSR header forwarding (`cookie`, `accept-language`, `user-agent`)
+Preferred placement:
+
+- reusable domain operations -> `infrastructure/*.api.ts` + store actions
+- one-off local UI actions (modal/page-local actions) -> direct `useApi()` in component/page is acceptable
+
+Examples of acceptable local calls in current codebase:
+
+- profile photo upload/delete actions,
+- dismissing generation score alert,
+- PDF preview payload fetch.
 
 ## `useApi()` composable
 
-- Located at: `@int/api/app/composables/useApi.ts`
-- Thin wrapper that calls `nuxtApp.$api()`
-- **This is the ONLY way to make API calls from client code**
+- Path: `@int/api/app/composables/useApi.ts`
+- Wrapper over Nuxt app `$api` instance.
 
-```typescript
-// useApi signature
-const data = await useApi('/api/resumes', { method: 'GET' });
+Example:
+
+```ts
+const resumes = await useApi('/api/resumes', { method: 'GET' });
 ```
 
 ## Forbidden patterns
 
-```typescript
-// ❌ FORBIDDEN: Direct $fetch anywhere in client code
+```ts
+// Forbidden: bypassing configured transport
 await $fetch('/api/resumes');
 
-// ❌ FORBIDDEN: $fetch with generic types
-await $fetch<Resume[]>('/api/resumes');
-
-// ❌ FORBIDDEN: useApi directly in components
-// (use store actions instead)
-const data = await useApi('/api/profile');
+// Forbidden: typed $fetch workaround instead of fixing endpoint typing
+await $fetch<MyType>('/api/resumes');
 ```
 
-## Infrastructure API files
+## Infrastructure file locations
 
-All API calls must be wrapped in typed functions in `infrastructure/*.api.ts` files:
+API wrappers live in app layers:
 
-```typescript
-// infrastructure/resume.api.ts
-const baseUrl = '/api/resumes';
+- Site: `apps/site/layers/*/app/infrastructure/*.api.ts`
+- Admin: `apps/admin/layers/*/app/infrastructure/*.api.ts`
 
-export const resumeApi = {
-  async fetchAll() {
-    return await useApi(baseUrl, { method: 'GET' });
-  },
+Shared API transport primitives live in:
 
-  async fetchById(id: string) {
-    return await useApi(`${baseUrl}/${id}`, { method: 'GET' });
-  },
+- `packages/nuxt-layer-api/app/composables/useApi.ts`
+- `packages/nuxt-layer-api/app/plugins/create-api.ts`
 
-  async create(file: File, title?: string) {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (title) formData.append('title', title);
+## Endpoint naming note
 
-    return await useApi(baseUrl, {
-      method: 'POST',
-      body: formData
-    });
-  }
-};
-```
+Prefer current plural endpoints for new code:
 
-## File locations
-
-- **Shared** (both apps): `packages/nuxt-layer-api/app/infrastructure/`
-  - `auth.api.ts` — authentication (fetchMe, logout)
-  - `user.api.ts` — user profile (shared profile endpoints)
-
-- **App-specific**: `apps/{app}/layers/{layer}/app/infrastructure/`
-  - `resume.api.ts` — resume CRUD (site only)
-  - `vacancy.api.ts` — vacancy CRUD (site only)
-
-## Where to call infrastructure API
-
-- **Only from Pinia store actions**
-- Never from components, pages, or composables directly
-
-```typescript
-// ✅ GOOD: Store action calls infrastructure
-// stores/resume.ts
-export const useResumeStore = defineStore('ResumeStore', {
-  actions: {
-    async fetchResumes() {
-      const data = await resumeApi.fetchAll();
-      this.resumes = data;
-      return data;
-    }
-  }
-});
-
-// ❌ BAD: Component calls infrastructure directly
-// SomeComponent.vue
-const data = await resumeApi.fetchAll(); // Don't do this!
-```
-
-## Headers in SSR
-
-- In SSR, `$api` automatically forwards request headers (`cookie`, `accept-language`, `user-agent`)
-- Do not log sensitive headers or cookies
-- The `x-on-server-call: true` header is added for debugging
+- use `/api/resumes*` for resume CRUD flows.

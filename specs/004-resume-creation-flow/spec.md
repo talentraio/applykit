@@ -468,34 +468,30 @@ interface VacancyStoreState {
 
 ### Modified Endpoints
 
-**GET /api/resume** (new - singular)
+**GET /api/resumes/:id**
 
-- Returns user's single resume (or 404 if none)
+- Returns the requested resume for the authenticated user (or 404 if not found/not owned)
 - Include atsSettings, humanSettings
 
-**POST /api/resume** (new - singular)
+**POST /api/resumes**
 
-- Create user's resume (or 400 if already exists)
+- Create a resume
 - Body: `{ content: ResumeContent }` or multipart file upload
 
-**PUT /api/resume** (new - singular)
+**PUT /api/resumes/:id**
 
-- Update user's resume content and/or settings
-- Creates version entry
-- Body: `{ content?, atsSettings?, humanSettings? }`
+- Update a specific resume content and/or title
+- Creates version entry when content changes
+- Body: `{ content?, title? }`
 
 **PUT /api/vacancies/[id]/generation** (modified)
 
 - Update generation content directly
 - Body: `{ content: ResumeContent }`
 
-### Deprecated Endpoints
+### Removed Legacy Endpoints
 
-- `GET /api/resumes` → Deprecated (redirect to /api/resume)
-- `POST /api/resumes` → Deprecated
-- `GET /api/resumes/[id]` → Deprecated
-- `PUT /api/resumes/[id]` → Deprecated
-- `DELETE /api/resumes/[id]` → Deprecated (single resume, no delete)
+- Legacy singular resume API routes (`GET/POST/PUT`) were removed in favor of `/api/resumes/*`
 
 ### Runtime Config
 
@@ -679,7 +675,7 @@ Phase 1: Schema & API Changes
 ├── Add ResumeFormatSettings schema
 ├── Add resume_versions table
 ├── Modify resumes table (add settings)
-├── Create /api/resume endpoints (singular)
+├── Create /api/resumes endpoints
 ├── Add runtimeConfig.resume.maxVersions
 
 Phase 2: A4 Preview System

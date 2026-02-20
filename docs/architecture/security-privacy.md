@@ -1,83 +1,83 @@
-# Security & privacy notes (MVP guardrails)
+# Security and privacy notes (MVP guardrails)
 
-This is not legal advice. It's a practical checklist to avoid obvious mistakes.
+This is not legal advice. It is a practical implementation-aligned checklist.
 
 ## Authentication
 
-Supported auth methods:
+Supported methods:
 
-- **Google OAuth** - Primary OAuth provider
-- **LinkedIn OAuth** - Secondary OAuth provider
-- **Email/Password** - Traditional registration with email verification
+- Google OAuth
+- LinkedIn OAuth
+- Email/password with verification
 
-### Password requirements
+### Password and token rules
 
-- Minimum 8 characters
-- At least 1 uppercase letter
-- At least 1 number
-- Hashed with bcrypt (12 rounds)
-
-### Token security
-
-- Email verification tokens: 32 bytes hex, 24h expiry, single-use
-- Password reset tokens: 32 bytes hex, 1h expiry, single-use
-
-### Account linking
-
-- When OAuth login matches existing email, accounts are merged
-- OAuth-verified emails are automatically marked as verified
-- Email change in profile requires re-verification
+- Password policy is validated server-side (minimum length and complexity checks).
+- Password hashes use bcrypt (`12` rounds).
+- Password reset tokens are single-use and expire in ~1 hour.
+- Email verification tokens are single-use with standard expiry, except invite flow:
+  - for `flow=invite`, token expiry is bypassed while user remains in `invited` status.
 
 ### Session management
 
-- Cookie-based sessions (7-day expiry)
-- HttpOnly, Secure (in production), SameSite=Lax
+- Cookie-based sessions via `nuxt-auth-utils`.
+- Runtime config sets `maxAge = 7 days`.
+- Secure cookie attributes are environment-aware (`Secure` in production).
 
-## Platform-managed LLM keys
+## Access control
 
-- User-provided API key flows are removed from runtime/API/UI surface.
-- Platform secrets stay server-side in runtime config (`NUXT_LLM_*`), never in client storage.
-- Do NOT expose platform keys in logs, responses, or client bundles.
-- Continue enforcing role limits, per-user daily caps, and global budget caps for all LLM operations.
+- `/api/*` is auth-protected by default.
+- `/api/auth/*` is public.
+- `/api/admin/*` requires `super_admin`.
+- Blocked/deleted users are denied protected operations.
 
-## LLM routing controls
+## LLM credential model
 
-- Runtime model selection uses precedence: `role override -> scenario default -> runtime fallback model`.
-- Routing payload is normalized server-side:
-  - retry model is accepted only for parse/adaptation/detailed-scoring scenarios;
-  - strategy is accepted only for adaptation scenario.
-- Inactive model IDs are rejected (`409`) for both primary and retry assignments.
+- Platform-managed provider keys only.
+- No BYOK runtime flow in current API/UI surface.
+- Keys stay server-side (`NUXT_LLM_*`) and must not leak into logs/responses/client bundles.
+
+## LLM routing and scenario controls
+
+- Resolution order: `role override -> scenario default -> runtime fallback`.
+- Scenario normalization is enforced server-side (retry/strategy/reasoning fields).
+- Inactive model assignments are rejected.
+- Scenario-level enable flags and role-level enable overrides are supported.
 
 ## Scoring integrity
 
-- Generation returns a lightweight baseline score (`before/after`) and always stores score breakdown.
-- Detailed scoring is executed on demand and persisted separately with vacancy-version marker.
-- Detailed scoring is deterministic from structured evidence, not a direct judge-only score.
-- If baseline or detailed scoring step fails, adaptation result is kept and fallback scoring semantics remain
-  explicit via breakdown versioning.
+- Baseline score is generated with adaptation and stored on `Generation`.
+- Detailed scoring is on-demand and persisted separately.
+- Detailed scoring uses evidence-backed deterministic structure, not opaque score-only output.
+- Fallback behavior is explicit through breakdown versioning.
 
-## User data (EU / GDPR shape)
+## Profile completion gate
 
-If we collect CVs and personal data, we need:
+Generation requires profile completeness:
 
-- data minimisation (collect only what we need)
-- storage limitation (define retention; don’t keep data forever)
-- security measures and deletion flows
+- required now: `firstName`, `lastName`, `email`, `country`, `searchRegion`
+- currently not required for gate: `languages` (temporarily relaxed)
+- phone and photo are optional
 
-Important: if we ever want to reuse resumes to build a dataset, do it as an explicit opt-in.
-Do NOT tie consent for dataset reuse to “basic product usage”.
+## User data and deletion
 
-## Account activation gate
+Account deletion flow (`DELETE /api/profile/account`) currently:
 
-MVP gate after resume import:
+1. create suppression record from email HMAC (anti-abuse)
+2. delete user content (photos, vacancies, resumes, usage logs, profile)
+3. sanitize user PII (tombstone)
+4. clear session
 
-- allow resume upload + parsing without extra friction
-- before generating adapted resumes:
-  - ask user to confirm key profile fields (name, email, country/region, languages)
-  - phone is optional; support multiple numbers if provided
+Hard admin delete can remove suppression to allow clean re-registration.
 
-## “Multi-brand SEO” (post-MVP)
+## GDPR-aligned guardrails
 
-Treat as an experiment with risks.
-Avoid tactics that look like doorway sites or duplicate content; it can backfire and damage trust.
-Prefer one strong brand + clear landing pages per region/role and real content.
+- Data minimization
+- Storage limitation
+- Access and deletion flows
+- Security controls around secrets, sessions, and abuse prevention
+
+Important product rule:
+
+- reuse of resume content for training/datasets must be explicit opt-in,
+- consent for that reuse must not be bundled with core product access.

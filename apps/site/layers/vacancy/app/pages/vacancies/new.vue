@@ -50,7 +50,7 @@ const handleSave = async (data: VacancyInput) => {
     const vacancy = await vacancyStore.createVacancy(data);
 
     toast.add({
-      title: `${t('common.create')} ${t('common.success').toLowerCase()}`,
+      title: t('vacancy.form.success'),
       color: 'success'
     });
 

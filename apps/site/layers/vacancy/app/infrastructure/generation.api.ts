@@ -1,10 +1,28 @@
-import type { Generation, LLMProvider } from '@int/schema';
+import type {
+  Generation,
+  LLMProvider,
+  PatchFormatSettingsBody,
+  PutFormatSettingsBody,
+  ResumeFormatSettingsAts,
+  ResumeFormatSettingsHuman
+} from '@int/schema';
 import type {
   VacanciesResumeGeneration,
   VacanciesScoreDetailsResponse
 } from '@layer/api/types/vacancies';
 
 const baseUrl = '/api/vacancies';
+const buildFormatSettingsUrl = (vacancyId: string, generationId: string): string =>
+  `${baseUrl}/${vacancyId}/generations/${generationId}/format-settings`;
+
+type GenerationFormatSettingsResponse = {
+  ats: ResumeFormatSettingsAts;
+  human: ResumeFormatSettingsHuman;
+};
+
+type DismissScoreAlertResponse = {
+  success: true;
+};
 
 /**
  * Generation options for tailoring resume
@@ -101,6 +119,48 @@ export const generationApi = {
         content,
         generationId
       }
+    });
+  },
+
+  /**
+   * Patch per-generation format settings.
+   */
+  async patchFormatSettings(
+    vacancyId: string,
+    generationId: string,
+    partial: PatchFormatSettingsBody
+  ): Promise<GenerationFormatSettingsResponse> {
+    return await useApi(buildFormatSettingsUrl(vacancyId, generationId), {
+      method: 'PATCH',
+      body: partial
+    });
+  },
+
+  /**
+   * Replace per-generation format settings.
+   * Server endpoint accepts PATCH with full payload.
+   */
+  async putFormatSettings(
+    vacancyId: string,
+    generationId: string,
+    settings: PutFormatSettingsBody
+  ): Promise<GenerationFormatSettingsResponse> {
+    return await useApi(buildFormatSettingsUrl(vacancyId, generationId), {
+      method: 'PATCH',
+      body: settings
+    });
+  },
+
+  /**
+   * Dismiss score alert notification for generation.
+   */
+  async dismissScoreAlert(
+    vacancyId: string,
+    generationId?: string
+  ): Promise<DismissScoreAlertResponse> {
+    return await useApi(`${baseUrl}/${vacancyId}/generation/dismiss-score-alert`, {
+      method: 'PATCH',
+      body: generationId ? { generationId } : {}
     });
   }
 };

@@ -105,8 +105,8 @@ Manages resume data and operations.
 
 **Actions**:
 
-- `fetchResumes()` - Fetch all user resumes
-- `fetchResume(id)` - Fetch single resume
+- `fetchResumeList()` - Fetch lightweight resume list
+- `fetchResumeById(id)` - Fetch a specific resume
 - `uploadResume(file, title?)` - Upload and parse resume
 - `updateResume(id, data)` - Update resume content/title
 - `deleteResume(id)` - Delete resume
