@@ -133,7 +133,11 @@ export const useResumeStore = defineStore('ResumeStore', {
     /**
      * Fetch resume list (lightweight, for selector)
      */
-    async fetchResumeList(): Promise<ResumeListItem[]> {
+    async fetchResumeList(options: { force?: boolean } = {}): Promise<ResumeListItem[]> {
+      if (this.resumeList.length > 0 && !options.force) {
+        return this.resumeList;
+      }
+
       const data = await resumeApi.fetchList();
       this.resumeList = data.items;
       return data.items;
@@ -170,7 +174,7 @@ export const useResumeStore = defineStore('ResumeStore', {
       const fullResume = await this.fetchResumeById(resume.id, { force: true });
 
       // Refresh resume list after upload
-      await this.fetchResumeList();
+      await this.fetchResumeList({ force: true });
 
       return fullResume;
     },
@@ -187,7 +191,7 @@ export const useResumeStore = defineStore('ResumeStore', {
       const fullResume = await this.fetchResumeById(resume.id, { force: true });
 
       // Refresh resume list after creation
-      await this.fetchResumeList();
+      await this.fetchResumeList({ force: true });
 
       return fullResume;
     },
@@ -204,7 +208,7 @@ export const useResumeStore = defineStore('ResumeStore', {
       const fullResume = await this.fetchResumeById(resume.id, { force: true });
 
       // Refresh resume list to include new resume
-      await this.fetchResumeList();
+      await this.fetchResumeList({ force: true });
 
       return fullResume;
     },
@@ -219,7 +223,7 @@ export const useResumeStore = defineStore('ResumeStore', {
       this.cachedResumes = this.cachedResumes.filter(c => c.id !== id);
 
       // Refresh resume list
-      await this.fetchResumeList();
+      await this.fetchResumeList({ force: true });
 
       // If deleted resume was active, clear active
       if (this.activeResumeId === id) {

@@ -143,6 +143,9 @@ export default defineEventHandler(async event => {
         getFirstString(titleArray) ||
         file.originalFilename?.replace(/\.(docx|pdf)$/i, '') ||
         'My Resume';
+      const generatedName = format(new Date(), 'dd.MM.yyyy');
+      const normalizedTitle = title.trim();
+      const name = normalizedTitle.length > 0 ? normalizedTitle : generatedName;
 
       const sourceFileName = file.originalFilename || 'unknown';
 
@@ -172,15 +175,13 @@ export default defineEventHandler(async event => {
         };
       }
 
-      const generatedName = format(new Date(), 'dd.MM.yyyy');
-
       const resume = await resumeRepository.create({
         userId,
         title,
         content: llmResult.content,
         sourceFileName,
         sourceFileType: fileType,
-        name: generatedName
+        name
       });
 
       if (isFirstResume) {
@@ -224,6 +225,7 @@ export default defineEventHandler(async event => {
     const body = await readBody<{
       content: ResumeContent;
       title?: string;
+      name?: string;
       sourceFileName?: string;
       sourceFileType?: SourceFileType;
       replaceResumeId?: string;
@@ -253,7 +255,7 @@ export default defineEventHandler(async event => {
       const sourceFileType = body.sourceFileType || replaceTargetResume.sourceFileType;
       const title =
         typeof body.title === 'string' && body.title.trim().length > 0
-          ? body.title
+          ? body.title.trim()
           : replaceTargetResume.title;
 
       const replacedResume = await resumeRepository.replaceBaseData(
@@ -281,7 +283,7 @@ export default defineEventHandler(async event => {
       };
     }
 
-    if (!body.title || typeof body.title !== 'string') {
+    if (!body.title || typeof body.title !== 'string' || body.title.trim().length === 0) {
       throw createError({
         statusCode: 400,
         message: 'title field is required and must be a string'
@@ -299,15 +301,18 @@ export default defineEventHandler(async event => {
     const sourceFileName = body.sourceFileName || 'import.json';
     const sourceFileType = body.sourceFileType || SOURCE_FILE_TYPE_MAP.PDF;
     const generatedName = format(new Date(), 'dd.MM.yyyy');
+    const normalizedTitle = body.title.trim();
+    const normalizedName = typeof body.name === 'string' ? body.name.trim() : '';
+    const name = normalizedName.length > 0 ? normalizedName : normalizedTitle || generatedName;
     const isFirstResume = currentCount === 0;
 
     const resume = await resumeRepository.create({
       userId,
-      title: body.title,
+      title: normalizedTitle,
       content: contentValidation.data,
       sourceFileName,
       sourceFileType,
-      name: generatedName
+      name
     });
 
     if (isFirstResume) {

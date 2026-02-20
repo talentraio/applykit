@@ -26,6 +26,7 @@ defineOptions({ name: 'ResumeModalCreateFromScratch' });
 
 const props = defineProps<{
   replaceResumeId?: string;
+  title?: string;
 }>();
 
 const isOpen = defineModel<boolean>('open', { default: false });
@@ -59,7 +60,8 @@ async function handleConfirm() {
 
   isCreating.value = true;
   try {
-    const title = props.replaceResumeId ? undefined : 'My Resume';
+    const titleFromInput = props.title?.trim();
+    const title = titleFromInput || (props.replaceResumeId ? undefined : 'My Resume');
     const resume = await resumeStore.createFromContent(emptyContent, title, props.replaceResumeId);
     isOpen.value = false;
     toast.add({

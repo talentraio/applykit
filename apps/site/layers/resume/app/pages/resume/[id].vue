@@ -20,19 +20,13 @@
       <!-- Left: Resume Selector + Editor Tabs -->
       <template #left>
         <div class="resume-page__left-panel">
-          <ResumeEditorSelector
+          <ResumeEditorToolbar
             :resume-id="resumeId"
             :resume-list="store.resumeList"
             :disabled="isSelectorDisabled"
-            class="resume-page__selector"
-          >
-            <template #actions>
-              <ResumeEditorSelectorMenu
-                :resume-id="resumeId"
-                :is-default-resume="isDefaultResume"
-              />
-            </template>
-          </ResumeEditorSelector>
+            :is-default-resume="isDefaultResume"
+            class="resume-page__toolbar"
+          />
 
           <ResumeEditorTools
             v-model="activeTab"
@@ -218,7 +212,7 @@ const isSelectorDisabled = computed(() => store.resumeList.length <= 1);
     min-height: 0;
   }
 
-  &__selector {
+  &__toolbar {
     flex-shrink: 0;
   }
 

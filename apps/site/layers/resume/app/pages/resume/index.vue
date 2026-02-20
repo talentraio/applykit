@@ -12,6 +12,8 @@
 
         <ResumeFormUpload
           class="mt-8"
+          show-title-input
+          require-title
           @success="handleUploadSuccess"
           @error="handleUploadError"
           @create-from-scratch="handleCreateFromScratch"
@@ -129,8 +131,8 @@ const handleUploadError = (err: Error) => {
 /**
  * Handle create from scratch click
  */
-const handleCreateFromScratch = () => {
-  void openCreateFromScratchModal();
+const handleCreateFromScratch = (payload: { title?: string }) => {
+  void openCreateFromScratchModal({ title: payload.title });
 };
 </script>
 
