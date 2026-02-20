@@ -42,6 +42,7 @@ const WORD_PATTERN = /[a-z0-9][a-z0-9+#-]*/g;
 const MIN_WORD_LENGTH = 3;
 const DEFAULT_GEMINI_CACHE_TTL_SECONDS = 300;
 const BASELINE_SCORING_MAX_TOKENS = 800;
+const LLM_GENERATE_LOG_PREFIX = '[LLM:generate]';
 
 type LlmUsageBreakdown = {
   inputTokens: number;
@@ -279,6 +280,49 @@ const toRole = (role?: Role): Role => {
   return role ?? USER_ROLE_MAP.PUBLIC;
 };
 
+const isGenerateDebugLogsEnabled = (): boolean => {
+  const runtimeConfig = useRuntimeConfig();
+  return runtimeConfig.llm?.debugLogs === true;
+};
+
+const toErrorLogDetails = (error: unknown): Record<string, unknown> => {
+  if (error instanceof GenerateLLMError) {
+    return {
+      errorName: error.name,
+      errorCode: error.code,
+      errorMessage: error.message
+    };
+  }
+
+  if (error instanceof LLMError) {
+    return {
+      errorName: error.name,
+      errorCode: error.code ?? null,
+      errorProvider: error.provider,
+      errorMessage: error.message
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      errorName: error.name,
+      errorMessage: error.message
+    };
+  }
+
+  return {
+    errorValue: String(error)
+  };
+};
+
+const logGenerateDebug = (event: string, details: Record<string, unknown>): void => {
+  if (!isGenerateDebugLogsEnabled()) {
+    return;
+  }
+
+  console.warn(`${LLM_GENERATE_LOG_PREFIX} ${event}`, details);
+};
+
 const resolveScenarioTarget = async (
   role: Role,
   scenario: LlmScenarioKey
@@ -353,14 +397,27 @@ const runAdaptationStep = async (
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     const retryReasoningEffort: LlmReasoningEffort | undefined = attempt > 1 ? 'medium' : undefined;
+    const attemptStartedAt = Date.now();
+    const adaptationPrompt = `${GENERATE_SYSTEM_PROMPT}\n\n${createGenerateUserPrompt(
+      sharedContextPrompt,
+      strategyKey
+    )}`;
+
+    logGenerateDebug('adaptation.attempt.start', {
+      attempt,
+      maxRetries,
+      strategyKey,
+      promptChars: adaptationPrompt.length,
+      requestedTemperature: options.temperature ?? 0.3,
+      requestedMaxTokens: 6000,
+      requestedReasoningEffort: retryReasoningEffort ?? null,
+      providerOverride: options.provider ?? null
+    });
 
     try {
       const response = await callLLM(
         {
-          prompt: `${GENERATE_SYSTEM_PROMPT}\n\n${createGenerateUserPrompt(
-            sharedContextPrompt,
-            strategyKey
-          )}`,
+          prompt: adaptationPrompt,
           temperature: options.temperature ?? 0.3,
           maxTokens: 6000,
           responseFormat: 'json',
@@ -384,8 +441,21 @@ const runAdaptationStep = async (
       totalOutputTokens += usageBreakdown.outputTokens;
       totalCachedInputTokens += usageBreakdown.cachedInputTokens;
 
+      const parsedContent = parseAdaptationContent(response.content);
+
+      logGenerateDebug('adaptation.attempt.success', {
+        attempt,
+        durationMs: Date.now() - attemptStartedAt,
+        provider: response.provider,
+        model: response.model,
+        tokensUsed: response.tokensUsed,
+        inputTokens: usageBreakdown.inputTokens,
+        outputTokens: usageBreakdown.outputTokens,
+        cachedInputTokens: usageBreakdown.cachedInputTokens
+      });
+
       return {
-        content: parseAdaptationContent(response.content),
+        content: parsedContent,
         usage: {
           cost: totalCost,
           tokensUsed: totalTokens,
@@ -410,6 +480,12 @@ const runAdaptationStep = async (
           error
         );
       }
+
+      logGenerateDebug('adaptation.attempt.failed', {
+        attempt,
+        durationMs: Date.now() - attemptStartedAt,
+        ...toErrorLogDetails(lastError)
+      });
     }
   }
 
@@ -440,13 +516,26 @@ const runBaselineScoringStep = async (
   let lastError: GenerateLLMError | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const attemptStartedAt = Date.now();
+    const scoringPrompt = `${BASELINE_SCORE_SYSTEM_PROMPT}\n\n${createBaselineScoreUserPrompt(
+      sharedContextPrompt,
+      tailoredResume
+    )}`;
+
+    logGenerateDebug('scoring.attempt.start', {
+      attempt,
+      maxRetries,
+      promptChars: scoringPrompt.length,
+      requestedTemperature: options.scoringTemperature ?? 0,
+      requestedMaxTokens: BASELINE_SCORING_MAX_TOKENS,
+      requestedReasoningEffort: 'low',
+      providerOverride: options.provider ?? null
+    });
+
     try {
       const response = await callLLM(
         {
-          prompt: `${BASELINE_SCORE_SYSTEM_PROMPT}\n\n${createBaselineScoreUserPrompt(
-            sharedContextPrompt,
-            tailoredResume
-          )}`,
+          prompt: scoringPrompt,
           temperature: options.scoringTemperature ?? 0,
           maxTokens: BASELINE_SCORING_MAX_TOKENS,
           responseFormat: 'json',
@@ -471,6 +560,19 @@ const runBaselineScoringStep = async (
 
       const parsedScores = parseBaselineScores(response.content);
       const normalizedScores = normalizeBaselineScores(parsedScores);
+
+      logGenerateDebug('scoring.attempt.success', {
+        attempt,
+        durationMs: Date.now() - attemptStartedAt,
+        provider: response.provider,
+        model: response.model,
+        tokensUsed: response.tokensUsed,
+        inputTokens: usageBreakdown.inputTokens,
+        outputTokens: usageBreakdown.outputTokens,
+        cachedInputTokens: usageBreakdown.cachedInputTokens,
+        matchScoreBefore: normalizedScores.matchScoreBefore,
+        matchScoreAfter: normalizedScores.matchScoreAfter
+      });
 
       return {
         scores: {
@@ -502,6 +604,12 @@ const runBaselineScoringStep = async (
           error
         );
       }
+
+      logGenerateDebug('scoring.attempt.failed', {
+        attempt,
+        durationMs: Date.now() - attemptStartedAt,
+        ...toErrorLogDetails(lastError)
+      });
     }
   }
 
@@ -556,12 +664,27 @@ export async function generateResumeWithLLM(
   },
   options: GenerateOptions = {}
 ): Promise<GenerateLLMResult> {
+  const generationStartedAt = Date.now();
   const runtimeRole = toRole(options.role);
+
+  logGenerateDebug('generation.start', {
+    role: runtimeRole,
+    userId: options.userId ?? null,
+    providerOverride: options.provider ?? null,
+    vacancyDescriptionChars: vacancy.description.length
+  });
+
   const adaptationTarget = await resolveScenarioTarget(
     runtimeRole,
     LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION
   );
   const strategyKey = await resolveGenerationStrategy(runtimeRole);
+
+  logGenerateDebug('generation.plan.resolved', {
+    adaptationProvider: adaptationTarget.provider,
+    adaptationModel: adaptationTarget.model,
+    strategyKey
+  });
 
   const sharedContext = buildSharedResumeContext(
     {
@@ -575,7 +698,22 @@ export async function generateResumeWithLLM(
     }
   );
 
+  logGenerateDebug('generation.shared-context.ready', {
+    sharedContextChars: sharedContext.prompt.length,
+    sharedContextTokenEstimate: sharedContext.cacheTokenEstimate
+  });
+
+  const adaptationStartedAt = Date.now();
   const adaptationResult = await runAdaptationStep(sharedContext.prompt, strategyKey, options);
+  const adaptationDurationMs = Date.now() - adaptationStartedAt;
+
+  logGenerateDebug('generation.adaptation.complete', {
+    durationMs: adaptationDurationMs,
+    attemptsUsed: adaptationResult.usage.attemptsUsed,
+    tokensUsed: adaptationResult.usage.tokensUsed,
+    provider: adaptationResult.usage.provider,
+    model: adaptationResult.usage.model
+  });
 
   const scoringProviderOptions = await resolveScoringProviderOptions(
     runtimeRole,
@@ -583,12 +721,27 @@ export async function generateResumeWithLLM(
   );
 
   try {
+    const scoringStartedAt = Date.now();
     const scoringResult = await runBaselineScoringStep(
       sharedContext.prompt,
       adaptationResult.content,
       options,
       scoringProviderOptions
     );
+    const scoringDurationMs = Date.now() - scoringStartedAt;
+
+    logGenerateDebug('generation.scoring.complete', {
+      durationMs: scoringDurationMs,
+      attemptsUsed: scoringResult.usage.attemptsUsed,
+      tokensUsed: scoringResult.usage.tokensUsed,
+      provider: scoringResult.usage.provider,
+      model: scoringResult.usage.model
+    });
+
+    logGenerateDebug('generation.complete', {
+      totalDurationMs: Date.now() - generationStartedAt,
+      scoringFallbackUsed: false
+    });
 
     return {
       content: adaptationResult.content,
@@ -600,6 +753,12 @@ export async function generateResumeWithLLM(
       scoringFallbackUsed: false
     };
   } catch (error) {
+    logGenerateDebug('generation.scoring.fallback', {
+      totalDurationMs: Date.now() - generationStartedAt,
+      sharedContextTokenEstimate: sharedContext.cacheTokenEstimate,
+      ...toErrorLogDetails(error)
+    });
+
     console.warn(
       `Baseline scoring step failed. Falling back to deterministic scores. Shared context estimate: ${sharedContext.cacheTokenEstimate} tokens.`,
       error instanceof Error ? error.message : error

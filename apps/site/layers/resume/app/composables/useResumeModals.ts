@@ -15,7 +15,7 @@ const RESUME_DELETE_CONFIRM_MODAL_OVERLAY_OPEN_STATE_KEY =
 
 export type ResumeUploadModalClosePayload =
   | { action: 'uploaded'; resume: Resume }
-  | { action: 'create-from-scratch'; title?: string };
+  | { action: 'create-from-scratch' };
 export type ResumeDeleteConfirmModalClosePayload =
   | { action: 'confirmed' }
   | { action: 'cancelled' };
@@ -27,7 +27,6 @@ export type OpenResumeUploadModalOptions = {
 
 export type OpenCreateFromScratchModalOptions = {
   replaceResumeId?: string;
-  title?: string;
 };
 
 export type UseResumeModalsComposable = {
@@ -131,8 +130,7 @@ export function useResumeModals(): UseResumeModalsComposable {
 
     try {
       await createModalOverlay.open({
-        replaceResumeId: options.replaceResumeId,
-        title: options.title
+        replaceResumeId: options.replaceResumeId
       });
     } finally {
       createOverlayOpen.value = false;
@@ -159,8 +157,7 @@ export function useResumeModals(): UseResumeModalsComposable {
     const result = await openUploadModal(options);
     if (result?.action === 'create-from-scratch') {
       await openCreateFromScratchModal({
-        replaceResumeId: options.replaceResumeId,
-        title: result.title
+        replaceResumeId: options.replaceResumeId
       });
     }
   };

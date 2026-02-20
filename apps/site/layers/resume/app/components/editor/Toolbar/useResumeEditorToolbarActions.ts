@@ -58,8 +58,7 @@ export function useResumeEditorToolbarActions(options: UseResumeEditorToolbarAct
 
     if (result?.action === 'create-from-scratch') {
       await openCreateFromScratchModal({
-        replaceResumeId,
-        title: result.title
+        replaceResumeId
       });
     }
   };

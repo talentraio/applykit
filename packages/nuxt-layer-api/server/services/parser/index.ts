@@ -2,7 +2,7 @@ import type { SourceFileType } from '@int/schema';
 import type { Buffer } from 'node:buffer';
 import { SOURCE_FILE_TYPE_MAP } from '@int/schema';
 import mammoth from 'mammoth';
-import { extractText, getDocumentProxy } from 'unpdf';
+import { extractText, getDocumentProxy, getResolvedPDFJS } from 'unpdf';
 
 /**
  * Document Parser Service
@@ -114,7 +114,12 @@ async function parseDocx(buffer: Buffer): Promise<ParseResult> {
  */
 async function parsePdf(buffer: Buffer): Promise<ParseResult> {
   try {
-    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const pdfjs = await getResolvedPDFJS();
+    const pdf = await getDocumentProxy(new Uint8Array(buffer), {
+      // Suppress noisy PDF.js font warnings (e.g. "TT: undefined function: 32")
+      // while still surfacing real parsing errors through thrown exceptions.
+      verbosity: pdfjs.VerbosityLevel.ERRORS
+    });
     const { totalPages, text } = await extractText(pdf, { mergePages: true });
     const normalizedText = normalizeExtractedText(text);
 
