@@ -1,5 +1,20 @@
 <template>
   <div class="resume-settings">
+    <div v-if="resumeId" class="resume-settings__section">
+      <h3 class="resume-settings__title">
+        {{ $t('resume.settings.resumeName') }}
+      </h3>
+
+      <div class="resume-settings__name-control">
+        <UInput
+          v-model="resumeNameValue"
+          :placeholder="$t('resume.settings.resumeNamePlaceholder')"
+          :disabled="isNameSaving"
+          :maxlength="255"
+        />
+      </div>
+    </div>
+
     <!-- Format Settings -->
     <div class="resume-settings__section">
       <h3 class="resume-settings__title">
@@ -107,6 +122,14 @@ const props = defineProps<{
    */
   previewType: PreviewType;
   /**
+   * Active resume ID for name updates
+   */
+  resumeId?: string;
+  /**
+   * Active resume name
+   */
+  resumeName?: string | null;
+  /**
    * Current spacing settings
    */
   settings: SpacingSettings;
@@ -118,6 +141,51 @@ const emit = defineEmits<{
 }>();
 
 const atsFormat = EXPORT_FORMAT_MAP.ATS;
+const { t } = useI18n();
+const toast = useToast();
+const resumeStore = useResumeStore();
+const isNameSaving = ref(false);
+const resumeNameValue = ref('');
+
+watch(
+  () => props.resumeName,
+  value => {
+    const normalized = value ?? '';
+    if (normalized !== resumeNameValue.value) {
+      resumeNameValue.value = normalized;
+    }
+  },
+  { immediate: true }
+);
+
+const saveResumeName = useDebounceFn(async (name: string) => {
+  if (!props.resumeId) return;
+
+  const normalized = name.trim();
+  if (!normalized) return;
+
+  const current = (props.resumeName ?? '').trim();
+  if (normalized === current) return;
+
+  isNameSaving.value = true;
+
+  try {
+    await resumeStore.updateResumeName(props.resumeId, normalized);
+  } catch (error) {
+    toast.add({
+      title: t('resume.error.updateFailed'),
+      description: error instanceof Error ? error.message : undefined,
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    });
+  } finally {
+    isNameSaving.value = false;
+  }
+}, 600);
+
+watch(resumeNameValue, value => {
+  void saveResumeName(value);
+});
 
 const updateSpacing = (partial: Partial<SpacingSettings>) => {
   emit('update:settings', {
@@ -175,6 +243,10 @@ const blockSpacing = computed({
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+  }
+
+  &__name-control {
+    margin-top: 0.75rem;
   }
 
   &__label {

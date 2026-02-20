@@ -43,7 +43,16 @@
       "duplicateResume": "Duplicate",
       "resumeDuplicated": "Resume duplicated successfully",
       "selectResume": "Select resume",
-      "defaultBadge": "Default"
+      "defaultBadge": "Default",
+      "makeDefault": "Make default",
+      "thisIsDefaultResume": "This is the default resume",
+      "defaultResumeUpdated": "Default resume updated",
+      "deleteResume": "Delete resume",
+      "deleteResumeConfirmTitle": "Delete this resume?",
+      "deleteResumeConfirmDescription": "This action cannot be undone.",
+      "deleteResumeConfirmAction": "Delete",
+      "deleteResumeConfirmCancel": "Cancel",
+      "resumeDeleted": "Resume deleted successfully"
     },
     "list": {
       "title": "My Resumes",
@@ -98,6 +107,8 @@
       "ai": "AI Enhance"
     },
     "settings": {
+      "resumeName": "Resume name",
+      "resumeNamePlaceholder": "Enter resume name",
       "previewType": {
         "label": "Preview Type",
         "description": "Choose how your resume will be displayed",
@@ -539,6 +550,9 @@
       "viewResume": "View Resume",
       "generateCoverLetter": "Generate Cover Letter",
       "lastUpdated": "Last Updated"
+    },
+    "generation": {
+      "selectBaseResume": "Select source resume"
     },
     "breadcrumbs": {
       "vacancies": "Vacancies"

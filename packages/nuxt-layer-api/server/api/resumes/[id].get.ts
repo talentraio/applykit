@@ -1,13 +1,18 @@
-import { resumeRepository, userRepository } from '../../data/repositories';
+import type { FormatSettingsConfig } from '../../types/format-settings-config';
+import {
+  resumeFormatSettingsRepository,
+  resumeRepository,
+  userRepository
+} from '../../data/repositories';
 
 /**
  * GET /api/resumes/:id
  *
  * Get full resume by ID with ownership check.
- * Includes computed isDefault field.
+ * Includes computed isDefault field and per-resume format settings.
  *
  * Params: id — resume UUID
- * Response: Full resume object with isDefault
+ * Response: Full resume object with isDefault and formatSettings
  * Errors: 401, 404
  */
 export default defineEventHandler(async event => {
@@ -34,6 +39,12 @@ export default defineEventHandler(async event => {
     });
   }
 
+  const config = useRuntimeConfig(event);
+  const defaults = (config.public.formatSettings as FormatSettingsConfig).defaults;
+  const settings =
+    (await resumeFormatSettingsRepository.findByResumeId(resume.id)) ??
+    (await resumeFormatSettingsRepository.seedDefaults(resume.id, defaults));
+
   return {
     id: resume.id,
     userId: resume.userId,
@@ -43,6 +54,10 @@ export default defineEventHandler(async event => {
     sourceFileName: resume.sourceFileName,
     sourceFileType: resume.sourceFileType,
     isDefault: resume.id === defaultResumeId,
+    formatSettings: {
+      ats: settings.ats,
+      human: settings.human
+    },
     createdAt: resume.createdAt.toISOString(),
     updatedAt: resume.updatedAt.toISOString()
   };

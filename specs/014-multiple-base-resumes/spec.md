@@ -50,11 +50,11 @@ Enable users to create and maintain multiple base resumes. Currently the system 
 
 ## Roles & limits
 
-| Role | Capability |
-|------|-----------|
-| `super_admin` | Full access (same as friend) |
-| `friend` | Create/manage multiple base resumes (no hard limit for MVP) |
-| `public` | Not applicable (no access to resume features) |
+| Role          | Capability                                                  |
+| ------------- | ----------------------------------------------------------- |
+| `super_admin` | Full access (same as friend)                                |
+| `friend`      | Create/manage multiple base resumes (no hard limit for MVP) |
+| `public`      | Not applicable (no access to resume features)               |
 
 - BYOK policy: unchanged. Multi-resume is purely a data-organization feature; LLM costs remain per-generation.
 - No additional daily limits for resume creation (existing generation limits per vacancy still apply).
@@ -250,7 +250,7 @@ CREATE INDEX idx_resume_format_settings_resume_id ON resume_format_settings(resu
 const resumeSchema = z.object({
   // ... existing fields ...
   name: z.string().min(1).max(255),
-  isDefault: z.boolean(), // computed at API layer, not stored per-resume
+  isDefault: z.boolean() // computed at API layer, not stored per-resume
 });
 
 // Resume list item (lightweight, for selectors)
@@ -259,22 +259,22 @@ const resumeListItemSchema = z.object({
   name: z.string(),
   isDefault: z.boolean(),
   createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
+  updatedAt: z.coerce.date()
 });
 
 // Duplicate resume request
 const duplicateResumeRequestSchema = z.object({
-  sourceResumeId: z.string().uuid(),
+  sourceResumeId: z.string().uuid()
 });
 
 // Set default resume request
 const setDefaultResumeRequestSchema = z.object({
-  resumeId: z.string().uuid(),
+  resumeId: z.string().uuid()
 });
 
 // Update resume name request
 const updateResumeNameSchema = z.object({
-  name: z.string().min(1).max(255),
+  name: z.string().min(1).max(255)
 });
 ```
 
@@ -291,28 +291,28 @@ All endpoints in `packages/nuxt-layer-api/server/api/ (package: @int/api)`.
 
 ### New endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/resumes` | List all user's resumes (lightweight: id, name, isDefault, dates) |
-| `GET` | `/api/resumes/:id` | Get full resume by ID (with ownership check, includes `isDefault`) |
-| `POST` | `/api/resumes/:id/duplicate` | Duplicate resume (content + format settings) |
-| `DELETE` | `/api/resumes/:id` | Delete resume (only non-default; 409 if default) |
-| `PUT` | `/api/resumes/:id/name` | Update resume name |
-| `PUT` | `/api/user/default-resume` | Set default resume ID |
-| `GET` | `/api/resumes/:id/format-settings` | Get per-resume format settings |
-| `PATCH` | `/api/resumes/:id/format-settings` | Patch per-resume format settings |
+| Method   | Path                               | Description                                                        |
+| -------- | ---------------------------------- | ------------------------------------------------------------------ |
+| `GET`    | `/api/resumes`                     | List all user's resumes (lightweight: id, name, isDefault, dates)  |
+| `GET`    | `/api/resumes/:id`                 | Get full resume by ID (with ownership check, includes `isDefault`) |
+| `POST`   | `/api/resumes/:id/duplicate`       | Duplicate resume (content + format settings)                       |
+| `DELETE` | `/api/resumes/:id`                 | Delete resume (only non-default; 409 if default)                   |
+| `PUT`    | `/api/resumes/:id/name`            | Update resume name                                                 |
+| `PUT`    | `/api/user/default-resume`         | Set default resume ID                                              |
+| `GET`    | `/api/resumes/:id/format-settings` | Get per-resume format settings                                     |
+| `PATCH`  | `/api/resumes/:id/format-settings` | Patch per-resume format settings                                   |
 
 ### Modified endpoints
 
-| Method | Path | Change |
-|--------|------|--------|
-| `GET` | `/api/resume` | **Deprecated**. Returns default (or latest) resume. Add `Deprecation` header. |
-| `POST` | `/api/resume` | Now always creates a new resume (no upsert). Sets as default if it's the first. Returns new resume with `isDefault`. Enforces 10-resume limit. |
-| `PUT` | `/api/resume` | **Deprecated**. Redirect callers to `PUT /api/resumes/:id`. |
-| `GET` | `/api/user/format-settings` | **Removed**. Replaced by `GET /api/resumes/:id/format-settings`. |
-| `PATCH` | `/api/user/format-settings` | **Removed**. Replaced by `PATCH /api/resumes/:id/format-settings`. |
-| `PUT` | `/api/user/format-settings` | **Removed**. No replacement (PATCH covers all use cases). |
-| `POST` | `/api/vacancies/:id/generate` | No server change needed (already accepts `resumeId`). Client-side change to pass `resumeId`. |
+| Method  | Path                          | Change                                                                                                                                         |
+| ------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`   | `/api/resumes`                | Returns list of user's resumes (default first, then `createdAt DESC`).                                                                         |
+| `POST`  | `/api/resumes`                | Now always creates a new resume (no upsert). Sets as default if it's the first. Returns new resume with `isDefault`. Enforces 10-resume limit. |
+| `PUT`   | `/api/resumes/:id`            | Updates requested resume content/title and creates a version entry when content changes.                                                       |
+| `GET`   | `/api/user/format-settings`   | **Removed**. Replaced by `GET /api/resumes/:id/format-settings`.                                                                               |
+| `PATCH` | `/api/user/format-settings`   | **Removed**. Replaced by `PATCH /api/resumes/:id/format-settings`.                                                                             |
+| `PUT`   | `/api/user/format-settings`   | **Removed**. No replacement (PATCH covers all use cases).                                                                                      |
+| `POST`  | `/api/vacancies/:id/generate` | No server change needed (already accepts `resumeId`). Client-side change to pass `resumeId`.                                                   |
 
 ### Endpoint details
 
@@ -358,7 +358,7 @@ All endpoints in `packages/nuxt-layer-api/server/api/ (package: @int/api)`.
 
 No changes to LLM workflows. The parse and generate pipelines remain the same:
 
-- **Parse**: triggered by `POST /api/resume` (file upload) — creates a new resume row (unchanged)
+- **Parse**: triggered by `POST /api/resumes` (file upload) — creates a new resume row (unchanged)
 - **Generate**: triggered by `POST /api/vacancies/:id/generate` — already accepts `resumeId` parameter. Client-side now passes it explicitly when user picks from the dropdown.
 
 Zod validation in LLM services is unchanged.
@@ -375,7 +375,7 @@ Zod validation in LLM services is unchanged.
 
 ## Limits & safety
 
-- **Hard limit: 10 base resumes per user** (server-enforced; `POST /api/resume` and `POST /api/resumes/:id/duplicate` return HTTP 409 when limit reached)
+- **Hard limit: 10 base resumes per user** (server-enforced; `POST /api/resumes` and `POST /api/resumes/:id/duplicate` return HTTP 409 when limit reached)
 - Per-user daily generation limits remain unchanged
 - Global budget cap and admin kill switch remain unchanged
 - Delete confirmation modal prevents accidental deletion
@@ -414,14 +414,14 @@ vacancy.generation.selectBaseResume
 
 ## Monorepo / layers touchpoints
 
-| Layer | Path | Package | Changes |
-|-------|------|---------|---------|
-| Schema | `packages/nuxt-layer-schema/` | `@int/schema` | Add `resumeListItemSchema`, `duplicateResumeRequestSchema`, `setDefaultResumeRequestSchema`, `updateResumeNameSchema`. Extend resume response schema with `name` and `isDefault`. |
-| API | `packages/nuxt-layer-api/` | `@int/api` | New endpoints, DB migration, `resume_format_settings` table, `defaultResumeId` on users, resume repository updates. |
-| UI | `packages/nuxt-layer-ui/` | `@int/ui` | No changes expected (uses existing `useProgrammaticOverlay`). |
-| Site / Resume layer | `apps/site/layers/resume/` | — | New page `/resume/[id]`, `ResumeDefaultToggle` component, resume selector, duplicate button, delete button + modal, resume name input in Settings, store refactor for multi-resume, updated `resumeApi` infrastructure. |
-| Site / Vacancy layer | `apps/site/layers/vacancy/` | — | Generation button: add resume picker dropdown when >1 resume. Pass `resumeId` to `generateResume()`. |
-| Site / Base layer | `apps/site/layers/_base/` | — | Remove user-level format settings store; replace with per-resume format settings logic in the resume layer. |
+| Layer                | Path                          | Package       | Changes                                                                                                                                                                                                                 |
+| -------------------- | ----------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Schema               | `packages/nuxt-layer-schema/` | `@int/schema` | Add `resumeListItemSchema`, `duplicateResumeRequestSchema`, `setDefaultResumeRequestSchema`, `updateResumeNameSchema`. Extend resume response schema with `name` and `isDefault`.                                       |
+| API                  | `packages/nuxt-layer-api/`    | `@int/api`    | New endpoints, DB migration, `resume_format_settings` table, `defaultResumeId` on users, resume repository updates.                                                                                                     |
+| UI                   | `packages/nuxt-layer-ui/`     | `@int/ui`     | No changes expected (uses existing `useProgrammaticOverlay`).                                                                                                                                                           |
+| Site / Resume layer  | `apps/site/layers/resume/`    | —             | New page `/resume/[id]`, `ResumeDefaultToggle` component, resume selector, duplicate button, delete button + modal, resume name input in Settings, store refactor for multi-resume, updated `resumeApi` infrastructure. |
+| Site / Vacancy layer | `apps/site/layers/vacancy/`   | —             | Generation button: add resume picker dropdown when >1 resume. Pass `resumeId` to `generateResume()`.                                                                                                                    |
+| Site / Base layer    | `apps/site/layers/_base/`     | —             | Remove user-level format settings store; replace with per-resume format settings logic in the resume layer.                                                                                                             |
 
 ## Acceptance criteria
 

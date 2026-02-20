@@ -141,23 +141,22 @@ runtimeConfig: {
 
 ## Phase 2: API Endpoints
 
-### 2.1 New Singular Endpoints
+### 2.1 Resume Endpoints
 
-**GET /api/resume**
+**GET /api/resumes/:id**
 
-- File: `packages/nuxt-layer-api/server/api/resume/index.get.ts`
-- Returns user's single resume (or 404)
+- File: `packages/nuxt-layer-api/server/api/resumes/[id].get.ts`
+- Returns requested resume for authenticated user (or 404 if not found/not owned)
 - Include atsSettings, humanSettings
 
-**POST /api/resume**
+**POST /api/resumes**
 
-- File: `packages/nuxt-layer-api/server/api/resume/index.post.ts`
+- File: `packages/nuxt-layer-api/server/api/resumes/index.post.ts`
 - Create resume (multipart file upload or JSON body)
-- 400 if resume already exists
 
-**PUT /api/resume**
+**PUT /api/resumes/:id**
 
-- File: `packages/nuxt-layer-api/server/api/resume/index.put.ts`
+- File: `packages/nuxt-layer-api/server/api/resumes/[id].put.ts`
 - Update content/settings
 - Creates version entry
 - Prunes old versions
@@ -170,9 +169,9 @@ runtimeConfig: {
 - Update generation content directly
 - Body: `{ content: ResumeContent }`
 
-### 2.3 Deprecate Old Endpoints
+### 2.3 Remove Legacy Endpoints
 
-Add deprecation headers and redirect logic to `/api/resumes/*` endpoints.
+Remove legacy singular resume endpoints and migrate callers to `/api/resumes/*`.
 
 ---
 
@@ -375,7 +374,7 @@ interface ResumeStoreState {
 
 - Debounced (500ms after last change)
 - Uses `watchDebounced` from VueUse
-- Calls `PUT /api/resume`
+- Calls `PUT /api/resumes/:id`
 
 ### 5.2 Vacancy Store Enhancements
 
@@ -463,9 +462,9 @@ Update navigation:
 | `packages/schema/schemas/resume-settings.ts`                             | ResumeFormatSettings schema |
 | `packages/nuxt-layer-api/server/data/migrations/002_resume_versions.sql` | DB migration                |
 | `packages/nuxt-layer-api/server/data/repositories/resume-version.ts`     | Version repository          |
-| `packages/nuxt-layer-api/server/api/resume/index.get.ts`                 | GET /api/resume             |
-| `packages/nuxt-layer-api/server/api/resume/index.post.ts`                | POST /api/resume            |
-| `packages/nuxt-layer-api/server/api/resume/index.put.ts`                 | PUT /api/resume             |
+| `packages/nuxt-layer-api/server/api/resumes/[id].get.ts`                 | GET /api/resumes/:id        |
+| `packages/nuxt-layer-api/server/api/resumes/index.post.ts`               | POST /api/resumes           |
+| `packages/nuxt-layer-api/server/api/resumes/[id].put.ts`                 | PUT /api/resumes/:id        |
 | `packages/nuxt-layer-api/server/api/vacancies/[id]/generation.put.ts`    | PUT generation              |
 | `apps/site/layers/resume/app/composables/useResumeBlocks.ts`             | Block conversion            |
 | `apps/site/layers/resume/app/composables/usePaginator.ts`                | Pagination logic            |
@@ -550,7 +549,7 @@ Phase 7: Mobile & Polish
 
 ## Success Criteria
 
-1. User can upload/create single resume on `/resume`
+1. User can upload/create a resume on `/resume`
 2. Two-column editor with live A4 preview
 3. Settings tab controls format (margins, fonts, spacing)
 4. Undo/redo works within session

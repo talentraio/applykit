@@ -66,42 +66,37 @@ const showErrorToast = (title: string, error: unknown) => {
 };
 
 // Check if user has resumes and redirect if so
-const { pending } = await useAsyncData('resume-index', async () => {
-  try {
-    // Fetch resume list to check if user has any resumes
-    const items = await store.fetchResumeList();
-
-    if (items.length > 0) {
-      // Find default resume or use first one
-      const defaultItem = items.find(r => r.isDefault);
-      const targetId = defaultItem?.id ?? items[0]?.id;
-
-      if (targetId) {
-        redirecting.value = true;
-        await navigateTo(`/resume/${targetId}`, { replace: true });
-        return true;
-      }
-    }
-
-    // No resumes — show upload form (no redirect)
-    return true;
-  } catch (error) {
-    // If list fetch fails, try legacy single-resume fetch
+const { pending } = await useAsyncData(
+  'resume-index',
+  async () => {
     try {
-      const resume = await store.fetchResume();
-      if (resume) {
-        redirecting.value = true;
-        await navigateTo(`/resume/${resume.id}`, { replace: true });
-        return true;
-      }
-    } catch {
-      // Both failed — show upload form
-    }
+      // Fetch resume list to check if user has any resumes
+      const items = await store.fetchResumeList();
 
-    showErrorToast(t('resume.error.fetchFailed'), error);
-    return false;
+      if (items.length > 0) {
+        // Find default resume or use first one
+        const defaultItem = items.find(r => r.isDefault);
+        const targetId = defaultItem?.id ?? items[0]?.id;
+
+        if (targetId) {
+          redirecting.value = true;
+          await navigateTo(`/resume/${targetId}`, { replace: true });
+          return true;
+        }
+      }
+
+      // No resumes — show upload form (no redirect)
+      return true;
+    } catch (error) {
+      showErrorToast(t('resume.error.fetchFailed'), error);
+      return false;
+    }
+  },
+  {
+    // Redirect decision must always reflect fresh data after create/delete/set-default flows.
+    getCachedData: () => undefined
   }
-});
+);
 
 const pageLoading = computed(() => pending.value);
 

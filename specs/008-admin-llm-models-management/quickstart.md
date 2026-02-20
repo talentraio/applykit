@@ -135,7 +135,7 @@ packages/nuxt-layer-api/server/services/llm/providers/gemini.ts
 packages/nuxt-layer-api/server/api/admin/llm/models/*.ts             # NEW
 packages/nuxt-layer-api/server/api/admin/llm/routing/*.ts            # NEW
 packages/nuxt-layer-api/server/api/admin/roles/[role].put.ts
-packages/nuxt-layer-api/server/api/resume/index.post.ts
+packages/nuxt-layer-api/server/api/resumes/index.post.ts
 packages/nuxt-layer-api/server/api/resumes/index.post.ts
 packages/nuxt-layer-api/server/api/vacancies/[id]/generate.post.ts
 packages/nuxt-layer-api/server/api/keys/*.ts                         # REMOVE

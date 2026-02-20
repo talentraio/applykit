@@ -6,6 +6,7 @@
 
 export { formatSettingsRepository } from './format-settings';
 export { generationRepository } from './generation';
+export { generationFormatSettingsRepository } from './generation-format-settings';
 export { generationScoreDetailRepository } from './generation-score-detail';
 export { llmModelRepository } from './llm-model';
 export { llmRoutingRepository } from './llm-routing';

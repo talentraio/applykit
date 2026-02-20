@@ -48,7 +48,7 @@ any other required docs (docs/architecture/\*, docs/api/\*, docs/codestyle/\*).
 - [x] T008 [P] Create `GET /api/user/format-settings` endpoint in `packages/nuxt-layer-api/server/api/user/format-settings.get.ts` (package: `@int/api`). Require auth via `requireUserSession(event)`. Return `{ ats, human }` (without id/userId/timestamps). If no settings row exists, auto-seed from `runtimeConfig.formatSettings.defaults` and return. See contracts/format-settings-api.md
 - [x] T009 [P] Create `PATCH /api/user/format-settings` endpoint in `packages/nuxt-layer-api/server/api/user/format-settings.patch.ts` (package: `@int/api`). Require auth. Validate body with `PatchFormatSettingsBodySchema`. Load existing settings from DB, deep-merge using `mergeFormatSettings`, validate merged result with `ResumeFormatSettingsAtsSchema`/`ResumeFormatSettingsHumanSchema`, save and return full settings. Return 422 on validation errors. See contracts/format-settings-api.md
 - [x] T010 [P] Seed format settings on user creation — add `formatSettingsRepository.seedDefaults(userId, defaults)` call (with defaults from `useRuntimeConfig().formatSettings.defaults`) to all user creation paths: `packages/nuxt-layer-api/server/api/auth/register.post.ts` (after createWithPassword), `packages/nuxt-layer-api/server/routes/auth/google.ts` (after create/activateInvitedUser), `packages/nuxt-layer-api/server/routes/auth/linkedin.ts` (after create/activateInvitedUser). See research.md R1 for all 4 creation paths
-- [x] T011 [P] Simplify resume API endpoints in `packages/nuxt-layer-api/` (package: `@int/api`): (1) `server/api/resume/index.put.ts` — remove `atsSettings`/`humanSettings` from body parsing, validation, and `resumeRepository.updateSettings()` call; (2) `server/api/resume/index.get.ts` — remove settings from response. Also remove `updateSettings` method from `packages/nuxt-layer-api/server/data/repositories/resume.ts` if no longer used
+- [x] T011 [P] Simplify resume API endpoints in `packages/nuxt-layer-api/` (package: `@int/api`): (1) `server/api/resumes/[id].put.ts` — remove `atsSettings`/`humanSettings` from body parsing, validation, and `resumeRepository.updateSettings()` call; (2) `server/api/resumes/[id].get.ts` — remove settings from response. Also remove `updateSettings` method from `packages/nuxt-layer-api/server/data/repositories/resume.ts` if no longer used
 - [x] T012 Run DB migration via `cd packages/nuxt-layer-api && pnpm db:migrate`. Verify table created and data migrated correctly
 
 **Checkpoint**: Server API fully functional — `GET` and `PATCH` endpoints work, seeding active, resume endpoints simplified
@@ -111,12 +111,12 @@ any other required docs (docs/architecture/\*, docs/api/\*, docs/codestyle/\*).
 
 **Purpose**: Documentation, type safety verification, cleanup
 
-- [x] T021 [P] Update API documentation in `docs/api/endpoints.md` — add `GET /api/user/format-settings` and `PATCH /api/user/format-settings`; update `PUT /api/resume` and `GET /api/resume` to reflect removed settings fields
+- [x] T021 [P] Update API documentation in `docs/api/endpoints.md` — add `GET /api/user/format-settings` and `PATCH /api/user/format-settings`; update `PUT /api/resumes/:id` and `GET /api/resumes/:id` to reflect removed settings fields
 - [x] T022 [P] Update schema documentation in `docs/api/schemas.md` — add `SpacingSettings`, `LocalizationSettings`, `ResumeFormatSettingsAts`, `ResumeFormatSettingsHuman`, `UserFormatSettings` entities; note removal of `ResumeFormatSettings`
 - [x] T023 [P] Update architecture documentation in `docs/architecture/data-flow.md` — add `UserFormatSettings` entity to core entities section; document settings lazy-loading flow; note separation from resume entity
 - [x] T024 [P] Add i18n keys for settings save feedback — add `settings.save.success`, `settings.save.error` to i18n message files in relevant locale files
 - [x] T025 Run typecheck `cd apps/site && pnpm vue-tsc --noEmit` and fix any remaining type errors across all layers
-- [ ] T026 Verify dev server starts cleanly `cd apps/site && pnpm dev` on port 3002 — test full flow: login → `/resume` → edit content → edit settings → undo → export PDF → navigate to vacancy → verify settings persist
+- [x] T026 Superseded by `/specs/014-multiple-base-resumes/` (settings migrated back to per-resume model). Validation covered by e2e smoke on current architecture: `tests/e2e/resume-modals.smoke.spec.ts` and `tests/e2e/resume-settings-history.spec.ts`
 
 ---
 

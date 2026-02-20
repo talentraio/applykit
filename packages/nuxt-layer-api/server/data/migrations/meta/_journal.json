@@ -176,6 +176,13 @@
       "when": 1771502350031,
       "tag": "0025_messy_exiles",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1771536503000,
+      "tag": "0026_generation_format_settings",
+      "breakpoints": true
     }
   ]
 }

@@ -35,13 +35,15 @@ const props = defineProps<{
 
 const { t } = useI18n();
 const vacancyStore = useVacancyStore();
-const { currentVacancyMeta, scoreDetailsLoading } = storeToRefs(vacancyStore);
+const { getCurrentVacancyMeta, getScoreDetailsLoading } = storeToRefs(vacancyStore);
 
-const canRequestDetails = computed(() => currentVacancyMeta.value?.canRequestScoreDetails ?? false);
-const canRegenerateDetails = computed(
-  () => currentVacancyMeta.value?.canRegenerateScoreDetails ?? false
+const canRequestDetails = computed(
+  () => getCurrentVacancyMeta.value?.canRequestScoreDetails ?? false
 );
-const loading = computed(() => scoreDetailsLoading.value);
+const canRegenerateDetails = computed(
+  () => getCurrentVacancyMeta.value?.canRegenerateScoreDetails ?? false
+);
+const loading = computed(() => getScoreDetailsLoading.value);
 
 const actionType = ref<'details' | 'regenerate' | null>(null);
 

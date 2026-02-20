@@ -46,8 +46,12 @@
  */
 
 import type { VacancyInput } from '@int/schema';
+import { toH3Error } from '@int/npm-utils';
 
 defineOptions({ name: 'VacancyOverviewPage' });
+definePageMeta({
+  key: 'vacancy-overview'
+});
 
 const route = useRoute();
 const { t } = useI18n();
@@ -56,6 +60,8 @@ const { openDeleteConfirmationModal } = useVacancyModals();
 
 // Store
 const vacancyStore = useVacancyStore();
+const resumeStore = useResumeStore();
+const { getCurrentVacancy } = storeToRefs(vacancyStore);
 
 // --- State ---
 const isEditMode = ref(false);
@@ -66,32 +72,28 @@ const vacancyId = computed(() => {
   return Array.isArray(id) ? (id[0] ?? '') : (id ?? '');
 });
 
-const { pending: vacancyPending, error: vacancyFetchError } = await useAsyncData(
+const { pending: vacancyPending } = await useAsyncData(
   'vacancy-overview',
-  () => {
-    return vacancyStore.fetchVacancyOverview(vacancyId.value);
+  async () => {
+    const [overviewResult] = await Promise.allSettled([
+      vacancyStore.fetchVacancyOverview(vacancyId.value),
+      resumeStore.fetchResumeList()
+    ]);
+
+    if (overviewResult.status === 'rejected') {
+      const h3Error = toH3Error(overviewResult.reason);
+      throw createError({
+        statusCode: h3Error?.statusCode ?? 404,
+        statusMessage: h3Error?.statusMessage ?? t('vacancy.error.fetchDetailFailed')
+      });
+    }
+
+    return overviewResult.value;
   },
-  {
-    watch: [vacancyId]
-  }
+  { watch: [vacancyId] }
 );
 
-watch(
-  vacancyFetchError,
-  error => {
-    if (!error) return;
-
-    showError(
-      createError({
-        statusCode: 404,
-        statusMessage: t('vacancy.error.fetchDetailFailed')
-      })
-    );
-  },
-  { immediate: true }
-);
-
-const vacancy = computed(() => vacancyStore.currentVacancy);
+const vacancy = computed(() => getCurrentVacancy.value);
 
 // --- Event Handlers ---
 

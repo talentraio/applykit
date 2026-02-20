@@ -14,7 +14,24 @@
         >
           <ResumeForm v-if="contentModel" v-model="contentModel" />
 
+          <ResumeEditorDefaultToggle
+            v-if="showDefaultToggle"
+            :resume-id="resolvedResumeId"
+            :is-default="isDefaultResume"
+            class="mt-6"
+          />
+
           <div v-if="contentModel && showUploadNew" class="resume-editor-tools__tab-actions mt-10">
+            <UButton
+              v-if="showDeleteButton"
+              variant="outline"
+              color="error"
+              size="lg"
+              icon="i-lucide-trash-2"
+              square
+              :aria-label="$t('resume.page.deleteResume')"
+              @click="emit('delete')"
+            />
             <UButton
               variant="outline"
               color="neutral"
@@ -34,7 +51,12 @@
           v-else-if="item.value === RESUME_EDITOR_TABS_MAP.SETTINGS"
           class="resume-editor-tools__tab-content"
         >
-          <ResumeSettings v-model:settings="settingsModel" :preview-type="previewType" />
+          <ResumeSettings
+            v-model:settings="settingsModel"
+            :preview-type="previewType"
+            :resume-id="resumeId"
+            :resume-name="resumeName"
+          />
         </div>
 
         <div
@@ -53,7 +75,33 @@
       >
         <ResumeForm v-if="contentModel" v-model="contentModel" />
 
+        <ResumeEditorDefaultToggle
+          v-if="showDefaultToggle"
+          :resume-id="resolvedResumeId"
+          :is-default="isDefaultResume"
+          class="mt-6"
+        />
+
         <div v-if="contentModel && showUploadNew" class="resume-editor-tools__tab-actions mt-10">
+          <UButton
+            v-if="showDeleteButton"
+            variant="outline"
+            color="error"
+            size="lg"
+            icon="i-lucide-trash-2"
+            square
+            :aria-label="$t('resume.page.deleteResume')"
+            @click="emit('delete')"
+          />
+          <UButton
+            variant="outline"
+            color="neutral"
+            size="lg"
+            icon="i-lucide-copy"
+            @click="emit('duplicate')"
+          >
+            {{ $t('resume.page.duplicateResume') }}
+          </UButton>
           <UButton variant="outline" color="warning" size="lg" @click="emit('uploadNew')">
             {{ $t('resume.page.clearAndCreateNew') }}
           </UButton>
@@ -64,7 +112,12 @@
         v-else-if="singleTabValue === RESUME_EDITOR_TABS_MAP.SETTINGS"
         class="resume-editor-tools__tab-content"
       >
-        <ResumeSettings v-model:settings="settingsModel" :preview-type="previewType" />
+        <ResumeSettings
+          v-model:settings="settingsModel"
+          :preview-type="previewType"
+          :resume-id="resumeId"
+          :resume-name="resumeName"
+        />
       </div>
 
       <div
@@ -90,15 +143,22 @@ const props = withDefaults(
     items: ResumeEditorTabItem[];
     previewType: PreviewType;
     showUploadNew?: boolean;
+    resumeId?: string;
+    resumeName?: string | null;
+    isDefaultResume?: boolean;
   }>(),
   {
-    showUploadNew: false
+    showUploadNew: false,
+    resumeId: undefined,
+    resumeName: null,
+    isDefaultResume: false
   }
 );
 
 const emit = defineEmits<{
   uploadNew: [];
   duplicate: [];
+  delete: [];
 }>();
 
 const activeTab = defineModel<string>({ required: true });
@@ -106,6 +166,11 @@ const contentModel = defineModel<ResumeContent | null>('content', { default: nul
 const settingsModel = defineModel<SpacingSettings>('settings', { required: true });
 const showTabs = computed(() => props.items.length > 1);
 const singleTabValue = computed(() => props.items[0]?.value ?? RESUME_EDITOR_TABS_MAP.EDIT);
+const showDefaultToggle = computed(
+  () => props.showUploadNew && !!props.resumeId && contentModel.value !== null
+);
+const showDeleteButton = computed(() => showDefaultToggle.value && !props.isDefaultResume);
+const resolvedResumeId = computed(() => props.resumeId ?? '');
 const tabsUi = {
   // Use trigger-based active styles instead of indicator positioning to avoid SSR-to-hydration color flash.
   indicator: 'hidden',
@@ -128,22 +193,40 @@ watch(
 
 <style lang="scss">
 .resume-editor-tools {
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 
   &__tabs {
-    height: 100%;
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 
   &__single {
-    height: 100%;
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  &__tabs > [role='tabpanel'] {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
   }
 
   &__tab-content {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
   }
 

@@ -19,22 +19,30 @@
     >
       <!-- Left: Resume Selector + Editor Tabs -->
       <template #left>
-        <ResumeEditorSelector
-          v-if="showSelector"
-          :resume-id="resumeId"
-          :resume-list="store.resumeList"
-        />
+        <div class="resume-page__left-panel">
+          <ResumeEditorSelector
+            v-if="showSelector"
+            :resume-id="resumeId"
+            :resume-list="store.resumeList"
+            class="resume-page__selector"
+          />
 
-        <ResumeEditorTools
-          v-model="activeTab"
-          v-model:content="contentModel"
-          v-model:settings="settingsModel"
-          :items="tabItems"
-          :preview-type="previewType"
-          :show-upload-new="true"
-          @upload-new="handleOpenUploadModal"
-          @duplicate="handleDuplicate"
-        />
+          <ResumeEditorTools
+            v-model="activeTab"
+            v-model:content="contentModel"
+            v-model:settings="settingsModel"
+            :items="tabItems"
+            :preview-type="previewType"
+            :show-upload-new="true"
+            :resume-id="resumeId"
+            :resume-name="activeResumeName"
+            :is-default-resume="isDefaultResume"
+            class="resume-page__tools"
+            @upload-new="handleOpenUploadModal"
+            @duplicate="handleDuplicate"
+            @delete="handleDeleteResume"
+          />
+        </div>
       </template>
     </ResumeEditorLayout>
   </div>
@@ -61,6 +69,7 @@
 import type { ResumeContent, SpacingSettings } from '@int/schema';
 import type { ResumeEditorTabItem } from '@site/resume/app/types/editor';
 import type { PreviewType } from '@site/resume/app/types/preview';
+import { toH3Error } from '@int/npm-utils';
 import { EXPORT_FORMAT_MAP } from '@int/schema';
 import { RESUME_EDITOR_TABS_MAP } from '@site/resume/app/constants';
 
@@ -68,11 +77,11 @@ defineOptions({ name: 'ResumeIdPage' });
 
 // Use editor layout (no footer) for full-screen editing experience
 definePageMeta({
-  layout: 'editor'
+  layout: 'editor',
+  key: 'resume-editor'
 });
 
 const route = useRoute();
-const router = useRouter();
 const { t } = useI18n();
 const toast = useToast();
 
@@ -96,7 +105,6 @@ const {
   humanSettings,
   canUndo,
   canRedo,
-  fetchSettings,
   updateContent,
   undo,
   redo,
@@ -107,8 +115,9 @@ const {
 
 // UI State
 const activeTab = ref(RESUME_EDITOR_TABS_MAP.EDIT);
-const { openUploadModal, openCreateFromScratchModal } = useResumeModals();
-const showSelector = computed(() => store.resumeList.length > 1);
+const { openUploadModal, openCreateFromScratchModal, openDeleteConfirmModal } = useResumeModals();
+const activeResumeName = computed(() => store.activeResume?.name ?? null);
+const isDefaultResume = computed(() => store.activeResume?.isDefault ?? false);
 const previewTypeModel = computed<PreviewType>({
   get: () => previewType.value,
   set: value => setPreviewType(value)
@@ -164,42 +173,36 @@ const showErrorToast = (title: string, error: unknown) => {
   });
 };
 
-// Fetch resume by ID, then settings
-const { pending } = await useAsyncData(`resume-page-${resumeId.value}`, async () => {
-  try {
-    await store.fetchResumeById(resumeId.value);
-  } catch (error) {
-    // If resume not found or access denied, redirect to /resume
-    if (
-      error &&
-      typeof error === 'object' &&
-      'statusCode' in error &&
-      (error.statusCode === 404 || error.statusCode === 403)
-    ) {
-      await navigateTo('/resume', { replace: true });
+// Fetch resume by ID (includes formatSettings in payload)
+const { pending } = await useAsyncData(
+  `resume-page`,
+  async () => {
+    const [resumeResult, listResult] = await Promise.allSettled([
+      store.fetchResumeById(resumeId.value),
+      store.fetchResumeList()
+    ]);
+
+    if (resumeResult.status === 'rejected') {
+      const error = resumeResult.reason;
+      const h3Error = toH3Error(error);
+
+      // If resume not found or access denied, redirect to /resume
+      if (h3Error && (h3Error.statusCode === 404 || h3Error.statusCode === 403)) {
+        await navigateTo('/resume', { replace: true });
+        return false;
+      }
+
+      showErrorToast(t('resume.error.fetchFailed'), error);
       return false;
     }
 
-    showErrorToast(t('resume.error.fetchFailed'), error);
-    return false;
-  }
+    return listResult.status !== 'rejected';
+  },
+  { watch: [resumeId] }
+);
 
-  try {
-    await fetchSettings();
-  } catch (error) {
-    showErrorToast(t('resume.error.settingsUpdateFailed'), error);
-  }
-
-  // Also fetch resume list for the selector
-  try {
-    await store.fetchResumeList();
-  } catch {
-    // Non-critical: selector won't show but editor still works
-  }
-
-  return true;
-});
 const pageLoading = computed(() => !hasResume.value && pending.value);
+const showSelector = computed(() => store.resumeList.length > 1);
 
 /**
  * Handle upload error
@@ -215,15 +218,18 @@ const handleUploadError = (err: Error) => {
 
 const handleOpenUploadModal = async () => {
   const result = await openUploadModal({
-    onError: handleUploadError
+    onError: handleUploadError,
+    replaceResumeId: resumeId.value
   });
 
   if (result?.action === 'uploaded') {
-    // Navigate to the newly uploaded resume
-    await router.push(`/resume/${result.resume.id}`);
+    if (result.resume.id !== resumeId.value) {
+      await navigateTo(`/resume/${result.resume.id}`);
+    }
   } else if (result?.action === 'create-from-scratch') {
-    // CreateFromScratch modal handles its own navigation
-    await openCreateFromScratchModal();
+    await openCreateFromScratchModal({
+      replaceResumeId: resumeId.value
+    });
   }
 };
 
@@ -241,9 +247,41 @@ const handleDuplicate = async () => {
       color: 'success',
       icon: 'i-lucide-check'
     });
-    await router.push(`/resume/${newResume.id}`);
+    await navigateTo(`/resume/${newResume.id}`);
   } catch (error) {
     showErrorToast(t('resume.error.createFailed'), error);
+  }
+};
+
+/**
+ * Handle delete non-default resume
+ */
+const handleDeleteResume = async () => {
+  const currentId = resumeId.value;
+  if (!currentId) return;
+
+  const result = await openDeleteConfirmModal();
+  if (result?.action !== 'confirmed') {
+    return;
+  }
+
+  try {
+    await store.deleteResume(currentId);
+    toast.add({
+      title: t('resume.page.resumeDeleted'),
+      color: 'success',
+      icon: 'i-lucide-check'
+    });
+
+    const nextResumeId = store.defaultResumeId ?? store.resumeList[0]?.id;
+    if (nextResumeId) {
+      await navigateTo(`/resume/${nextResumeId}`, { replace: true });
+      return;
+    }
+
+    await navigateTo('/resume', { replace: true });
+  } catch (error) {
+    showErrorToast(t('resume.error.deleteFailed'), error);
   }
 };
 </script>
@@ -252,6 +290,23 @@ const handleDuplicate = async () => {
 .resume-page {
   // Full height minus header (uses CSS variable from main.css)
   height: calc(100vh - var(--layout-header-height, 64px));
+
+  &__left-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  &__selector {
+    flex-shrink: 0;
+  }
+
+  &__tools {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
 
   &__loading {
     display: flex;

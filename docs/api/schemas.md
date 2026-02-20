@@ -65,28 +65,29 @@ From `packages/schema/schemas/resume.ts`:
 
 Resume entity (`Resume`):
 
-- `id`, `userId`, `title`, `content`, `sourceFileName`, `sourceFileType`, `createdAt`, `updatedAt`
+- `id`, `userId`, `name`, `title`, `content`, `sourceFileName`, `sourceFileType`, `isDefault`,
+  `createdAt`, `updatedAt`
 
 Primary endpoint payloads:
 
-- `POST /api/resume` (JSON mode)
-  - `{ content: ResumeContent, title, sourceFileName?, sourceFileType? }`
-- `PUT /api/resume`
+- `POST /api/resumes` (JSON mode)
+  - `{ content: ResumeContent, title, sourceFileName?, sourceFileType?, replaceResumeId? }`
+- `PUT /api/resumes/:id`
   - `{ content?: ResumeContent, title?: string }`
+- `PUT /api/resumes/:id/name`
+  - `{ name: string }`
 
 ## Format settings contracts
 
 From `packages/schema/schemas/format-settings.ts`:
 
-- `UserFormatSettings`
+- `ResumeFormatSettings`
   - `{ ats, human }`
 - `ats` and `human` each contain:
   - `spacing`: `marginX`, `marginY`, `fontSize`, `lineHeight`, `blockSpacing`
   - `localization`: `language`, `dateFormat`, `pageFormat`
 - `PatchFormatSettingsBody`
   - deep partial patch of `{ ats?, human? }`
-- `PutFormatSettingsBody`
-  - full replacement `{ ats, human }`
 
 ## Vacancy contracts
 
@@ -220,5 +221,5 @@ From `packages/schema/constants/enums.ts`:
 
 ## Notes
 
-- `/api/resumes*` contracts remain for backward compatibility but are deprecated.
-- Prefer singular `/api/resume` and `/api/pdf/*` export flow for new code.
+- `/api/resumes*` contracts are primary for resume CRUD and editing flows.
+- Prefer `/api/resumes*` and `/api/pdf/*` export flow for new code.

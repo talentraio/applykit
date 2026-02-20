@@ -351,6 +351,29 @@ export const generations = pgTable(
 );
 
 /**
+ * Generation Format Settings table
+ * Snapshot of formatting preferences for each generated resume.
+ * One-to-one with generations.
+ */
+export const generationFormatSettings = pgTable(
+  'generation_format_settings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    generationId: uuid('generation_id')
+      .notNull()
+      .references(() => generations.id, { onDelete: 'cascade' })
+      .unique(),
+    ats: jsonb('ats').$type<ResumeFormatSettingsAts>().notNull(),
+    human: jsonb('human').$type<ResumeFormatSettingsHuman>().notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => ({
+    generationIdIdx: index('idx_generation_format_settings_generation_id').on(table.generationId)
+  })
+);
+
+/**
  * Generation Score Details table
  * Stores on-demand detailed scoring payloads linked to a concrete generation.
  */
@@ -611,6 +634,9 @@ export type NewVacancy = typeof vacancies.$inferInsert;
 
 export type Generation = typeof generations.$inferSelect;
 export type NewGeneration = typeof generations.$inferInsert;
+
+export type GenerationFormatSettingsRow = typeof generationFormatSettings.$inferSelect;
+export type NewGenerationFormatSettingsRow = typeof generationFormatSettings.$inferInsert;
 
 export type GenerationScoreDetail = typeof generationScoreDetails.$inferSelect;
 export type NewGenerationScoreDetail = typeof generationScoreDetails.$inferInsert;

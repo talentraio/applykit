@@ -1,4 +1,5 @@
 export { parseListFromEnv } from './utils/env-helpers';
+export { isH3Error, toH3Error } from './utils/h3-error';
 
 export type { SerializedClass, TValues } from './utils/type-helpers';
 

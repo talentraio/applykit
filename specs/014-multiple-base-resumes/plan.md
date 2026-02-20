@@ -23,13 +23,13 @@ Lift the single-resume-per-user constraint so users can maintain up to 10 base r
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| I. Documentation Is Binding | PASS | `docs/codestyle/base.md` read; all relevant docs loaded |
-| II. Nuxt Stack Invariants | PASS | Using Nuxt v4, NuxtUI v4; MCP docs available for framework APIs |
-| III. Schema-First Contracts | PASS | New schemas defined in `@int/schema` with Zod; `isDefault` computed at API layer |
-| IV. Store/Action Data Flow | PASS | Resume store refactored to handle multi-resume cache; format settings moved to per-resume |
-| V. i18n and SSR Requirements | PASS | All new UI strings use i18n keys; no SSR/island changes needed |
+| Principle                    | Status | Notes                                                                                     |
+| ---------------------------- | ------ | ----------------------------------------------------------------------------------------- |
+| I. Documentation Is Binding  | PASS   | `docs/codestyle/base.md` read; all relevant docs loaded                                   |
+| II. Nuxt Stack Invariants    | PASS   | Using Nuxt v4, NuxtUI v4; MCP docs available for framework APIs                           |
+| III. Schema-First Contracts  | PASS   | New schemas defined in `@int/schema` with Zod; `isDefault` computed at API layer          |
+| IV. Store/Action Data Flow   | PASS   | Resume store refactored to handle multi-resume cache; format settings moved to per-resume |
+| V. i18n and SSR Requirements | PASS   | All new UI strings use i18n keys; no SSR/island changes needed                            |
 
 No violations. All gates pass.
 
@@ -78,10 +78,6 @@ packages/nuxt-layer-api/                 # @int/api — backend changes
       format-settings.get.ts             # REMOVE
       format-settings.patch.ts           # REMOVE
       format-settings.put.ts             # REMOVE
-    resume/
-      index.get.ts                       # MODIFIED: deprecated, returns default resume
-      index.post.ts                      # MODIFIED: always creates new, enforces limit
-      index.put.ts                       # MODIFIED: deprecated
 
 apps/site/layers/resume/                 # Resume layer — UI changes
   app/pages/
@@ -113,7 +109,7 @@ apps/site/layers/_base/                  # Base layer — cleanup
     format-settings.ts                   # MODIFIED: refactored to per-resume endpoints
 ```
 
-**Structure Decision**: Existing monorepo structure preserved. Changes distributed across `@int/schema`, `@int/api`, site/resume layer, site/vacancy layer, and site/_base layer. No new packages or layers introduced.
+**Structure Decision**: Existing monorepo structure preserved. Changes distributed across `@int/schema`, `@int/api`, site/resume layer, site/vacancy layer, and site/\_base layer. No new packages or layers introduced.
 
 ## Complexity Tracking
 

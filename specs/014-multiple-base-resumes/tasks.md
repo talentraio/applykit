@@ -54,12 +54,12 @@
 - [x] T014 [P] Implement `PUT /api/user/default-resume` at `packages/nuxt-layer-api/server/api/user/default-resume.put.ts` — validates resume exists and belongs to user, updates `users.default_resume_id`
 - [x] T015 [P] Implement `GET /api/resumes/:id/format-settings` at `packages/nuxt-layer-api/server/api/resumes/[id]/format-settings.get.ts` — auto-seeds defaults if no settings exist
 - [x] T016 [P] Implement `PATCH /api/resumes/:id/format-settings` at `packages/nuxt-layer-api/server/api/resumes/[id]/format-settings.patch.ts` — same deep-partial merge logic as former user format settings
-- [x] T017 Modify `GET /api/resume` at `packages/nuxt-layer-api/server/api/resume/index.get.ts` — return default resume (via `users.defaultResumeId`), add `Deprecation` header, include `name` and `isDefault` in response
-- [x] T018 Modify `POST /api/resume` at `packages/nuxt-layer-api/server/api/resume/index.post.ts` — always create new resume (no upsert), auto-set as default if first resume, generate name from `dd.MM.yyyy`, enforce 10-resume limit, include `name` and `isDefault` in response
+- [x] T017 Align `GET /api/resumes/:id` at `packages/nuxt-layer-api/server/api/resumes/[id].get.ts` — return requested resume by ID with ownership check, include `name` and computed `isDefault` in response
+- [x] T018 Modify `POST /api/resumes` at `packages/nuxt-layer-api/server/api/resumes/index.post.ts` — always create new resume (no upsert), auto-set as default if first resume, generate name from `dd.MM.yyyy`, enforce 10-resume limit, include `name` and `isDefault` in response
 - [x] T019 Remove old format-settings endpoints: deleted `packages/nuxt-layer-api/server/api/user/format-settings.get.ts`, `format-settings.patch.ts`, `format-settings.put.ts`
 - [x] T020 Deprecated old format-settings repository (kept for auth flows that seed user-level defaults). Added `@deprecated` JSDoc to `packages/nuxt-layer-api/server/data/repositories/format-settings.ts`
 - [x] T021 Add new API methods to resume API client at `apps/site/layers/resume/app/infrastructure/resume.api.ts`: `fetchList()`, `fetchById()`, `duplicate()`, `deleteResume()`, `updateName()`, `setDefault()`, `fetchFormatSettings()`, `patchFormatSettings()`
-- [x] T022 Refactor format-settings store at `apps/site/layers/_base/app/stores/format-settings.ts` to accept `resumeId` parameter in `fetchSettings()` and `patchSettings()`, change API paths from `/api/user/format-settings` to `/api/resumes/:id/format-settings`
+- [x] T022 Refactor format-settings store at `apps/site/layers/_base/app/stores/format-settings.ts` to accept `resumeId` parameter in `fetchSettings()` and `patchSettings()`, change API paths from `/api/user/format-settings` to `/api/resumes/:id/format-settings` (later superseded by full removal of this `_base` store when settings were consolidated into resume store state)
 - [x] T023 Refactor resume store at `apps/site/layers/resume/app/stores/index.ts`: add `activeResumeId` state, add `resumeList` state, fix `_upsertCachedResume()` for proper multi-resume cache, add actions: `fetchResumeList()`, `fetchResumeById()`, `duplicateResume()`, `deleteResume()`, `setDefaultResume()`, `updateResumeName()`
 - [x] T024 Refactor `useResume` composable at `apps/site/layers/resume/app/composables/useResume.ts` to be resume-id-aware (use `activeResumeId` via `store.activeResume`), wire format settings to per-resume endpoints
 
@@ -77,7 +77,7 @@
 
 - [x] T025 [US1] Create dynamic route page at `apps/site/layers/resume/app/pages/resume/[id].vue` — loads specific resume by ID, sets `activeResumeId` in store, handles 404 with redirect to `/resume`
 - [x] T026 [US1] Modify `/resume` page at `apps/site/layers/resume/app/pages/resume/index.vue` (moved from `resume.vue`) — if user has resumes, redirect to `/resume/[defaultResumeId]`. If no resumes, show `ResumeFormUpload` as currently
-- [x] T027 [US1] Modify `POST /api/resume` flow — post-upload and create-from-scratch navigate to `/resume/[newId]` in the client (server-side auto-default + name generation was done in T018)
+- [x] T027 [US1] Modify `POST /api/resumes` flow — post-upload and create-from-scratch navigate to `/resume/[newId]` in the client (server-side auto-default + name generation was done in T018)
 
 **Checkpoint**: User Story 1 is functional — first resume creation, routing, and redirect all work.
 
@@ -122,9 +122,9 @@
 
 ### Implementation for User Story 4
 
-- [ ] T033 [US4] Create `DefaultToggle.vue` component at `apps/site/layers/resume/app/components/editor/DefaultToggle.vue` — standalone, accepts `resumeId` and `isDefault` props, shows "Make default" button or disabled "This is the default resume", calls `resumeStore.setDefaultResume()`, shows success toast
-- [ ] T034 [US4] Integrate `DefaultToggle.vue` into editor tools at `apps/site/layers/resume/app/components/editor/Tools.vue` — full-width, above action buttons row
-- [ ] T035 [US4] Add i18n keys `resume.page.makeDefault`, `resume.page.thisIsDefaultResume`, `resume.page.defaultResumeUpdated` to locale files
+- [x] T033 [US4] Create `DefaultToggle.vue` component at `apps/site/layers/resume/app/components/editor/DefaultToggle.vue` — standalone, accepts `resumeId` and `isDefault` props, shows "Make default" button or disabled "This is the default resume", calls `resumeStore.setDefaultResume()`, shows success toast
+- [x] T034 [US4] Integrate `DefaultToggle.vue` into editor tools at `apps/site/layers/resume/app/components/editor/Tools.vue` — full-width, above action buttons row
+- [x] T035 [US4] Add i18n keys `resume.page.makeDefault`, `resume.page.thisIsDefaultResume`, `resume.page.defaultResumeUpdated` to locale files
 
 **Checkpoint**: Default toggle works, state reflects immediately in UI and selector.
 
@@ -138,9 +138,9 @@
 
 ### Implementation for User Story 5
 
-- [ ] T036 [US5] Create delete confirmation modal component at `apps/site/layers/resume/app/components/editor/modal/DeleteConfirm.vue` — programmatic overlay via `useProgrammaticOverlay`, confirm/cancel actions
-- [ ] T037 [US5] Add delete button (icon-only, leftmost in action row) to `apps/site/layers/resume/app/components/editor/Tools.vue` — only for non-default resumes, click opens delete confirmation modal, on confirm calls `resumeStore.deleteResume()` and navigates to `/resume/[defaultResumeId]`
-- [ ] T038 [US5] Add i18n keys `resume.page.deleteResume`, `resume.page.deleteResumeConfirmTitle`, `resume.page.deleteResumeConfirmDescription`, `resume.page.deleteResumeConfirmAction`, `resume.page.deleteResumeConfirmCancel`, `resume.page.resumeDeleted` to locale files
+- [x] T036 [US5] Create delete confirmation modal component at `apps/site/layers/resume/app/components/editor/modal/DeleteConfirm.vue` — programmatic overlay via `useProgrammaticOverlay`, confirm/cancel actions
+- [x] T037 [US5] Add delete button (icon-only, leftmost in action row) to `apps/site/layers/resume/app/components/editor/Tools.vue` — only for non-default resumes, click opens delete confirmation modal, on confirm calls `resumeStore.deleteResume()` and navigates to `/resume/[defaultResumeId]`
+- [x] T038 [US5] Add i18n keys `resume.page.deleteResume`, `resume.page.deleteResumeConfirmTitle`, `resume.page.deleteResumeConfirmDescription`, `resume.page.deleteResumeConfirmAction`, `resume.page.deleteResumeConfirmCancel`, `resume.page.resumeDeleted` to locale files
 
 **Checkpoint**: Delete flow works end-to-end with modal confirmation.
 
@@ -154,8 +154,8 @@
 
 ### Implementation for User Story 6
 
-- [ ] T039 [US6] Add "Resume name" text input above Format Settings section in the Settings tab component at `apps/site/layers/resume/app/components/editor/` (locate Settings tab template) — bind to resume name, wire auto-save via `resumeStore.updateResumeName()`
-- [ ] T040 [US6] Add i18n keys `resume.settings.resumeName`, `resume.settings.resumeNamePlaceholder` to locale files
+- [x] T039 [US6] Add "Resume name" text input above Format Settings section in the Settings tab component at `apps/site/layers/resume/app/components/editor/` (locate Settings tab template) — bind to resume name, wire auto-save via `resumeStore.updateResumeName()`
+- [x] T040 [US6] Add i18n keys `resume.settings.resumeName`, `resume.settings.resumeNamePlaceholder` to locale files
 
 **Checkpoint**: Resume name is editable and persisted.
 
@@ -169,8 +169,8 @@
 
 ### Implementation for User Story 7
 
-- [ ] T041 [US7] Modify vacancy generate flow at `apps/site/layers/vacancy/app/components/Item/overview/Content/index.vue` — when >1 resume, replace direct generate with `UDropdownMenu` showing resume list, default resume first, on select call `vacancyStore.generateResume(vacancyId, { resumeId })`. When 1 resume, keep current behavior
-- [ ] T042 [US7] Add i18n key `vacancy.generation.selectBaseResume` to locale files
+- [x] T041 [US7] Modify vacancy generate flow at `apps/site/layers/vacancy/app/components/Item/overview/Content/index.vue` — when >1 resume, replace direct generate with `UDropdownMenu` showing resume list, default resume first, on select call `vacancyStore.generateResume(vacancyId, { resumeId })`. When 1 resume, keep current behavior
+- [x] T042 [US7] Add i18n key `vacancy.generation.selectBaseResume` to locale files
 
 **Checkpoint**: Vacancy generation with resume picker works for multi-resume users.
 
@@ -184,7 +184,7 @@
 
 ### Implementation for User Story 8
 
-- [ ] T043 [US8] Verify and adjust "Clear and create new" flow in `apps/site/layers/resume/app/components/editor/Tools.vue` and related upload handler — ensure `replaceBaseData` does not modify `name` or format settings. Ensure user stays on `/resume/[id]` after upload (not redirected to `/resume`)
+- [x] T043 [US8] Verify and adjust "Clear and create new" flow in `apps/site/layers/resume/app/components/editor/Tools.vue` and related upload handler — ensure `replaceBaseData` does not modify `name` or format settings. Ensure user stays on `/resume/[id]` after upload (not redirected to `/resume`)
 
 **Checkpoint**: Clear and create new works correctly in multi-resume context.
 
@@ -192,13 +192,13 @@
 
 ## Phase 11: Polish & Cross-Cutting Concerns
 
-**Purpose**: Cleanup, deprecation handling, and cross-cutting concerns that affect multiple user stories.
+**Purpose**: Cleanup and cross-cutting concerns that affect multiple user stories.
 
-- [ ] T044 Add `Deprecation` header to `PUT /api/resume` at `packages/nuxt-layer-api/server/api/resume/index.put.ts`
-- [ ] T045 Verify all new UI strings use i18n keys (audit all components created/modified in Phases 3-10)
-- [ ] T046 Verify format settings are independent per resume: create two resumes, change settings on one, confirm the other retains its own settings
-- [ ] T047 Run `pnpm --filter @int/api db:migrate` to apply migration and verify existing data migrated correctly (name backfilled, format settings copied, default resume set)
-- [ ] T048 Manual smoke test: run through all 9 user flows (UF-1 through UF-9) from spec.md and verify acceptance criteria AC-1 through AC-15
+- [x] T044 Verify `PUT /api/resumes/:id` remains the canonical update endpoint (no deprecation headers)
+- [x] T045 Verify all new UI strings use i18n keys (audit all components created/modified in Phases 3-10)
+- [x] T046 Verify format settings are independent per resume: create two resumes, change settings on one, confirm the other retains its own settings
+- [x] T047 Run `pnpm --filter @int/api db:migrate` to apply migration and verify existing data migrated correctly (name backfilled, format settings copied, default resume set)
+- [x] T048 Manual smoke test: run through all 9 user flows (UF-1 through UF-9) from spec.md and verify acceptance criteria AC-1 through AC-15
 
 ---
 

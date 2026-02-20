@@ -12,6 +12,7 @@ import type {
 } from '@layer/api/types/vacancies';
 
 const vacancyUrl = '/api/vacancies';
+const buildVacancyByIdUrl = (id: string): string => `${vacancyUrl}/${id}`;
 
 /**
  * Vacancy API
@@ -72,7 +73,7 @@ export const vacancyApi = {
    * Update a vacancy
    */
   async update(id: string, data: Partial<VacancyInput>): Promise<Vacancy> {
-    return await useApi(`${vacancyUrl}/${id}`, {
+    return await useApi(buildVacancyByIdUrl(id), {
       method: 'PUT',
       body: data
     });
@@ -82,7 +83,7 @@ export const vacancyApi = {
    * Delete a vacancy
    */
   async delete(id: string): Promise<void> {
-    await useApi(`${vacancyUrl}/${id}`, {
+    await useApi(buildVacancyByIdUrl(id), {
       method: 'DELETE'
     });
   },

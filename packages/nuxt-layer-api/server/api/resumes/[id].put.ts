@@ -1,50 +1,29 @@
+import type { ResumeContent } from '@int/schema';
 import { ResumeContentSchema } from '@int/schema';
-import { z } from 'zod';
 import { resumeRepository } from '../../data/repositories';
+import { resumeVersionRepository } from '../../data/repositories/resume-version';
 
 /**
  * PUT /api/resumes/:id
  *
- * DEPRECATED: Use PUT /api/resume instead
+ * Update a specific resume content and/or title.
+ * Creates a version snapshot when content is updated.
  *
- * Update resume content or title
- * Users can edit the parsed JSON or rename the resume
+ * Request:
+ * - Content-Type: application/json
+ * - Fields (all optional):
+ *   - content: ResumeContent
+ *   - title: string
  *
- * Request body:
- * {
- *   content?: ResumeContent (optional, updated JSON)
- *   title?: string (optional, new title)
- * }
- *
- * This endpoint is deprecated and will be removed in a future version.
- * Migrate to the new singular /api/resume endpoint.
- *
- * Related: T076 (US2)
+ * Response:
+ * - Updated Resume object
+ * - 404: Resume not found
+ * - 400: Validation error
  */
-
-const UpdateResumeSchema = z
-  .object({
-    content: ResumeContentSchema.optional(),
-    title: z.string().min(1).max(255).optional()
-  })
-  .refine(
-    (data: { content?: unknown; title?: string }) =>
-      data.content !== undefined || data.title !== undefined,
-    {
-      message: 'At least one of content or title must be provided'
-    }
-  );
-
 export default defineEventHandler(async event => {
-  // Add deprecation header
-  setHeader(event, 'Deprecation', 'true');
-  setHeader(event, 'Sunset', new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toUTCString());
-  setHeader(event, 'Link', '</api/resume>; rel="successor-version"');
-
-  // Require authentication
   const session = await requireUserSession(event);
+  const userId = (session.user as { id: string }).id;
 
-  // Get resume ID from route params
   const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
@@ -53,55 +32,71 @@ export default defineEventHandler(async event => {
     });
   }
 
-  // Parse and validate request body
-  const body = await readBody(event);
-  const validation = UpdateResumeSchema.safeParse(body);
-
-  if (!validation.success) {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid request body',
-      data: validation.error.errors
-    });
-  }
-
-  const { content, title } = validation.data;
-
-  // Check if resume exists and belongs to user
-  const existingResume = await resumeRepository.findByIdAndUserId(
-    id,
-    (session.user as { id: string }).id
-  );
-  if (!existingResume) {
+  const resume = await resumeRepository.findByIdAndUserId(id, userId);
+  if (!resume) {
     throw createError({
       statusCode: 404,
       message: 'Resume not found'
     });
   }
 
-  // Update content if provided
-  let updatedResume = existingResume;
-  if (content) {
-    const result = await resumeRepository.updateContent(
-      id,
-      (session.user as { id: string }).id,
-      content
-    );
-    if (result) {
-      updatedResume = result;
+  const body = await readBody<{
+    content?: ResumeContent;
+    title?: string;
+  }>(event);
+
+  let contentToUpdate: ResumeContent | null = null;
+  let titleToUpdate: string | null = null;
+
+  if (body.content !== undefined) {
+    const contentValidation = ResumeContentSchema.safeParse(body.content);
+    if (!contentValidation.success) {
+      throw createError({
+        statusCode: 400,
+        message: `Invalid resume content: ${contentValidation.error.message}`
+      });
     }
+
+    const currentVersionNumber = await resumeVersionRepository.getLatestVersionNumber(resume.id);
+    const newVersionNumber = currentVersionNumber + 1;
+
+    await resumeVersionRepository.createVersion({
+      resumeId: resume.id,
+      content: contentValidation.data,
+      versionNumber: newVersionNumber
+    });
+
+    const config = useRuntimeConfig();
+    const maxVersions = config.resume?.maxVersions || 10;
+    await resumeVersionRepository.pruneOldVersions(resume.id, maxVersions);
+
+    contentToUpdate = contentValidation.data;
   }
 
-  // Update title if provided
-  if (title) {
-    const result = await resumeRepository.updateTitle(
-      id,
-      (session.user as { id: string }).id,
-      title
-    );
-    if (result) {
-      updatedResume = result;
+  if (body.title !== undefined && typeof body.title === 'string') {
+    if (body.title.trim().length === 0) {
+      throw createError({
+        statusCode: 400,
+        message: 'Title cannot be empty'
+      });
     }
+    titleToUpdate = body.title;
+  }
+
+  if (!contentToUpdate && !titleToUpdate) {
+    return resume;
+  }
+
+  let updatedResume = resume;
+
+  if (contentToUpdate) {
+    updatedResume =
+      (await resumeRepository.updateContent(resume.id, userId, contentToUpdate)) || resume;
+  }
+
+  if (titleToUpdate) {
+    updatedResume =
+      (await resumeRepository.updateTitle(resume.id, userId, titleToUpdate)) || resume;
   }
 
   return updatedResume;

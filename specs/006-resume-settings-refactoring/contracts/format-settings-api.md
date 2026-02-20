@@ -165,7 +165,7 @@ At least one of `ats` or `human` must be present (empty body → 422).
 
 ## Modified endpoints
 
-### PUT /api/resume
+### PUT /api/resumes/:id
 
 **Removed from body**: `atsSettings`, `humanSettings`
 **Removed from response**: `atsSettings`, `humanSettings`
@@ -179,7 +179,7 @@ Body now accepts only:
 }
 ```
 
-### GET /api/resume
+### GET /api/resumes/:id
 
 **Removed from response**: `atsSettings`, `humanSettings`
 

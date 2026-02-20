@@ -18,6 +18,7 @@
    - Remove `userFormatSettings` table definition
 
 2. **Generate & apply migration**
+
    ```bash
    pnpm --filter @int/api db:generate
    # Review generated SQL, add data migration statements
@@ -37,7 +38,7 @@
 
 5. **API endpoints** (`packages/nuxt-layer-api/server/api/`)
    - New: `GET /api/resumes`, `GET /api/resumes/:id`, `POST /api/resumes/:id/duplicate`, `DELETE /api/resumes/:id`, `PUT /api/resumes/:id/name`, `PUT /api/user/default-resume`, `GET /api/resumes/:id/format-settings`, `PATCH /api/resumes/:id/format-settings`
-   - Modify: `GET /api/resume`, `POST /api/resume`, `PUT /api/resume` (deprecation headers)
+   - Modify: `POST /api/resumes`, `PUT /api/resumes/:id`
    - Remove: `GET/PATCH/PUT /api/user/format-settings`
 
 ### Phase 2: Client Infrastructure (API client + Store)
