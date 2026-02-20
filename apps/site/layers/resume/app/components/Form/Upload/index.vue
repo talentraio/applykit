@@ -1,5 +1,22 @@
 <template>
   <div class="resume-upload">
+    <UFormField
+      v-if="showTitleInput"
+      :label="$t('resume.upload.resumeNameLabel')"
+      name="resume-title"
+      :required="requireTitleInput"
+      :error="titleError || undefined"
+      class="resume-upload__name-field"
+    >
+      <UInput
+        v-model="resumeTitle"
+        :placeholder="$t('resume.upload.resumeNamePlaceholder')"
+        :maxlength="255"
+        :disabled="isUploading"
+        class="w-full"
+      />
+    </UFormField>
+
     <!-- Dropzone -->
     <div
       class="resume-upload__dropzone"
@@ -119,9 +136,17 @@ import type { Resume } from '@int/schema';
 
 defineOptions({ name: 'ResumeFormUpload' });
 
-const props = defineProps<{
-  replaceResumeId?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    replaceResumeId?: string;
+    showTitleInput?: boolean;
+    requireTitle?: boolean;
+  }>(),
+  {
+    showTitleInput: false,
+    requireTitle: false
+  }
+);
 
 const emit = defineEmits<{
   /** File upload started */
@@ -131,7 +156,7 @@ const emit = defineEmits<{
   /** Upload failed */
   error: [error: Error];
   /** User chose to create from scratch */
-  createFromScratch: [];
+  createFromScratch: [payload: { title?: string }];
 }>();
 
 const { t } = useI18n();
@@ -142,6 +167,33 @@ const isUploading = ref(false);
 const isDragging = ref(false);
 const selectedFile = ref<File | null>(null);
 const error = ref<string | null>(null);
+const resumeTitle = ref('');
+const titleError = ref<string | null>(null);
+
+const requireTitleInput = computed(
+  () => props.showTitleInput && (props.requireTitle || !props.replaceResumeId)
+);
+
+const normalizedResumeTitle = computed(() => {
+  const normalized = resumeTitle.value.trim();
+  return normalized.length > 0 ? normalized : undefined;
+});
+
+watch(resumeTitle, () => {
+  titleError.value = null;
+});
+
+function validateResumeTitle(): string | null {
+  if (!requireTitleInput.value) {
+    return null;
+  }
+
+  if (normalizedResumeTitle.value) {
+    return null;
+  }
+
+  return t('resume.upload.resumeNameRequired');
+}
 
 /**
  * Validate file type and size
@@ -173,6 +225,13 @@ function validateFile(file: File): string | null {
  */
 async function processFile(file: File) {
   error.value = null;
+  titleError.value = null;
+
+  const titleValidationError = validateResumeTitle();
+  if (titleValidationError) {
+    titleError.value = titleValidationError;
+    return;
+  }
 
   const validationError = validateFile(file);
   if (validationError) {
@@ -186,7 +245,7 @@ async function processFile(file: File) {
 
   try {
     isUploading.value = true;
-    const resume = await uploadResume(file, undefined, props.replaceResumeId);
+    const resume = await uploadResume(file, normalizedResumeTitle.value, props.replaceResumeId);
     emit('success', resume);
     selectedFile.value = null;
 
@@ -237,12 +296,25 @@ function triggerFileInput() {
 }
 
 function handleCreateFromScratch() {
-  emit('createFromScratch');
+  error.value = null;
+  titleError.value = null;
+
+  const titleValidationError = validateResumeTitle();
+  if (titleValidationError) {
+    titleError.value = titleValidationError;
+    return;
+  }
+
+  emit('createFromScratch', { title: normalizedResumeTitle.value });
 }
 </script>
 
 <style lang="scss">
 .resume-upload {
+  &__name-field {
+    margin-bottom: 1rem;
+  }
+
   &__dropzone {
     position: relative;
     display: flex;
