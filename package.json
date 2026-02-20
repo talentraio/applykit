@@ -8,6 +8,8 @@
     "db:up": "bash ./scripts/dev/db-up.sh",
     "db:down": "bash ./scripts/dev/db-down.sh",
     "db:status": "bash ./scripts/dev/db-status.sh",
+    "db:migrate:preview": "bash ./scripts/deploy/db-migrate.sh preview",
+    "db:migrate:prod": "bash ./scripts/deploy/db-migrate.sh prod",
     "dev:site": "pnpm --filter site dev",
     "dev:admin": "pnpm --filter admin dev",
     "build:site": "pnpm --filter site build",

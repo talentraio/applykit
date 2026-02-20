@@ -26,6 +26,23 @@ pnpm db:up
 pnpm --filter @int/api db:migrate
 ```
 
+### Preview and production migrations
+
+Use environment-specific scripts from repo root:
+
+```bash
+pnpm db:migrate:preview
+pnpm db:migrate:prod -- --yes
+```
+
+How URL is resolved:
+
+- First priority: `NUXT_DATABASE_URL` (if explicitly provided)
+- Otherwise: `PREVIEW_DATABASE_URL` or `PROD_DATABASE_URL`
+- Fallback for local manual runs: values from root `.env`
+
+The `prod` command requires `--yes` outside CI to prevent accidental runs.
+
 ### After schema changes (CRITICAL: follow this order)
 
 **⚠️ NEVER create SQL migration files manually!** Always use Drizzle Kit to generate them.
