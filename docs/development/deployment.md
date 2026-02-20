@@ -112,6 +112,15 @@ For preview deployments, add `*.vercel.app` as a wildcard if the provider suppor
 2. GitHub Actions runs migrations, then deploys both apps to production.
 3. If migration fails, deploy is blocked — fix and push again.
 
+### Manual migration run (if deploy was started outside CI)
+
+From repo root:
+
+```bash
+pnpm db:migrate:preview
+pnpm db:migrate:prod -- --yes
+```
+
 ### Rollback
 
 - **Code**: Vercel Dashboard → Deployments → select a previous deployment → "Promote to Production".
@@ -134,6 +143,7 @@ reset it by deleting the `preview` branch in Neon and recreating it from `main`.
 | ---------------------------------- | ------------------------------------------------ |
 | `.github/workflows/production.yml` | Production deploy (push to `main`)               |
 | `.github/workflows/preview.yml`    | Preview deploy (PR against `main`)               |
+| `scripts/deploy/db-migrate.sh`     | Shared migration runner for preview/production   |
 | `apps/site/vercel.json`            | Site: Fluid Compute + cron config                |
 | `apps/admin/vercel.json`           | Admin: Fluid Compute config                      |
 | `.vercelignore`                    | Excludes non-essential files from Vercel uploads |

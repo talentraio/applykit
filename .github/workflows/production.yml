@@ -27,9 +27,9 @@ jobs:
       # --- Database migrations (MUST succeed before any deploy) ---
 
       - name: Run database migrations
-        run: pnpm --filter @int/api db:migrate
+        run: pnpm db:migrate:prod -- --yes
         env:
-          NUXT_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
       # --- Site: pull → build → deploy ---
 

@@ -30,9 +30,9 @@ jobs:
       # --- Database migrations (preview DB) ---
 
       - name: Run database migrations (preview)
-        run: pnpm --filter @int/api db:migrate
+        run: pnpm db:migrate:preview
         env:
-          NUXT_DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
+          PREVIEW_DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
 
       # --- Site: pull → build → deploy ---
 
