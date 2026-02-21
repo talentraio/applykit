@@ -270,13 +270,20 @@
         </div>
 
         <div v-else-if="viewMode === 'edit'" class="vacancy-cover-page__editor-pane">
-          <UTextarea
+          <UEditor
+            v-slot="{ editor }"
             v-model="contentMarkdown"
-            class="vacancy-cover-page__markdown"
-            :rows="24"
-            autoresize
+            content-type="markdown"
             :placeholder="t('vacancy.cover.editorPlaceholder')"
-          />
+            :ui="markdownEditorUi"
+            class="vacancy-cover-page__markdown-editor"
+          >
+            <UEditorToolbar
+              :editor="editor"
+              :items="markdownEditorToolbarItems"
+              class="vacancy-cover-page__markdown-editor-toolbar"
+            />
+          </UEditor>
           <p v-if="coverLetterSaving" class="vacancy-cover-page__saving">
             {{ t('vacancy.resume.saving') }}
           </p>
@@ -434,6 +441,22 @@ const viewModeOptions = computed<BaseEditorLayoutModeOption[]>(() => [
     icon: 'i-lucide-pencil'
   }
 ]);
+
+const markdownEditorToolbarItems = [
+  [{ kind: 'undo' }, { kind: 'redo' }],
+  [
+    { kind: 'mark', mark: 'bold' },
+    { kind: 'mark', mark: 'italic' },
+    { kind: 'mark', mark: 'underline' }
+  ],
+  [{ kind: 'bulletList' }, { kind: 'orderedList' }, { kind: 'blockquote' }]
+];
+
+const markdownEditorUi = {
+  root: 'w-full',
+  content: 'min-h-[640px]',
+  base: 'min-h-[640px] p-4'
+} as const;
 
 const languageItems = computed(() => [
   { label: t('vacancy.cover.languageEnglish'), value: 'en' },
@@ -975,8 +998,18 @@ const pageLoading = computed(() => pending.value);
     padding-right: 0.25rem;
   }
 
-  &__markdown {
-    min-height: 600px;
+  &__markdown-editor {
+    width: min(980px, 100%);
+    border: 1px solid var(--ui-border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background-color: var(--ui-bg);
+  }
+
+  &__markdown-editor-toolbar {
+    border-bottom: 1px solid var(--ui-border);
+    padding: 0.5rem 0.75rem;
+    overflow-x: auto;
   }
 
   &__hint {
@@ -1013,8 +1046,8 @@ const pageLoading = computed(() => pending.value);
       justify-content: flex-start;
     }
 
-    &__markdown {
-      min-height: 420px;
+    &__markdown-editor {
+      width: 100%;
     }
   }
 }
