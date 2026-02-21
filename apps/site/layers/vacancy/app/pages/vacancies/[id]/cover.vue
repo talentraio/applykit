@@ -2,255 +2,322 @@
   <div class="vacancy-cover-page">
     <BasePageLoading v-if="pageLoading" show-text wrapper-class="vacancy-cover-page__loading" />
 
-    <div v-else class="vacancy-cover-page__layout">
-      <aside class="vacancy-cover-page__inputs">
-        <UPageCard>
-          <template #header>
-            <h2 class="text-lg font-semibold">{{ t('vacancy.cover.inputsTitle') }}</h2>
-          </template>
-
-          <div class="space-y-4">
-            <UFormField :label="t('vacancy.cover.language')">
-              <USelectMenu
-                v-model="generationSettings.language"
-                :items="languageItems"
-                value-key="value"
-                :search-input="false"
-                class="w-full"
-              />
-            </UFormField>
-
-            <UFormField :label="t('vacancy.cover.type')">
-              <USelectMenu
-                v-model="generationSettings.type"
-                :items="typeItems"
-                value-key="value"
-                :search-input="false"
-                class="w-full"
-              />
-            </UFormField>
-
-            <UFormField :label="t('vacancy.cover.tone')">
-              <USelectMenu
-                v-model="generationSettings.tone"
-                :items="toneItems"
-                value-key="value"
-                :search-input="false"
-                class="w-full"
-              />
-            </UFormField>
-
-            <UFormField :label="t('vacancy.cover.length')">
-              <USelectMenu
-                v-model="generationSettings.lengthPreset"
-                :items="lengthItems"
-                value-key="value"
-                :search-input="false"
-                class="w-full"
-              />
-            </UFormField>
-
-            <UFormField :label="t('vacancy.cover.recipientName')">
-              <UInput
-                v-model="generationSettings.recipientName"
-                class="w-full"
-                :placeholder="t('vacancy.cover.recipientNamePlaceholder')"
-              />
-            </UFormField>
-
-            <UFormField
-              v-if="generationSettings.type === 'message'"
-              :label="t('vacancy.cover.subject')"
-            >
-              <UCheckbox
-                v-model="generationSettings.includeSubjectLine"
-                :label="t('vacancy.cover.includeSubjectLine')"
-              />
-            </UFormField>
-
-            <UFormField :label="t('vacancy.cover.instructions')">
-              <UTextarea
-                v-model="generationSettings.instructions"
-                class="w-full"
-                :rows="6"
-                autoresize
-                :placeholder="t('vacancy.cover.instructionsPlaceholder')"
-              />
-            </UFormField>
-
-            <UButton
-              block
-              :loading="coverLetterGenerating"
-              :disabled="!hasGeneration"
-              icon="i-lucide-sparkles"
-              @click="handleGenerate"
-            >
-              {{ hasCoverLetter ? t('vacancy.cover.regenerate') : t('vacancy.cover.generate') }}
-            </UButton>
-
-            <div v-if="!hasGeneration" class="vacancy-cover-page__hint">
-              <p>{{ t('vacancy.cover.generateResumeFirst') }}</p>
-              <UButton
-                variant="ghost"
-                icon="i-lucide-arrow-left"
-                :to="`/vacancies/${vacancyId}/overview`"
+    <BaseEditorLayout
+      v-else
+      v-model:mode="layoutMode"
+      class="vacancy-cover-page__layout"
+      :mode-options="viewModeOptions"
+      :can-undo="canUndo"
+      :can-redo="canRedo"
+      :is-dirty="false"
+      :mobile-preview-title="t('vacancy.cover.preview')"
+      :mobile-preview-aria-label="t('vacancy.cover.preview')"
+      :mobile-close-label="t('resume.preview.close')"
+      @undo="undo"
+      @redo="redo"
+    >
+      <template #left>
+        <div class="vacancy-cover-page__left-panel">
+          <UTabs
+            v-model="activeLeftTab"
+            :items="leftTabItems"
+            :ui="tabsUi"
+            class="vacancy-cover-page__tabs"
+          >
+            <template #content="{ item }">
+              <div
+                v-if="item.value === inputsTabValue"
+                class="vacancy-cover-page__tab-content vacancy-cover-page__tab-content--inputs"
               >
-                {{ t('vacancy.cover.backToOverview') }}
-              </UButton>
-            </div>
-          </div>
-        </UPageCard>
-      </aside>
+                <div class="vacancy-cover-page__inputs-form">
+                  <UFormField :label="t('vacancy.cover.language')">
+                    <USelectMenu
+                      v-model="generationSettings.language"
+                      :items="languageItems"
+                      value-key="value"
+                      :search-input="false"
+                      class="w-full"
+                    />
+                  </UFormField>
 
-      <section class="vacancy-cover-page__workspace">
+                  <UFormField :label="t('vacancy.cover.type')">
+                    <USelectMenu
+                      v-model="generationSettings.type"
+                      :items="typeItems"
+                      value-key="value"
+                      :search-input="false"
+                      class="w-full"
+                    />
+                  </UFormField>
+
+                  <UFormField :label="t('vacancy.cover.tone')">
+                    <USelectMenu
+                      v-model="generationSettings.tone"
+                      :items="toneItems"
+                      value-key="value"
+                      :search-input="false"
+                      class="w-full"
+                    />
+                  </UFormField>
+
+                  <UFormField :label="t('vacancy.cover.length')">
+                    <USelectMenu
+                      v-model="generationSettings.lengthPreset"
+                      :items="lengthItems"
+                      value-key="value"
+                      :search-input="false"
+                      class="w-full"
+                    />
+                  </UFormField>
+
+                  <UFormField :label="t('vacancy.cover.recipientName')">
+                    <UInput
+                      v-model="generationSettings.recipientName"
+                      class="w-full"
+                      :placeholder="t('vacancy.cover.recipientNamePlaceholder')"
+                    />
+                  </UFormField>
+
+                  <UFormField
+                    v-if="generationSettings.type === 'message'"
+                    :label="t('vacancy.cover.subject')"
+                  >
+                    <UCheckbox
+                      v-model="generationSettings.includeSubjectLine"
+                      :label="t('vacancy.cover.includeSubjectLine')"
+                    />
+                  </UFormField>
+
+                  <UFormField :label="t('vacancy.cover.instructions')">
+                    <UTextarea
+                      v-model="generationSettings.instructions"
+                      class="w-full"
+                      :rows="6"
+                      autoresize
+                      :placeholder="t('vacancy.cover.instructionsPlaceholder')"
+                    />
+                  </UFormField>
+
+                  <UButton
+                    block
+                    :loading="coverLetterGenerating"
+                    :disabled="!hasGeneration"
+                    icon="i-lucide-sparkles"
+                    @click="handleGenerate"
+                  >
+                    {{
+                      hasCoverLetter ? t('vacancy.cover.regenerate') : t('vacancy.cover.generate')
+                    }}
+                  </UButton>
+
+                  <div v-if="!hasGeneration" class="vacancy-cover-page__hint">
+                    <p>{{ t('vacancy.cover.generateResumeFirst') }}</p>
+                    <UButton
+                      variant="ghost"
+                      icon="i-lucide-arrow-left"
+                      :to="`/vacancies/${vacancyId}/overview`"
+                    >
+                      {{ t('vacancy.cover.backToOverview') }}
+                    </UButton>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-else
+                class="vacancy-cover-page__tab-content vacancy-cover-page__tab-content--format"
+              >
+                <div class="vacancy-cover-page__format-settings">
+                  <h3 class="vacancy-cover-page__section-title">
+                    {{ t('vacancy.cover.formatTitle') }}
+                  </h3>
+                  <p class="vacancy-cover-page__section-description">
+                    {{ t('vacancy.cover.formatDescription') }}
+                  </p>
+
+                  <div class="vacancy-cover-page__controls">
+                    <div class="vacancy-cover-page__control">
+                      <label class="vacancy-cover-page__label">
+                        {{ t('resume.settings.marginX.label') }}
+                        <span class="vacancy-cover-page__value"
+                          >{{ formatSettings.marginX }}mm</span
+                        >
+                      </label>
+                      <USlider
+                        :model-value="formatSettings.marginX"
+                        :min="10"
+                        :max="26"
+                        :step="1"
+                        disabled
+                      />
+                      <p class="vacancy-cover-page__hint-text">
+                        {{ t('resume.settings.marginX.hint') }}
+                      </p>
+                    </div>
+
+                    <div class="vacancy-cover-page__control">
+                      <label class="vacancy-cover-page__label">
+                        {{ t('resume.settings.marginY.label') }}
+                        <span class="vacancy-cover-page__value"
+                          >{{ formatSettings.marginY }}mm</span
+                        >
+                      </label>
+                      <USlider
+                        :model-value="formatSettings.marginY"
+                        :min="10"
+                        :max="26"
+                        :step="1"
+                        disabled
+                      />
+                      <p class="vacancy-cover-page__hint-text">
+                        {{ t('resume.settings.marginY.hint') }}
+                      </p>
+                    </div>
+
+                    <div class="vacancy-cover-page__control">
+                      <label class="vacancy-cover-page__label">
+                        {{ t('resume.settings.fontSize.label') }}
+                        <span class="vacancy-cover-page__value"
+                          >{{ formatSettings.fontSize }}pt</span
+                        >
+                      </label>
+                      <USlider
+                        :model-value="formatSettings.fontSize"
+                        :min="9"
+                        :max="13"
+                        :step="0.5"
+                        disabled
+                      />
+                      <p class="vacancy-cover-page__hint-text">
+                        {{ t('resume.settings.fontSize.hint') }}
+                      </p>
+                    </div>
+
+                    <div class="vacancy-cover-page__control">
+                      <label class="vacancy-cover-page__label">
+                        {{ t('resume.settings.lineHeight.label') }}
+                        <span class="vacancy-cover-page__value">{{
+                          formatSettings.lineHeight.toFixed(1)
+                        }}</span>
+                      </label>
+                      <USlider
+                        :model-value="formatSettings.lineHeight"
+                        :min="1.1"
+                        :max="1.5"
+                        :step="0.05"
+                        disabled
+                      />
+                      <p class="vacancy-cover-page__hint-text">
+                        {{ t('resume.settings.lineHeight.hint') }}
+                      </p>
+                    </div>
+
+                    <div class="vacancy-cover-page__control">
+                      <label class="vacancy-cover-page__label">
+                        {{ t('vacancy.cover.paragraphSpacingLabel') }}
+                        <span class="vacancy-cover-page__value">{{
+                          formatSettings.blockSpacing
+                        }}</span>
+                      </label>
+                      <USlider
+                        :model-value="formatSettings.blockSpacing"
+                        :min="1"
+                        :max="9"
+                        :step="1"
+                        disabled
+                      />
+                      <p class="vacancy-cover-page__hint-text">
+                        {{ t('vacancy.cover.paragraphSpacingHint') }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </UTabs>
+        </div>
+      </template>
+
+      <template #right-actions>
+        <div class="vacancy-cover-page__actions">
+          <UButton
+            size="sm"
+            variant="outline"
+            icon="i-lucide-copy"
+            :disabled="!hasCoverLetter || !contentMarkdown.trim()"
+            @click="copyContent"
+          >
+            {{ t('vacancy.cover.copy') }}
+          </UButton>
+          <UButton
+            size="sm"
+            variant="outline"
+            icon="i-lucide-download"
+            :disabled="!hasCoverLetter || !contentMarkdown.trim()"
+            :loading="downloadingPdf"
+            @click="downloadPdf"
+          >
+            {{ t('vacancy.cover.downloadPdf') }}
+          </UButton>
+        </div>
+      </template>
+
+      <template #preview>
         <div v-if="!hasCoverLetter" class="vacancy-cover-page__empty">
           <UIcon name="i-lucide-mail" class="h-14 w-14 text-muted" />
           <h3 class="mt-4 text-lg font-semibold">{{ t('vacancy.cover.noCoverLetter') }}</h3>
           <p class="mt-2 text-muted">{{ t('vacancy.cover.generateHint') }}</p>
         </div>
 
-        <div v-else class="vacancy-cover-page__editor">
-          <div class="vacancy-cover-page__toolbar">
-            <div class="vacancy-cover-page__toolbar-group">
-              <UButton
-                :variant="viewMode === 'edit' ? 'solid' : 'outline'"
-                size="sm"
-                icon="i-lucide-pencil"
-                @click="viewMode = 'edit'"
-              >
-                {{ t('resume.tabs.edit') }}
-              </UButton>
-              <UButton
-                :variant="viewMode === 'preview' ? 'solid' : 'outline'"
-                size="sm"
-                icon="i-lucide-eye"
-                @click="viewMode = 'preview'"
-              >
-                {{ t('vacancy.cover.preview') }}
-              </UButton>
-            </div>
-
-            <div class="vacancy-cover-page__toolbar-group">
-              <UButton
-                size="sm"
-                variant="outline"
-                icon="i-lucide-undo"
-                :disabled="!canUndo"
-                @click="undo"
-              >
-                {{ t('resume.history.undo') }}
-              </UButton>
-              <UButton
-                size="sm"
-                variant="outline"
-                icon="i-lucide-redo"
-                :disabled="!canRedo"
-                @click="redo"
-              >
-                {{ t('resume.history.redo') }}
-              </UButton>
-              <UButton size="sm" variant="outline" icon="i-lucide-copy" @click="copyContent">
-                {{ t('vacancy.cover.copy') }}
-              </UButton>
-              <UButton
-                size="sm"
-                variant="outline"
-                icon="i-lucide-download"
-                :loading="downloadingPdf"
-                @click="downloadPdf"
-              >
-                {{ t('vacancy.cover.downloadPdf') }}
-              </UButton>
-            </div>
-          </div>
-
-          <div v-if="viewMode === 'edit'" class="vacancy-cover-page__edit-grid">
-            <UTextarea
-              v-model="contentMarkdown"
-              class="vacancy-cover-page__markdown"
-              :rows="20"
-              autoresize
-              :placeholder="t('vacancy.cover.editorPlaceholder')"
-            />
-
-            <UPageCard>
-              <template #header>
-                <h3 class="text-base font-semibold">{{ t('vacancy.cover.formatTitle') }}</h3>
-              </template>
-
-              <div class="grid grid-cols-1 gap-3">
-                <UFormField :label="t('resume.settings.marginX.label')">
-                  <UInput
-                    :model-value="String(formatSettings.marginX)"
-                    type="number"
-                    min="10"
-                    max="26"
-                    step="1"
-                    @update:model-value="value => updateFormatSetting('marginX', value)"
-                  />
-                </UFormField>
-
-                <UFormField :label="t('resume.settings.marginY.label')">
-                  <UInput
-                    :model-value="String(formatSettings.marginY)"
-                    type="number"
-                    min="10"
-                    max="26"
-                    step="1"
-                    @update:model-value="value => updateFormatSetting('marginY', value)"
-                  />
-                </UFormField>
-
-                <UFormField :label="t('resume.settings.fontSize.label')">
-                  <UInput
-                    :model-value="String(formatSettings.fontSize)"
-                    type="number"
-                    min="9"
-                    max="13"
-                    step="0.1"
-                    @update:model-value="value => updateFormatSetting('fontSize', value)"
-                  />
-                </UFormField>
-
-                <UFormField :label="t('resume.settings.lineHeight.label')">
-                  <UInput
-                    :model-value="String(formatSettings.lineHeight)"
-                    type="number"
-                    min="1.1"
-                    max="1.5"
-                    step="0.05"
-                    @update:model-value="value => updateFormatSetting('lineHeight', value)"
-                  />
-                </UFormField>
-
-                <UFormField :label="t('resume.settings.blockSpacing.label')">
-                  <UInput
-                    :model-value="String(formatSettings.blockSpacing)"
-                    type="number"
-                    min="1"
-                    max="9"
-                    step="1"
-                    @update:model-value="value => updateFormatSetting('blockSpacing', value)"
-                  />
-                </UFormField>
-              </div>
-            </UPageCard>
-          </div>
-
-          <div v-else class="vacancy-cover-page__preview-wrap">
-            <VacancyCoverPaperPreview
-              :html-content="previewHtml"
-              :subject-line="displaySubjectLine"
-              :settings="formatSettings"
-            />
-          </div>
-
+        <div v-else-if="viewMode === 'edit'" class="vacancy-cover-page__editor-pane">
+          <UTextarea
+            v-model="contentMarkdown"
+            class="vacancy-cover-page__markdown"
+            :rows="24"
+            autoresize
+            :placeholder="t('vacancy.cover.editorPlaceholder')"
+          />
           <p v-if="coverLetterSaving" class="vacancy-cover-page__saving">
             {{ t('vacancy.resume.saving') }}
           </p>
         </div>
-      </section>
-    </div>
+
+        <div v-else class="vacancy-cover-page__preview-wrap">
+          <VacancyCoverPaperPreview
+            :html-content="previewHtml"
+            :subject-line="displaySubjectLine"
+            :settings="formatSettings"
+          />
+          <p v-if="coverLetterSaving" class="vacancy-cover-page__saving">
+            {{ t('vacancy.resume.saving') }}
+          </p>
+        </div>
+      </template>
+
+      <template #mobile-preview-actions>
+        <div class="vacancy-cover-page__actions">
+          <UButton
+            size="sm"
+            variant="outline"
+            icon="i-lucide-copy"
+            :disabled="!hasCoverLetter || !contentMarkdown.trim()"
+            @click="copyContent"
+          >
+            {{ t('vacancy.cover.copy') }}
+          </UButton>
+          <UButton
+            size="sm"
+            variant="outline"
+            icon="i-lucide-download"
+            :disabled="!hasCoverLetter || !contentMarkdown.trim()"
+            :loading="downloadingPdf"
+            @click="downloadPdf"
+          >
+            {{ t('vacancy.cover.downloadPdf') }}
+          </UButton>
+        </div>
+      </template>
+    </BaseEditorLayout>
   </div>
 </template>
 
@@ -264,6 +331,7 @@ import type {
   CoverLetterType,
   SpacingSettings
 } from '@int/schema';
+import type { BaseEditorLayoutModeOption } from '@site/base/app/components/base/editor-layout/types';
 import {
   DefaultCoverLetterFormatSettings,
   normalizeNullableText,
@@ -280,6 +348,7 @@ definePageMeta({
 });
 
 type ViewMode = 'edit' | 'preview';
+type LeftPanelTab = 'inputs' | 'format';
 
 type EditorSnapshot = {
   contentMarkdown: string;
@@ -319,6 +388,7 @@ const contentMarkdown = ref('');
 const subjectLine = ref<string | null>(null);
 const formatSettings = reactive<SpacingSettings>(structuredClone(DefaultCoverLetterFormatSettings));
 const viewMode = ref<ViewMode>('edit');
+const activeLeftTab = ref<LeftPanelTab>('inputs');
 const downloadingPdf = ref(false);
 
 const historyEntries = ref<EditorSnapshot[]>([]);
@@ -331,6 +401,39 @@ const hasGeneration = computed(() => Boolean(getOverviewLatestGeneration.value))
 const hasCoverLetter = computed(() => Boolean(getCoverLetter.value));
 const coverLetterGenerating = computed(() => getCoverLetterGenerating.value);
 const coverLetterSaving = computed(() => getCoverLetterSaving.value);
+const inputsTabValue: LeftPanelTab = 'inputs';
+
+const tabsUi = {
+  indicator: 'hidden',
+  trigger:
+    'data-[state=active]:bg-primary data-[state=active]:text-inverted data-[state=active]:shadow-xs'
+} as const;
+
+const leftTabItems = computed(() => [
+  {
+    label: t('vacancy.cover.inputsTitle'),
+    value: inputsTabValue,
+    icon: 'i-lucide-sliders-horizontal'
+  },
+  {
+    label: t('vacancy.cover.formatTitle'),
+    value: 'format' as LeftPanelTab,
+    icon: 'i-lucide-settings'
+  }
+]);
+
+const viewModeOptions = computed<BaseEditorLayoutModeOption[]>(() => [
+  {
+    value: 'preview',
+    label: t('vacancy.cover.preview'),
+    icon: 'i-lucide-eye'
+  },
+  {
+    value: 'edit',
+    label: t('resume.tabs.edit'),
+    icon: 'i-lucide-pencil'
+  }
+]);
 
 const languageItems = computed(() => [
   { label: t('vacancy.cover.languageEnglish'), value: 'en' },
@@ -357,6 +460,15 @@ const lengthItems = computed(() => [
 
 const previewHtml = computed(() => markdownToHtml(contentMarkdown.value));
 const displaySubjectLine = computed(() => normalizeNullableText(subjectLine.value));
+const isViewMode = (value: string): value is ViewMode => value === 'edit' || value === 'preview';
+const layoutMode = computed<string>({
+  get: () => viewMode.value,
+  set: value => {
+    if (isViewMode(value)) {
+      viewMode.value = value;
+    }
+  }
+});
 
 const canUndo = computed(() => historyIndex.value > 0);
 const canRedo = computed(
@@ -587,25 +699,6 @@ async function handleGenerate(): Promise<void> {
   }
 }
 
-function updateFormatSetting(key: keyof SpacingSettings, value: string | number): void {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) {
-    return;
-  }
-
-  const limits: Record<keyof SpacingSettings, { min: number; max: number; round?: boolean }> = {
-    marginX: { min: 10, max: 26 },
-    marginY: { min: 10, max: 26 },
-    fontSize: { min: 9, max: 13 },
-    lineHeight: { min: 1.1, max: 1.5 },
-    blockSpacing: { min: 1, max: 9, round: true }
-  };
-
-  const limit = limits[key];
-  const clamped = Math.min(limit.max, Math.max(limit.min, parsed));
-  formatSettings[key] = limit.round ? Math.round(clamped) : clamped;
-}
-
 function undo(): void {
   if (!canUndo.value) return;
 
@@ -771,27 +864,119 @@ const pageLoading = computed(() => pending.value);
   }
 
   &__layout {
-    display: grid;
-    grid-template-columns: 360px minmax(0, 1fr);
-    gap: 1rem;
     height: 100%;
     min-height: 0;
-    padding: 1rem;
-
-    @media (width <= 1200px) {
-      grid-template-columns: 1fr;
-      overflow: auto;
-    }
   }
 
-  &__inputs {
+  &__left-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     min-height: 0;
-    overflow: auto;
   }
 
-  &__workspace {
+  &__tabs {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
     min-height: 0;
+    overflow: hidden;
+    padding: 1rem 1rem 0;
+  }
+
+  &__tabs > [role='tabpanel'] {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  &__tab-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1rem 0;
+  }
+
+  &__inputs-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 1rem 1rem;
+  }
+
+  &__format-settings {
+    padding: 0 1rem 1rem;
+  }
+
+  &__section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  &__section-description {
+    font-size: 0.875rem;
+    color: var(--color-neutral-500);
+  }
+
+  &__controls {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  &__value {
+    color: var(--color-primary-500);
+    font-weight: 600;
+  }
+
+  &__hint-text {
+    font-size: 0.75rem;
+    color: var(--color-neutral-400);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  &__editor-pane,
+  &__preview-wrap {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    width: min(980px, 100%);
+    min-height: 0;
+  }
+
+  &__preview-wrap {
+    align-items: center;
     overflow: auto;
+    padding-right: 0.25rem;
+  }
+
+  &__markdown {
+    min-height: 600px;
   }
 
   &__hint {
@@ -814,53 +999,23 @@ const pageLoading = computed(() => pending.value);
     align-items: center;
     text-align: center;
     padding: 2rem;
-  }
-
-  &__editor {
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  &__toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  &__toolbar-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  &__edit-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    gap: 0.75rem;
-    min-height: 0;
-
-    @media (width <= 1200px) {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  &__markdown {
-    min-height: 520px;
-  }
-
-  &__preview-wrap {
-    min-height: 0;
-    overflow: auto;
-    padding-right: 0.25rem;
+    width: min(980px, 100%);
   }
 
   &__saving {
+    margin-top: 0.5rem;
     font-size: 0.875rem;
     color: var(--ui-text-muted);
+  }
+
+  @media (width <= 1200px) {
+    &__actions {
+      justify-content: flex-start;
+    }
+
+    &__markdown {
+      min-height: 420px;
+    }
   }
 }
 </style>

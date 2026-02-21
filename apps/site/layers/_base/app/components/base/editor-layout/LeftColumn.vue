@@ -12,8 +12,8 @@
       <div class="base-editor-layout-left-column__footer-row">
         <div class="base-editor-layout-left-column__history">
           <BaseUndoRedoControls
-            :can-undo="canUndo"
-            :can-redo="canRedo"
+            :can-undo="props.canUndo"
+            :can-redo="props.canRedo"
             @undo="emit('undo')"
             @redo="emit('redo')"
           />
@@ -38,7 +38,7 @@
 <script setup lang="ts">
 defineOptions({ name: 'BaseEditorLayoutLeftColumn' });
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     canUndo?: boolean;
     canRedo?: boolean;
