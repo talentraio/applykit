@@ -1,4 +1,7 @@
 import type {
+  CoverLetter,
+  CoverLetterGenerateBody,
+  CoverLetterPatchBody,
   Generation,
   GenerationScoreDetail,
   ResumeContent,
@@ -21,6 +24,7 @@ import type {
   GenerateOptions,
   GenerateScoreDetailsOptions
 } from '@site/vacancy/app/infrastructure/generation.api';
+import { coverLetterApi } from '@site/vacancy/app/infrastructure/cover-letter.api';
 import { generationApi } from '@site/vacancy/app/infrastructure/generation.api';
 import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
 
@@ -77,6 +81,13 @@ export const useVacancyStore = defineStore('VacancyStore', {
     savingGeneration: boolean;
     generationSaveEpoch: number;
 
+    // Cover letter state
+    coverLetter: CoverLetter | null;
+    coverLetterLoading: boolean;
+    coverLetterGenerating: boolean;
+    coverLetterSaving: boolean;
+    coverLetterSaveEpoch: number;
+
     // Cached generations for editing (max 20)
     cachedGenerations: CachedGeneration[];
     currentGenerationId: string | null;
@@ -102,6 +113,13 @@ export const useVacancyStore = defineStore('VacancyStore', {
     generating: false,
     savingGeneration: false,
     generationSaveEpoch: 0,
+
+    // Cover letter state
+    coverLetter: null,
+    coverLetterLoading: false,
+    coverLetterGenerating: false,
+    coverLetterSaving: false,
+    coverLetterSaveEpoch: 0,
 
     // Cached generations for editing
     cachedGenerations: [],
@@ -212,7 +230,27 @@ export const useVacancyStore = defineStore('VacancyStore', {
      */
     getDisplayGenerationContent(): ResumeContent | null {
       return this.getCurrentGeneration?.content ?? null;
-    }
+    },
+
+    /**
+     * Get current cover letter.
+     */
+    getCoverLetter: (state): CoverLetter | null => state.coverLetter,
+
+    /**
+     * Cover letter load status.
+     */
+    getCoverLetterLoading: (state): boolean => state.coverLetterLoading,
+
+    /**
+     * Cover letter generation status.
+     */
+    getCoverLetterGenerating: (state): boolean => state.coverLetterGenerating,
+
+    /**
+     * Cover letter save status.
+     */
+    getCoverLetterSaving: (state): boolean => state.coverLetterSaving
   },
 
   actions: {
@@ -254,6 +292,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
         this.preparationScoreDetailsStale = false;
         this.preparationCanRequestDetails = false;
         this.preparationCanRegenerateDetails = false;
+        this.coverLetter = null;
         return overview;
       } catch (err) {
         this.currentVacancy = null;
@@ -263,6 +302,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
         this.preparationScoreDetailsStale = false;
         this.preparationCanRequestDetails = false;
         this.preparationCanRegenerateDetails = false;
+        this.coverLetter = null;
         throw err instanceof Error ? err : new Error('Failed to fetch vacancy overview');
       } finally {
         this.loading = false;
@@ -284,6 +324,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
         this.preparationScoreDetailsStale = false;
         this.preparationCanRequestDetails = false;
         this.preparationCanRegenerateDetails = false;
+        this.coverLetter = null;
         return vacancy;
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to create vacancy');
@@ -354,6 +395,7 @@ export const useVacancyStore = defineStore('VacancyStore', {
           this.preparationScoreDetailsStale = false;
           this.preparationCanRequestDetails = false;
           this.preparationCanRegenerateDetails = false;
+          this.coverLetter = null;
         }
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to delete vacancy');
@@ -545,6 +587,81 @@ export const useVacancyStore = defineStore('VacancyStore', {
     },
 
     // =========================================
+    // Cover Letter API Actions
+    // =========================================
+
+    /**
+     * Fetch latest cover letter for vacancy.
+     */
+    async fetchCoverLetter(vacancyId: string): Promise<CoverLetter | null> {
+      this.coverLetterLoading = true;
+
+      try {
+        const response = await coverLetterApi.fetchLatest(vacancyId);
+        this.coverLetter = response.coverLetter;
+        return response.coverLetter;
+      } catch (err) {
+        this.coverLetter = null;
+        throw err instanceof Error ? err : new Error('Failed to fetch cover letter');
+      } finally {
+        this.coverLetterLoading = false;
+      }
+    },
+
+    /**
+     * Generate cover letter for vacancy.
+     */
+    async generateCoverLetter(
+      vacancyId: string,
+      payload: CoverLetterGenerateBody
+    ): Promise<CoverLetter> {
+      this.coverLetterGenerating = true;
+
+      try {
+        const coverLetter = await coverLetterApi.generate(vacancyId, payload);
+        this.coverLetter = coverLetter;
+        return coverLetter;
+      } catch (err) {
+        throw err instanceof Error ? err : new Error('Failed to generate cover letter');
+      } finally {
+        this.coverLetterGenerating = false;
+      }
+    },
+
+    /**
+     * Patch cover letter by ID.
+     */
+    async patchCoverLetter(id: string, payload: CoverLetterPatchBody): Promise<CoverLetter | null> {
+      const saveEpoch = this.coverLetterSaveEpoch + 1;
+      this.coverLetterSaveEpoch = saveEpoch;
+      this.coverLetterSaving = true;
+
+      try {
+        const updated = await coverLetterApi.patch(id, payload);
+        if (saveEpoch !== this.coverLetterSaveEpoch) {
+          return null;
+        }
+
+        this.coverLetter = updated;
+        return updated;
+      } catch (err) {
+        throw err instanceof Error ? err : new Error('Failed to save cover letter');
+      } finally {
+        if (saveEpoch === this.coverLetterSaveEpoch) {
+          this.coverLetterSaving = false;
+        }
+      }
+    },
+
+    /**
+     * Invalidate in-flight cover letter save operations.
+     */
+    invalidateCoverLetterSaves(): void {
+      this.coverLetterSaveEpoch += 1;
+      this.coverLetterSaving = false;
+    },
+
+    // =========================================
     // Generation Cache Actions
     // =========================================
 
@@ -689,6 +806,12 @@ export const useVacancyStore = defineStore('VacancyStore', {
       this.generating = false;
       this.savingGeneration = false;
       this.generationSaveEpoch = 0;
+
+      this.coverLetter = null;
+      this.coverLetterLoading = false;
+      this.coverLetterGenerating = false;
+      this.coverLetterSaving = false;
+      this.coverLetterSaveEpoch = 0;
 
       this.cachedGenerations = [];
       this.currentGenerationId = null;

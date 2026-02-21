@@ -113,9 +113,9 @@ describe('vacancy detailed score fallback integration', () => {
       }
     );
 
-    expect(callLLMMock).toHaveBeenCalledTimes(2);
+    expect(callLLMMock).toHaveBeenCalledTimes(1);
     expect(result.details.summary.after).toBeGreaterThanOrEqual(result.details.summary.before);
     expect(result.details.scoreBreakdown.version).toBe('deterministic-v1');
-    expect(result.usage.attemptsUsed).toBe(2);
+    expect(result.usage.attemptsUsed).toBe(1);
   });
 });

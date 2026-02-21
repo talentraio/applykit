@@ -9,7 +9,8 @@ vi.mock('vue', () => ({
       return getter();
     }
   }),
-  defineAsyncComponent: (loader: () => Promise<unknown>) => ({ __asyncLoader: loader })
+  defineAsyncComponent: (loader: () => Promise<unknown>) => ({ __asyncLoader: loader }),
+  markRaw: <T>(value: T) => value
 }));
 
 vi.mock('#components', () => ({

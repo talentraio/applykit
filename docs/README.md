@@ -7,6 +7,7 @@
 - [API](./api/README.md)
 - [Design / MVP contract](./design/mvp.md)
 - [Concept updates](./concept-updates/README.md)
+- [Product concepts](./product-concepts/README.md)
 
 ## Development
 

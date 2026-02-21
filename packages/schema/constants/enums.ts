@@ -176,6 +176,52 @@ export const VACANCY_STATUS_VALUES = [
   VACANCY_STATUS_MAP.OFFER
 ] as const;
 
+export const COVER_LETTER_LANGUAGE_MAP = {
+  EN: 'en',
+  DA: 'da'
+} as const;
+
+export const COVER_LETTER_LANGUAGE_VALUES = [
+  COVER_LETTER_LANGUAGE_MAP.EN,
+  COVER_LETTER_LANGUAGE_MAP.DA
+] as const;
+
+export const COVER_LETTER_TYPE_MAP = {
+  LETTER: 'letter',
+  MESSAGE: 'message'
+} as const;
+
+export const COVER_LETTER_TYPE_VALUES = [
+  COVER_LETTER_TYPE_MAP.LETTER,
+  COVER_LETTER_TYPE_MAP.MESSAGE
+] as const;
+
+export const COVER_LETTER_TONE_MAP = {
+  PROFESSIONAL: 'professional',
+  FRIENDLY: 'friendly',
+  ENTHUSIASTIC: 'enthusiastic',
+  DIRECT: 'direct'
+} as const;
+
+export const COVER_LETTER_TONE_VALUES = [
+  COVER_LETTER_TONE_MAP.PROFESSIONAL,
+  COVER_LETTER_TONE_MAP.FRIENDLY,
+  COVER_LETTER_TONE_MAP.ENTHUSIASTIC,
+  COVER_LETTER_TONE_MAP.DIRECT
+] as const;
+
+export const COVER_LETTER_LENGTH_PRESET_MAP = {
+  SHORT: 'short',
+  STANDARD: 'standard',
+  LONG: 'long'
+} as const;
+
+export const COVER_LETTER_LENGTH_PRESET_VALUES = [
+  COVER_LETTER_LENGTH_PRESET_MAP.SHORT,
+  COVER_LETTER_LENGTH_PRESET_MAP.STANDARD,
+  COVER_LETTER_LENGTH_PRESET_MAP.LONG
+] as const;
+
 export const LANGUAGE_LEVEL_MAP = {
   NATIVE: 'Native',
   FLUENT: 'Fluent',

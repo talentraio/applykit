@@ -1,4 +1,5 @@
 import type {
+  CoverLetter,
   Generation,
   GenerationScoreDetail,
   GenerationScoreDetailPayload,
@@ -48,4 +49,8 @@ export type VacancyPreparationResponse = {
   scoreDetailsStale: boolean;
   canRequestDetails: boolean;
   canRegenerateDetails: boolean;
+};
+
+export type VacancyCoverLetterResponse = {
+  coverLetter: CoverLetter | null;
 };

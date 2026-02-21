@@ -4,6 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const callLLMMock = vi.fn();
 const resolveScenarioModelMock = vi.fn();
+const useRuntimeConfigMock = vi.fn(() => ({
+  llm: {
+    debugLogs: false,
+    geminiCache: {
+      enabled: false,
+      ttlSeconds: 300
+    },
+    geminiApiKey: ''
+  }
+}));
 
 vi.mock('../../../server/services/llm/index', () => ({
   callLLM: callLLMMock,
@@ -54,6 +64,11 @@ describe('llm scenario selection integration', () => {
   beforeEach(() => {
     callLLMMock.mockReset();
     resolveScenarioModelMock.mockReset();
+    useRuntimeConfigMock.mockClear();
+
+    Object.assign(globalThis, {
+      useRuntimeConfig: useRuntimeConfigMock
+    });
 
     resolveScenarioModelMock.mockImplementation(async (_role, scenario) => {
       if (scenario === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION) {

@@ -6,9 +6,14 @@ import type {
   ResumeFormatSettingsAts,
   ResumeFormatSettingsHuman,
   ScoreBreakdown,
+  SpacingSettings,
   VacancyListColumnVisibility
 } from '@int/schema';
 import {
+  COVER_LETTER_LANGUAGE_VALUES,
+  COVER_LETTER_LENGTH_PRESET_VALUES,
+  COVER_LETTER_TONE_VALUES,
+  COVER_LETTER_TYPE_VALUES,
   LLM_MODEL_STATUS_VALUES,
   LLM_PROVIDER_VALUES,
   LLM_REASONING_EFFORT_VALUES,
@@ -66,6 +71,16 @@ export const providerTypeEnum = pgEnum('provider_type', PROVIDER_TYPE_VALUES);
 export const userStatusEnum = pgEnum('user_status', USER_STATUS_VALUES);
 export const usageContextEnum = pgEnum('usage_context', USAGE_CONTEXT_VALUES);
 export const vacancyStatusEnum = pgEnum('vacancy_status', VACANCY_STATUS_VALUES);
+export const coverLetterLanguageEnum = pgEnum(
+  'cover_letter_language',
+  COVER_LETTER_LANGUAGE_VALUES
+);
+export const coverLetterTypeEnum = pgEnum('cover_letter_type', COVER_LETTER_TYPE_VALUES);
+export const coverLetterToneEnum = pgEnum('cover_letter_tone', COVER_LETTER_TONE_VALUES);
+export const coverLetterLengthPresetEnum = pgEnum(
+  'cover_letter_length_preset',
+  COVER_LETTER_LENGTH_PRESET_VALUES
+);
 export const budgetPeriodEnum = pgEnum('budget_period', ['weekly', 'monthly']);
 export const suppressionReasonEnum = pgEnum('suppression_reason', SUPPRESSION_REASON_VALUES);
 
@@ -347,6 +362,41 @@ export const generations = pgTable(
     scoreAlertDismissedAtIdx: index('idx_generations_score_alert_dismissed_at').on(
       table.scoreAlertDismissedAt
     )
+  })
+);
+
+/**
+ * Cover Letters table
+ * Stores latest cover letter/application message per vacancy.
+ */
+export const coverLetters = pgTable(
+  'cover_letters',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    vacancyId: uuid('vacancy_id')
+      .notNull()
+      .references(() => vacancies.id, { onDelete: 'cascade' })
+      .unique(),
+    generationId: uuid('generation_id')
+      .notNull()
+      .references(() => generations.id, { onDelete: 'cascade' }),
+    language: coverLetterLanguageEnum('language').notNull().default('en'),
+    type: coverLetterTypeEnum('type').notNull().default('letter'),
+    tone: coverLetterToneEnum('tone').notNull().default('professional'),
+    lengthPreset: coverLetterLengthPresetEnum('length_preset').notNull().default('standard'),
+    recipientName: varchar('recipient_name', { length: 120 }),
+    includeSubjectLine: boolean('include_subject_line').notNull().default(false),
+    instructions: text('instructions'),
+    subjectLine: varchar('subject_line', { length: 180 }),
+    contentMarkdown: text('content_markdown').notNull(),
+    formatSettings: jsonb('format_settings').$type<SpacingSettings>().notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
+  },
+  table => ({
+    vacancyIdIdx: index('idx_cover_letters_vacancy_id').on(table.vacancyId),
+    generationIdIdx: index('idx_cover_letters_generation_id').on(table.generationId),
+    updatedAtIdx: index('idx_cover_letters_updated_at').on(table.updatedAt)
   })
 );
 
@@ -634,6 +684,9 @@ export type NewVacancy = typeof vacancies.$inferInsert;
 
 export type Generation = typeof generations.$inferSelect;
 export type NewGeneration = typeof generations.$inferInsert;
+
+export type CoverLetter = typeof coverLetters.$inferSelect;
+export type NewCoverLetter = typeof coverLetters.$inferInsert;
 
 export type GenerationFormatSettingsRow = typeof generationFormatSettings.$inferSelect;
 export type NewGenerationFormatSettingsRow = typeof generationFormatSettings.$inferInsert;

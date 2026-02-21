@@ -1,5 +1,9 @@
 import { z } from 'zod';
 import {
+  COVER_LETTER_LANGUAGE_MAP,
+  COVER_LETTER_LENGTH_PRESET_MAP,
+  COVER_LETTER_TONE_MAP,
+  COVER_LETTER_TYPE_MAP,
   EXPORT_FORMAT_MAP,
   LLM_MODEL_STATUS_MAP,
   LLM_PROVIDER_MAP,
@@ -77,6 +81,22 @@ export type ExportFormat = z.infer<typeof ExportFormatSchema>;
 // Vacancy application status
 export const VacancyStatusSchema = z.nativeEnum(VACANCY_STATUS_MAP);
 export type VacancyStatus = z.infer<typeof VacancyStatusSchema>;
+
+// Cover letter output language
+export const CoverLetterLanguageSchema = z.nativeEnum(COVER_LETTER_LANGUAGE_MAP);
+export type CoverLetterLanguage = z.infer<typeof CoverLetterLanguageSchema>;
+
+// Cover letter output type
+export const CoverLetterTypeSchema = z.nativeEnum(COVER_LETTER_TYPE_MAP);
+export type CoverLetterType = z.infer<typeof CoverLetterTypeSchema>;
+
+// Cover letter tone preset
+export const CoverLetterToneSchema = z.nativeEnum(COVER_LETTER_TONE_MAP);
+export type CoverLetterTone = z.infer<typeof CoverLetterToneSchema>;
+
+// Cover letter length preset
+export const CoverLetterLengthPresetSchema = z.nativeEnum(COVER_LETTER_LENGTH_PRESET_MAP);
+export type CoverLetterLengthPreset = z.infer<typeof CoverLetterLengthPresetSchema>;
 
 // Suppression reasons for anti-abuse
 export const SuppressionReasonSchema = z.nativeEnum(SUPPRESSION_REASON_MAP);
