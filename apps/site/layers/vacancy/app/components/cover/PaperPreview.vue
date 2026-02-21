@@ -84,59 +84,59 @@ const contentVariables = computed(() => {
   }
 
   &__content {
-    :deep(p) {
+    p {
       margin: 0 0 var(--cover-letter-paragraph-gap);
     }
 
-    :deep(p:last-child) {
+    p:last-child {
       margin-bottom: 0;
     }
 
-    :deep(ul),
-    :deep(ol) {
+    ul,
+    ol {
       margin: 0 0 var(--cover-letter-paragraph-gap);
       padding-left: 1.25em;
     }
 
-    :deep(li) {
+    li {
       margin-bottom: 0.3em;
     }
 
-    :deep(h1),
-    :deep(h2),
-    :deep(h3) {
+    h1,
+    h2,
+    h3 {
       margin: 0 0 0.7em;
       font-weight: 600;
       line-height: 1.2;
     }
 
-    :deep(h1) {
+    h1 {
       font-size: 1.3em;
     }
 
-    :deep(h2) {
+    h2 {
       font-size: 1.2em;
     }
 
-    :deep(h3) {
+    h3 {
       font-size: 1.1em;
     }
 
-    :deep(blockquote) {
+    blockquote {
       margin: 0 0 var(--cover-letter-paragraph-gap);
       padding-left: 0.9em;
       border-left: 2px solid #d1d5db;
       color: #4b5563;
     }
 
-    :deep(code) {
+    code {
       background: #f3f4f6;
       border-radius: 0.2rem;
       padding: 0.05em 0.25em;
       font-size: 0.92em;
     }
 
-    :deep(a) {
+    a {
       color: #2563eb;
       text-decoration: underline;
     }

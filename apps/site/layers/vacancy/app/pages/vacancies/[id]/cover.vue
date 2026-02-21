@@ -185,14 +185,14 @@
                       </label>
                       <USlider
                         :model-value="formatSettings.fontSize"
-                        :min="9"
-                        :max="13"
+                        :min="10"
+                        :max="14"
                         :step="0.5"
                         :disabled="!hasCoverLetter"
                         @update:model-value="value => updateFormatSetting('fontSize', value)"
                       />
                       <p class="vacancy-cover-page__hint-text">
-                        {{ t('resume.settings.fontSize.hint') }}
+                        {{ t('vacancy.cover.fontSizeHint') }}
                       </p>
                     </div>
 
@@ -205,14 +205,14 @@
                       </label>
                       <USlider
                         :model-value="formatSettings.lineHeight"
-                        :min="1.1"
+                        :min="1"
                         :max="1.5"
-                        :step="0.05"
+                        :step="0.1"
                         :disabled="!hasCoverLetter"
                         @update:model-value="value => updateFormatSetting('lineHeight', value)"
                       />
                       <p class="vacancy-cover-page__hint-text">
-                        {{ t('resume.settings.lineHeight.hint') }}
+                        {{ t('vacancy.cover.lineHeightHint') }}
                       </p>
                     </div>
 
@@ -517,12 +517,12 @@ const canRedo = computed(
 
 const formatSettingLimits: Record<
   keyof SpacingSettings,
-  { min: number; max: number; round?: boolean }
+  { min: number; max: number; round?: boolean; precision?: number }
 > = {
   marginX: { min: 10, max: 26 },
   marginY: { min: 10, max: 26 },
-  fontSize: { min: 9, max: 13 },
-  lineHeight: { min: 1.1, max: 1.5 },
+  fontSize: { min: 10, max: 14, precision: 1 },
+  lineHeight: { min: 1, max: 1.5, precision: 1 },
   blockSpacing: { min: 1, max: 9, round: true }
 };
 
@@ -546,7 +546,13 @@ function updateFormatSetting(
 
   const limits = formatSettingLimits[key];
   const clampedValue = Math.min(limits.max, Math.max(limits.min, value));
-  formatSettings[key] = limits.round ? Math.round(clampedValue) : clampedValue;
+  const normalizedValue = limits.round
+    ? Math.round(clampedValue)
+    : typeof limits.precision === 'number'
+      ? Number(clampedValue.toFixed(limits.precision))
+      : clampedValue;
+
+  formatSettings[key] = normalizedValue;
 }
 
 const toEditorSnapshot = (): EditorSnapshot => ({
