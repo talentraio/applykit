@@ -148,7 +148,8 @@
                         :min="10"
                         :max="26"
                         :step="1"
-                        disabled
+                        :disabled="!hasCoverLetter"
+                        @update:model-value="value => updateFormatSetting('marginX', value)"
                       />
                       <p class="vacancy-cover-page__hint-text">
                         {{ t('resume.settings.marginX.hint') }}
@@ -167,7 +168,8 @@
                         :min="10"
                         :max="26"
                         :step="1"
-                        disabled
+                        :disabled="!hasCoverLetter"
+                        @update:model-value="value => updateFormatSetting('marginY', value)"
                       />
                       <p class="vacancy-cover-page__hint-text">
                         {{ t('resume.settings.marginY.hint') }}
@@ -186,7 +188,8 @@
                         :min="9"
                         :max="13"
                         :step="0.5"
-                        disabled
+                        :disabled="!hasCoverLetter"
+                        @update:model-value="value => updateFormatSetting('fontSize', value)"
                       />
                       <p class="vacancy-cover-page__hint-text">
                         {{ t('resume.settings.fontSize.hint') }}
@@ -205,7 +208,8 @@
                         :min="1.1"
                         :max="1.5"
                         :step="0.05"
-                        disabled
+                        :disabled="!hasCoverLetter"
+                        @update:model-value="value => updateFormatSetting('lineHeight', value)"
                       />
                       <p class="vacancy-cover-page__hint-text">
                         {{ t('resume.settings.lineHeight.hint') }}
@@ -224,7 +228,8 @@
                         :min="1"
                         :max="9"
                         :step="1"
-                        disabled
+                        :disabled="!hasCoverLetter"
+                        @update:model-value="value => updateFormatSetting('blockSpacing', value)"
                       />
                       <p class="vacancy-cover-page__hint-text">
                         {{ t('vacancy.cover.paragraphSpacingHint') }}
@@ -498,9 +503,39 @@ const canRedo = computed(
   () => historyIndex.value >= 0 && historyIndex.value < historyEntries.value.length - 1
 );
 
+const formatSettingLimits: Record<
+  keyof SpacingSettings,
+  { min: number; max: number; round?: boolean }
+> = {
+  marginX: { min: 10, max: 26 },
+  marginY: { min: 10, max: 26 },
+  fontSize: { min: 9, max: 13 },
+  lineHeight: { min: 1.1, max: 1.5 },
+  blockSpacing: { min: 1, max: 9, round: true }
+};
+
 const getErrorMessage = (error: unknown): string | undefined => {
   return error instanceof Error && error.message ? error.message : undefined;
 };
+
+const toSliderNumber = (value: number | number[] | undefined): number | null => {
+  if (typeof value === 'undefined') return null;
+  return Array.isArray(value) ? (value[0] ?? 0) : value;
+};
+
+function updateFormatSetting(
+  key: keyof SpacingSettings,
+  rawValue: number | number[] | undefined
+): void {
+  if (!hasCoverLetter.value) return;
+
+  const value = toSliderNumber(rawValue);
+  if (value === null || !Number.isFinite(value)) return;
+
+  const limits = formatSettingLimits[key];
+  const clampedValue = Math.min(limits.max, Math.max(limits.min, value));
+  formatSettings[key] = limits.round ? Math.round(clampedValue) : clampedValue;
+}
 
 const toEditorSnapshot = (): EditorSnapshot => ({
   contentMarkdown: contentMarkdown.value,
