@@ -1,73 +1,74 @@
 <template>
-  <div class="resume-editor-layout">
-    <!-- Header slot -->
-    <header v-if="$slots.header" class="resume-editor-layout__header py-4">
+  <BaseEditorLayout
+    v-model:mode="layoutMode"
+    class="resume-editor-layout"
+    :mode-options="previewModeOptions"
+    :can-undo="canUndo"
+    :can-redo="canRedo"
+    :is-dirty="isDirty"
+    :mobile-preview-title="t('resume.preview.overlayTitle')"
+    :mobile-preview-aria-label="t('resume.preview.mobileButton')"
+    :mobile-close-label="t('resume.preview.close')"
+    @undo="emit('undo')"
+    @redo="emit('redo')"
+    @discard="emit('discard')"
+  >
+    <template v-if="$slots.header" #header>
       <slot name="header" />
-    </header>
+    </template>
 
-    <!-- Main content area -->
-    <div class="resume-editor-layout__main">
-      <ResumeEditorLayoutLeftColumn
-        :can-undo="canUndo"
-        :can-redo="canRedo"
-        :is-dirty="isDirty"
-        @undo="emit('undo')"
-        @redo="emit('redo')"
-        @discard="emit('discard')"
-      >
-        <slot name="left" />
+    <template #left>
+      <slot name="left" />
+    </template>
 
-        <template v-if="$slots['left-actions']" #actions>
-          <slot name="left-actions" />
-        </template>
-      </ResumeEditorLayoutLeftColumn>
+    <template v-if="$slots['left-actions']" #left-actions>
+      <slot name="left-actions" />
+    </template>
 
-      <ResumeEditorLayoutRightColumn
-        v-model:preview-type="previewType"
-        :preview-content="previewContent"
-        :preview-settings="previewSettings"
-        :export-settings="exportSettings"
+    <template #right-actions>
+      <BaseDownloadPdf
+        v-if="previewContent"
+        :content="previewContent"
+        :settings="exportSettings"
+        :photo-url="photoUrl"
+        size="sm"
+      />
+    </template>
+
+    <template #preview>
+      <ResumePreview
+        v-if="previewContent"
+        :content="previewContent"
+        :type="previewType"
+        :settings="currentPreviewSettings"
         :photo-url="photoUrl"
       />
-    </div>
+      <div v-else class="resume-editor-layout__empty">
+        <UIcon name="i-lucide-file-text" class="h-12 w-12 text-muted" />
+        <p class="mt-4 text-muted">{{ t('resume.preview.empty') }}</p>
+      </div>
+    </template>
 
-    <ResumeEditorLayoutMobilePreview
-      v-model:preview-type="previewType"
-      :preview-content="previewContent"
-      :export-settings="exportSettings"
-      :photo-url="photoUrl"
-    />
-  </div>
+    <template #mobile-preview-actions>
+      <BaseDownloadPdf
+        v-if="previewContent"
+        :content="previewContent"
+        :settings="exportSettings"
+        :photo-url="photoUrl"
+      />
+    </template>
+  </BaseEditorLayout>
 </template>
 
 <script setup lang="ts">
-/**
- * Resume Editor Layout Component
- *
- * Two-column layout for resume editing:
- * - Left column (40%): Editor tabs (Content, Settings, AI Enhance)
- * - Right column (60%): A4 Preview
- *
- * Desktop: Side-by-side layout
- * Mobile: Single column (preview hidden, accessible via float button)
- *
- * Slots:
- * - header: Top actions
- * - left: Left column content (tabs, form, settings)
- * - left-actions: Left column actions below scroll area
- *
- * Related: T032 (US3), T052 (US5)
- */
-
 import type {
   ResumeContent,
   ResumeFormatSettingsAts,
   ResumeFormatSettingsHuman
 } from '@int/schema';
+import type { BaseEditorLayoutModeOption } from '@site/base/app/components/base/editor-layout/types';
 import type { PreviewType } from '@site/resume/app/types/preview';
-import ResumeEditorLayoutLeftColumn from './LeftColumn.vue';
-import ResumeEditorLayoutMobilePreview from './MobilePreview.vue';
-import ResumeEditorLayoutRightColumn from './RightColumn.vue';
+import { EXPORT_FORMAT_MAP } from '@int/schema';
 
 type FormatSettingsMap = {
   ats: ResumeFormatSettingsAts;
@@ -76,7 +77,7 @@ type FormatSettingsMap = {
 
 defineOptions({ name: 'ResumeEditorLayout' });
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     previewContent?: ResumeContent | null;
     previewSettings?: ResumeFormatSettingsAts | ResumeFormatSettingsHuman;
@@ -102,36 +103,55 @@ const emit = defineEmits<{
 }>();
 
 const previewType = defineModel<PreviewType>('previewType', { required: true });
+const { t } = useI18n();
 const { profile } = useProfile();
 const photoUrl = computed(() => profile.value?.photoUrl ?? undefined);
+
+const previewModeOptions = computed<BaseEditorLayoutModeOption[]>(() => [
+  {
+    value: EXPORT_FORMAT_MAP.ATS,
+    label: t('resume.settings.previewType.ats')
+  },
+  {
+    value: EXPORT_FORMAT_MAP.HUMAN,
+    label: t('resume.settings.previewType.human')
+  }
+]);
+
+const isPreviewType = (value: string): value is PreviewType =>
+  value === EXPORT_FORMAT_MAP.ATS || value === EXPORT_FORMAT_MAP.HUMAN;
+
+const layoutMode = computed<string>({
+  get: () => previewType.value,
+  set: value => {
+    if (isPreviewType(value)) {
+      previewType.value = value;
+    }
+  }
+});
+
+const currentPreviewSettings = computed<
+  ResumeFormatSettingsAts | ResumeFormatSettingsHuman | undefined
+>(() => {
+  if (props.exportSettings) {
+    return previewType.value === EXPORT_FORMAT_MAP.ATS
+      ? props.exportSettings.ats
+      : props.exportSettings.human;
+  }
+
+  return props.previewSettings;
+});
 </script>
 
 <style lang="scss">
 .resume-editor-layout {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-
-  &__header {
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--color-neutral-200);
-
-    @media (prefers-color-scheme: dark) {
-      border-bottom-color: var(--color-neutral-800);
-    }
-  }
-
-  &__main {
+  &__empty {
     display: flex;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-
-    // Mobile: single column
-    @media (width <= 1023px) {
-      flex-direction: column;
-    }
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    text-align: center;
   }
 }
 </style>

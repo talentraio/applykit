@@ -1,16 +1,16 @@
 <template>
-  <aside class="resume-editor-layout-left-column">
-    <div class="resume-editor-layout-left-column__content">
+  <aside class="base-editor-layout-left-column">
+    <div class="base-editor-layout-left-column__content">
       <slot />
     </div>
 
-    <div v-if="$slots.actions" class="resume-editor-layout-left-column__actions">
+    <div v-if="$slots.actions" class="base-editor-layout-left-column__actions">
       <slot name="actions" />
     </div>
 
-    <div class="resume-editor-layout-left-column__footer">
-      <div class="resume-editor-layout-left-column__footer-row">
-        <div class="resume-editor-layout-left-column__history">
+    <div class="base-editor-layout-left-column__footer">
+      <div class="base-editor-layout-left-column__footer-row">
+        <div class="base-editor-layout-left-column__history">
           <BaseUndoRedoControls
             :can-undo="canUndo"
             :can-redo="canRedo"
@@ -25,7 +25,7 @@
           color="neutral"
           size="sm"
           icon="i-lucide-x"
-          class="resume-editor-layout-left-column__discard"
+          class="base-editor-layout-left-column__discard"
           @click="emit('discard')"
         >
           {{ $t('common.cancel') }}
@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-defineOptions({ name: 'ResumeEditorLayoutLeftColumn' });
+defineOptions({ name: 'BaseEditorLayoutLeftColumn' });
 
 withDefaults(
   defineProps<{
@@ -59,13 +59,12 @@ const emit = defineEmits<{
 </script>
 
 <style lang="scss">
-.resume-editor-layout-left-column {
+.base-editor-layout-left-column {
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
 
-  // Desktop: 40% width
   @media (width >= 1024px) {
     width: 40%;
     min-width: 360px;
@@ -77,7 +76,6 @@ const emit = defineEmits<{
     }
   }
 
-  // Mobile: full width
   @media (width <= 1023px) {
     flex: 1;
     width: 100%;
