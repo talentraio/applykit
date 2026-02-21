@@ -69,7 +69,7 @@
         <div class="resume-settings__control">
           <label class="resume-settings__label">
             {{ $t('resume.settings.lineHeight.label') }}
-            <span class="resume-settings__value">{{ lineHeight.toFixed(1) }}</span>
+            <span class="resume-settings__value">{{ lineHeight.toFixed(2) }}</span>
           </label>
           <USlider v-model="lineHeight" :min="1.1" :max="1.5" :step="0.05" />
           <p class="resume-settings__hint">

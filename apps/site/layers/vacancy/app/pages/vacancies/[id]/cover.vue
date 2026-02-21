@@ -200,14 +200,14 @@
                       <label class="vacancy-cover-page__label">
                         {{ t('resume.settings.lineHeight.label') }}
                         <span class="vacancy-cover-page__value">{{
-                          formatSettings.lineHeight.toFixed(1)
+                          formatSettings.lineHeight.toFixed(2)
                         }}</span>
                       </label>
                       <USlider
                         :model-value="formatSettings.lineHeight"
-                        :min="1"
+                        :min="1.1"
                         :max="1.5"
-                        :step="0.1"
+                        :step="0.05"
                         :disabled="!hasCoverLetter"
                         @update:model-value="value => updateFormatSetting('lineHeight', value)"
                       />
@@ -522,7 +522,7 @@ const formatSettingLimits: Record<
   marginX: { min: 10, max: 26 },
   marginY: { min: 10, max: 26 },
   fontSize: { min: 10, max: 14, precision: 1 },
-  lineHeight: { min: 1, max: 1.5, precision: 1 },
+  lineHeight: { min: 1.1, max: 1.5, precision: 2 },
   blockSpacing: { min: 1, max: 9, round: true }
 };
 

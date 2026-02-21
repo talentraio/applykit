@@ -613,7 +613,7 @@
       "formatTitle": "Formatting",
       "formatDescription": "Adjust formatting for the generated cover letter.",
       "fontSizeHint": "Base font size in points (10-14pt)",
-      "lineHeightHint": "Line spacing multiplier (1.0-1.5)",
+      "lineHeightHint": "Line spacing multiplier (1.10-1.50)",
       "paragraphSpacingLabel": "Paragraph Spacing",
       "paragraphSpacingHint": "Space between paragraphs (1-9)",
       "generated": "Cover letter generated",
