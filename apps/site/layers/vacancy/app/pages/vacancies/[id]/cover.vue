@@ -1023,8 +1023,9 @@ const pageLoading = computed(() => pending.value);
     display: flex;
     flex: 1;
     flex-direction: column;
-    width: min(980px, 100%);
+    width: min(794px, 100%);
     min-height: 0;
+    margin-inline: auto;
   }
 
   &__preview-wrap {
@@ -1034,7 +1035,7 @@ const pageLoading = computed(() => pending.value);
   }
 
   &__markdown-editor {
-    width: min(980px, 100%);
+    width: 100%;
     border: 1px solid var(--ui-border);
     border-radius: 0.75rem;
     overflow: hidden;
@@ -1067,7 +1068,8 @@ const pageLoading = computed(() => pending.value);
     align-items: center;
     text-align: center;
     padding: 2rem;
-    width: min(980px, 100%);
+    width: min(794px, 100%);
+    margin-inline: auto;
   }
 
   &__saving {

@@ -60,6 +60,8 @@ const contentVariables = computed(() => {
 <style lang="scss">
 .cover-letter-paper-preview {
   width: 100%;
+  display: flex;
+  justify-content: center;
   overflow: hidden;
 
   &__sheet {
