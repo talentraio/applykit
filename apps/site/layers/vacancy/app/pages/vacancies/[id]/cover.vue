@@ -286,7 +286,7 @@
             <UEditorToolbar
               :editor="editor"
               :items="markdownEditorToolbarItems"
-              class="vacancy-cover-page__markdown-editor-toolbar"
+              class="vacancy-cover-page__markdown-editor-toolbar bg-default"
             />
           </UEditor>
           <p v-if="coverLetterSaving" class="vacancy-cover-page__saving">
@@ -447,15 +447,27 @@ const viewModeOptions = computed<BaseEditorLayoutModeOption[]>(() => [
   }
 ]);
 
-const markdownEditorToolbarItems = [
-  [{ kind: 'undo' }, { kind: 'redo' }],
+const markdownEditorToolbarItems = computed(() => [
   [
-    { kind: 'mark', mark: 'bold' },
-    { kind: 'mark', mark: 'italic' },
-    { kind: 'mark', mark: 'underline' }
+    { kind: 'undo', icon: 'i-lucide-undo', tooltip: { text: t('resume.history.undo') } },
+    { kind: 'redo', icon: 'i-lucide-redo', tooltip: { text: t('resume.history.redo') } }
   ],
-  [{ kind: 'bulletList' }, { kind: 'orderedList' }, { kind: 'blockquote' }]
-];
+  [
+    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
+    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
+    {
+      kind: 'mark',
+      mark: 'underline',
+      icon: 'i-lucide-underline',
+      tooltip: { text: 'Underline' }
+    }
+  ],
+  [
+    { kind: 'bulletList', icon: 'i-lucide-list', tooltip: { text: 'Bullet list' } },
+    { kind: 'orderedList', icon: 'i-lucide-list-ordered', tooltip: { text: 'Ordered list' } },
+    { kind: 'blockquote', icon: 'i-lucide-text-quote', tooltip: { text: 'Quote' } }
+  ]
+]);
 
 const markdownEditorUi = {
   root: 'w-full',
@@ -1021,15 +1033,14 @@ const pageLoading = computed(() => pending.value);
   &__editor-pane,
   &__preview-wrap {
     display: flex;
-    flex: 1;
     flex-direction: column;
-    width: min(794px, 100%);
+    width: 100%;
+    max-width: 794px;
     min-height: 0;
     margin-inline: auto;
   }
 
   &__preview-wrap {
-    align-items: center;
     overflow: auto;
     padding-right: 0.25rem;
   }
