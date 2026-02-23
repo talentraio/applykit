@@ -190,6 +190,34 @@
       "when": 1772100000000,
       "tag": "0027_cover_letters",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1772186400000,
+      "tag": "0028_cover_letter_locale",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1771781177049,
+      "tag": "0029_tearful_black_cat",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1771813707289,
+      "tag": "0030_milky_vengeance",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1773000000000,
+      "tag": "0031_drop_legacy_cover_letter_uniques",
+      "breakpoints": true
     }
   ]
 }

@@ -11,7 +11,7 @@
       :description="errorMessage"
     />
 
-    <template v-else-if="!preparation?.latestGeneration">
+    <template v-else-if="!preparationLatestGeneration">
       <UPageCard class="vacancy-preparation-page__empty-card">
         <div class="space-y-4 text-center">
           <UIcon name="i-lucide-file-text" class="mx-auto h-10 w-10 text-muted" />
@@ -24,7 +24,7 @@
       </UPageCard>
     </template>
 
-    <template v-else-if="!preparation?.detailedScoringEnabled">
+    <template v-else-if="!preparationDetailedScoringEnabled">
       <UPageCard class="vacancy-preparation-page__empty-card">
         <div class="space-y-4 text-center">
           <UIcon name="i-lucide-sliders-horizontal" class="mx-auto h-10 w-10 text-muted" />
@@ -41,7 +41,7 @@
       </UPageCard>
     </template>
 
-    <template v-else-if="!preparation?.scoreDetails">
+    <template v-else-if="!preparationScoreDetails">
       <UPageCard class="vacancy-preparation-page__empty-card">
         <div class="space-y-4 text-center">
           <UIcon name="i-lucide-list-checks" class="mx-auto h-10 w-10 text-muted" />
@@ -63,7 +63,7 @@
                 {{ t('vacancy.preparation.title') }}
               </h2>
 
-              <UBadge v-if="preparation.scoreDetailsStale" color="warning" variant="soft">
+              <UBadge v-if="preparationScoreDetailsStale" color="warning" variant="soft">
                 {{ t('vacancy.preparation.staleBadge') }}
               </UBadge>
             </div>
@@ -73,21 +73,21 @@
             <UPageCard variant="subtle">
               <p class="text-xs text-muted">{{ t('vacancy.preparation.before') }}</p>
               <p class="text-xl font-semibold">
-                {{ preparation.scoreDetails.details.summary.before }}%
+                {{ preparationScoreDetails.details.summary.before }}%
               </p>
             </UPageCard>
 
             <UPageCard variant="subtle">
               <p class="text-xs text-muted">{{ t('vacancy.preparation.after') }}</p>
               <p class="text-xl font-semibold">
-                {{ preparation.scoreDetails.details.summary.after }}%
+                {{ preparationScoreDetails.details.summary.after }}%
               </p>
             </UPageCard>
 
             <UPageCard variant="subtle">
               <p class="text-xs text-muted">{{ t('vacancy.preparation.improvement') }}</p>
               <p class="text-xl font-semibold text-primary">
-                +{{ preparation.scoreDetails.details.summary.improvement }}%
+                +{{ preparationScoreDetails.details.summary.improvement }}%
               </p>
             </UPageCard>
           </div>
@@ -101,7 +101,7 @@
 
             <ul class="space-y-2 text-sm">
               <li
-                v-for="item in preparation.scoreDetails.details.matched"
+                v-for="item in preparationScoreDetails.details.matched"
                 :key="`matched-${item.signalType}-${item.signal}`"
               >
                 <span class="font-medium">{{ item.signal }}</span>
@@ -117,7 +117,7 @@
 
             <ul class="space-y-2 text-sm">
               <li
-                v-for="item in preparation.scoreDetails.details.gaps"
+                v-for="item in preparationScoreDetails.details.gaps"
                 :key="`gaps-${item.signalType}-${item.signal}`"
               >
                 <span class="font-medium">{{ item.signal }}</span>
@@ -134,7 +134,7 @@
 
           <ul class="list-disc space-y-2 pl-5 text-sm">
             <li
-              v-for="(recommendation, index) in preparation.scoreDetails.details.recommendations"
+              v-for="(recommendation, index) in preparationScoreDetails.details.recommendations"
               :key="`recommendation-${index}`"
             >
               {{ recommendation }}
@@ -147,28 +147,40 @@
 </template>
 
 <script setup lang="ts">
-import type { VacancyPreparationResponse } from '@layer/api/types/vacancies';
-
 defineOptions({ name: 'VacancyPreparationPage' });
 
 const route = useRoute();
 const { t } = useI18n();
-const vacancyStore = useVacancyStore();
+const vacancyPreparationStore = useVacancyPreparationStore();
+const {
+  getPreparationLatestGeneration,
+  getPreparationDetailedScoringEnabled,
+  getPreparationScoreDetails,
+  getPreparationScoreDetailsStale
+} = storeToRefs(vacancyPreparationStore);
 
 const vacancyId = computed(() => {
   const id = route.params.id;
   return Array.isArray(id) ? (id[0] ?? '') : (id ?? '');
 });
 
-const { data, pending, error } = await useAsyncData<VacancyPreparationResponse>(
+const { pending, error } = await useAsyncData(
   'vacancy-preparation',
-  () => vacancyStore.fetchVacancyPreparation(vacancyId.value),
+  async () => {
+    await vacancyPreparationStore.fetchVacancyPreparation(vacancyId.value);
+    return true;
+  },
   {
     watch: [vacancyId]
   }
 );
 
-const preparation = computed(() => data.value ?? null);
+const preparationLatestGeneration = computed(() => getPreparationLatestGeneration.value);
+const preparationDetailedScoringEnabled = computed(
+  () => getPreparationDetailedScoringEnabled.value
+);
+const preparationScoreDetails = computed(() => getPreparationScoreDetails.value);
+const preparationScoreDetailsStale = computed(() => getPreparationScoreDetailsStale.value);
 
 const errorMessage = computed(() => {
   if (!error.value) {

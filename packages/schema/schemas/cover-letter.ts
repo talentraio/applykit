@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { COVER_LETTER_LENGTH_PRESET_MAP } from '../constants/enums';
 import {
   CoverLetterLanguageSchema,
   CoverLetterLengthPresetSchema,
@@ -11,19 +12,37 @@ import { SpacingSettingsSchema } from './format-settings';
 const OptionalRecipientNameSchema = z.string().max(120).nullable().optional();
 const OptionalInstructionsSchema = z.string().max(4000).nullable().optional();
 const OptionalSubjectLineSchema = z.string().max(180).nullable().optional();
+const CharacterLimitSchema = z.number().int().min(1).max(10000);
+const NullableCharacterLimitSchema = CharacterLimitSchema.nullable();
+const OptionalCharacterLimitSchema = NullableCharacterLimitSchema.optional();
 
 const CoverLetterGenerationSettingsBaseSchema = z.object({
   language: CoverLetterLanguageSchema.default('en'),
   type: CoverLetterTypeSchema.default('letter'),
   tone: CoverLetterToneSchema.default('professional'),
   lengthPreset: CoverLetterLengthPresetSchema.default('standard'),
+  characterLimit: NullableCharacterLimitSchema.default(null),
   recipientName: OptionalRecipientNameSchema,
   includeSubjectLine: z.boolean().default(false),
   instructions: OptionalInstructionsSchema
 });
 
+const hasOwn = <T extends object>(value: T, key: keyof T): boolean =>
+  Object.prototype.hasOwnProperty.call(value, key);
+
+const isCharacterLengthPreset = (
+  lengthPreset: z.infer<typeof CoverLetterLengthPresetSchema>
+): boolean =>
+  lengthPreset === COVER_LETTER_LENGTH_PRESET_MAP.MIN_CHARS ||
+  lengthPreset === COVER_LETTER_LENGTH_PRESET_MAP.MAX_CHARS;
+
 const validateSubjectLineToggle = (
-  value: { type: 'letter' | 'message'; includeSubjectLine: boolean },
+  value: {
+    type: 'letter' | 'message';
+    includeSubjectLine: boolean;
+    lengthPreset: z.infer<typeof CoverLetterLengthPresetSchema>;
+    characterLimit?: number | null;
+  },
   ctx: z.RefinementCtx
 ): void => {
   if (value.type !== 'message' && value.includeSubjectLine) {
@@ -31,6 +50,30 @@ const validateSubjectLineToggle = (
       code: z.ZodIssueCode.custom,
       path: ['includeSubjectLine'],
       message: 'Subject line can only be enabled for message type'
+    });
+  }
+
+  if (value.type !== 'message' && isCharacterLengthPreset(value.lengthPreset)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['lengthPreset'],
+      message: 'Character-based length presets can only be used for message type'
+    });
+  }
+
+  if (isCharacterLengthPreset(value.lengthPreset) && value.characterLimit === null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['characterLimit'],
+      message: 'Character limit is required for selected length preset'
+    });
+  }
+
+  if (!isCharacterLengthPreset(value.lengthPreset) && value.characterLimit !== null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['characterLimit'],
+      message: 'Character limit can only be used with character-based length presets'
     });
   }
 };
@@ -54,6 +97,7 @@ export const CoverLetterSchema = z.object({
   type: CoverLetterTypeSchema,
   tone: CoverLetterToneSchema,
   lengthPreset: CoverLetterLengthPresetSchema,
+  characterLimit: NullableCharacterLimitSchema,
   recipientName: z.string().max(120).nullable(),
   includeSubjectLine: z.boolean(),
   instructions: z.string().max(4000).nullable(),
@@ -84,6 +128,7 @@ export const CoverLetterPatchBodySchema = z
     type: CoverLetterTypeSchema.optional(),
     tone: CoverLetterToneSchema.optional(),
     lengthPreset: CoverLetterLengthPresetSchema.optional(),
+    characterLimit: OptionalCharacterLimitSchema,
     recipientName: OptionalRecipientNameSchema,
     includeSubjectLine: z.boolean().optional(),
     instructions: OptionalInstructionsSchema,
@@ -105,6 +150,44 @@ export const CoverLetterPatchBodySchema = z
         path: ['includeSubjectLine'],
         message: 'Subject line can only be enabled for message type'
       });
+    }
+
+    if (
+      value.type === 'letter' &&
+      hasOwn(value, 'characterLimit') &&
+      value.characterLimit !== null
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['characterLimit'],
+        message: 'Character limit can only be used for message type'
+      });
+    }
+
+    if (value.lengthPreset) {
+      if (isCharacterLengthPreset(value.lengthPreset)) {
+        if (!hasOwn(value, 'characterLimit') || value.characterLimit === null) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['characterLimit'],
+            message: 'Character limit is required for selected length preset'
+          });
+        }
+
+        if (value.type === 'letter') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['lengthPreset'],
+            message: 'Character-based length presets can only be used for message type'
+          });
+        }
+      } else if (hasOwn(value, 'characterLimit') && value.characterLimit !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['characterLimit'],
+          message: 'Character limit can only be used with character-based length presets'
+        });
+      }
     }
   });
 

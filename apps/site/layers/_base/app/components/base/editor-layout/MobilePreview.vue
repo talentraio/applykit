@@ -122,7 +122,7 @@ const isOpen = ref(false);
   &__content {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem;
+    padding: 0 1rem 1rem;
     display: flex;
     justify-content: center;
     align-items: flex-start;

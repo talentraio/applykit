@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
-  COVER_LETTER_LANGUAGE_MAP,
   COVER_LETTER_LENGTH_PRESET_MAP,
+  COVER_LETTER_LOCALE_MAP,
   COVER_LETTER_TONE_MAP,
   COVER_LETTER_TYPE_MAP,
   EXPORT_FORMAT_MAP,
@@ -83,7 +83,7 @@ export const VacancyStatusSchema = z.nativeEnum(VACANCY_STATUS_MAP);
 export type VacancyStatus = z.infer<typeof VacancyStatusSchema>;
 
 // Cover letter output language
-export const CoverLetterLanguageSchema = z.nativeEnum(COVER_LETTER_LANGUAGE_MAP);
+export const CoverLetterLanguageSchema = z.nativeEnum(COVER_LETTER_LOCALE_MAP);
 export type CoverLetterLanguage = z.infer<typeof CoverLetterLanguageSchema>;
 
 // Cover letter output type

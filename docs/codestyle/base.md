@@ -101,6 +101,13 @@ defineOptions({ name: 'AuthFormRegistration' });
   - or an explicit import improves readability,
   - or it prevents name collisions.
 
+## Composable Arguments Reactivity
+
+- When passing reactive props/state into composables, prefer **refs/getters** over ad-hoc wrappers.
+- For props, prefer `toRef(() => props.foo)` (or `toRef(props, 'foo')` when two-way sync is needed).
+- In composables, accept flexible reactive inputs via `MaybeRefOrGetter<T>` and normalize with `toValue(...)`.
+- Avoid creating multiple `computed(() => props.foo)` only to forward values into composables.
+
 ## API calls (client-side)
 
 - **Always use `useApi()`** for all client-side API calls to the backend (components, composables, stores, API files).
@@ -282,7 +289,9 @@ const typed = validated as MyType; // Safe after Zod validation
 
 Functions:
 
-- In Vue components, prefer **arrow functions**.
+- In Vue components, use **arrow functions by default**.
+- Use `function` declarations only when there is a clear reason (for example hoisting requirements or
+  clearer named recursion).
 - For one-liners, allow implicit returns:
   - `const isReady = () => status.value === 'ready';`
 - If a function doesn't fit within Prettier line length, use braces:

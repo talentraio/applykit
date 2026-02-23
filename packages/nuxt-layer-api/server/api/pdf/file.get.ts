@@ -33,7 +33,7 @@ export default defineEventHandler(async event => {
     const result = await exportResumeToPDFPreview({
       previewUrl,
       format: payload.format,
-      waitForSelector: '[data-pdf-ready="true"] .resume-preview__page',
+      waitForSelector: '[data-pdf-ready="true"] .resume-preview[data-ready="true"]',
       margins: {
         top: DEFAULT_MARGIN_MM,
         right: DEFAULT_MARGIN_MM,

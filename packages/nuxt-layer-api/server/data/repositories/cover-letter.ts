@@ -10,13 +10,14 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { coverLetters, vacancies } from '../schema';
 
-type UpsertCoverLetterPayload = {
+type CreateCoverLetterPayload = {
   vacancyId: string;
   generationId: string;
   language: CoverLetterLanguage;
   type: CoverLetterType;
   tone: CoverLetterTone;
   lengthPreset: CoverLetterLengthPreset;
+  characterLimit: number | null;
   recipientName: string | null;
   includeSubjectLine: boolean;
   instructions: string | null;
@@ -25,7 +26,7 @@ type UpsertCoverLetterPayload = {
   formatSettings: SpacingSettings;
 };
 
-type UpdateCoverLetterPayload = Partial<Omit<UpsertCoverLetterPayload, 'vacancyId'>>;
+type UpdateCoverLetterPayload = Partial<Omit<CreateCoverLetterPayload, 'vacancyId'>>;
 
 /**
  * Cover Letter Repository
@@ -54,6 +55,7 @@ export const coverLetterRepository = {
         type: coverLetters.type,
         tone: coverLetters.tone,
         lengthPreset: coverLetters.lengthPreset,
+        characterLimit: coverLetters.characterLimit,
         recipientName: coverLetters.recipientName,
         includeSubjectLine: coverLetters.includeSubjectLine,
         instructions: coverLetters.instructions,
@@ -79,17 +81,16 @@ export const coverLetterRepository = {
       .select()
       .from(coverLetters)
       .where(eq(coverLetters.vacancyId, vacancyId))
-      .orderBy(desc(coverLetters.updatedAt))
+      .orderBy(desc(coverLetters.createdAt), desc(coverLetters.updatedAt))
       .limit(1);
 
     return result[0] ?? null;
   },
 
   /**
-   * Upsert latest cover letter by vacancy.
-   * Stores one latest record per vacancy.
+   * Create a new cover letter version.
    */
-  async upsertLatest(payload: UpsertCoverLetterPayload): Promise<CoverLetter> {
+  async create(payload: CreateCoverLetterPayload): Promise<CoverLetter> {
     const result = await db
       .insert(coverLetters)
       .values({
@@ -99,6 +100,7 @@ export const coverLetterRepository = {
         type: payload.type,
         tone: payload.tone,
         lengthPreset: payload.lengthPreset,
+        characterLimit: payload.characterLimit,
         recipientName: payload.recipientName,
         includeSubjectLine: payload.includeSubjectLine,
         instructions: payload.instructions,
@@ -106,31 +108,14 @@ export const coverLetterRepository = {
         contentMarkdown: payload.contentMarkdown,
         formatSettings: payload.formatSettings
       })
-      .onConflictDoUpdate({
-        target: coverLetters.vacancyId,
-        set: {
-          generationId: payload.generationId,
-          language: payload.language,
-          type: payload.type,
-          tone: payload.tone,
-          lengthPreset: payload.lengthPreset,
-          recipientName: payload.recipientName,
-          includeSubjectLine: payload.includeSubjectLine,
-          instructions: payload.instructions,
-          subjectLine: payload.subjectLine,
-          contentMarkdown: payload.contentMarkdown,
-          formatSettings: payload.formatSettings,
-          updatedAt: new Date()
-        }
-      })
       .returning();
 
-    const upserted = result[0];
-    if (!upserted) {
-      throw new Error('Failed to upsert cover letter');
+    const created = result[0];
+    if (!created) {
+      throw new Error('Failed to create cover letter');
     }
 
-    return upserted;
+    return created;
   },
 
   /**

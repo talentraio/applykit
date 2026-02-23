@@ -10,8 +10,8 @@ import type {
   VacancyListColumnVisibility
 } from '@int/schema';
 import {
-  COVER_LETTER_LANGUAGE_VALUES,
   COVER_LETTER_LENGTH_PRESET_VALUES,
+  COVER_LETTER_LOCALE_VALUES,
   COVER_LETTER_TONE_VALUES,
   COVER_LETTER_TYPE_VALUES,
   LLM_MODEL_STATUS_VALUES,
@@ -71,10 +71,7 @@ export const providerTypeEnum = pgEnum('provider_type', PROVIDER_TYPE_VALUES);
 export const userStatusEnum = pgEnum('user_status', USER_STATUS_VALUES);
 export const usageContextEnum = pgEnum('usage_context', USAGE_CONTEXT_VALUES);
 export const vacancyStatusEnum = pgEnum('vacancy_status', VACANCY_STATUS_VALUES);
-export const coverLetterLanguageEnum = pgEnum(
-  'cover_letter_language',
-  COVER_LETTER_LANGUAGE_VALUES
-);
+export const coverLetterLanguageEnum = pgEnum('cover_letter_language', COVER_LETTER_LOCALE_VALUES);
 export const coverLetterTypeEnum = pgEnum('cover_letter_type', COVER_LETTER_TYPE_VALUES);
 export const coverLetterToneEnum = pgEnum('cover_letter_tone', COVER_LETTER_TONE_VALUES);
 export const coverLetterLengthPresetEnum = pgEnum(
@@ -367,7 +364,7 @@ export const generations = pgTable(
 
 /**
  * Cover Letters table
- * Stores latest cover letter/application message per vacancy.
+ * Stores cover letter/application message versions per vacancy.
  */
 export const coverLetters = pgTable(
   'cover_letters',
@@ -375,8 +372,7 @@ export const coverLetters = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     vacancyId: uuid('vacancy_id')
       .notNull()
-      .references(() => vacancies.id, { onDelete: 'cascade' })
-      .unique(),
+      .references(() => vacancies.id, { onDelete: 'cascade' }),
     generationId: uuid('generation_id')
       .notNull()
       .references(() => generations.id, { onDelete: 'cascade' }),
@@ -384,6 +380,7 @@ export const coverLetters = pgTable(
     type: coverLetterTypeEnum('type').notNull().default('letter'),
     tone: coverLetterToneEnum('tone').notNull().default('professional'),
     lengthPreset: coverLetterLengthPresetEnum('length_preset').notNull().default('standard'),
+    characterLimit: integer('character_limit'),
     recipientName: varchar('recipient_name', { length: 120 }),
     includeSubjectLine: boolean('include_subject_line').notNull().default(false),
     instructions: text('instructions'),
@@ -395,6 +392,10 @@ export const coverLetters = pgTable(
   },
   table => ({
     vacancyIdIdx: index('idx_cover_letters_vacancy_id').on(table.vacancyId),
+    vacancyCreatedAtIdx: index('idx_cover_letters_vacancy_created_at').on(
+      table.vacancyId,
+      table.createdAt
+    ),
     generationIdIdx: index('idx_cover_letters_generation_id').on(table.generationId),
     updatedAtIdx: index('idx_cover_letters_updated_at').on(table.updatedAt)
   })
@@ -433,8 +434,7 @@ export const generationScoreDetails = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     generationId: uuid('generation_id')
       .notNull()
-      .references(() => generations.id, { onDelete: 'cascade' })
-      .unique(),
+      .references(() => generations.id, { onDelete: 'cascade' }),
     vacancyId: uuid('vacancy_id')
       .notNull()
       .references(() => vacancies.id, { onDelete: 'cascade' }),
@@ -448,6 +448,10 @@ export const generationScoreDetails = pgTable(
   },
   table => ({
     vacancyIdIdx: index('idx_generation_score_details_vacancy_id').on(table.vacancyId),
+    generationIdIdx: index('idx_generation_score_details_generation_id').on(table.generationId),
+    vacancyGenerationCreatedAtIdx: index(
+      'idx_generation_score_details_vacancy_generation_created_at'
+    ).on(table.vacancyId, table.generationId, table.createdAt),
     updatedAtIdx: index('idx_generation_score_details_updated_at').on(table.updatedAt)
   })
 );

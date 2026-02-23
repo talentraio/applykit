@@ -77,6 +77,7 @@ export default defineEventHandler(async (event): Promise<VacancyMeta> => {
     id: vacancy.id,
     company: vacancy.company,
     jobPosition: vacancy.jobPosition,
+    latestGenerationId: latestGeneration?.id ?? null,
     canRequestScoreDetails: Boolean(latestGeneration && detailedScoringEnabled),
     canRegenerateScoreDetails
   };

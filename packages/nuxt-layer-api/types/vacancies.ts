@@ -9,6 +9,7 @@ import type {
 } from '@int/schema';
 
 export type VacancyMeta = Pick<Vacancy, 'id' | 'company' | 'jobPosition'> & {
+  latestGenerationId: string | null;
   canRequestScoreDetails: boolean;
   canRegenerateScoreDetails: boolean;
 };

@@ -114,12 +114,12 @@ body {
       gap: 0;
     }
 
-    &__page {
+    .base-paper-sheet__sheet {
       box-shadow: none;
       border: none;
     }
 
-    &__page-number {
+    .base-paginated-sheets__page-number {
       display: none;
     }
   }

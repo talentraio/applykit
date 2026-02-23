@@ -6,6 +6,8 @@ import type {
   CoverLetterType,
   ResumeContent
 } from '@int/schema';
+import type { CoverLetterCharacterBufferConfig } from '../../vacancy/cover-letter-character-limits';
+import { createSoftCharacterTarget } from '../../vacancy/cover-letter-character-limits';
 
 type CoverLetterPromptInput = {
   resumeContent: ResumeContent;
@@ -15,6 +17,10 @@ type CoverLetterPromptInput = {
     description: string;
   };
   settings: CoverLetterGenerationSettings;
+};
+
+type CoverLetterPromptOptions = {
+  characterBufferConfig?: CoverLetterCharacterBufferConfig;
 };
 
 type LanguagePack = {
@@ -31,7 +37,7 @@ const LANGUAGE_PACKS: Record<CoverLetterLanguage, LanguagePack> = {
       'Prefer concise, direct wording over inflated corporate language.'
     ]
   },
-  da: {
+  'da-DK': {
     label: 'Danish',
     guidance: [
       'Use natural modern Danish that sounds human and specific.',
@@ -51,7 +57,11 @@ const TONE_RULES: Record<CoverLetterTone, string> = {
 const LENGTH_RULES: Record<CoverLetterLengthPreset, string> = {
   short: 'Aim for a concise output: 2-3 paragraphs, approximately 110-170 words.',
   standard: 'Aim for a balanced output: 3-4 paragraphs, approximately 170-260 words.',
-  long: 'Aim for a detailed output: 4-5 paragraphs, approximately 260-360 words.'
+  long: 'Aim for a detailed output: 4-5 paragraphs, approximately 260-360 words.',
+  min_chars:
+    'For message output, target at least the provided minimum character count (plain text, excluding markdown symbols).',
+  max_chars:
+    'For message output, do not exceed the provided maximum character count (plain text, excluding markdown symbols).'
 };
 
 const TYPE_RULES: Record<CoverLetterType, string> = {
@@ -97,7 +107,29 @@ function createRecipientInstruction(settings: CoverLetterGenerationSettings): st
   return `Use recipient name in greeting when appropriate: "${settings.recipientName}".`;
 }
 
-export function createCoverLetterUserPrompt(input: CoverLetterPromptInput): string {
+function createLengthInstruction(
+  settings: CoverLetterGenerationSettings,
+  options: CoverLetterPromptOptions
+): string {
+  const baseRule = LENGTH_RULES[settings.lengthPreset];
+
+  if (settings.lengthPreset === 'min_chars') {
+    const softTarget = createSoftCharacterTarget(settings, options.characterBufferConfig);
+    return `${baseRule} Minimum characters (hard limit): ${settings.characterLimit ?? 'not provided'}. Soft target for generation: ${softTarget ?? 'not provided'}.`;
+  }
+
+  if (settings.lengthPreset === 'max_chars') {
+    const softTarget = createSoftCharacterTarget(settings, options.characterBufferConfig);
+    return `${baseRule} Maximum characters (hard limit): ${settings.characterLimit ?? 'not provided'}. Soft target for generation: ${softTarget ?? 'not provided'}.`;
+  }
+
+  return baseRule;
+}
+
+export function createCoverLetterUserPrompt(
+  input: CoverLetterPromptInput,
+  options: CoverLetterPromptOptions = {}
+): string {
   const { resumeContent, vacancy, settings } = input;
   const instructions = settings.instructions?.trim() ?? '';
 
@@ -115,7 +147,7 @@ Rules:
 - Never include markdown code fences.
 - Never add commentary outside JSON.
 - ${TONE_RULES[settings.tone]}
-- ${LENGTH_RULES[settings.lengthPreset]}
+- ${createLengthInstruction(settings, options)}
 - ${TYPE_RULES[settings.type]}
 - ${createRecipientInstruction(settings)}
 - ${createSubjectLineInstruction(settings)}

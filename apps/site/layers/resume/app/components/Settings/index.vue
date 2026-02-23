@@ -222,8 +222,6 @@ const blockSpacing = computed({
 
 <style lang="scss">
 .resume-settings {
-  padding: 1rem;
-
   &__section {
     padding: 1rem 0;
   }

@@ -12,13 +12,19 @@ import {
 } from '../../../../data/repositories';
 import { requireLimit } from '../../../../services/limits';
 import { generateCoverLetterWithLLM } from '../../../../services/llm/cover-letter';
+import {
+  getCharacterLimitValidationMessage,
+  resolveCoverLetterCharacterBufferConfig,
+  resolveCoverLetterCharacterLimits,
+  toCharacterLimitIssue
+} from '../../../../services/vacancy/cover-letter-character-limits';
 import { getEffectiveUserRole } from '../../../../utils/session-helpers';
 import { logGenerate } from '../../../../utils/usage';
 
 /**
  * POST /api/vacancies/:id/cover-letter/generate
  *
- * Generates and stores latest cover letter for vacancy.
+ * Generates and stores a new cover letter version for vacancy.
  */
 export default defineEventHandler(async event => {
   const session = await requireUserSession(event);
@@ -68,10 +74,26 @@ export default defineEventHandler(async event => {
     type: payload.type,
     tone: payload.tone,
     lengthPreset: payload.lengthPreset,
+    characterLimit: payload.characterLimit,
     recipientName: normalizeNullableText(payload.recipientName),
     includeSubjectLine: payload.type === 'message' ? payload.includeSubjectLine : false,
     instructions: normalizeNullableText(payload.instructions)
   };
+  const runtimeConfig = useRuntimeConfig(event);
+  const characterLimits = resolveCoverLetterCharacterLimits(runtimeConfig);
+  const characterBufferConfig = resolveCoverLetterCharacterBufferConfig(runtimeConfig);
+  const characterLimitValidationMessage = getCharacterLimitValidationMessage(
+    generationSettings,
+    characterLimits
+  );
+
+  if (characterLimitValidationMessage) {
+    throw createError({
+      statusCode: 422,
+      statusMessage: 'Validation Error',
+      data: { issues: [toCharacterLimitIssue(characterLimitValidationMessage)] }
+    });
+  }
 
   try {
     const result = await generateCoverLetterWithLLM(
@@ -87,7 +109,8 @@ export default defineEventHandler(async event => {
       {
         userId,
         role: userRole,
-        provider: payload.provider
+        provider: payload.provider,
+        characterBufferConfig
       }
     );
 
@@ -102,13 +125,14 @@ export default defineEventHandler(async event => {
     const includeSubjectLine =
       generationSettings.type === 'message' ? generationSettings.includeSubjectLine : false;
 
-    const coverLetter = await coverLetterRepository.upsertLatest({
+    const coverLetter = await coverLetterRepository.create({
       vacancyId,
       generationId: latestGeneration.id,
       language: generationSettings.language,
       type: generationSettings.type,
       tone: generationSettings.tone,
       lengthPreset: generationSettings.lengthPreset,
+      characterLimit: generationSettings.characterLimit,
       recipientName: generationSettings.recipientName ?? null,
       includeSubjectLine,
       instructions: generationSettings.instructions ?? null,

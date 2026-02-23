@@ -6,7 +6,13 @@ import type {
   ResumeContent,
   Role
 } from '@int/schema';
-import { CoverLetterLlmResponseSchema, LLM_SCENARIO_KEY_MAP, USER_ROLE_MAP } from '@int/schema';
+import type { CoverLetterCharacterBufferConfig } from '../vacancy/cover-letter-character-limits';
+import {
+  COVER_LETTER_LENGTH_PRESET_MAP,
+  CoverLetterLlmResponseSchema,
+  LLM_SCENARIO_KEY_MAP,
+  USER_ROLE_MAP
+} from '@int/schema';
 import { callLLM, LLMError } from './index';
 import { COVER_LETTER_SYSTEM_PROMPT, createCoverLetterUserPrompt } from './prompts/cover-letter';
 
@@ -48,6 +54,7 @@ export type GenerateCoverLetterOptions = {
   role?: Role;
   provider?: LLMProvider;
   maxRetries?: number;
+  characterBufferConfig?: CoverLetterCharacterBufferConfig;
 };
 
 export type GenerateCoverLetterResult = {
@@ -128,6 +135,55 @@ function parseCoverLetterResponse(content: string): CoverLetterLlmResponse {
   };
 }
 
+function markdownToPlainText(markdown: string): string {
+  const withoutCodeBlocks = markdown.replace(/```[\s\S]*?```/g, ' ');
+  const withoutInlineCode = withoutCodeBlocks.replace(/`([^`]+)`/g, '$1');
+  const withoutLinks = withoutInlineCode.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+  const withoutEmphasis = withoutLinks.replace(/[*_~>#-]/g, ' ');
+  return withoutEmphasis.replace(/\s+/g, ' ').trim();
+}
+
+function getCharacterCount(contentMarkdown: string): number {
+  return markdownToPlainText(contentMarkdown).length;
+}
+
+function validateCharacterLimit(
+  settings: CoverLetterGenerationSettings,
+  contentMarkdown: string
+): void {
+  if (settings.type !== 'message') {
+    return;
+  }
+
+  const characterLimit = settings.characterLimit;
+  if (characterLimit === null) {
+    return;
+  }
+
+  const characterCount = getCharacterCount(contentMarkdown);
+  if (
+    settings.lengthPreset === COVER_LETTER_LENGTH_PRESET_MAP.MIN_CHARS &&
+    characterCount < characterLimit
+  ) {
+    throw new CoverLetterGenerationError(
+      `Generated message is shorter than minimum character limit (${characterCount}/${characterLimit})`,
+      'VALIDATION_FAILED',
+      { characterCount, characterLimit, mode: 'min_chars' }
+    );
+  }
+
+  if (
+    settings.lengthPreset === COVER_LETTER_LENGTH_PRESET_MAP.MAX_CHARS &&
+    characterCount > characterLimit
+  ) {
+    throw new CoverLetterGenerationError(
+      `Generated message exceeds maximum character limit (${characterCount}/${characterLimit})`,
+      'VALIDATION_FAILED',
+      { characterCount, characterLimit, mode: 'max_chars' }
+    );
+  }
+}
+
 function toUsageBreakdown(
   usage:
     | {
@@ -176,11 +232,16 @@ export async function generateCoverLetterWithLLM(
       const llmResponse = await callLLM(
         {
           systemMessage: COVER_LETTER_SYSTEM_PROMPT,
-          prompt: createCoverLetterUserPrompt({
-            resumeContent: input.resumeContent,
-            vacancy: input.vacancy,
-            settings: input.settings
-          }),
+          prompt: createCoverLetterUserPrompt(
+            {
+              resumeContent: input.resumeContent,
+              vacancy: input.vacancy,
+              settings: input.settings
+            },
+            {
+              characterBufferConfig: options.characterBufferConfig
+            }
+          ),
           responseFormat: 'json'
         },
         {
@@ -193,6 +254,7 @@ export async function generateCoverLetterWithLLM(
       );
 
       const parsed = parseCoverLetterResponse(llmResponse.content);
+      validateCharacterLimit(input.settings, parsed.contentMarkdown);
       const usage = toUsageBreakdown(llmResponse.usage);
 
       return {

@@ -7,6 +7,7 @@
         :color="modelValue === option.value ? 'primary' : 'neutral'"
         :variant="modelValue === option.value ? 'solid' : 'outline'"
         :icon="option.icon"
+        :disabled="option.disabled"
         @click="emit('update:modelValue', option.value)"
       >
         {{ option.label }}

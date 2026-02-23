@@ -3,11 +3,13 @@
     <div v-if="pending" class="cover-letter-pdf-preview__status">Preparing preview...</div>
     <div v-else-if="!payload" class="cover-letter-pdf-preview__status">Preview unavailable.</div>
     <div v-else class="cover-letter-pdf-preview__content">
-      <VacancyCoverPaperPreview
+      <VacancyItemCoverRightPreview
         class="cover-letter-pdf-preview__page"
         :html-content="previewHtml"
         :subject-line="payload.subjectLine"
         :settings="previewSettings"
+        :elevated="false"
+        :show-page-numbers="false"
       />
     </div>
   </div>
@@ -16,6 +18,7 @@
 <script setup lang="ts">
 import type { SpacingSettings } from '@int/schema';
 import { DefaultCoverLetterFormatSettings, SpacingSettingsSchema } from '@int/schema';
+import VacancyItemCoverRightPreview from '@site/vacancy/app/components/Item/cover/right/Preview.vue';
 import { coverLetterApi } from '@site/vacancy/app/infrastructure/cover-letter.api';
 import { markdownToHtml } from '@site/vacancy/app/utils/cover-letter-markdown';
 
@@ -116,13 +119,6 @@ body {
 
   &__content {
     width: 210mm;
-  }
-
-  .cover-letter-paper-preview {
-    &__sheet {
-      box-shadow: none;
-      border: none;
-    }
   }
 }
 </style>

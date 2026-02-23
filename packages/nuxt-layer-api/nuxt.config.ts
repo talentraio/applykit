@@ -1,6 +1,10 @@
 import type { ResumeFormatSettingsAts, ResumeFormatSettingsHuman } from '@int/schema';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import {
+  COVER_LETTER_CHARACTER_BUFFER_DEFAULTS,
+  COVER_LETTER_CHARACTER_LIMIT_DEFAULTS
+} from '@int/schema';
 
 const createFormatSettingsDefaults = () =>
   ({
@@ -98,6 +102,17 @@ export default defineNuxtConfig({
       siteUrl: '',
       formatSettings: {
         defaults: createFormatSettingsDefaults()
+      },
+      coverLetter: {
+        minLengthLimitCharacters: COVER_LETTER_CHARACTER_LIMIT_DEFAULTS.MIN,
+        maxLengthLimitCharacters: COVER_LETTER_CHARACTER_LIMIT_DEFAULTS.MAX,
+        targetBufferRatio: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_RATIO,
+        targetBufferSmallLimitThreshold:
+          COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_SMALL_LIMIT_THRESHOLD,
+        targetBufferSmallMin: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_SMALL_MIN,
+        targetBufferSmallMax: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_SMALL_MAX,
+        targetBufferMin: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_MIN,
+        targetBufferMax: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_MAX
       }
     }
   },

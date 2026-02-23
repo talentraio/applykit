@@ -66,6 +66,7 @@ const { t } = useI18n();
 const toast = useToast();
 const route = useRoute();
 const vacancyStore = useVacancyStore();
+const generationStore = useVacancyResumeGenerationStore();
 const resumeStore = useResumeStore();
 const authStore = useAuthStore();
 const { openProfileIncompleteModal } = useProfileIncompleteModal();
@@ -110,7 +111,7 @@ const handleGenerate = async (selectedResumeId?: string) => {
   isGenerating.value = true;
 
   try {
-    await vacancyStore.generateResume(
+    await generationStore.generateResume(
       vacancyId.value,
       selectedResumeId ? { resumeId: selectedResumeId } : undefined
     );
