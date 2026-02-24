@@ -1269,7 +1269,7 @@ export async function generateCoverLetterWithLLM(
               prompt: createCoverLetterCriticPrompt({
                 settings: input.settings,
                 contentMarkdown: normalizedParsed.contentMarkdown,
-                subjectLine: normalizedParsed.subjectLine
+                subjectLine: normalizedParsed.subjectLine ?? null
               }),
               responseFormat: 'json',
               model: humanizerConfig.criticModel,
@@ -1321,7 +1321,7 @@ export async function generateCoverLetterWithLLM(
                     prompt: createCoverLetterRewritePrompt({
                       settings: input.settings,
                       contentMarkdown: normalizedParsed.contentMarkdown,
-                      subjectLine: normalizedParsed.subjectLine,
+                      subjectLine: normalizedParsed.subjectLine ?? null,
                       issues: quality.issues,
                       targetedFixes: quality.targetedFixes
                     }),
