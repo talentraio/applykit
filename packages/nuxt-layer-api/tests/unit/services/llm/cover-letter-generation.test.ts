@@ -179,6 +179,166 @@ Test User`,
     expect(result.contentMarkdown).not.toContain('Test User');
   });
 
+  it('runs critic quality scoring in score mode without rewrite pass', async () => {
+    callLLMMock.mockReset();
+    callLLMMock
+      .mockResolvedValueOnce({
+        content: JSON.stringify({
+          contentMarkdown: validLetterMarkdown,
+          subjectLine: null
+        }),
+        tokensUsed: 80,
+        cost: 0.009,
+        provider: 'openai',
+        providerType: 'platform',
+        model: 'gpt-5-mini'
+      })
+      .mockResolvedValueOnce({
+        content: JSON.stringify({
+          naturalnessScore: 68,
+          aiPatternRiskScore: 44,
+          specificityScore: 76,
+          localeFitScore: 82,
+          rewriteRecommended: true,
+          issues: ['Text sounds too template-like in opening sentence.'],
+          targetedFixes: ['Use a more concrete, role-specific opening line.']
+        }),
+        tokensUsed: 40,
+        cost: 0.004,
+        provider: 'openai',
+        providerType: 'platform',
+        model: 'gpt-5-mini'
+      });
+
+    const result = await generateCoverLetterWithLLM(
+      {
+        resumeContent: resumeContentFixture,
+        vacancy: {
+          company: 'Acme',
+          jobPosition: 'Frontend Engineer',
+          description: 'Build UI'
+        },
+        settings: {
+          language: 'en',
+          market: 'default',
+          grammaticalGender: 'neutral',
+          type: 'letter',
+          tone: 'professional',
+          lengthPreset: 'standard',
+          characterLimit: null,
+          recipientName: null,
+          includeSubjectLine: false,
+          instructions: null
+        }
+      },
+      {
+        maxRetries: 0,
+        humanizerConfig: {
+          mode: 'score',
+          criticProvider: 'openai',
+          criticModel: 'gpt-5-mini',
+          minNaturalnessScore: 75,
+          maxAiRiskScore: 35,
+          maxRewritePasses: 1,
+          debugLogs: false
+        }
+      }
+    );
+
+    expect(callLLMMock).toHaveBeenCalledTimes(2);
+    expect(result.contentMarkdown).toContain('Sincerely,');
+  });
+
+  it('runs rewrite pass when critic scores fail configured thresholds', async () => {
+    callLLMMock.mockReset();
+    callLLMMock
+      .mockResolvedValueOnce({
+        content: JSON.stringify({
+          contentMarkdown: validLetterMarkdown,
+          subjectLine: null
+        }),
+        tokensUsed: 80,
+        cost: 0.009,
+        provider: 'openai',
+        providerType: 'platform',
+        model: 'gpt-5-mini'
+      })
+      .mockResolvedValueOnce({
+        content: JSON.stringify({
+          naturalnessScore: 61,
+          aiPatternRiskScore: 49,
+          specificityScore: 70,
+          localeFitScore: 78,
+          rewriteRecommended: true,
+          issues: ['Overly generic opening and repetitive sentence rhythm.'],
+          targetedFixes: ['Use concrete evidence and vary sentence cadence.']
+        }),
+        tokensUsed: 40,
+        cost: 0.004,
+        provider: 'openai',
+        providerType: 'platform',
+        model: 'gpt-5-mini'
+      })
+      .mockResolvedValueOnce({
+        content: JSON.stringify({
+          contentMarkdown: `Dear Hiring Team,
+
+I am applying for the Frontend Engineer role at Acme. I build stable UI systems with practical delivery focus.
+
+In my recent work, I led Vue and TypeScript implementation for product features and team-level standards.
+
+I would welcome a short conversation about how I can support your roadmap this quarter.
+
+Sincerely,
+Test User`,
+          subjectLine: null
+        }),
+        tokensUsed: 70,
+        cost: 0.007,
+        provider: 'openai',
+        providerType: 'platform',
+        model: 'gpt-5-mini'
+      });
+
+    const result = await generateCoverLetterWithLLM(
+      {
+        resumeContent: resumeContentFixture,
+        vacancy: {
+          company: 'Acme',
+          jobPosition: 'Frontend Engineer',
+          description: 'Build UI'
+        },
+        settings: {
+          language: 'en',
+          market: 'default',
+          grammaticalGender: 'neutral',
+          type: 'letter',
+          tone: 'professional',
+          lengthPreset: 'standard',
+          characterLimit: null,
+          recipientName: null,
+          includeSubjectLine: false,
+          instructions: null
+        }
+      },
+      {
+        maxRetries: 0,
+        humanizerConfig: {
+          mode: 'rewrite',
+          criticProvider: 'openai',
+          criticModel: 'gpt-5-mini',
+          minNaturalnessScore: 75,
+          maxAiRiskScore: 35,
+          maxRewritePasses: 1,
+          debugLogs: false
+        }
+      }
+    );
+
+    expect(callLLMMock).toHaveBeenCalledTimes(3);
+    expect(result.contentMarkdown).toContain('stable UI systems with practical delivery focus');
+  });
+
   it('autofixes long-dash punctuation without retry', async () => {
     callLLMMock.mockReset();
     callLLMMock.mockResolvedValue({

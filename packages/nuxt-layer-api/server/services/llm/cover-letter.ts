@@ -7,18 +7,24 @@ import type {
   Role
 } from '@int/schema';
 import type { CoverLetterCharacterBufferConfig } from '../vacancy/cover-letter-character-limits';
+import type { CoverLetterHumanizerConfig } from '../vacancy/cover-letter-humanizer';
 import {
   COVER_LETTER_LENGTH_PRESET_MAP,
   CoverLetterLlmResponseSchema,
   LLM_SCENARIO_KEY_MAP,
   USER_ROLE_MAP
 } from '@int/schema';
+import { z } from 'zod';
 import {
   formatCoverLetterCurrentDate,
   getCoverLetterLetterClosing
 } from '../vacancy/cover-letter-locale-presentation';
 import { callLLM, LLMError } from './index';
 import { COVER_LETTER_SYSTEM_PROMPT, createCoverLetterUserPrompt } from './prompts/cover-letter';
+import {
+  createCoverLetterCriticPrompt,
+  createCoverLetterRewritePrompt
+} from './prompts/cover-letter/critic';
 import { getCoverLetterLanguagePack } from './prompts/cover-letter/language-packs';
 
 const NON_RECOVERABLE_LLM_ERROR_CODES = new Set([
@@ -66,6 +72,18 @@ type CoverLetterValidationDetails = {
   retryValidationFeedback: string;
 };
 
+const CoverLetterQualityEvaluationSchema = z.object({
+  naturalnessScore: z.number().min(0).max(100),
+  aiPatternRiskScore: z.number().min(0).max(100),
+  specificityScore: z.number().min(0).max(100),
+  localeFitScore: z.number().min(0).max(100),
+  rewriteRecommended: z.boolean(),
+  issues: z.array(z.string()).default([]),
+  targetedFixes: z.array(z.string()).default([])
+});
+
+type CoverLetterQualityEvaluation = z.infer<typeof CoverLetterQualityEvaluationSchema>;
+
 export type CoverLetterUsage = {
   cost: number;
   tokensUsed: number;
@@ -84,6 +102,7 @@ export type GenerateCoverLetterOptions = {
   provider?: LLMProvider;
   maxRetries?: number;
   characterBufferConfig?: CoverLetterCharacterBufferConfig;
+  humanizerConfig?: CoverLetterHumanizerConfig;
 };
 
 export type GenerateCoverLetterResult = {
@@ -162,6 +181,49 @@ function parseCoverLetterResponse(content: string): CoverLetterLlmResponse {
     contentMarkdown: validation.data.contentMarkdown,
     subjectLine: validation.data.subjectLine ?? null
   };
+}
+
+function parseCoverLetterQualityResponse(content: string): CoverLetterQualityEvaluation {
+  const jsonString = extractJSON(content);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch (error) {
+    throw new CoverLetterGenerationError(
+      `Failed to parse cover-letter quality JSON: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      'INVALID_JSON',
+      { content }
+    );
+  }
+
+  const validation = CoverLetterQualityEvaluationSchema.safeParse(parsed);
+  if (!validation.success) {
+    throw new CoverLetterGenerationError(
+      `Cover-letter quality response validation failed: ${validation.error.message}`,
+      'VALIDATION_FAILED',
+      validation.error.issues
+    );
+  }
+
+  return validation.data;
+}
+
+function logHumanizer(
+  config: CoverLetterHumanizerConfig | undefined,
+  message: string,
+  payload?: Record<string, unknown>
+): void {
+  if (!config?.debugLogs) {
+    return;
+  }
+
+  if (payload) {
+    console.warn(`[cover-letter-humanizer] ${message}`, payload);
+    return;
+  }
+
+  console.warn(`[cover-letter-humanizer] ${message}`);
 }
 
 function markdownToPlainText(markdown: string): string {
@@ -989,6 +1051,35 @@ function validateGeneratedCoverLetter(
   );
 }
 
+function normalizeCandidateForOutput(
+  input: GenerationInput,
+  candidate: CoverLetterLlmResponse
+): CoverLetterLlmResponse {
+  const constrainedParsed = applyMaxCharacterLimitFallback(input.settings, candidate);
+  const normalizedParsedByType =
+    input.settings.type === 'letter'
+      ? applyLetterStructureFallback(input, constrainedParsed)
+      : applyMessageStructureFallback(input, constrainedParsed);
+  const normalizedParsed = applyHumanStyleFallback(normalizedParsedByType);
+  validateGeneratedCoverLetter(input, normalizedParsed);
+  return normalizedParsed;
+}
+
+function shouldRewriteByQuality(
+  config: CoverLetterHumanizerConfig,
+  quality: CoverLetterQualityEvaluation
+): boolean {
+  if (config.mode !== 'rewrite' || config.maxRewritePasses < 1) {
+    return false;
+  }
+
+  return (
+    quality.rewriteRecommended ||
+    quality.naturalnessScore < config.minNaturalnessScore ||
+    quality.aiPatternRiskScore > config.maxAiRiskScore
+  );
+}
+
 function isCoverLetterValidationDetails(value: unknown): value is CoverLetterValidationDetails {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return false;
@@ -1167,13 +1258,111 @@ export async function generateCoverLetterWithLLM(
         };
       }
 
-      const constrainedParsed = applyMaxCharacterLimitFallback(input.settings, candidate);
-      const normalizedParsedByType =
-        input.settings.type === 'letter'
-          ? applyLetterStructureFallback(input, constrainedParsed)
-          : applyMessageStructureFallback(input, constrainedParsed);
-      const normalizedParsed = applyHumanStyleFallback(normalizedParsedByType);
-      validateGeneratedCoverLetter(input, normalizedParsed);
+      let normalizedParsed = normalizeCandidateForOutput(input, candidate);
+      const humanizerConfig = options.humanizerConfig;
+
+      if (humanizerConfig && humanizerConfig.mode !== 'off') {
+        try {
+          const criticResponse = await callLLM(
+            {
+              systemMessage: COVER_LETTER_SYSTEM_PROMPT,
+              prompt: createCoverLetterCriticPrompt({
+                settings: input.settings,
+                contentMarkdown: normalizedParsed.contentMarkdown,
+                subjectLine: normalizedParsed.subjectLine
+              }),
+              responseFormat: 'json',
+              model: humanizerConfig.criticModel,
+              temperature: 0.1,
+              maxTokens: 600,
+              reasoningEffort: 'low'
+            },
+            {
+              userId: options.userId,
+              role: userRole,
+              provider: humanizerConfig.criticProvider,
+              respectRequestMaxTokens: true,
+              respectRequestReasoningEffort: true
+            }
+          );
+          appendUsage(usageAccumulator, criticResponse);
+
+          const quality = parseCoverLetterQualityResponse(criticResponse.content);
+          const belowNaturalnessThreshold =
+            quality.naturalnessScore < humanizerConfig.minNaturalnessScore;
+          const aboveAiRiskThreshold = quality.aiPatternRiskScore > humanizerConfig.maxAiRiskScore;
+          const shouldRewrite = shouldRewriteByQuality(humanizerConfig, quality);
+
+          logHumanizer(humanizerConfig, 'quality evaluated', {
+            mode: humanizerConfig.mode,
+            naturalnessScore: quality.naturalnessScore,
+            aiPatternRiskScore: quality.aiPatternRiskScore,
+            specificityScore: quality.specificityScore,
+            localeFitScore: quality.localeFitScore,
+            rewriteRecommended: quality.rewriteRecommended,
+            belowNaturalnessThreshold,
+            aboveAiRiskThreshold,
+            shouldRewrite
+          });
+
+          if (shouldRewrite) {
+            let rewriteApplied = false;
+            let rewriteFailureMessage: string | null = null;
+
+            for (
+              let rewritePass = 0;
+              rewritePass < humanizerConfig.maxRewritePasses;
+              rewritePass++
+            ) {
+              try {
+                const rewriteResponse = await callLLM(
+                  {
+                    systemMessage: COVER_LETTER_SYSTEM_PROMPT,
+                    prompt: createCoverLetterRewritePrompt({
+                      settings: input.settings,
+                      contentMarkdown: normalizedParsed.contentMarkdown,
+                      subjectLine: normalizedParsed.subjectLine,
+                      issues: quality.issues,
+                      targetedFixes: quality.targetedFixes
+                    }),
+                    responseFormat: 'json'
+                  },
+                  {
+                    userId: options.userId,
+                    role: userRole,
+                    provider: options.provider,
+                    scenario: LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION,
+                    scenarioPhase: 'retry'
+                  }
+                );
+                appendUsage(usageAccumulator, rewriteResponse);
+
+                const rewrittenCandidate = parseCoverLetterResponse(rewriteResponse.content);
+                normalizedParsed = normalizeCandidateForOutput(input, rewrittenCandidate);
+                rewriteApplied = true;
+                break;
+              } catch (error) {
+                rewriteFailureMessage =
+                  error instanceof Error ? error.message : 'Unknown rewrite error';
+              }
+            }
+
+            logHumanizer(humanizerConfig, 'rewrite pass result', {
+              rewriteApplied,
+              maxRewritePasses: humanizerConfig.maxRewritePasses,
+              failureMessage: rewriteFailureMessage
+            });
+          } else {
+            logHumanizer(humanizerConfig, 'rewrite pass skipped', {
+              mode: humanizerConfig.mode
+            });
+          }
+        } catch (error) {
+          logHumanizer(humanizerConfig, 'critic pass failed, using base output', {
+            message: error instanceof Error ? error.message : 'Unknown critic error'
+          });
+        }
+      }
 
       return {
         contentMarkdown: normalizedParsed.contentMarkdown,

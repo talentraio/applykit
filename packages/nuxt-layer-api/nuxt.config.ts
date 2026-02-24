@@ -53,6 +53,17 @@ export default defineNuxtConfig({
           output: Number(process.env.NUXT_LLM_FALLBACK_PRICE_OUTPUT ?? '1.6'),
           cache: Number(process.env.NUXT_LLM_FALLBACK_PRICE_CACHE ?? '0')
         }
+      },
+      coverLetterHumanizer: {
+        mode: process.env.NUXT_LLM_COVER_LETTER_HUMANIZER_MODE ?? 'off',
+        criticProvider: process.env.NUXT_LLM_COVER_LETTER_CRITIC_PROVIDER ?? 'openai',
+        criticModel: process.env.NUXT_LLM_COVER_LETTER_CRITIC_MODEL ?? 'gpt-5-mini',
+        minNaturalnessScore: Number(
+          process.env.NUXT_LLM_COVER_LETTER_MIN_NATURALNESS_SCORE ?? '75'
+        ),
+        maxAiRiskScore: Number(process.env.NUXT_LLM_COVER_LETTER_MAX_AI_RISK_SCORE ?? '35'),
+        maxRewritePasses: Number(process.env.NUXT_LLM_COVER_LETTER_MAX_REWRITE_PASSES ?? '1'),
+        debugLogs: process.env.NUXT_LLM_COVER_LETTER_HUMANIZER_DEBUG_LOGS !== 'false'
       }
     },
     resume: {

@@ -21,6 +21,7 @@ import {
   resolveCoverLetterCharacterLimits,
   toCharacterLimitIssue
 } from '../../../../services/vacancy/cover-letter-character-limits';
+import { resolveCoverLetterHumanizerConfig } from '../../../../services/vacancy/cover-letter-humanizer';
 import { getEffectiveUserRole } from '../../../../utils/session-helpers';
 import { logGenerate } from '../../../../utils/usage';
 
@@ -100,6 +101,7 @@ export default defineEventHandler(async event => {
   const runtimeConfig = useRuntimeConfig(event);
   const characterLimits = resolveCoverLetterCharacterLimits(runtimeConfig);
   const characterBufferConfig = resolveCoverLetterCharacterBufferConfig(runtimeConfig);
+  const humanizerConfig = resolveCoverLetterHumanizerConfig(runtimeConfig);
   const characterLimitValidationMessage = getCharacterLimitValidationMessage(
     generationSettings,
     characterLimits
@@ -128,7 +130,8 @@ export default defineEventHandler(async event => {
         userId,
         role: userRole,
         provider: payload.provider,
-        characterBufferConfig
+        characterBufferConfig,
+        humanizerConfig
       }
     );
 
