@@ -17,6 +17,8 @@ const createSettings = (
   overrides: Partial<CoverLetterGenerationSettings> = {}
 ): CoverLetterGenerationSettings => ({
   language: 'en',
+  market: 'default',
+  grammaticalGender: 'neutral',
   type: 'message',
   tone: 'professional',
   lengthPreset: COVER_LETTER_LENGTH_PRESET_MAP.MIN_CHARS,

@@ -43,6 +43,7 @@ export const profileRepository = {
         country: data.country,
         searchRegion: data.searchRegion,
         workFormat: data.workFormat,
+        grammaticalGender: data.grammaticalGender,
         languages: data.languages ?? [],
         phones: data.phones,
         photoUrl: data.photoUrl

@@ -579,10 +579,27 @@
     },
     "cover": {
       "inputsTitle": "Cover Letter Inputs",
-      "language": {
-        "label": "Output language",
-        "en": "English",
-        "da-DK": "Danish"
+      "localeProfile": {
+        "label": "Writing profile",
+        "general": {
+          "en": "General (English)"
+        },
+        "denmark": {
+          "en": "Denmark (English)",
+          "da-DK": "Denmark (Danish)"
+        },
+        "ukraine": {
+          "en": "Ukraine (English)",
+          "uk-UA": "Ukraine (Ukrainian)"
+        }
+      },
+      "grammaticalGender": {
+        "label": "Grammatical form",
+        "option": {
+          "masculine": "Masculine",
+          "feminine": "Feminine",
+          "neutral": "Neutral"
+        }
       },
       "type": {
         "label": "Output type",
@@ -628,6 +645,11 @@
       "copy": "Copy",
       "downloadPdf": "Download PDF",
       "editorPlaceholder": "Edit markdown content...",
+      "editorHelp": {
+        "title": "Editor help",
+        "enter": "Enter: new paragraph",
+        "shiftEnter": "Shift+Enter: line break in the same paragraph"
+      },
       "formatTitle": "Formatting",
       "formatDescription": "Adjust formatting for the generated cover letter.",
       "fontSizeHint": "Base font size in points (10-14pt)",
@@ -921,6 +943,7 @@
       "countryHint": "ISO 3166-1 alpha-2 code (e.g., US, GB, DE)",
       "searchRegion": "Search Region",
       "workFormat": "Work Format",
+      "grammaticalGender": "Writing style",
       "languages": "Languages",
       "phones": "Phone Numbers",
       "language": "Language",
@@ -939,6 +962,11 @@
         "remote": "Remote",
         "onsite": "On-site",
         "hybrid": "Hybrid"
+      },
+      "grammaticalGenderOptions": {
+        "masculine": "Masculine form",
+        "feminine": "Feminine form",
+        "neutral": "Neutral (avoid gendered forms)"
       },
       "languageLevelOptions": {
         "native": "Native or bilingual proficiency",

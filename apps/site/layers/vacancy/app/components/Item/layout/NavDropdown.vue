@@ -32,9 +32,14 @@ import type { DropdownMenuItem } from '#ui/types';
 
 defineOptions({ name: 'VacancyItemLayoutNavDropdown' });
 
-const props = defineProps<{
-  vacancyId: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    vacancyId?: string;
+  }>(),
+  {
+    vacancyId: ''
+  }
+);
 
 const route = useRoute();
 const { t } = useI18n();
@@ -63,11 +68,19 @@ const currentLabel = computed(() => {
   return t(`vacancy.nav.${section.labelKey}`);
 });
 
+const getSectionRoute = (section: Section): string => {
+  if (!props.vacancyId) {
+    return '/vacancies';
+  }
+
+  return `/vacancies/${props.vacancyId}/${section}`;
+};
+
 const items = computed<DropdownMenuItem[][]>(() => [
   sections.map(section => ({
     label: t(`vacancy.nav.${section.labelKey}`),
     icon: section.icon,
-    to: `/vacancies/${props.vacancyId}/${section.value}`,
+    to: getSectionRoute(section.value),
     exact: true
   }))
 ]);

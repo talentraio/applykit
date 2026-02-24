@@ -12,8 +12,10 @@ import type {
 import {
   COVER_LETTER_LENGTH_PRESET_VALUES,
   COVER_LETTER_LOCALE_VALUES,
+  COVER_LETTER_MARKET_VALUES,
   COVER_LETTER_TONE_VALUES,
   COVER_LETTER_TYPE_VALUES,
+  GRAMMATICAL_GENDER_VALUES,
   LLM_MODEL_STATUS_VALUES,
   LLM_PROVIDER_VALUES,
   LLM_REASONING_EFFORT_VALUES,
@@ -72,12 +74,14 @@ export const userStatusEnum = pgEnum('user_status', USER_STATUS_VALUES);
 export const usageContextEnum = pgEnum('usage_context', USAGE_CONTEXT_VALUES);
 export const vacancyStatusEnum = pgEnum('vacancy_status', VACANCY_STATUS_VALUES);
 export const coverLetterLanguageEnum = pgEnum('cover_letter_language', COVER_LETTER_LOCALE_VALUES);
+export const coverLetterMarketEnum = pgEnum('cover_letter_market', COVER_LETTER_MARKET_VALUES);
 export const coverLetterTypeEnum = pgEnum('cover_letter_type', COVER_LETTER_TYPE_VALUES);
 export const coverLetterToneEnum = pgEnum('cover_letter_tone', COVER_LETTER_TONE_VALUES);
 export const coverLetterLengthPresetEnum = pgEnum(
   'cover_letter_length_preset',
   COVER_LETTER_LENGTH_PRESET_VALUES
 );
+export const grammaticalGenderEnum = pgEnum('grammatical_gender', GRAMMATICAL_GENDER_VALUES);
 export const budgetPeriodEnum = pgEnum('budget_period', ['weekly', 'monthly']);
 export const suppressionReasonEnum = pgEnum('suppression_reason', SUPPRESSION_REASON_VALUES);
 
@@ -188,6 +192,7 @@ export const profiles = pgTable('profiles', {
   country: varchar('country', { length: 2 }).notNull(), // ISO 3166-1 alpha-2
   searchRegion: varchar('search_region', { length: 100 }).notNull(),
   workFormat: workFormatEnum('work_format').notNull(),
+  grammaticalGender: grammaticalGenderEnum('grammatical_gender').notNull().default('neutral'),
   languages: jsonb('languages').$type<LanguageEntry[]>().notNull(),
   phones: jsonb('phones').$type<PhoneEntry[]>(),
   photoUrl: varchar('photo_url', { length: 2048 }), // Profile photo for human resume
@@ -377,6 +382,8 @@ export const coverLetters = pgTable(
       .notNull()
       .references(() => generations.id, { onDelete: 'cascade' }),
     language: coverLetterLanguageEnum('language').notNull().default('en'),
+    market: coverLetterMarketEnum('market').notNull().default('default'),
+    grammaticalGender: grammaticalGenderEnum('grammatical_gender').notNull().default('neutral'),
     type: coverLetterTypeEnum('type').notNull().default('letter'),
     tone: coverLetterToneEnum('tone').notNull().default('professional'),
     lengthPreset: coverLetterLengthPresetEnum('length_preset').notNull().default('standard'),

@@ -2,8 +2,14 @@ const LINK_PATTERN = /\[([^\]]+)\]\(([^)\s]+)\)/g;
 const BOLD_PATTERN = /\*\*([^*]+)\*\*/g;
 const ITALIC_PATTERN = /\*([^*]+)\*/g;
 const CODE_PATTERN = /`([^`]+)`/g;
+const HTML_TAG_PATTERN = /<\/?([a-z][a-z0-9:-]*)(?:\s[^<>]*)?>/gi;
+const PLAIN_URL_PATTERN = /(^|[\s(])((?:https?:\/\/|www\.)[^\s<]+)/gi;
+const PLAIN_EMAIL_PATTERN = /(^|[\s(])([\w.%+-]+@[\w.-]+\.[a-z]{2,})/gi;
+const LINK_EXCLUDED_TAGS = new Set(['a', 'code', 'pre']);
 
 const BLOCKQUOTE_PATTERN = /^>\s?(.+)$/;
+const DATE_LIKE_ORDERED_ITEM_TEXT_PATTERN = /^\p{L}+\.?\s+\d{4}(?:\s*р\.?)?$/u;
+const DATE_LIKE_LINE_PATTERN = /^\s*\d{1,2}\.\s+\p{L}+\.?\s+\d{4}(?:\s*р\.?)?\s*$/u;
 
 function parseHeading(line: string): { level: number; text: string } | null {
   let cursor = 0;
@@ -53,6 +59,10 @@ function parseOrderedListItem(line: string): string | null {
   if (separator !== ' ' && separator !== '\t') return null;
 
   const text = line.slice(cursor + 2).trim();
+  if (DATE_LIKE_ORDERED_ITEM_TEXT_PATTERN.test(text)) {
+    return null;
+  }
+
   return text.length > 0 ? text : null;
 }
 
@@ -66,17 +76,109 @@ function escapeHtml(value: string): string {
 }
 
 function sanitizeLink(rawUrl: string): string | null {
-  if (!rawUrl) return null;
+  const normalized = rawUrl.trim();
+  if (!normalized) return null;
+  const normalizedLower = normalized.toLowerCase();
 
   if (
-    rawUrl.startsWith('http://') ||
-    rawUrl.startsWith('https://') ||
-    rawUrl.startsWith('mailto:')
+    normalizedLower.startsWith('http://') ||
+    normalizedLower.startsWith('https://') ||
+    normalizedLower.startsWith('mailto:')
   ) {
-    return rawUrl;
+    return normalized;
   }
 
   return null;
+}
+
+function splitTrailingPunctuation(value: string): { core: string; trailing: string } {
+  let core = value;
+  let trailing = '';
+
+  while (core.length > 0) {
+    const char = core.slice(-1);
+    if (!'.!,?;:)]'.includes(char)) break;
+
+    trailing = `${char}${trailing}`;
+    core = core.slice(0, -1);
+  }
+
+  return { core, trailing };
+}
+
+function linkifyPlainText(text: string): string {
+  const withLinks = text.replaceAll(
+    PLAIN_URL_PATTERN,
+    (_fullMatch, prefix: string, candidate: string) => {
+      const { core, trailing } = splitTrailingPunctuation(candidate);
+      if (!core) {
+        return `${prefix}${candidate}`;
+      }
+
+      const hrefCandidate = core.toLowerCase().startsWith('www.') ? `https://${core}` : core;
+      const safeUrl = sanitizeLink(hrefCandidate);
+      if (!safeUrl) {
+        return `${prefix}${candidate}`;
+      }
+
+      return `${prefix}<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${core}</a>${trailing}`;
+    }
+  );
+
+  return withLinks.replaceAll(
+    PLAIN_EMAIL_PATTERN,
+    (_fullMatch, prefix: string, candidate: string) => {
+      const { core, trailing } = splitTrailingPunctuation(candidate);
+      if (!core) {
+        return `${prefix}${candidate}`;
+      }
+
+      const safeMailto = sanitizeLink(`mailto:${core}`);
+      if (!safeMailto) {
+        return `${prefix}${candidate}`;
+      }
+
+      return `${prefix}<a href="${safeMailto}" target="_blank" rel="noopener noreferrer">${core}</a>${trailing}`;
+    }
+  );
+}
+
+function applyAutoLinks(rendered: string): string {
+  if (!rendered.includes('<')) {
+    return linkifyPlainText(rendered);
+  }
+
+  let cursor = 0;
+  let result = '';
+  let skipDepth = 0;
+
+  for (const tagMatch of rendered.matchAll(HTML_TAG_PATTERN)) {
+    const fullTag = tagMatch[0];
+    const tagName = (tagMatch[1] ?? '').toLowerCase();
+    const tokenStart = tagMatch.index ?? 0;
+    const tokenEnd = tokenStart + fullTag.length;
+    const isClosingTag = fullTag.startsWith('</');
+    const isSelfClosingTag = fullTag.endsWith('/>');
+    const segment = rendered.slice(cursor, tokenStart);
+
+    result += skipDepth > 0 ? segment : linkifyPlainText(segment);
+    result += fullTag;
+
+    if (LINK_EXCLUDED_TAGS.has(tagName) && !isSelfClosingTag) {
+      if (isClosingTag) {
+        skipDepth = Math.max(0, skipDepth - 1);
+      } else {
+        skipDepth += 1;
+      }
+    }
+
+    cursor = tokenEnd;
+  }
+
+  const tail = rendered.slice(cursor);
+  result += skipDepth > 0 ? tail : linkifyPlainText(tail);
+
+  return result;
 }
 
 function renderInlineMarkdown(text: string): string {
@@ -95,13 +197,21 @@ function renderInlineMarkdown(text: string): string {
     return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${label}</a>`;
   });
 
-  return rendered;
+  return applyAutoLinks(rendered);
+}
+
+function normalizeParagraphLine(line: string): string {
+  // Tiptap markdown hard break marker: "line\\"
+  return line.replace(/(?<!\\)\\$/u, '');
 }
 
 function flushParagraph(paragraphLines: string[], htmlParts: string[]): void {
   if (paragraphLines.length === 0) return;
 
-  const paragraph = paragraphLines.map(line => renderInlineMarkdown(line)).join('<br />');
+  const paragraph = paragraphLines
+    .map(line => normalizeParagraphLine(line))
+    .map(line => renderInlineMarkdown(line))
+    .join('<br />');
   htmlParts.push(`<p>${paragraph}</p>`);
   paragraphLines.length = 0;
 }
@@ -157,7 +267,7 @@ export function markdownToHtml(markdown: string): string {
         listState.ulOpen = true;
       }
 
-      htmlParts.push(`<li>${renderInlineMarkdown(unorderedItem)}</li>`);
+      htmlParts.push(`<li><p>${renderInlineMarkdown(unorderedItem)}</p></li>`);
       continue;
     }
 
@@ -170,7 +280,7 @@ export function markdownToHtml(markdown: string): string {
         listState.olOpen = true;
       }
 
-      htmlParts.push(`<li>${renderInlineMarkdown(orderedItem)}</li>`);
+      htmlParts.push(`<li><p>${renderInlineMarkdown(orderedItem)}</p></li>`);
       continue;
     }
 
@@ -194,6 +304,7 @@ export function markdownToHtml(markdown: string): string {
 
 export function markdownToPlainText(markdown: string): string {
   return markdown
+    .replaceAll(/\\\n/g, '\n')
     .replaceAll(/\r\n?/g, '\n')
     .replaceAll(/```[\s\S]*?```/g, '')
     .replaceAll(/^#{1,6}\s+/gm, '')
@@ -206,4 +317,15 @@ export function markdownToPlainText(markdown: string): string {
     .replaceAll(/`([^`]+)`/g, '$1')
     .replaceAll(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+export function escapeDateLikeOrderedLines(markdown: string): string {
+  if (!markdown.trim()) return markdown;
+
+  const lines = markdown.replaceAll(/\r\n?/g, '\n').split('\n');
+  const normalizedLines = lines.map(line =>
+    DATE_LIKE_LINE_PATTERN.test(line) ? line.replace(/^(\s*\d{1,2})\./u, '$1\\.') : line
+  );
+
+  return normalizedLines.join('\n');
 }

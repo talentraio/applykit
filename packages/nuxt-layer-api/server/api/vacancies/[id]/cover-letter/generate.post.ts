@@ -11,7 +11,10 @@ import {
   vacancyRepository
 } from '../../../../data/repositories';
 import { requireLimit } from '../../../../services/limits';
-import { generateCoverLetterWithLLM } from '../../../../services/llm/cover-letter';
+import {
+  CoverLetterGenerationError,
+  generateCoverLetterWithLLM
+} from '../../../../services/llm/cover-letter';
 import {
   getCharacterLimitValidationMessage,
   resolveCoverLetterCharacterBufferConfig,
@@ -20,6 +23,19 @@ import {
 } from '../../../../services/vacancy/cover-letter-character-limits';
 import { getEffectiveUserRole } from '../../../../utils/session-helpers';
 import { logGenerate } from '../../../../utils/usage';
+
+type CoverLetterValidationDetails = {
+  issues: string[];
+};
+
+const isCoverLetterValidationDetails = (value: unknown): value is CoverLetterValidationDetails => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const issues = Reflect.get(value, 'issues');
+  return Array.isArray(issues) && issues.every(issue => typeof issue === 'string');
+};
 
 /**
  * POST /api/vacancies/:id/cover-letter/generate
@@ -71,6 +87,8 @@ export default defineEventHandler(async event => {
 
   const generationSettings: CoverLetterGenerationSettings = {
     language: payload.language,
+    market: payload.market,
+    grammaticalGender: payload.grammaticalGender,
     type: payload.type,
     tone: payload.tone,
     lengthPreset: payload.lengthPreset,
@@ -129,6 +147,8 @@ export default defineEventHandler(async event => {
       vacancyId,
       generationId: latestGeneration.id,
       language: generationSettings.language,
+      market: generationSettings.market,
+      grammaticalGender: generationSettings.grammaticalGender,
       type: generationSettings.type,
       tone: generationSettings.tone,
       lengthPreset: generationSettings.lengthPreset,
@@ -143,6 +163,40 @@ export default defineEventHandler(async event => {
 
     return coverLetter;
   } catch (error) {
+    if (error instanceof CoverLetterGenerationError) {
+      if (error.code === 'VALIDATION_FAILED') {
+        const issues = isCoverLetterValidationDetails(error.details)
+          ? error.details.issues
+          : [error.message];
+
+        throw createError({
+          statusCode: 502,
+          statusMessage: 'Bad Gateway',
+          message: 'Cover letter generation did not meet output constraints',
+          data: {
+            issues: issues.map(message => ({
+              code: 'custom',
+              path: ['contentMarkdown'],
+              message
+            }))
+          }
+        });
+      }
+
+      if (error.code === 'INVALID_JSON') {
+        throw createError({
+          statusCode: 502,
+          statusMessage: 'Bad Gateway',
+          message: 'Cover letter generation returned invalid model response'
+        });
+      }
+
+      throw createError({
+        statusCode: 500,
+        message: `Cover letter generation failed: ${error.message}`
+      });
+    }
+
     if (error instanceof Error) {
       throw createError({
         statusCode: 500,

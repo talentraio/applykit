@@ -3,10 +3,23 @@
     class="vacancy-item-cover-left-generation-config vacancy-cover-page__tab-content vacancy-cover-page__tab-content--inputs"
   >
     <div class="vacancy-cover-page__inputs-form">
-      <UFormField :label="t('vacancy.cover.language.label')">
+      <UFormField :label="t('vacancy.cover.localeProfile.label')">
         <USelectMenu
-          v-model="language"
-          :items="languageItems"
+          v-model="localeProfile"
+          :items="localeProfileItems"
+          value-key="value"
+          :search-input="false"
+          class="w-full"
+        />
+      </UFormField>
+
+      <UFormField
+        v-if="showGrammaticalGenderField"
+        :label="t('vacancy.cover.grammaticalGender.label')"
+      >
+        <USelectMenu
+          v-model="grammaticalGender"
+          :items="grammaticalGenderItems"
           value-key="value"
           :search-input="false"
           class="w-full"
@@ -110,13 +123,16 @@
 </template>
 
 <script setup lang="ts">
-import type { CoverLetterLengthPreset } from '@int/schema';
+import type { CoverLetterLengthPreset, GrammaticalGender } from '@int/schema';
 import {
   COVER_LETTER_CHARACTER_LIMIT_DEFAULTS,
   COVER_LETTER_LENGTH_PRESET_MAP,
   COVER_LETTER_LOCALE_MAP,
+  COVER_LETTER_MARKET_MAP,
   COVER_LETTER_TONE_MAP,
-  COVER_LETTER_TYPE_MAP
+  COVER_LETTER_TYPE_MAP,
+  GRAMMATICAL_GENDER_MAP,
+  localeRequiresGrammaticalGender
 } from '@int/schema';
 
 defineOptions({ name: 'VacancyItemCoverLeftGenerationConfig' });
@@ -145,6 +161,86 @@ const vacancyId = computed(() => {
 const language = computed({
   get: () => getCoverLetter.value?.language ?? COVER_LETTER_LOCALE_MAP.EN,
   set: value => vacancyCoverLetterStore.updateCurrentLanguage(value)
+});
+
+const market = computed({
+  get: () => getCoverLetter.value?.market ?? COVER_LETTER_MARKET_MAP.DEFAULT,
+  set: value => vacancyCoverLetterStore.updateCurrentMarket(value)
+});
+
+const COVER_LETTER_LOCALE_PROFILE_MAP = {
+  GENERAL_EN: 'general_en',
+  DENMARK_EN: 'denmark_en',
+  DENMARK_DA: 'denmark_da',
+  UKRAINE_UK: 'ukraine_uk',
+  UKRAINE_EN: 'ukraine_en'
+} as const;
+
+type CoverLetterLocaleProfile =
+  (typeof COVER_LETTER_LOCALE_PROFILE_MAP)[keyof typeof COVER_LETTER_LOCALE_PROFILE_MAP];
+
+const resolveProfileFromSettings = (
+  languageValue: (typeof COVER_LETTER_LOCALE_MAP)[keyof typeof COVER_LETTER_LOCALE_MAP],
+  marketValue: (typeof COVER_LETTER_MARKET_MAP)[keyof typeof COVER_LETTER_MARKET_MAP]
+): CoverLetterLocaleProfile => {
+  if (
+    marketValue === COVER_LETTER_MARKET_MAP.DK &&
+    languageValue === COVER_LETTER_LOCALE_MAP.DA_DK
+  ) {
+    return COVER_LETTER_LOCALE_PROFILE_MAP.DENMARK_DA;
+  }
+
+  if (marketValue === COVER_LETTER_MARKET_MAP.DK && languageValue === COVER_LETTER_LOCALE_MAP.EN) {
+    return COVER_LETTER_LOCALE_PROFILE_MAP.DENMARK_EN;
+  }
+
+  if (
+    marketValue === COVER_LETTER_MARKET_MAP.UA &&
+    languageValue === COVER_LETTER_LOCALE_MAP.UK_UA
+  ) {
+    return COVER_LETTER_LOCALE_PROFILE_MAP.UKRAINE_UK;
+  }
+
+  if (marketValue === COVER_LETTER_MARKET_MAP.UA && languageValue === COVER_LETTER_LOCALE_MAP.EN) {
+    return COVER_LETTER_LOCALE_PROFILE_MAP.UKRAINE_EN;
+  }
+
+  return COVER_LETTER_LOCALE_PROFILE_MAP.GENERAL_EN;
+};
+
+const applyProfileToSettings = (profile: CoverLetterLocaleProfile): void => {
+  switch (profile) {
+    case COVER_LETTER_LOCALE_PROFILE_MAP.DENMARK_DA:
+      language.value = COVER_LETTER_LOCALE_MAP.DA_DK;
+      market.value = COVER_LETTER_MARKET_MAP.DK;
+      return;
+    case COVER_LETTER_LOCALE_PROFILE_MAP.DENMARK_EN:
+      language.value = COVER_LETTER_LOCALE_MAP.EN;
+      market.value = COVER_LETTER_MARKET_MAP.DK;
+      return;
+    case COVER_LETTER_LOCALE_PROFILE_MAP.UKRAINE_UK:
+      language.value = COVER_LETTER_LOCALE_MAP.UK_UA;
+      market.value = COVER_LETTER_MARKET_MAP.UA;
+      return;
+    case COVER_LETTER_LOCALE_PROFILE_MAP.UKRAINE_EN:
+      language.value = COVER_LETTER_LOCALE_MAP.EN;
+      market.value = COVER_LETTER_MARKET_MAP.UA;
+      return;
+    case COVER_LETTER_LOCALE_PROFILE_MAP.GENERAL_EN:
+    default:
+      language.value = COVER_LETTER_LOCALE_MAP.EN;
+      market.value = COVER_LETTER_MARKET_MAP.DEFAULT;
+  }
+};
+
+const localeProfile = computed<CoverLetterLocaleProfile>({
+  get: () => resolveProfileFromSettings(language.value, market.value),
+  set: value => applyProfileToSettings(value)
+});
+
+const grammaticalGender = computed<GrammaticalGender>({
+  get: () => getCoverLetter.value?.grammaticalGender ?? GRAMMATICAL_GENDER_MAP.NEUTRAL,
+  set: value => vacancyCoverLetterStore.updateCurrentGrammaticalGender(value)
 });
 
 const type = computed({
@@ -215,6 +311,10 @@ const showCharacterLimitInput = computed(() => {
   return (
     type.value === COVER_LETTER_TYPE_MAP.MESSAGE && isCharacterLengthPreset(lengthPreset.value)
   );
+});
+
+const showGrammaticalGenderField = computed(() => {
+  return localeRequiresGrammaticalGender(language.value);
 });
 
 const toPositiveInteger = (value: unknown, fallback: number): number => {
@@ -288,9 +388,42 @@ const characterLimitPlaceholder = computed(() => {
     : t('vacancy.cover.length.maxCharsPlaceholder');
 });
 
-const languageItems = computed(() => [
-  { label: t('vacancy.cover.language.en'), value: COVER_LETTER_LOCALE_MAP.EN },
-  { label: t('vacancy.cover.language.da-DK'), value: COVER_LETTER_LOCALE_MAP.DA_DK }
+const localeProfileItems = computed(() => [
+  {
+    label: t('vacancy.cover.localeProfile.general.en'),
+    value: COVER_LETTER_LOCALE_PROFILE_MAP.GENERAL_EN
+  },
+  {
+    label: t('vacancy.cover.localeProfile.denmark.en'),
+    value: COVER_LETTER_LOCALE_PROFILE_MAP.DENMARK_EN
+  },
+  {
+    label: t('vacancy.cover.localeProfile.denmark.da-DK'),
+    value: COVER_LETTER_LOCALE_PROFILE_MAP.DENMARK_DA
+  },
+  {
+    label: t('vacancy.cover.localeProfile.ukraine.en'),
+    value: COVER_LETTER_LOCALE_PROFILE_MAP.UKRAINE_EN
+  },
+  {
+    label: t('vacancy.cover.localeProfile.ukraine.uk-UA'),
+    value: COVER_LETTER_LOCALE_PROFILE_MAP.UKRAINE_UK
+  }
+]);
+
+const grammaticalGenderItems = computed(() => [
+  {
+    label: t('vacancy.cover.grammaticalGender.option.masculine'),
+    value: GRAMMATICAL_GENDER_MAP.MASCULINE
+  },
+  {
+    label: t('vacancy.cover.grammaticalGender.option.feminine'),
+    value: GRAMMATICAL_GENDER_MAP.FEMININE
+  },
+  {
+    label: t('vacancy.cover.grammaticalGender.option.neutral'),
+    value: GRAMMATICAL_GENDER_MAP.NEUTRAL
+  }
 ]);
 
 const typeItems = computed(() => [

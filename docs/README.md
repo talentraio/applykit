@@ -12,6 +12,8 @@
 ## Development
 
 - [Development guide](./development/README.md)
+- [Cover-letter locale/market onboarding](./development/cover-letter-locale-market-onboarding.md)
+- [Cover-letter locale/market PR checklist](./development/cover-letter-locale-market-checklist.md)
 - [Code style](./codestyle/README.md)
 
 ## Shared contracts

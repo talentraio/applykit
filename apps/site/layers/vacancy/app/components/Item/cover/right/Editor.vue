@@ -30,6 +30,27 @@
               :disabled="!editor || !editor.can().chain().focus().redo().run()"
               @click="editor?.chain().focus().redo().run()"
             />
+            <UTooltip :content="{ side: 'bottom', align: 'start' }">
+              <UButton
+                size="sm"
+                color="neutral"
+                variant="ghost"
+                icon="i-lucide-circle-help"
+                :aria-label="t('vacancy.cover.editorHelp.title')"
+                :title="t('vacancy.cover.editorHelp.title')"
+              />
+
+              <template #content>
+                <div class="vacancy-item-cover-right-editor__help-tooltip">
+                  <p class="vacancy-item-cover-right-editor__help-tooltip-text">
+                    {{ t('vacancy.cover.editorHelp.enter') }}
+                  </p>
+                  <p class="vacancy-item-cover-right-editor__help-tooltip-text">
+                    {{ t('vacancy.cover.editorHelp.shiftEnter') }}
+                  </p>
+                </div>
+              </template>
+            </UTooltip>
           </div>
 
           <div class="vacancy-item-cover-right-editor__toolbar-group">
@@ -242,6 +263,24 @@ const markdownEditorHandlers = {
     z-index: 8;
     margin-bottom: calc(-1 * var(--vacancy-cover-editor-toolbar-height));
     pointer-events: none;
+    overflow: visible;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: var(--vacancy-cover-editor-toolbar-height);
+      background: linear-gradient(
+        to bottom,
+        rgb(255 255 255 / 100%) 0%,
+        rgb(255 255 255 / 100%) 80%,
+        rgb(255 255 255 / 70%) 100%
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
   }
 
   &__toolbar {
@@ -255,6 +294,8 @@ const markdownEditorHandlers = {
     border-radius: 0;
     padding: 0.5rem 0.75rem;
     overflow-x: auto;
+    position: relative;
+    z-index: 1;
     background-color: var(--vacancy-cover-editor-toolbar-bg);
     opacity: 0.7;
     pointer-events: auto;
@@ -333,8 +374,56 @@ const markdownEditorHandlers = {
     margin: 0;
   }
 
-  &__editor .tiptap p + p {
+  &__editor .tiptap > :is(p, ul, ol, blockquote, h1, h2, h3) {
+    margin: 0;
+  }
+
+  &__editor
+    .tiptap
+    > :is(p, ul, ol, blockquote, h1, h2, h3)
+    + :is(p, ul, ol, blockquote, h1, h2, h3) {
     margin-top: var(--vacancy-cover-editor-paragraph-spacing);
+  }
+
+  &__editor .tiptap ul,
+  &__editor .tiptap ol {
+    margin: 0;
+    padding-left: 1.5em;
+    list-style-position: outside;
+  }
+
+  &__editor .tiptap ul {
+    list-style-type: disc;
+  }
+
+  &__editor .tiptap ol {
+    list-style-type: decimal;
+  }
+
+  &__editor .tiptap li {
+    display: list-item;
+    margin: 0;
+    padding: 0;
+    color: #1f2937;
+  }
+
+  &__editor .tiptap li::marker {
+    color: currentcolor;
+  }
+
+  &__editor .tiptap li + li {
+    margin-top: 0.3em;
+  }
+
+  &__editor .tiptap li > p {
+    margin: 0;
+  }
+
+  &__editor .tiptap a {
+    color: #2563eb;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    overflow-wrap: anywhere;
   }
 
   &__toolbar-group {
@@ -356,6 +445,18 @@ const markdownEditorHandlers = {
     color: var(--ui-text-muted);
   }
 
+  &__help-tooltip {
+    display: grid;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  &__help-tooltip-text {
+    margin: 0;
+    white-space: nowrap;
+  }
+
   @media (width <= 1023px) {
     &__editor .tiptap {
       padding: var(--vacancy-cover-editor-mobile-margin-y)
@@ -371,7 +472,10 @@ const markdownEditorHandlers = {
       line-height: var(--vacancy-cover-editor-mobile-line-height);
     }
 
-    &__editor .tiptap p + p {
+    &__editor
+      .tiptap
+      > :is(p, ul, ol, blockquote, h1, h2, h3)
+      + :is(p, ul, ol, blockquote, h1, h2, h3) {
       margin-top: var(--vacancy-cover-editor-mobile-paragraph-spacing);
     }
   }

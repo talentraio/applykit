@@ -2,9 +2,11 @@ import { z } from 'zod';
 import {
   COVER_LETTER_LENGTH_PRESET_MAP,
   COVER_LETTER_LOCALE_MAP,
+  COVER_LETTER_MARKET_MAP,
   COVER_LETTER_TONE_MAP,
   COVER_LETTER_TYPE_MAP,
   EXPORT_FORMAT_MAP,
+  GRAMMATICAL_GENDER_MAP,
   LLM_MODEL_STATUS_MAP,
   LLM_PROVIDER_MAP,
   LLM_REASONING_EFFORT_MAP,
@@ -86,6 +88,10 @@ export type VacancyStatus = z.infer<typeof VacancyStatusSchema>;
 export const CoverLetterLanguageSchema = z.nativeEnum(COVER_LETTER_LOCALE_MAP);
 export type CoverLetterLanguage = z.infer<typeof CoverLetterLanguageSchema>;
 
+// Cover letter target market
+export const CoverLetterMarketSchema = z.nativeEnum(COVER_LETTER_MARKET_MAP);
+export type CoverLetterMarket = z.infer<typeof CoverLetterMarketSchema>;
+
 // Cover letter output type
 export const CoverLetterTypeSchema = z.nativeEnum(COVER_LETTER_TYPE_MAP);
 export type CoverLetterType = z.infer<typeof CoverLetterTypeSchema>;
@@ -97,6 +103,10 @@ export type CoverLetterTone = z.infer<typeof CoverLetterToneSchema>;
 // Cover letter length preset
 export const CoverLetterLengthPresetSchema = z.nativeEnum(COVER_LETTER_LENGTH_PRESET_MAP);
 export type CoverLetterLengthPreset = z.infer<typeof CoverLetterLengthPresetSchema>;
+
+// Grammatical gender preference for localized text generation
+export const GrammaticalGenderSchema = z.nativeEnum(GRAMMATICAL_GENDER_MAP);
+export type GrammaticalGender = z.infer<typeof GrammaticalGenderSchema>;
 
 // Suppression reasons for anti-abuse
 export const SuppressionReasonSchema = z.nativeEnum(SUPPRESSION_REASON_MAP);

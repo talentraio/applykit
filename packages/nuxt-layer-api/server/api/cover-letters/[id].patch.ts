@@ -86,6 +86,8 @@ export default defineEventHandler(async event => {
 
   const nextSettingsValidation = CoverLetterGenerationSettingsSchema.safeParse({
     language: patch.language ?? existing.language,
+    market: patch.market ?? existing.market,
+    grammaticalGender: patch.grammaticalGender ?? existing.grammaticalGender,
     type: nextType,
     tone: patch.tone ?? existing.tone,
     lengthPreset: nextLengthPreset,
@@ -120,6 +122,8 @@ export default defineEventHandler(async event => {
 
   const updated = await coverLetterRepository.updateById(coverLetterId, {
     language: nextSettings.language,
+    market: nextSettings.market,
+    grammaticalGender: nextSettings.grammaticalGender,
     type: nextSettings.type,
     tone: nextSettings.tone,
     lengthPreset: nextSettings.lengthPreset,

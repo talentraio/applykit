@@ -249,7 +249,8 @@ const isSubjectBlock = (block: CoverPreviewBlock): block is CoverPreviewSubjectB
 
     ul,
     ol {
-      padding-left: 1.25em;
+      margin: 0;
+      padding-left: 1.5em;
       list-style-position: outside;
     }
 
@@ -263,7 +264,16 @@ const isSubjectBlock = (block: CoverPreviewBlock): block is CoverPreviewSubjectB
 
     li {
       display: list-item;
-      margin-bottom: 0.3em;
+      margin: 0;
+      padding: 0;
+    }
+
+    li + li {
+      margin-top: 0.3em;
+    }
+
+    li > p {
+      margin: 0;
     }
 
     h1,
@@ -301,6 +311,9 @@ const isSubjectBlock = (block: CoverPreviewBlock): block is CoverPreviewSubjectB
     a {
       color: #2563eb;
       text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+      overflow-wrap: anywhere;
     }
   }
 }

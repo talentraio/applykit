@@ -8,7 +8,7 @@
     "build": "nuxt build .playground",
     "typecheck": "nuxt typecheck",
     "postinstall": "nuxt prepare & nuxt prepare .playground",
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "drizzle-kit generate && tsx ./scripts/fix-migration-journal.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",

@@ -131,10 +131,51 @@ export const VACANCY_STATUS_VALUES = enumValues(VACANCY_STATUS_MAP);
 
 export const COVER_LETTER_LOCALE_MAP = {
   EN: 'en',
-  DA_DK: 'da-DK'
+  DA_DK: 'da-DK',
+  UK_UA: 'uk-UA'
 } as const;
 
 export const COVER_LETTER_LOCALE_VALUES = enumValues(COVER_LETTER_LOCALE_MAP);
+
+type CoverLetterLocale = (typeof COVER_LETTER_LOCALE_MAP)[keyof typeof COVER_LETTER_LOCALE_MAP];
+
+export const COVER_LETTER_LOCALE_META_MAP = {
+  en: {
+    requiresGrammaticalGender: false
+  },
+  'da-DK': {
+    requiresGrammaticalGender: false
+  },
+  'uk-UA': {
+    requiresGrammaticalGender: true
+  }
+} as const satisfies Record<CoverLetterLocale, { requiresGrammaticalGender: boolean }>;
+
+export const localeRequiresGrammaticalGender = (locale: CoverLetterLocale): boolean => {
+  return COVER_LETTER_LOCALE_META_MAP[locale].requiresGrammaticalGender;
+};
+
+export const COVER_LETTER_MARKET_MAP = {
+  DEFAULT: 'default',
+  DK: 'dk',
+  UA: 'ua'
+} as const;
+
+export const COVER_LETTER_MARKET_VALUES = enumValues(COVER_LETTER_MARKET_MAP);
+
+type CoverLetterMarket = (typeof COVER_LETTER_MARKET_MAP)[keyof typeof COVER_LETTER_MARKET_MAP];
+
+export const COVER_LETTER_DEFAULT_MARKET_BY_LOCALE_MAP = {
+  en: COVER_LETTER_MARKET_MAP.DEFAULT,
+  'da-DK': COVER_LETTER_MARKET_MAP.DK,
+  'uk-UA': COVER_LETTER_MARKET_MAP.UA
+} as const satisfies Record<CoverLetterLocale, CoverLetterMarket>;
+
+export const resolveDefaultCoverLetterMarketByLocale = (
+  locale: CoverLetterLocale
+): CoverLetterMarket => {
+  return COVER_LETTER_DEFAULT_MARKET_BY_LOCALE_MAP[locale];
+};
 
 export const COVER_LETTER_TYPE_MAP = {
   LETTER: 'letter',
@@ -175,6 +216,14 @@ export const COVER_LETTER_CHARACTER_BUFFER_DEFAULTS = {
   TARGET_BUFFER_MIN: 10,
   TARGET_BUFFER_MAX: 30
 } as const;
+
+export const GRAMMATICAL_GENDER_MAP = {
+  MASCULINE: 'masculine',
+  FEMININE: 'feminine',
+  NEUTRAL: 'neutral'
+} as const;
+
+export const GRAMMATICAL_GENDER_VALUES = enumValues(GRAMMATICAL_GENDER_MAP);
 
 export const LANGUAGE_LEVEL_MAP = {
   NATIVE: 'Native',

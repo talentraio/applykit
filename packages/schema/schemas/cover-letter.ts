@@ -3,8 +3,10 @@ import { COVER_LETTER_LENGTH_PRESET_MAP } from '../constants/enums';
 import {
   CoverLetterLanguageSchema,
   CoverLetterLengthPresetSchema,
+  CoverLetterMarketSchema,
   CoverLetterToneSchema,
   CoverLetterTypeSchema,
+  GrammaticalGenderSchema,
   LLMProviderSchema
 } from './enums';
 import { SpacingSettingsSchema } from './format-settings';
@@ -18,6 +20,8 @@ const OptionalCharacterLimitSchema = NullableCharacterLimitSchema.optional();
 
 const CoverLetterGenerationSettingsBaseSchema = z.object({
   language: CoverLetterLanguageSchema.default('en'),
+  market: CoverLetterMarketSchema.default('default'),
+  grammaticalGender: GrammaticalGenderSchema.default('neutral'),
   type: CoverLetterTypeSchema.default('letter'),
   tone: CoverLetterToneSchema.default('professional'),
   lengthPreset: CoverLetterLengthPresetSchema.default('standard'),
@@ -94,6 +98,8 @@ export const CoverLetterSchema = z.object({
   vacancyId: z.string().uuid(),
   generationId: z.string().uuid(),
   language: CoverLetterLanguageSchema,
+  market: CoverLetterMarketSchema,
+  grammaticalGender: GrammaticalGenderSchema,
   type: CoverLetterTypeSchema,
   tone: CoverLetterToneSchema,
   lengthPreset: CoverLetterLengthPresetSchema,
@@ -125,6 +131,8 @@ export type CoverLetterGenerateBody = z.infer<typeof CoverLetterGenerateBodySche
 export const CoverLetterPatchBodySchema = z
   .object({
     language: CoverLetterLanguageSchema.optional(),
+    market: CoverLetterMarketSchema.optional(),
+    grammaticalGender: GrammaticalGenderSchema.optional(),
     type: CoverLetterTypeSchema.optional(),
     tone: CoverLetterToneSchema.optional(),
     lengthPreset: CoverLetterLengthPresetSchema.optional(),

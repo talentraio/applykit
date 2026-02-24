@@ -1,8 +1,10 @@
 import type {
   CoverLetterLanguage,
   CoverLetterLengthPreset,
+  CoverLetterMarket,
   CoverLetterTone,
   CoverLetterType,
+  GrammaticalGender,
   SpacingSettings
 } from '@int/schema';
 import type { CoverLetter } from '../schema';
@@ -14,6 +16,8 @@ type CreateCoverLetterPayload = {
   vacancyId: string;
   generationId: string;
   language: CoverLetterLanguage;
+  market: CoverLetterMarket;
+  grammaticalGender: GrammaticalGender;
   type: CoverLetterType;
   tone: CoverLetterTone;
   lengthPreset: CoverLetterLengthPreset;
@@ -52,6 +56,8 @@ export const coverLetterRepository = {
         vacancyId: coverLetters.vacancyId,
         generationId: coverLetters.generationId,
         language: coverLetters.language,
+        market: coverLetters.market,
+        grammaticalGender: coverLetters.grammaticalGender,
         type: coverLetters.type,
         tone: coverLetters.tone,
         lengthPreset: coverLetters.lengthPreset,
@@ -97,6 +103,8 @@ export const coverLetterRepository = {
         vacancyId: payload.vacancyId,
         generationId: payload.generationId,
         language: payload.language,
+        market: payload.market,
+        grammaticalGender: payload.grammaticalGender,
         type: payload.type,
         tone: payload.tone,
         lengthPreset: payload.lengthPreset,
