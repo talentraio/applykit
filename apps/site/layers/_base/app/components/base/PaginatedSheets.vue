@@ -1,7 +1,7 @@
 <template>
   <div class="base-paginated-sheets" :data-ready="isReady ? 'true' : 'false'">
     <div
-      v-if="isInternalMode"
+      v-if="isInternalMode && !loading"
       ref="measurerRef"
       class="base-paginated-sheets__measurer"
       aria-hidden="true"
@@ -82,6 +82,7 @@ const props = withDefaults(
     fontSize: number;
     lineHeight: number;
     blockSpacingPx?: number;
+    loading?: boolean;
     showPageNumbers?: boolean;
     showLoadingWhenMeasuring?: boolean;
     minScale?: number;
@@ -89,6 +90,7 @@ const props = withDefaults(
     elevated?: boolean;
   }>(),
   {
+    loading: false,
     showPageNumbers: true,
     minScale: 0.25,
     maxScale: 1,
@@ -142,6 +144,10 @@ const resolvedPages = computed<PaginatedPage<TBlock>[]>(() => {
 });
 
 const visiblePages = computed<PaginatedPage<TBlock>[]>(() => {
+  if (props.loading) {
+    return [];
+  }
+
   if (!isInternalMode.value) {
     return resolvedPages.value;
   }
@@ -162,6 +168,7 @@ const isReady = computed(() => {
 });
 
 const showLoadingSheet = computed(() => {
+  if (props.loading) return true;
   if (!props.showLoadingWhenMeasuring) return false;
   if (!isInternalMode.value) return false;
   if (internalBlocks.value.length === 0) return false;

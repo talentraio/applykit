@@ -30,27 +30,109 @@
               :disabled="!editor || !editor.can().chain().focus().redo().run()"
               @click="editor?.chain().focus().redo().run()"
             />
-            <UTooltip :content="{ side: 'bottom', align: 'start' }">
+          </div>
+
+          <div class="vacancy-item-cover-right-editor__toolbar-group">
+            <UButton
+              size="sm"
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-corner-down-left"
+              :title="t('vacancy.cover.editorLineBreak')"
+              :aria-label="t('vacancy.cover.editorLineBreak')"
+              :disabled="!editor || !canInsertLineBreak(editor)"
+              @click="insertLineBreak(editor)"
+            />
+          </div>
+
+          <div class="vacancy-item-cover-right-editor__toolbar-group">
+            <UButton
+              v-if="editor?.isActive('link')"
+              size="sm"
+              color="neutral"
+              variant="solid"
+              icon="i-lucide-link"
+              :title="t('vacancy.cover.editorUnlink')"
+              :aria-label="t('vacancy.cover.editorUnlink')"
+              :disabled="!editor || !canToggleLink(editor)"
+              @click="toggleLink(editor)"
+            />
+
+            <UPopover
+              v-else
+              v-model:open="linkPopoverOpen"
+              :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
+              :ui="{ content: 'vacancy-item-cover-right-editor__link-popover' }"
+            >
               <UButton
                 size="sm"
                 color="neutral"
-                variant="ghost"
-                icon="i-lucide-circle-help"
-                :aria-label="t('vacancy.cover.editorHelp.title')"
-                :title="t('vacancy.cover.editorHelp.title')"
+                variant="outline"
+                icon="i-lucide-link"
+                :title="t('vacancy.cover.editorLink')"
+                :aria-label="t('vacancy.cover.editorLink')"
+                :disabled="!editor || !canToggleLink(editor)"
+                @click="prepareLinkPopover(editor)"
               />
 
               <template #content>
-                <div class="vacancy-item-cover-right-editor__help-tooltip">
-                  <p class="vacancy-item-cover-right-editor__help-tooltip-text">
-                    {{ t('vacancy.cover.editorHelp.enter') }}
-                  </p>
-                  <p class="vacancy-item-cover-right-editor__help-tooltip-text">
-                    {{ t('vacancy.cover.editorHelp.shiftEnter') }}
-                  </p>
+                <div class="vacancy-item-cover-right-editor__link-popover-content">
+                  <UInput
+                    v-model="linkHrefInput"
+                    :placeholder="t('vacancy.cover.editorLinkPlaceholder')"
+                    class="w-full"
+                    @keydown.enter.prevent="applyLink(editor)"
+                  />
+
+                  <div class="vacancy-item-cover-right-editor__link-popover-actions">
+                    <UButton
+                      size="xs"
+                      color="neutral"
+                      variant="ghost"
+                      :label="t('vacancy.cover.editorLinkCancel')"
+                      @click="closeLinkPopover"
+                    />
+                    <UButton
+                      size="xs"
+                      color="neutral"
+                      :label="t('vacancy.cover.editorLinkApply')"
+                      @click="applyLink(editor)"
+                    />
+                  </div>
                 </div>
               </template>
-            </UTooltip>
+            </UPopover>
+
+            <UPopover
+              v-model:open="textStylePopoverOpen"
+              :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
+              :ui="{ content: 'vacancy-item-cover-right-editor__text-style-popover' }"
+            >
+              <UButton
+                size="sm"
+                color="neutral"
+                variant="outline"
+                icon="i-lucide-heading"
+                :label="getTextStyleTriggerLabel(editor)"
+                :title="t('vacancy.cover.editorTextStyle')"
+                :aria-label="t('vacancy.cover.editorTextStyle')"
+                :disabled="!editor || !canUseTextStyles(editor)"
+              />
+
+              <template #content>
+                <div class="vacancy-item-cover-right-editor__text-style-options">
+                  <UButton
+                    v-for="item in textStyleItems"
+                    :key="item.value"
+                    size="xs"
+                    color="neutral"
+                    :variant="isTextStyleActive(editor, item.value) ? 'solid' : 'ghost'"
+                    :label="item.label"
+                    @click="applyTextStyle(editor, item.value)"
+                  />
+                </div>
+              </template>
+            </UPopover>
           </div>
 
           <div class="vacancy-item-cover-right-editor__toolbar-group">
@@ -130,6 +212,10 @@ const props = defineProps<{
 
 const contentMarkdown = defineModel<string>({ required: true });
 const { t } = useI18n();
+const toast = useToast();
+const linkPopoverOpen = ref(false);
+const linkHrefInput = ref('');
+const textStylePopoverOpen = ref(false);
 
 const markdownEditorUi = {
   root: 'w-full',
@@ -175,19 +261,74 @@ type ToggleListCommand = 'toggleBulletList' | 'toggleOrderedList';
 type EditorCanCommands = {
   toggleBulletList: () => boolean;
   toggleOrderedList: () => boolean;
+  setHardBreak: () => boolean;
+};
+type HeadingLevel = 1 | 2 | 3 | 4;
+type TextStyleValue = 'paragraph' | `heading-${HeadingLevel}`;
+type TextStyleItem = {
+  value: TextStyleValue;
+  label: string;
+  shortLabel: string;
 };
 type EditorCommandChain = {
   focus: () => EditorCommandChain;
   toggleBulletList: () => EditorCommandChain;
   toggleOrderedList: () => EditorCommandChain;
+  setHardBreak: () => EditorCommandChain;
+  setParagraph: () => EditorCommandChain;
+  setHeading: (attrs: { level: HeadingLevel }) => EditorCommandChain;
+  setLink: (attrs: { href: string }) => EditorCommandChain;
+  unsetLink: () => EditorCommandChain;
+  extendMarkRange: (mark: string) => EditorCommandChain;
+  run: () => boolean;
 };
 type EditorLike = {
   extensionManager: {
     extensions: { name: string }[];
   };
+  state: {
+    selection: {
+      empty: boolean;
+    };
+  };
   can: () => EditorCanCommands;
   chain: () => EditorCommandChain;
-  isActive: (name: string) => boolean;
+  isActive: (name: string, attrs?: Record<string, unknown>) => boolean;
+};
+
+const textStyleItems = computed<TextStyleItem[]>(() => [
+  {
+    value: 'paragraph',
+    label: t('vacancy.cover.editorTextStyleParagraph'),
+    shortLabel: 'P'
+  },
+  {
+    value: 'heading-1',
+    label: t('vacancy.cover.editorTextStyleHeading1'),
+    shortLabel: 'H1'
+  },
+  {
+    value: 'heading-2',
+    label: t('vacancy.cover.editorTextStyleHeading2'),
+    shortLabel: 'H2'
+  },
+  {
+    value: 'heading-3',
+    label: t('vacancy.cover.editorTextStyleHeading3'),
+    shortLabel: 'H3'
+  },
+  {
+    value: 'heading-4',
+    label: t('vacancy.cover.editorTextStyleHeading4'),
+    shortLabel: 'H4'
+  }
+]);
+
+const textStyleHeadingLevels: Record<Exclude<TextStyleValue, 'paragraph'>, HeadingLevel> = {
+  'heading-1': 1,
+  'heading-2': 2,
+  'heading-3': 3,
+  'heading-4': 4
 };
 
 const hasEditorExtension = (editor: EditorLike, extensionName: string): boolean =>
@@ -219,6 +360,133 @@ const createSafeListHandler = (
     return !hasEditorExtension(editor, listType) || editor.isActive('code');
   }
 });
+
+const canInsertLineBreak = (editor: EditorLike): boolean => {
+  return hasEditorExtension(editor, 'hardBreak') && editor.can().setHardBreak();
+};
+
+const insertLineBreak = (editor: EditorLike | undefined): void => {
+  if (!editor || !canInsertLineBreak(editor)) return;
+  editor.chain().focus().setHardBreak().run();
+};
+
+const normalizeLinkHref = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const href = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    return new URL(href).href;
+  } catch {
+    return null;
+  }
+};
+
+const canToggleLink = (editor: EditorLike): boolean => {
+  return hasEditorExtension(editor, 'link') && !editor.isActive('code');
+};
+
+const canUseTextStyles = (editor: EditorLike): boolean => {
+  return hasEditorExtension(editor, 'paragraph') && hasEditorExtension(editor, 'heading');
+};
+
+const getActiveTextStyle = (editor: EditorLike | undefined): TextStyleValue => {
+  if (!editor || !canUseTextStyles(editor)) {
+    return 'paragraph';
+  }
+
+  if (editor.isActive('heading', { level: 1 })) return 'heading-1';
+  if (editor.isActive('heading', { level: 2 })) return 'heading-2';
+  if (editor.isActive('heading', { level: 3 })) return 'heading-3';
+  if (editor.isActive('heading', { level: 4 })) return 'heading-4';
+
+  return 'paragraph';
+};
+
+const isTextStyleActive = (editor: EditorLike | undefined, value: TextStyleValue): boolean => {
+  return getActiveTextStyle(editor) === value;
+};
+
+const getTextStyleTriggerLabel = (editor: EditorLike | undefined): string => {
+  const activeValue = getActiveTextStyle(editor);
+  return textStyleItems.value.find(item => item.value === activeValue)?.shortLabel ?? 'P';
+};
+
+const applyTextStyle = (editor: EditorLike | undefined, value: TextStyleValue): void => {
+  if (!editor || !canUseTextStyles(editor)) return;
+
+  if (value === 'paragraph') {
+    editor.chain().focus().setParagraph().run();
+    textStylePopoverOpen.value = false;
+  } else {
+    const level = textStyleHeadingLevels[value];
+    editor.chain().focus().setHeading({ level }).run();
+    textStylePopoverOpen.value = false;
+  }
+};
+
+const toggleLink = (editor: EditorLike | undefined): void => {
+  if (!editor || !canToggleLink(editor)) return;
+
+  if (editor.isActive('link')) {
+    editor.chain().focus().unsetLink().run();
+  }
+};
+
+const closeLinkPopover = (): void => {
+  linkPopoverOpen.value = false;
+  linkHrefInput.value = '';
+};
+
+const prepareLinkPopover = (editor: EditorLike | undefined): void => {
+  if (!editor || !canToggleLink(editor)) {
+    closeLinkPopover();
+    return;
+  }
+
+  if (editor.state.selection.empty) {
+    closeLinkPopover();
+    toast.add({
+      title: t('vacancy.cover.editorLinkSelectText'),
+      color: 'warning',
+      icon: 'i-lucide-info'
+    });
+    return;
+  }
+
+  linkPopoverOpen.value = true;
+};
+
+const applyLink = (editor: EditorLike | undefined): void => {
+  if (!editor || !canToggleLink(editor)) {
+    closeLinkPopover();
+    return;
+  }
+
+  if (editor.state.selection.empty) {
+    closeLinkPopover();
+    toast.add({
+      title: t('vacancy.cover.editorLinkSelectText'),
+      color: 'warning',
+      icon: 'i-lucide-info'
+    });
+    return;
+  }
+
+  const href = normalizeLinkHref(linkHrefInput.value);
+  if (!href) {
+    toast.add({
+      title: t('vacancy.cover.editorLinkInvalid'),
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    });
+    return;
+  }
+
+  editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
+  closeLinkPopover();
+};
 
 const markdownEditorHandlers = {
   bulletList: createSafeListHandler('bulletList', 'toggleBulletList'),
@@ -362,7 +630,11 @@ const markdownEditorHandlers = {
   &__editor .tiptap,
   &__editor .tiptap p,
   &__editor .tiptap li,
-  &__editor .tiptap blockquote {
+  &__editor .tiptap blockquote,
+  &__editor .tiptap h1,
+  &__editor .tiptap h2,
+  &__editor .tiptap h3,
+  &__editor .tiptap h4 {
     line-height: var(--vacancy-cover-editor-line-height);
   }
 
@@ -374,15 +646,19 @@ const markdownEditorHandlers = {
     margin: 0;
   }
 
-  &__editor .tiptap > :is(p, ul, ol, blockquote, h1, h2, h3) {
+  &__editor .tiptap > :is(p, ul, ol, blockquote, h1, h2, h3, h4) {
     margin: 0;
   }
 
   &__editor
     .tiptap
-    > :is(p, ul, ol, blockquote, h1, h2, h3)
-    + :is(p, ul, ol, blockquote, h1, h2, h3) {
+    > :is(p, ul, ol, blockquote, h1, h2, h3, h4)
+    + :is(p, ul, ol, blockquote, h1, h2, h3, h4) {
     margin-top: var(--vacancy-cover-editor-paragraph-spacing);
+  }
+
+  &__editor .tiptap :is(h1, h2, h3, h4) {
+    color: #1f2937;
   }
 
   &__editor .tiptap ul,
@@ -445,16 +721,16 @@ const markdownEditorHandlers = {
     color: var(--ui-text-muted);
   }
 
-  &__help-tooltip {
-    display: grid;
-    gap: 0.25rem;
-    font-size: 0.75rem;
-    line-height: 1.2;
+  &__text-style-popover {
+    padding: 0.375rem;
+    border: 1px solid var(--ui-border-muted);
+    background-color: var(--ui-bg-elevated);
   }
 
-  &__help-tooltip-text {
-    margin: 0;
-    white-space: nowrap;
+  &__text-style-options {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1fr);
+    gap: 0.25rem;
   }
 
   @media (width <= 1023px) {
@@ -468,14 +744,18 @@ const markdownEditorHandlers = {
     &__editor .tiptap,
     &__editor .tiptap p,
     &__editor .tiptap li,
-    &__editor .tiptap blockquote {
+    &__editor .tiptap blockquote,
+    &__editor .tiptap h1,
+    &__editor .tiptap h2,
+    &__editor .tiptap h3,
+    &__editor .tiptap h4 {
       line-height: var(--vacancy-cover-editor-mobile-line-height);
     }
 
     &__editor
       .tiptap
-      > :is(p, ul, ol, blockquote, h1, h2, h3)
-      + :is(p, ul, ol, blockquote, h1, h2, h3) {
+      > :is(p, ul, ol, blockquote, h1, h2, h3, h4)
+      + :is(p, ul, ol, blockquote, h1, h2, h3, h4) {
       margin-top: var(--vacancy-cover-editor-mobile-paragraph-spacing);
     }
   }

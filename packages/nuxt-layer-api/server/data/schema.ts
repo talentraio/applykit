@@ -13,6 +13,7 @@ import {
   COVER_LETTER_LENGTH_PRESET_VALUES,
   COVER_LETTER_LOCALE_VALUES,
   COVER_LETTER_MARKET_VALUES,
+  COVER_LETTER_QUALITY_MODE_VALUES,
   COVER_LETTER_TONE_VALUES,
   COVER_LETTER_TYPE_VALUES,
   GRAMMATICAL_GENDER_VALUES,
@@ -75,6 +76,10 @@ export const usageContextEnum = pgEnum('usage_context', USAGE_CONTEXT_VALUES);
 export const vacancyStatusEnum = pgEnum('vacancy_status', VACANCY_STATUS_VALUES);
 export const coverLetterLanguageEnum = pgEnum('cover_letter_language', COVER_LETTER_LOCALE_VALUES);
 export const coverLetterMarketEnum = pgEnum('cover_letter_market', COVER_LETTER_MARKET_VALUES);
+export const coverLetterQualityModeEnum = pgEnum(
+  'cover_letter_quality_mode',
+  COVER_LETTER_QUALITY_MODE_VALUES
+);
 export const coverLetterTypeEnum = pgEnum('cover_letter_type', COVER_LETTER_TYPE_VALUES);
 export const coverLetterToneEnum = pgEnum('cover_letter_tone', COVER_LETTER_TONE_VALUES);
 export const coverLetterLengthPresetEnum = pgEnum(
@@ -383,6 +388,7 @@ export const coverLetters = pgTable(
       .references(() => generations.id, { onDelete: 'cascade' }),
     language: coverLetterLanguageEnum('language').notNull().default('en'),
     market: coverLetterMarketEnum('market').notNull().default('default'),
+    qualityMode: coverLetterQualityModeEnum('quality_mode').notNull().default('high'),
     grammaticalGender: grammaticalGenderEnum('grammatical_gender').notNull().default('neutral'),
     type: coverLetterTypeEnum('type').notNull().default('letter'),
     tone: coverLetterToneEnum('tone').notNull().default('professional'),

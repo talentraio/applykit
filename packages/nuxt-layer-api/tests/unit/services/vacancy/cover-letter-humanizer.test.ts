@@ -6,9 +6,6 @@ describe('resolveCoverLetterHumanizerConfig', () => {
     const config = resolveCoverLetterHumanizerConfig({});
 
     expect(config).toEqual({
-      mode: 'off',
-      criticProvider: 'openai',
-      criticModel: 'gpt-5-mini',
       minNaturalnessScore: 75,
       maxAiRiskScore: 35,
       maxRewritePasses: 1,
@@ -20,9 +17,6 @@ describe('resolveCoverLetterHumanizerConfig', () => {
     const config = resolveCoverLetterHumanizerConfig({
       llm: {
         coverLetterHumanizer: {
-          mode: 'rewrite',
-          criticProvider: 'gemini',
-          criticModel: 'gemini-2.5-flash',
           minNaturalnessScore: '120',
           maxAiRiskScore: '-10',
           maxRewritePasses: '7',
@@ -32,9 +26,6 @@ describe('resolveCoverLetterHumanizerConfig', () => {
     });
 
     expect(config).toEqual({
-      mode: 'rewrite',
-      criticProvider: 'gemini',
-      criticModel: 'gemini-2.5-flash',
       minNaturalnessScore: 100,
       maxAiRiskScore: 0,
       maxRewritePasses: 3,

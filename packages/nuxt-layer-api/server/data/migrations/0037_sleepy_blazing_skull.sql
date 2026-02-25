@@ -1,0 +1,2 @@
+CREATE TYPE "public"."cover_letter_quality_mode" AS ENUM('draft', 'high');--> statement-breakpoint
+ALTER TABLE "cover_letters" ADD COLUMN "quality_mode" "cover_letter_quality_mode" DEFAULT 'high' NOT NULL;

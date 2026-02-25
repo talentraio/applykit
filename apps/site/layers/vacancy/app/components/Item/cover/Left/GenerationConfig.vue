@@ -13,6 +13,47 @@
         />
       </UFormField>
 
+      <UFormField v-if="showQualityModeSelector" :label="t('vacancy.cover.quality.label')">
+        <template #hint>
+          <UPopover
+            :content="{ side: 'bottom', align: 'end', sideOffset: 8 }"
+            :ui="{ content: 'vacancy-cover-page__quality-hint-popover' }"
+          >
+            <UButton
+              size="xs"
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-circle-help"
+              class="vacancy-cover-page__quality-hint-trigger"
+              :aria-label="t('vacancy.cover.quality.hint.ariaLabel')"
+              :title="t('vacancy.cover.quality.hint.ariaLabel')"
+            />
+
+            <template #content>
+              <div class="vacancy-cover-page__quality-hint-tooltip">
+                <p class="vacancy-cover-page__quality-hint-line">
+                  {{ t('vacancy.cover.quality.hint.draft') }}
+                </p>
+                <p class="vacancy-cover-page__quality-hint-line">
+                  {{ t('vacancy.cover.quality.hint.high') }}
+                </p>
+                <p class="vacancy-cover-page__quality-hint-warning">
+                  {{ t('vacancy.cover.quality.hint.warning') }}
+                </p>
+              </div>
+            </template>
+          </UPopover>
+        </template>
+
+        <USelectMenu
+          v-model="qualityMode"
+          :items="qualityModeItems"
+          value-key="value"
+          :search-input="false"
+          class="w-full"
+        />
+      </UFormField>
+
       <UFormField
         v-if="showGrammaticalGenderField"
         :label="t('vacancy.cover.grammaticalGender.label')"
@@ -93,14 +134,21 @@
           class="w-full"
           :rows="6"
           autoresize
+          :maxlength="additionalInstructionsMaxCharacters"
           :placeholder="t('vacancy.cover.instructionsPlaceholder')"
         />
+
+        <p class="vacancy-cover-page__instructions-counter">
+          {{ instructionsCharacterCount }}/{{ additionalInstructionsMaxCharacters }}
+        </p>
       </UFormField>
 
       <UButton
         block
         :loading="coverLetterGenerating"
-        :disabled="!hasGeneration || Boolean(characterLimitValidationError)"
+        :disabled="
+          !hasGeneration || !coverLetterFlowAvailable || Boolean(characterLimitValidationError)
+        "
         icon="i-lucide-sparkles"
         @click="emit('generate')"
       >
@@ -118,17 +166,26 @@
           {{ t('vacancy.cover.backToOverview') }}
         </UButton>
       </div>
+
+      <div v-if="!coverLetterFlowAvailable" class="vacancy-cover-page__hint">
+        <p>{{ t('vacancy.cover.flowDisabledHint') }}</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CoverLetterLengthPreset, GrammaticalGender } from '@int/schema';
+import type {
+  CoverLetterLengthPreset,
+  CoverLetterQualityMode,
+  GrammaticalGender
+} from '@int/schema';
 import {
   COVER_LETTER_CHARACTER_LIMIT_DEFAULTS,
   COVER_LETTER_LENGTH_PRESET_MAP,
   COVER_LETTER_LOCALE_MAP,
   COVER_LETTER_MARKET_MAP,
+  COVER_LETTER_QUALITY_MODE_MAP,
   COVER_LETTER_TONE_MAP,
   COVER_LETTER_TYPE_MAP,
   GRAMMATICAL_GENDER_MAP,
@@ -153,6 +210,15 @@ const { getCoverLetter, getCoverLetterGenerating, getHasPersistedCoverLetter } =
 const hasGeneration = computed(() => Boolean(getCurrentVacancyMeta.value?.latestGenerationId));
 const hasCoverLetter = computed(() => getHasPersistedCoverLetter.value);
 const coverLetterGenerating = computed(() => getCoverLetterGenerating.value);
+const coverLetterDraftEnabled = computed(
+  () => getCurrentVacancyMeta.value?.coverLetterDraftEnabled ?? true
+);
+const coverLetterHighEnabled = computed(
+  () => getCurrentVacancyMeta.value?.coverLetterHighEnabled ?? true
+);
+const coverLetterFlowAvailable = computed(() => {
+  return coverLetterDraftEnabled.value || coverLetterHighEnabled.value;
+});
 const vacancyId = computed(() => {
   const value = route.params.id;
   return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
@@ -243,6 +309,11 @@ const grammaticalGender = computed<GrammaticalGender>({
   set: value => vacancyCoverLetterStore.updateCurrentGrammaticalGender(value)
 });
 
+const qualityMode = computed<CoverLetterQualityMode>({
+  get: () => getCoverLetter.value?.qualityMode ?? COVER_LETTER_QUALITY_MODE_MAP.HIGH,
+  set: value => vacancyCoverLetterStore.updateCurrentQualityMode(value)
+});
+
 const type = computed({
   get: () => getCoverLetter.value?.type ?? COVER_LETTER_TYPE_MAP.LETTER,
   set: value => vacancyCoverLetterStore.updateCurrentType(value)
@@ -295,9 +366,26 @@ const includeSubjectLine = computed({
   set: value => vacancyCoverLetterStore.updateCurrentIncludeSubjectLine(value)
 });
 
+const additionalInstructionsMaxCharacters = computed(() => {
+  const rawValue = runtimeConfig.public?.coverLetter?.additionalInstructionsMaxCharacters;
+  const parsed =
+    typeof rawValue === 'number'
+      ? rawValue
+      : Number.parseInt(typeof rawValue === 'string' ? rawValue : String(rawValue ?? ''), 10);
+
+  if (!Number.isFinite(parsed)) {
+    return 1000;
+  }
+
+  return Math.max(1, Math.trunc(parsed));
+});
+
 const instructions = computed({
   get: () => getCoverLetter.value?.instructions ?? '',
-  set: value => vacancyCoverLetterStore.updateCurrentInstructions(value)
+  set: value =>
+    vacancyCoverLetterStore.updateCurrentInstructions(
+      value.slice(0, additionalInstructionsMaxCharacters.value)
+    )
 });
 
 const isCharacterLengthPreset = (value: CoverLetterLengthPreset): boolean => {
@@ -315,6 +403,25 @@ const showCharacterLimitInput = computed(() => {
 
 const showGrammaticalGenderField = computed(() => {
   return localeRequiresGrammaticalGender(language.value);
+});
+
+const showQualityModeSelector = computed(() => {
+  return coverLetterDraftEnabled.value && coverLetterHighEnabled.value;
+});
+
+watchEffect(() => {
+  if (coverLetterDraftEnabled.value && !coverLetterHighEnabled.value) {
+    if (qualityMode.value !== COVER_LETTER_QUALITY_MODE_MAP.DRAFT) {
+      qualityMode.value = COVER_LETTER_QUALITY_MODE_MAP.DRAFT;
+    }
+    return;
+  }
+
+  if (!coverLetterDraftEnabled.value && coverLetterHighEnabled.value) {
+    if (qualityMode.value !== COVER_LETTER_QUALITY_MODE_MAP.HIGH) {
+      qualityMode.value = COVER_LETTER_QUALITY_MODE_MAP.HIGH;
+    }
+  }
 });
 
 const toPositiveInteger = (value: unknown, fallback: number): number => {
@@ -348,6 +455,7 @@ const characterLimitBounds = computed(() => {
 
 const minCharacterLimit = computed(() => characterLimitBounds.value.min);
 const maxCharacterLimit = computed(() => characterLimitBounds.value.max);
+const instructionsCharacterCount = computed(() => instructions.value.length);
 
 const characterLimitHint = computed(() => {
   return t('vacancy.cover.length.charLimitRangeHint', {
@@ -438,6 +546,11 @@ const toneItems = computed(() => [
   { label: t('vacancy.cover.tone.direct'), value: COVER_LETTER_TONE_MAP.DIRECT }
 ]);
 
+const qualityModeItems = computed(() => [
+  { label: t('vacancy.cover.quality.draft'), value: COVER_LETTER_QUALITY_MODE_MAP.DRAFT },
+  { label: t('vacancy.cover.quality.high'), value: COVER_LETTER_QUALITY_MODE_MAP.HIGH }
+]);
+
 const lengthItems = computed(() => [
   ...[
     { label: t('vacancy.cover.length.short'), value: COVER_LETTER_LENGTH_PRESET_MAP.SHORT },
@@ -497,6 +610,49 @@ const lengthItems = computed(() => [
     color: var(--ui-color-error-500);
     font-size: 0.75rem;
     line-height: 1.4;
+  }
+
+  &__instructions-counter {
+    margin-top: 0.5rem;
+    color: var(--ui-text-muted);
+    font-size: 0.75rem;
+    text-align: right;
+  }
+
+  &__quality-hint-trigger {
+    padding: 0;
+    min-height: 1rem;
+    min-width: 1rem;
+    color: var(--ui-text-muted);
+  }
+
+  &__quality-hint-popover {
+    z-index: 90;
+    max-width: 22rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--ui-border-muted);
+    background-color: var(--ui-bg-elevated);
+    box-shadow: 0 8px 24px rgb(9 15 42 / 24%);
+    white-space: normal;
+  }
+
+  &__quality-hint-tooltip {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  &__quality-hint-line {
+    color: var(--ui-text-toned);
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  &__quality-hint-warning {
+    color: var(--ui-color-warning-500);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    font-weight: 500;
   }
 }
 </style>

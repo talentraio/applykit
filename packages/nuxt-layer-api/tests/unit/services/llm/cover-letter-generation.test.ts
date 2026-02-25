@@ -1,4 +1,5 @@
 import type { ResumeContent } from '@int/schema';
+import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 import { describe, expect, it, vi } from 'vitest';
 import { generateCoverLetterWithLLM } from '../../../../server/services/llm/cover-letter';
 
@@ -179,7 +180,7 @@ Test User`,
     expect(result.contentMarkdown).not.toContain('Test User');
   });
 
-  it('runs critic quality scoring in score mode without rewrite pass', async () => {
+  it('runs critic quality scoring without rewrite when rewrite passes are disabled', async () => {
     callLLMMock.mockReset();
     callLLMMock
       .mockResolvedValueOnce({
@@ -234,9 +235,85 @@ Test User`,
       {
         maxRetries: 0,
         humanizerConfig: {
-          mode: 'score',
-          criticProvider: 'openai',
-          criticModel: 'gpt-5-mini',
+          provider: 'openai',
+          model: 'gpt-5-mini',
+          minNaturalnessScore: 75,
+          maxAiRiskScore: 35,
+          maxRewritePasses: 0,
+          debugLogs: false
+        }
+      }
+    );
+
+    expect(callLLMMock).toHaveBeenCalledTimes(2);
+    expect(result.contentMarkdown).toContain('Sincerely,');
+  });
+
+  it('retries critic parsing once when critic returns invalid JSON', async () => {
+    callLLMMock.mockReset();
+    callLLMMock
+      .mockResolvedValueOnce({
+        content: JSON.stringify({
+          contentMarkdown: validLetterMarkdown,
+          subjectLine: null
+        }),
+        tokensUsed: 80,
+        cost: 0.009,
+        provider: 'openai',
+        providerType: 'platform',
+        model: 'gpt-5-mini'
+      })
+      .mockResolvedValueOnce({
+        content: '{"naturalnessScore":72',
+        tokensUsed: 20,
+        cost: 0.002,
+        provider: 'openai',
+        providerType: 'platform',
+        model: 'gpt-5-mini'
+      })
+      .mockResolvedValueOnce({
+        content: JSON.stringify({
+          naturalnessScore: 78,
+          aiPatternRiskScore: 24,
+          specificityScore: 74,
+          localeFitScore: 81,
+          rewriteRecommended: false,
+          issues: [],
+          targetedFixes: []
+        }),
+        tokensUsed: 25,
+        cost: 0.003,
+        provider: 'openai',
+        providerType: 'platform',
+        model: 'gpt-5-mini'
+      });
+
+    const result = await generateCoverLetterWithLLM(
+      {
+        resumeContent: resumeContentFixture,
+        vacancy: {
+          company: 'Acme',
+          jobPosition: 'Frontend Engineer',
+          description: 'Build UI'
+        },
+        settings: {
+          language: 'en',
+          market: 'default',
+          grammaticalGender: 'neutral',
+          type: 'letter',
+          tone: 'professional',
+          lengthPreset: 'standard',
+          characterLimit: null,
+          recipientName: null,
+          includeSubjectLine: false,
+          instructions: null
+        }
+      },
+      {
+        maxRetries: 0,
+        humanizerConfig: {
+          provider: 'openai',
+          model: 'gpt-5-mini',
           minNaturalnessScore: 75,
           maxAiRiskScore: 35,
           maxRewritePasses: 1,
@@ -245,7 +322,7 @@ Test User`,
       }
     );
 
-    expect(callLLMMock).toHaveBeenCalledTimes(2);
+    expect(callLLMMock).toHaveBeenCalledTimes(3);
     expect(result.contentMarkdown).toContain('Sincerely,');
   });
 
@@ -324,9 +401,8 @@ Test User`,
       {
         maxRetries: 0,
         humanizerConfig: {
-          mode: 'rewrite',
-          criticProvider: 'openai',
-          criticModel: 'gpt-5-mini',
+          provider: 'openai',
+          model: 'gpt-5-mini',
           minNaturalnessScore: 75,
           maxAiRiskScore: 35,
           maxRewritePasses: 1,
@@ -337,6 +413,12 @@ Test User`,
 
     expect(callLLMMock).toHaveBeenCalledTimes(3);
     expect(result.contentMarkdown).toContain('stable UI systems with practical delivery focus');
+    expect(callLLMMock.mock.calls[2]?.[1]?.scenario).toBe(
+      LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC
+    );
+    expect(callLLMMock.mock.calls[2]?.[1]?.respectRequestReasoningEffort).toBe(true);
+    expect(callLLMMock.mock.calls[2]?.[1]?.respectRequestMaxTokens).toBe(true);
+    expect(callLLMMock.mock.calls[2]?.[0]?.reasoningEffort).toBe('low');
   });
 
   it('autofixes long-dash punctuation without retry', async () => {
@@ -509,6 +591,71 @@ Test User`
       }
     }
   );
+
+  it('deduplicates top-level date lines in letter normalization', async () => {
+    callLLMMock.mockReset();
+    callLLMMock.mockResolvedValue({
+      content: JSON.stringify({
+        contentMarkdown: `Test User
+test@example.com
++45 12 34 56 78
+
+24 лютого 2026 р.
+
+24 лютого 2026 р.
+
+Добрий день!
+
+Подаюся на роль і можу підсилити команду практичним досвідом.
+
+З повагою
+Test User`,
+        subjectLine: null
+      }),
+      tokensUsed: 90,
+      cost: 0.01,
+      provider: 'openai',
+      providerType: 'platform',
+      model: 'gpt-5-mini'
+    });
+
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-02-24T12:00:00.000Z'));
+
+    try {
+      const result = await generateCoverLetterWithLLM(
+        {
+          resumeContent: resumeContentFixture,
+          vacancy: {
+            company: 'Acme',
+            jobPosition: 'Frontend Engineer',
+            description: 'Build UI'
+          },
+          settings: {
+            language: 'uk-UA',
+            market: 'ua',
+            grammaticalGender: 'masculine',
+            type: 'letter',
+            tone: 'friendly',
+            lengthPreset: 'standard',
+            characterLimit: null,
+            recipientName: null,
+            includeSubjectLine: false,
+            instructions: null
+          }
+        },
+        {
+          maxRetries: 0
+        }
+      );
+
+      const expectedDate = '24 лютого 2026 р.';
+      const dateOccurrences = result.contentMarkdown.split(expectedDate).length - 1;
+      expect(dateOccurrences).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it.each(['gpt-5-mini', 'gpt-4.1', 'gpt-5.2', 'gemini-2.5-flash'])(
     'preserves usage model metadata for %s',

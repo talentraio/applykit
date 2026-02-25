@@ -93,9 +93,6 @@ export const useVacancyPreparationStore = defineStore('VacancyPreparationStore',
     getPreparationLatestGeneration(): VacancyOverviewGeneration | null {
       return this.getPreparationItem?.latestGeneration ?? null;
     },
-    getPreparationDetailedScoringEnabled(): boolean {
-      return this.getPreparationItem?.detailedScoringEnabled ?? false;
-    },
     getPreparationScoreDetails(): GenerationScoreDetail | null {
       return this.getPreparationItem?.scoreDetails ?? null;
     },

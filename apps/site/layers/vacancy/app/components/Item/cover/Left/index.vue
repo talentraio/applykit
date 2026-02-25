@@ -27,6 +27,7 @@ defineOptions({ name: 'VacancyItemCoverLeft' });
 const props = defineProps<{
   formatSettings: SpacingSettings;
   hasCoverLetter: boolean;
+  tabsDisabled?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -62,13 +63,14 @@ const leftTabItems = computed(() => [
   {
     label: t('vacancy.cover.inputsTitle'),
     value: inputsTabValue,
-    icon: 'i-lucide-sliders-horizontal'
+    icon: 'i-lucide-sliders-horizontal',
+    disabled: props.tabsDisabled ?? false
   },
   {
     label: t('vacancy.cover.formatTitle'),
     value: 'format' as LeftPanelTab,
     icon: 'i-lucide-settings',
-    disabled: !props.hasCoverLetter
+    disabled: (props.tabsDisabled ?? false) || !props.hasCoverLetter
   }
 ]);
 

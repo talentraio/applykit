@@ -15,6 +15,11 @@ import type {
   LlmScenarioModel as LlmScenarioModelRow,
   LlmScenario as LlmScenarioRow
 } from '../schema';
+import {
+  LLM_REASONING_EFFORT_MAP,
+  LLM_RESPONSE_FORMAT_MAP,
+  LLM_SCENARIO_KEY_MAP
+} from '@int/schema';
 import { and, eq } from 'drizzle-orm';
 import { isUndefinedTableError } from '../../utils/db-errors';
 import { db } from '../db';
@@ -31,6 +36,49 @@ const toNullableNumber = (value: string | null): number | null => {
 };
 
 const ROLE_SCENARIO_ENABLED_OVERRIDES_RELATION = 'llm_role_scenario_enabled_overrides';
+const SCENARIO_KEY_ENUM_NAME = 'llm_scenario_key';
+
+type ScenarioBootstrapConfig = {
+  label: string;
+  description: string;
+  enabled: boolean;
+  defaultModelKeys?: string[];
+  defaultTemperature?: string | null;
+  defaultMaxTokens?: number | null;
+  defaultResponseFormat?: 'text' | 'json' | null;
+  defaultReasoningEffort?: LlmReasoningEffort | null;
+  defaultStrategyKey?: LlmStrategyKey | null;
+};
+
+const SCENARIO_BOOTSTRAP_CONFIG: Partial<Record<LlmScenarioKey, ScenarioBootstrapConfig>> = {
+  [LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT]: {
+    label: 'Cover Letter Generation Draft',
+    description: 'Generate a fast draft cover letter structure for manual refinement.',
+    enabled: true,
+    defaultModelKeys: ['gpt-5-mini', 'gpt-4.1-mini'],
+    defaultTemperature: '0.40',
+    defaultMaxTokens: 3000,
+    defaultResponseFormat: LLM_RESPONSE_FORMAT_MAP.JSON,
+    defaultReasoningEffort: LLM_REASONING_EFFORT_MAP.AUTO,
+    defaultStrategyKey: null
+  },
+  [LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC]: {
+    label: 'Cover Letter Humanizer Critic',
+    description: 'Evaluate and optionally rewrite cover letter output for naturalness.',
+    enabled: false,
+    defaultModelKeys: ['gpt-5-mini', 'gpt-4.1-mini'],
+    defaultTemperature: '0.00',
+    defaultMaxTokens: 1500,
+    defaultResponseFormat: LLM_RESPONSE_FORMAT_MAP.JSON,
+    defaultReasoningEffort: LLM_REASONING_EFFORT_MAP.LOW,
+    defaultStrategyKey: null
+  }
+};
+
+const BOOTSTRAP_SCENARIO_KEYS: LlmScenarioKey[] = [
+  LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT,
+  LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC
+];
 
 type RoutingAssignment = {
   modelId: string;
@@ -112,6 +160,88 @@ const toDbPatch = (
   };
 };
 
+const isInvalidScenarioEnumValueError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return (
+    error.message.includes('invalid input value for enum') &&
+    error.message.includes(SCENARIO_KEY_ENUM_NAME)
+  );
+};
+
+const ensureScenarioBootstrap = async (scenarioKey: LlmScenarioKey): Promise<void> => {
+  const config = SCENARIO_BOOTSTRAP_CONFIG[scenarioKey];
+  if (!config) {
+    return;
+  }
+
+  try {
+    await db
+      .insert(llmScenarios)
+      .values({
+        key: scenarioKey,
+        label: config.label,
+        description: config.description,
+        enabled: config.enabled
+      })
+      .onConflictDoNothing();
+  } catch (error) {
+    if (isInvalidScenarioEnumValueError(error)) {
+      return;
+    }
+    throw error;
+  }
+
+  if (!config.defaultModelKeys?.length) {
+    return;
+  }
+
+  const [existingDefault] = await db
+    .select({ scenarioKey: llmScenarioModels.scenarioKey })
+    .from(llmScenarioModels)
+    .where(eq(llmScenarioModels.scenarioKey, scenarioKey))
+    .limit(1);
+  if (existingDefault) {
+    return;
+  }
+
+  const modelRows = await db
+    .select({ id: llmModels.id, modelKey: llmModels.modelKey })
+    .from(llmModels)
+    .where(and(eq(llmModels.provider, 'openai'), eq(llmModels.status, 'active')));
+
+  const resolvedModelId =
+    config.defaultModelKeys
+      .map(modelKey => modelRows.find(row => row.modelKey === modelKey)?.id ?? null)
+      .find(modelId => modelId !== null) ?? null;
+
+  if (!resolvedModelId) {
+    return;
+  }
+
+  await db
+    .insert(llmScenarioModels)
+    .values({
+      scenarioKey,
+      modelId: resolvedModelId,
+      retryModelId: null,
+      temperature: config.defaultTemperature ?? null,
+      maxTokens: config.defaultMaxTokens ?? null,
+      responseFormat: config.defaultResponseFormat ?? null,
+      reasoningEffort: config.defaultReasoningEffort ?? null,
+      strategyKey: config.defaultStrategyKey ?? null
+    })
+    .onConflictDoNothing();
+};
+
+const ensureBootstrapScenarios = async (): Promise<void> => {
+  for (const scenarioKey of BOOTSTRAP_SCENARIO_KEYS) {
+    await ensureScenarioBootstrap(scenarioKey);
+  }
+};
+
 export type RuntimeResolvedModel = {
   source: 'role_override' | 'scenario_default';
   assignment: RoutingAssignment;
@@ -121,6 +251,8 @@ export type RuntimeResolvedModel = {
 
 export const llmRoutingRepository = {
   async findScenario(scenarioKey: LlmScenarioKey): Promise<LlmScenarioRow | null> {
+    await ensureScenarioBootstrap(scenarioKey);
+
     const rows = await db
       .select()
       .from(llmScenarios)
@@ -151,6 +283,8 @@ export const llmRoutingRepository = {
   },
 
   async getRoutingItems(): Promise<LlmRoutingItem[]> {
+    await ensureBootstrapScenarios();
+
     const [scenarioRows, defaultRows, overrideRows] = await Promise.all([
       db.select().from(llmScenarios),
       db.select().from(llmScenarioModels),
@@ -217,6 +351,8 @@ export const llmRoutingRepository = {
     scenarioKey: LlmScenarioKey,
     input: RoutingAssignmentInput
   ): Promise<LlmRoutingItem | null> {
+    await ensureScenarioBootstrap(scenarioKey);
+
     const now = new Date();
     const values = {
       scenarioKey,
@@ -236,6 +372,8 @@ export const llmRoutingRepository = {
     scenarioKey: LlmScenarioKey,
     enabled: boolean
   ): Promise<LlmRoutingItem | null> {
+    await ensureScenarioBootstrap(scenarioKey);
+
     const rows = await db
       .update(llmScenarios)
       .set({
@@ -257,6 +395,8 @@ export const llmRoutingRepository = {
     role: Role,
     input: RoutingAssignmentInput
   ): Promise<LlmRoutingItem | null> {
+    await ensureScenarioBootstrap(scenarioKey);
+
     const now = new Date();
     const values = {
       role,
@@ -281,6 +421,8 @@ export const llmRoutingRepository = {
     role: Role,
     enabled: boolean
   ): Promise<LlmRoutingItem | null> {
+    await ensureScenarioBootstrap(scenarioKey);
+
     const now = new Date();
 
     await db

@@ -42,6 +42,7 @@
         :type="previewType"
         :settings="currentPreviewSettings"
         :photo-url="photoUrl"
+        :loading="previewLoading"
       />
       <div v-else class="resume-editor-layout__empty">
         <UIcon name="i-lucide-file-text" class="h-12 w-12 text-muted" />
@@ -82,6 +83,7 @@ const props = withDefaults(
     previewContent?: ResumeContent | null;
     previewSettings?: ResumeFormatSettingsAts | ResumeFormatSettingsHuman;
     exportSettings?: FormatSettingsMap;
+    previewLoading?: boolean;
     canUndo?: boolean;
     canRedo?: boolean;
     isDirty?: boolean;
@@ -90,6 +92,7 @@ const props = withDefaults(
     previewContent: null,
     previewSettings: undefined,
     exportSettings: undefined,
+    previewLoading: false,
     canUndo: false,
     canRedo: false,
     isDirty: false

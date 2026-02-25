@@ -3,10 +3,12 @@ import type {
   CoverLetterGenerateBody,
   CoverLetterLengthPreset,
   CoverLetterPatchBody,
+  CoverLetterQualityMode,
   GrammaticalGender,
   SpacingSettings
 } from '@int/schema';
 import {
+  COVER_LETTER_QUALITY_MODE_MAP,
   DefaultCoverLetterFormatSettings,
   GRAMMATICAL_GENDER_MAP,
   normalizeNullableText
@@ -56,6 +58,7 @@ export type CoverLetterCacheItem = {
   language: CoverLetterGenerateBody['language'];
   market: CoverLetterGenerateBody['market'];
   grammaticalGender: CoverLetterGenerateBody['grammaticalGender'];
+  qualityMode: CoverLetterQualityMode;
   type: CoverLetterGenerateBody['type'];
   tone: CoverLetterGenerateBody['tone'];
   lengthPreset: CoverLetterGenerateBody['lengthPreset'];
@@ -80,6 +83,7 @@ const createDraftCoverLetter = (
   language: 'en',
   market: 'default',
   grammaticalGender,
+  qualityMode: COVER_LETTER_QUALITY_MODE_MAP.HIGH,
   type: 'letter',
   tone: 'professional',
   lengthPreset: 'standard',
@@ -101,6 +105,7 @@ const toCoverLetterCacheItem = (coverLetter: CoverLetter): CoverLetterCacheItem 
   language: coverLetter.language,
   market: coverLetter.market,
   grammaticalGender: coverLetter.grammaticalGender,
+  qualityMode: coverLetter.qualityMode,
   type: coverLetter.type,
   tone: coverLetter.tone,
   lengthPreset: coverLetter.lengthPreset,
@@ -122,6 +127,7 @@ const toGeneratePayload = (coverLetter: CoverLetterCacheItem): CoverLetterGenera
   language: coverLetter.language,
   market: coverLetter.market,
   grammaticalGender: coverLetter.grammaticalGender,
+  qualityMode: coverLetter.qualityMode,
   type: coverLetter.type,
   tone: coverLetter.tone,
   lengthPreset: coverLetter.lengthPreset,
@@ -143,13 +149,13 @@ export const useVacancyCoverLetterStore = defineStore('VacancyCoverLetterStore',
   state: (): {
     activeVacancyId: string | null;
     coverLetters: CoverLetterCacheItem[];
-    coverLetterGenerating: boolean;
+    coverLetterGeneratingVacancyIds: string[];
     coverLetterSaving: boolean;
     coverLetterSaveEpoch: number;
   } => ({
     activeVacancyId: null,
     coverLetters: [],
-    coverLetterGenerating: false,
+    coverLetterGeneratingVacancyIds: [],
     coverLetterSaving: false,
     coverLetterSaveEpoch: 0
   }),
@@ -163,7 +169,11 @@ export const useVacancyCoverLetterStore = defineStore('VacancyCoverLetterStore',
     getHasPersistedCoverLetter(): boolean {
       return Boolean(this.getCoverLetter?.id);
     },
-    getCoverLetterGenerating: (state): boolean => state.coverLetterGenerating,
+    getCoverLetterGenerating: (state): boolean => {
+      if (!state.activeVacancyId) return false;
+      return state.coverLetterGeneratingVacancyIds.includes(state.activeVacancyId);
+    },
+    getCoverLetterGeneratingVacancyIds: (state): string[] => state.coverLetterGeneratingVacancyIds,
     getCoverLetterSaving: (state): boolean => state.coverLetterSaving,
 
     getCoverLetterGeneratePayload(): CoverLetterGenerateBody {
@@ -198,8 +208,8 @@ export const useVacancyCoverLetterStore = defineStore('VacancyCoverLetterStore',
     },
 
     _upsertCoverLetter(coverLetter: CoverLetter): void {
-      const nextCoverLetter = toCoverLetterCacheItem(coverLetter);
       const index = this.coverLetters.findIndex(entry => entry.vacancyId === coverLetter.vacancyId);
+      const nextCoverLetter = toCoverLetterCacheItem(coverLetter);
 
       if (index !== -1) {
         this.coverLetters[index] = nextCoverLetter;
@@ -218,6 +228,20 @@ export const useVacancyCoverLetterStore = defineStore('VacancyCoverLetterStore',
       }
 
       this._ensureDraft(vacancyId);
+    },
+
+    _startCoverLetterGenerating(vacancyId: string): void {
+      if (this.coverLetterGeneratingVacancyIds.includes(vacancyId)) {
+        return;
+      }
+
+      this.coverLetterGeneratingVacancyIds.push(vacancyId);
+    },
+
+    _finishCoverLetterGenerating(vacancyId: string): void {
+      this.coverLetterGeneratingVacancyIds = this.coverLetterGeneratingVacancyIds.filter(
+        item => item !== vacancyId
+      );
     },
 
     setActiveContext(vacancyId: string): void {
@@ -240,6 +264,12 @@ export const useVacancyCoverLetterStore = defineStore('VacancyCoverLetterStore',
       const coverLetter = this.getCoverLetter;
       if (!coverLetter) return;
       coverLetter.grammaticalGender = grammaticalGender;
+    },
+
+    updateCurrentQualityMode(qualityMode: CoverLetterQualityMode): void {
+      const coverLetter = this.getCoverLetter;
+      if (!coverLetter) return;
+      coverLetter.qualityMode = qualityMode;
     },
 
     updateCurrentType(type: CoverLetterGenerateBody['type']): void {
@@ -369,17 +399,19 @@ export const useVacancyCoverLetterStore = defineStore('VacancyCoverLetterStore',
       payload?: CoverLetterGenerateBody
     ): Promise<CoverLetterCacheItem> {
       this._ensureVacancyContext(vacancyId);
-      this.coverLetterGenerating = true;
+      this._startCoverLetterGenerating(vacancyId);
+      const vacancyStore = useVacancyStore();
 
       try {
         const generatePayload = payload ?? this.getCoverLetterGeneratePayload;
         const coverLetter = await coverLetterApi.generate(vacancyId, generatePayload);
         this._upsertCoverLetter(coverLetter);
+        vacancyStore.markCoverLetterGenerated(vacancyId);
         return this.getCoverLetter ?? this._ensureDraft(vacancyId);
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to generate cover letter');
       } finally {
-        this.coverLetterGenerating = false;
+        this._finishCoverLetterGenerating(vacancyId);
       }
     },
 
@@ -413,7 +445,7 @@ export const useVacancyCoverLetterStore = defineStore('VacancyCoverLetterStore',
     $reset(): void {
       this.activeVacancyId = null;
       this.coverLetters = [];
-      this.coverLetterGenerating = false;
+      this.coverLetterGeneratingVacancyIds = [];
       this.coverLetterSaving = false;
       this.coverLetterSaveEpoch = 0;
     }

@@ -52,7 +52,7 @@
       size="lg"
       :to="coverTo"
     >
-      {{ t('vacancy.overview.generateCoverLetter') }}
+      {{ coverLetterActionLabel }}
     </UButton>
   </div>
 </template>
@@ -71,6 +71,7 @@ defineOptions({ name: 'VacancyItemOverviewContentActions' });
 const props = defineProps<{
   isGenerating: boolean;
   hasGeneration: boolean;
+  hasCoverLetter: boolean;
   canGenerateResume: boolean;
   resumeTo: string;
   coverTo: string;
@@ -101,6 +102,12 @@ const generateActionLabel = computed(() => {
 const generateActionIcon = computed(() =>
   props.hasGeneration ? 'i-lucide-refresh-cw' : 'i-lucide-sparkles'
 );
+
+const coverLetterActionLabel = computed(() => {
+  return props.hasCoverLetter
+    ? t('vacancy.overview.viewCoverLetter')
+    : t('vacancy.overview.generateCoverLetter');
+});
 
 const generateDropdownItems = computed<DropdownMenuItem[][]>(() => {
   const pickerItems = props.resumePickerItems ?? [];

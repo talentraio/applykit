@@ -55,9 +55,6 @@ export default defineNuxtConfig({
         }
       },
       coverLetterHumanizer: {
-        mode: process.env.NUXT_LLM_COVER_LETTER_HUMANIZER_MODE ?? 'off',
-        criticProvider: process.env.NUXT_LLM_COVER_LETTER_CRITIC_PROVIDER ?? 'openai',
-        criticModel: process.env.NUXT_LLM_COVER_LETTER_CRITIC_MODEL ?? 'gpt-5-mini',
         minNaturalnessScore: Number(
           process.env.NUXT_LLM_COVER_LETTER_MIN_NATURALNESS_SCORE ?? '75'
         ),
@@ -117,6 +114,7 @@ export default defineNuxtConfig({
       coverLetter: {
         minLengthLimitCharacters: COVER_LETTER_CHARACTER_LIMIT_DEFAULTS.MIN,
         maxLengthLimitCharacters: COVER_LETTER_CHARACTER_LIMIT_DEFAULTS.MAX,
+        additionalInstructionsMaxCharacters: 1000,
         targetBufferRatio: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_RATIO,
         targetBufferSmallLimitThreshold:
           COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_SMALL_LIMIT_THRESHOLD,

@@ -3,6 +3,7 @@ import {
   COVER_LETTER_LENGTH_PRESET_MAP,
   COVER_LETTER_LOCALE_MAP,
   COVER_LETTER_MARKET_MAP,
+  COVER_LETTER_QUALITY_MODE_MAP,
   COVER_LETTER_TONE_MAP,
   COVER_LETTER_TYPE_MAP,
   EXPORT_FORMAT_MAP,
@@ -103,6 +104,10 @@ export type CoverLetterTone = z.infer<typeof CoverLetterToneSchema>;
 // Cover letter length preset
 export const CoverLetterLengthPresetSchema = z.nativeEnum(COVER_LETTER_LENGTH_PRESET_MAP);
 export type CoverLetterLengthPreset = z.infer<typeof CoverLetterLengthPresetSchema>;
+
+// Cover letter quality mode
+export const CoverLetterQualityModeSchema = z.nativeEnum(COVER_LETTER_QUALITY_MODE_MAP);
+export type CoverLetterQualityMode = z.infer<typeof CoverLetterQualityModeSchema>;
 
 // Grammatical gender preference for localized text generation
 export const GrammaticalGenderSchema = z.nativeEnum(GRAMMATICAL_GENDER_MAP);

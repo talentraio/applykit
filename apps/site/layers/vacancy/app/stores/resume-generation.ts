@@ -46,7 +46,7 @@ export const useVacancyResumeGenerationStore = defineStore('VacancyResumeGenerat
   state: (): {
     activeVacancyId: string | null;
     generations: Generation[];
-    generating: boolean;
+    generatingVacancyIds: string[];
     savingGeneration: boolean;
     generationSaveEpoch: number;
 
@@ -61,7 +61,7 @@ export const useVacancyResumeGenerationStore = defineStore('VacancyResumeGenerat
     return {
       activeVacancyId: null,
       generations: [],
-      generating: false,
+      generatingVacancyIds: [],
       savingGeneration: false,
       generationSaveEpoch: 0,
 
@@ -84,6 +84,13 @@ export const useVacancyResumeGenerationStore = defineStore('VacancyResumeGenerat
     getHasGeneration(): boolean {
       return this.getCurrentGeneration !== null;
     },
+
+    getGenerating: (state): boolean => {
+      if (!state.activeVacancyId) return false;
+      return state.generatingVacancyIds.includes(state.activeVacancyId);
+    },
+
+    getGeneratingVacancyIds: (state): string[] => state.generatingVacancyIds,
 
     getSavingGeneration: (state): boolean => state.savingGeneration,
 
@@ -141,9 +148,21 @@ export const useVacancyResumeGenerationStore = defineStore('VacancyResumeGenerat
       }
     },
 
+    _startGenerating(vacancyId: string): void {
+      if (this.generatingVacancyIds.includes(vacancyId)) {
+        return;
+      }
+
+      this.generatingVacancyIds.push(vacancyId);
+    },
+
+    _finishGenerating(vacancyId: string): void {
+      this.generatingVacancyIds = this.generatingVacancyIds.filter(item => item !== vacancyId);
+    },
+
     async generateResume(vacancyId: string, options?: GenerateOptions): Promise<Generation> {
       this._ensureVacancyContext(vacancyId);
-      this.generating = true;
+      this._startGenerating(vacancyId);
 
       try {
         const generation = await generationApi.generate(vacancyId, options);
@@ -166,7 +185,7 @@ export const useVacancyResumeGenerationStore = defineStore('VacancyResumeGenerat
       } catch (err) {
         throw err instanceof Error ? err : new Error('Failed to generate resume');
       } finally {
-        this.generating = false;
+        this._finishGenerating(vacancyId);
       }
     },
 
@@ -381,7 +400,7 @@ export const useVacancyResumeGenerationStore = defineStore('VacancyResumeGenerat
 
       this.activeVacancyId = null;
       this.generations = [];
-      this.generating = false;
+      this.generatingVacancyIds = [];
       this.savingGeneration = false;
       this.generationSaveEpoch = 0;
 

@@ -59,7 +59,9 @@ export const LLM_SCENARIO_KEY_MAP = {
   RESUME_ADAPTATION: 'resume_adaptation',
   RESUME_ADAPTATION_SCORING: 'resume_adaptation_scoring',
   RESUME_ADAPTATION_SCORING_DETAIL: 'resume_adaptation_scoring_detail',
-  COVER_LETTER_GENERATION: 'cover_letter_generation'
+  COVER_LETTER_GENERATION: 'cover_letter_generation',
+  COVER_LETTER_GENERATION_DRAFT: 'cover_letter_generation_draft',
+  COVER_LETTER_HUMANIZER_CRITIC: 'cover_letter_humanizer_critic'
 } as const;
 
 export const LLM_SCENARIO_KEY_VALUES = enumValues(LLM_SCENARIO_KEY_MAP);
@@ -202,6 +204,13 @@ export const COVER_LETTER_LENGTH_PRESET_MAP = {
 } as const;
 
 export const COVER_LETTER_LENGTH_PRESET_VALUES = enumValues(COVER_LETTER_LENGTH_PRESET_MAP);
+
+export const COVER_LETTER_QUALITY_MODE_MAP = {
+  DRAFT: 'draft',
+  HIGH: 'high'
+} as const;
+
+export const COVER_LETTER_QUALITY_MODE_VALUES = enumValues(COVER_LETTER_QUALITY_MODE_MAP);
 
 export const COVER_LETTER_CHARACTER_LIMIT_DEFAULTS = {
   MIN: 100,

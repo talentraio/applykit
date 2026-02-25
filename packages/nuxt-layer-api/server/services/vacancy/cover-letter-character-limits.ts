@@ -10,6 +10,7 @@ type RuntimeConfigLike = {
     coverLetter?: {
       minLengthLimitCharacters?: unknown;
       maxLengthLimitCharacters?: unknown;
+      additionalInstructionsMaxCharacters?: unknown;
       targetBufferRatio?: unknown;
       targetBufferSmallLimitThreshold?: unknown;
       targetBufferSmallMin?: unknown;
@@ -33,6 +34,8 @@ export type CoverLetterCharacterBufferConfig = {
   targetBufferMin: number;
   targetBufferMax: number;
 };
+
+const DEFAULT_ADDITIONAL_INSTRUCTIONS_MAX_CHARACTERS = 1000;
 
 export const DEFAULT_COVER_LETTER_CHARACTER_BUFFER_CONFIG: CoverLetterCharacterBufferConfig = {
   targetBufferRatio: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_RATIO,
@@ -131,6 +134,15 @@ export const resolveCoverLetterCharacterBufferConfig = (
   };
 };
 
+export const resolveCoverLetterAdditionalInstructionsMaxCharacters = (
+  runtimeConfig: RuntimeConfigLike
+): number => {
+  return toPositiveInt(
+    runtimeConfig.public?.coverLetter?.additionalInstructionsMaxCharacters,
+    DEFAULT_ADDITIONAL_INSTRUCTIONS_MAX_CHARACTERS
+  );
+};
+
 const isCharacterLengthPreset = (value: CoverLetterGenerationSettings['lengthPreset']): boolean => {
   return (
     value === COVER_LETTER_LENGTH_PRESET_MAP.MIN_CHARS ||
@@ -165,6 +177,18 @@ export const getCharacterLimitValidationMessage = (
   }
 
   return null;
+};
+
+export const getAdditionalInstructionsValidationMessage = (
+  settings: CoverLetterGenerationSettings,
+  maxLength: number
+): string | null => {
+  const length = settings.instructions?.length ?? 0;
+  if (length <= maxLength) {
+    return null;
+  }
+
+  return `Additional instructions must be at most ${maxLength} characters.`;
 };
 
 export const createAdaptiveCharacterBuffer = (
@@ -210,5 +234,17 @@ type CharacterLimitIssue = {
 export const toCharacterLimitIssue = (message: string): CharacterLimitIssue => ({
   code: 'custom',
   path: ['characterLimit'],
+  message
+});
+
+type AdditionalInstructionsIssue = {
+  code: 'custom';
+  path: ['instructions'];
+  message: string;
+};
+
+export const toAdditionalInstructionsIssue = (message: string): AdditionalInstructionsIssue => ({
+  code: 'custom',
+  path: ['instructions'],
   message
 });

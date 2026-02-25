@@ -8,6 +8,7 @@
       :font-size="settings.fontSize"
       :line-height="settings.lineHeight"
       :block-spacing-px="paragraphSpacingPx"
+      :loading="loading"
       :show-page-numbers="showPageNumbers"
       :show-loading-when-measuring="true"
       :elevated="elevated"
@@ -63,11 +64,13 @@ const props = withDefaults(
     htmlContent: string;
     settings: SpacingSettings;
     subjectLine?: string | null;
+    loading?: boolean;
     elevated?: boolean;
     showPageNumbers?: boolean;
   }>(),
   {
     subjectLine: null,
+    loading: false,
     elevated: true,
     showPageNumbers: true
   }
@@ -186,7 +189,7 @@ const parseHtmlBlocks = (value: string): CoverPreviewHtmlBlock[] => {
     id: `html-${index}`,
     kind: 'html',
     html: segment,
-    keepWithNext: /^<h[1-3]\b/i.test(segment) ? 1 : 0
+    keepWithNext: /^<h[1-4]\b/i.test(segment) ? 1 : 0
   }));
 };
 
@@ -278,9 +281,11 @@ const isSubjectBlock = (block: CoverPreviewBlock): block is CoverPreviewSubjectB
 
     h1,
     h2,
-    h3 {
+    h3,
+    h4 {
       font-weight: 600;
       line-height: 1.2;
+      color: #1f2937;
     }
 
     h1 {
@@ -293,6 +298,10 @@ const isSubjectBlock = (block: CoverPreviewBlock): block is CoverPreviewSubjectB
 
     h3 {
       font-size: 1.1em;
+    }
+
+    h4 {
+      font-size: 1em;
     }
 
     blockquote {

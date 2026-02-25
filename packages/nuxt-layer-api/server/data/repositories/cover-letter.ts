@@ -2,6 +2,7 @@ import type {
   CoverLetterLanguage,
   CoverLetterLengthPreset,
   CoverLetterMarket,
+  CoverLetterQualityMode,
   CoverLetterTone,
   CoverLetterType,
   GrammaticalGender,
@@ -17,6 +18,7 @@ type CreateCoverLetterPayload = {
   generationId: string;
   language: CoverLetterLanguage;
   market: CoverLetterMarket;
+  qualityMode: CoverLetterQualityMode;
   grammaticalGender: GrammaticalGender;
   type: CoverLetterType;
   tone: CoverLetterTone;
@@ -57,6 +59,7 @@ export const coverLetterRepository = {
         generationId: coverLetters.generationId,
         language: coverLetters.language,
         market: coverLetters.market,
+        qualityMode: coverLetters.qualityMode,
         grammaticalGender: coverLetters.grammaticalGender,
         type: coverLetters.type,
         tone: coverLetters.tone,
@@ -104,6 +107,7 @@ export const coverLetterRepository = {
         generationId: payload.generationId,
         language: payload.language,
         market: payload.market,
+        qualityMode: payload.qualityMode,
         grammaticalGender: payload.grammaticalGender,
         type: payload.type,
         tone: payload.tone,

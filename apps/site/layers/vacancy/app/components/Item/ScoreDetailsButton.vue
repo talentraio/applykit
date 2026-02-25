@@ -36,6 +36,15 @@ const props = defineProps<{
 const { t } = useI18n();
 const vacancyStore = useVacancyStore();
 const vacancyPreparationStore = useVacancyPreparationStore();
+const {
+  openGenerationStatusModal: openScoreDetailsGenerationModal,
+  markGenerationStatusSuccess: markScoreDetailsGenerationSuccess,
+  markGenerationStatusError: markScoreDetailsGenerationError
+} = useGenerationStatusModal({
+  overlayId: 'site-score-details-generation-modal',
+  overlayOpenStateKey: 'site-score-details-generation-modal-overlay-open',
+  sessionStateKey: 'site-score-details-generation-modal-session'
+});
 const { getCurrentVacancyMeta } = storeToRefs(vacancyStore);
 
 const canRequestDetails = computed(
@@ -69,15 +78,32 @@ const handleOpenDetails = async (regenerate: boolean): Promise<void> => {
       }
     }
 
-    await vacancyPreparationStore.fetchScoreDetails(props.vacancyId, generationId, { regenerate });
-    await navigateTo(`/vacancies/${props.vacancyId}/preparation`);
-  } catch {
-    const toast = useToast();
-    toast.add({
-      title: t('vacancy.resume.detailsFailed'),
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
+    const subject = t('vacancy.resume.generationModal.loading.document.scoreDetails');
+    const { sessionId, completion } = openScoreDetailsGenerationModal({
+      titleSubject: subject,
+      readyStatementSubject: subject,
+      descriptionSubject: subject,
+      waitingTime: t('vacancy.resume.generationModal.loading.waitingTime'),
+      errorTitle: t('vacancy.resume.detailsFailed'),
+      errorDescription: t('generation.error.generic'),
+      errorMessage: t('generation.error.generic'),
+      errorActionLabel: t('generation.statusModal.action.error')
     });
+
+    try {
+      await vacancyPreparationStore.fetchScoreDetails(props.vacancyId, generationId, {
+        regenerate
+      });
+      markScoreDetailsGenerationSuccess(sessionId);
+
+      const closePayload = await completion;
+      if (closePayload?.action === 'acknowledged-success') {
+        await navigateTo(`/vacancies/${props.vacancyId}/preparation`);
+      }
+    } catch {
+      markScoreDetailsGenerationError(sessionId);
+      await completion;
+    }
   } finally {
     isLoading.value = false;
     actionType.value = null;

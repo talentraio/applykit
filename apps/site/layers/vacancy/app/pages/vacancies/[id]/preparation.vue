@@ -24,7 +24,7 @@
       </UPageCard>
     </template>
 
-    <template v-else-if="!preparationDetailedScoringEnabled">
+    <template v-else-if="!preparationCanRequestDetails">
       <UPageCard class="vacancy-preparation-page__empty-card">
         <div class="space-y-4 text-center">
           <UIcon name="i-lucide-sliders-horizontal" class="mx-auto h-10 w-10 text-muted" />
@@ -93,7 +93,7 @@
           </div>
         </UPageCard>
 
-        <div class="grid gap-6 lg:grid-cols-2">
+        <div class="grid gap-6" :class="hasGaps ? 'lg:grid-cols-2' : 'lg:grid-cols-1'">
           <UPageCard>
             <template #header>
               <h3 class="text-base font-semibold">{{ t('vacancy.preparation.matched') }}</h3>
@@ -110,7 +110,7 @@
             </ul>
           </UPageCard>
 
-          <UPageCard>
+          <UPageCard v-if="hasGaps">
             <template #header>
               <h3 class="text-base font-semibold">{{ t('vacancy.preparation.gaps') }}</h3>
             </template>
@@ -154,7 +154,7 @@ const { t } = useI18n();
 const vacancyPreparationStore = useVacancyPreparationStore();
 const {
   getPreparationLatestGeneration,
-  getPreparationDetailedScoringEnabled,
+  getPreparationCanRequestDetails,
   getPreparationScoreDetails,
   getPreparationScoreDetailsStale
 } = storeToRefs(vacancyPreparationStore);
@@ -176,11 +176,10 @@ const { pending, error } = await useAsyncData(
 );
 
 const preparationLatestGeneration = computed(() => getPreparationLatestGeneration.value);
-const preparationDetailedScoringEnabled = computed(
-  () => getPreparationDetailedScoringEnabled.value
-);
+const preparationCanRequestDetails = computed(() => getPreparationCanRequestDetails.value);
 const preparationScoreDetails = computed(() => getPreparationScoreDetails.value);
 const preparationScoreDetailsStale = computed(() => getPreparationScoreDetailsStale.value);
+const hasGaps = computed(() => (preparationScoreDetails.value?.details.gaps.length ?? 0) > 0);
 
 const errorMessage = computed(() => {
   if (!error.value) {

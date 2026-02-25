@@ -1,6 +1,6 @@
 <template>
   <div class="resume-preview" :data-ready="isReady ? 'true' : 'false'">
-    <template v-if="hasBlocks">
+    <template v-if="hasBlocks || props.loading">
       <BasePaginatedSheets
         class="resume-preview__pages"
         :blocks="blocks"
@@ -9,6 +9,7 @@
         :font-size="settings.fontSize"
         :line-height="settings.lineHeight"
         :block-spacing-px="settings.blockSpacing * 2"
+        :loading="props.loading"
         :show-loading-when-measuring="true"
         @ready-change="handlePaginatedReadyChange"
       >
@@ -78,10 +79,15 @@ const props = withDefaults(
      * Profile photo URL for human view
      */
     photoUrl?: string;
+    /**
+     * Show loading state instead of rendered pages
+     */
+    loading?: boolean;
   }>(),
   {
     type: EXPORT_FORMAT_MAP.ATS,
-    settings: undefined
+    settings: undefined,
+    loading: false
   }
 );
 

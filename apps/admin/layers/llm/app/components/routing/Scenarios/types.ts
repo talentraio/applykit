@@ -28,6 +28,14 @@ export type RoutingScenarioDraft = {
   reasoningEffort: string;
   strategyKey: string;
   flowEnabled: boolean;
+  draftModelId: string;
+  draftReasoningEffort: string;
+  draftFlowEnabled: boolean;
+  highModelId: string;
+  highReasoningEffort: string;
+  highFlowEnabled: boolean;
+  highHumanizerEnabled: boolean;
+  highHumanizerModelId: string;
 };
 
 export type ResumeAdaptationRuntimeConfig = {
@@ -46,7 +54,15 @@ export const createEmptyRoutingScenarioDraft = (): RoutingScenarioDraft => ({
   tertiaryModelId: '',
   reasoningEffort: '',
   strategyKey: '',
-  flowEnabled: true
+  flowEnabled: true,
+  draftModelId: '',
+  draftReasoningEffort: '',
+  draftFlowEnabled: true,
+  highModelId: '',
+  highReasoningEffort: '',
+  highFlowEnabled: true,
+  highHumanizerEnabled: false,
+  highHumanizerModelId: ''
 });
 
 export const cloneRoutingScenarioDraft = (draft: RoutingScenarioDraft): RoutingScenarioDraft => ({
@@ -55,5 +71,13 @@ export const cloneRoutingScenarioDraft = (draft: RoutingScenarioDraft): RoutingS
   tertiaryModelId: draft.tertiaryModelId,
   reasoningEffort: draft.reasoningEffort,
   strategyKey: draft.strategyKey,
-  flowEnabled: draft.flowEnabled
+  flowEnabled: draft.flowEnabled,
+  draftModelId: draft.draftModelId,
+  draftReasoningEffort: draft.draftReasoningEffort,
+  draftFlowEnabled: draft.draftFlowEnabled,
+  highModelId: draft.highModelId,
+  highReasoningEffort: draft.highReasoningEffort,
+  highFlowEnabled: draft.highFlowEnabled,
+  highHumanizerEnabled: draft.highHumanizerEnabled,
+  highHumanizerModelId: draft.highHumanizerModelId
 });

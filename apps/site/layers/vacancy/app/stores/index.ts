@@ -88,12 +88,19 @@ export const useVacancyStore = defineStore('VacancyStore', {
         company: overview.vacancy.company,
         jobPosition: overview.vacancy.jobPosition,
         latestGenerationId,
+        hasCoverLetter: overview.hasCoverLetter,
         canRequestScoreDetails: hasSameVacancyMeta
           ? (this.currentVacancyMeta?.canRequestScoreDetails ?? false)
           : false,
         canRegenerateScoreDetails: hasSameVacancyMeta
           ? (this.currentVacancyMeta?.canRegenerateScoreDetails ?? false)
-          : false
+          : false,
+        coverLetterDraftEnabled: hasSameVacancyMeta
+          ? (this.currentVacancyMeta?.coverLetterDraftEnabled ?? true)
+          : true,
+        coverLetterHighEnabled: hasSameVacancyMeta
+          ? (this.currentVacancyMeta?.coverLetterHighEnabled ?? true)
+          : true
       };
     },
 
@@ -119,6 +126,15 @@ export const useVacancyStore = defineStore('VacancyStore', {
           latestGenerationId: generation.id
         };
       }
+    },
+
+    markCoverLetterGenerated(vacancyId: string): void {
+      if (this.currentVacancyMeta?.id !== vacancyId) return;
+
+      this.currentVacancyMeta = {
+        ...this.currentVacancyMeta,
+        hasCoverLetter: true
+      };
     },
 
     async fetchVacancyMeta(id: string): Promise<VacancyMeta> {
@@ -171,8 +187,11 @@ export const useVacancyStore = defineStore('VacancyStore', {
           company: vacancy.company,
           jobPosition: vacancy.jobPosition,
           latestGenerationId: null,
+          hasCoverLetter: false,
           canRequestScoreDetails: false,
-          canRegenerateScoreDetails: false
+          canRegenerateScoreDetails: false,
+          coverLetterDraftEnabled: true,
+          coverLetterHighEnabled: true
         };
         return vacancy;
       } catch (err) {

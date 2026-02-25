@@ -21,6 +21,7 @@
           v-model:active-tab="activeLeftTab"
           :format-settings="formatSettings"
           :has-cover-letter="hasCoverLetter"
+          :tabs-disabled="coverLetterGenerating"
           @generate="handleGenerate"
           @update-format-setting="updateFormatSetting"
         />
@@ -36,7 +37,7 @@
       </template>
 
       <template #preview>
-        <div v-if="!hasCoverLetter" class="vacancy-cover-page__empty">
+        <div v-if="!hasCoverLetter && !coverLetterGenerating" class="vacancy-cover-page__empty">
           <UIcon name="i-lucide-mail" class="h-14 w-14 text-muted" />
           <h3 class="mt-4 text-lg font-semibold">{{ t('vacancy.cover.noCoverLetter') }}</h3>
           <p class="mt-2 text-muted">{{ t('vacancy.cover.generateHint') }}</p>
@@ -54,6 +55,7 @@
             :html-content="previewHtml"
             :subject-line="displaySubjectLine"
             :settings="formatSettings"
+            :loading="coverLetterGenerating"
           />
           <p v-if="coverLetterSaving" class="vacancy-cover-page__saving">
             {{ t('vacancy.resume.saving') }}
@@ -92,8 +94,10 @@ const route = useRoute();
 const { t } = useI18n();
 const toast = useToast();
 const vacancyStore = useVacancyStore();
+const vacancyCoverLetterStore = useVacancyCoverLetterStore();
 
 const { getCurrentVacancyMeta } = storeToRefs(vacancyStore);
+const { getCoverLetterGenerating } = storeToRefs(vacancyCoverLetterStore);
 
 const vacancyId = computed(() => {
   const value = route.params.id;
@@ -105,6 +109,7 @@ const activeLeftTab = ref<LeftPanelTab>('inputs');
 
 const latestGenerationId = computed(() => getCurrentVacancyMeta.value?.latestGenerationId ?? null);
 const hasGeneration = computed(() => Boolean(latestGenerationId.value));
+const coverLetterGenerating = computed(() => getCoverLetterGenerating.value);
 
 const getErrorMessage = (error: unknown): string | undefined => {
   return error instanceof Error && error.message ? error.message : undefined;
@@ -133,19 +138,29 @@ const {
     });
   }
 });
+const {
+  openGenerationStatusModal: openCoverLetterGenerationModal,
+  markGenerationStatusSuccess: markCoverLetterGenerationSuccess,
+  markGenerationStatusError: markCoverLetterGenerationError
+} = useGenerationStatusModal({
+  overlayId: 'site-cover-letter-generation-modal',
+  overlayOpenStateKey: 'site-cover-letter-generation-modal-overlay-open',
+  sessionStateKey: 'site-cover-letter-generation-modal-session'
+});
 const hasCoverLetter = computed(() => hasPersistedCoverLetter.value);
 
 const viewModeOptions = computed<BaseEditorLayoutModeOption[]>(() => [
   {
     value: 'preview',
     label: t('vacancy.cover.preview'),
-    icon: 'i-lucide-eye'
+    icon: 'i-lucide-eye',
+    disabled: coverLetterGenerating.value
   },
   {
     value: 'edit',
     label: t('resume.tabs.edit'),
     icon: 'i-lucide-pencil',
-    disabled: !hasCoverLetter.value
+    disabled: coverLetterGenerating.value || !hasCoverLetter.value
   }
 ]);
 
@@ -171,24 +186,27 @@ const handleGenerate = async (): Promise<void> => {
     return;
   }
 
-  const hadCoverLetter = hasCoverLetter.value;
+  viewMode.value = 'preview';
+
+  const outputType = vacancyCoverLetterStore.getCoverLetterGeneratePayload.type;
+  const subject =
+    outputType === 'message'
+      ? t('vacancy.cover.generationModal.loading.document.message')
+      : t('vacancy.cover.generationModal.loading.document.letter');
+
+  const { sessionId: modalSessionId } = openCoverLetterGenerationModal({
+    titleSubject: subject,
+    readyStatementSubject: subject,
+    descriptionSubject: subject,
+    waitingTime: t('vacancy.cover.generationModal.loading.waitingTime')
+  });
 
   try {
     await generateCoverLetter(vacancyId.value);
     viewMode.value = 'preview';
-
-    toast.add({
-      title: hadCoverLetter ? t('vacancy.cover.regenerated') : t('vacancy.cover.generated'),
-      color: 'success',
-      icon: 'i-lucide-check-circle'
-    });
-  } catch (error) {
-    toast.add({
-      title: t('vacancy.cover.generateFailed'),
-      description: getErrorMessage(error),
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    });
+    markCoverLetterGenerationSuccess(modalSessionId);
+  } catch {
+    markCoverLetterGenerationError(modalSessionId);
   }
 };
 

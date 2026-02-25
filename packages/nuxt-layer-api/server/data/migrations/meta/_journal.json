@@ -246,6 +246,20 @@
       "when": 1774800003000,
       "tag": "0035_lush_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1774800004000,
+      "tag": "0036_heavy_vermin",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1774800005000,
+      "tag": "0037_sleepy_blazing_skull",
+      "breakpoints": true
     }
   ]
 }

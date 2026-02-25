@@ -99,8 +99,16 @@ const resumeScoringItem = computed(() => {
   return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING) ?? null;
 });
 
-const coverLetterItem = computed(() => {
+const coverLetterHighItem = computed(() => {
   return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION) ?? null;
+});
+
+const coverLetterDraftItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT) ?? null;
+});
+
+const coverLetterHumanizerItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC) ?? null;
 });
 
 const detailedScoringItem = computed(() => {
@@ -242,12 +250,40 @@ const resumeAdaptationCapabilities = computed<string[]>(() => {
 });
 
 const coverLetterCapabilities = computed<string[]>(() => {
-  const item = coverLetterItem.value;
-  if (!item) return [];
+  const highItem = coverLetterHighItem.value;
+  const draftItem = coverLetterDraftItem.value;
+  const humanizerItem = coverLetterHumanizerItem.value;
+
+  if (!highItem && !draftItem && !humanizerItem) return [];
+
+  const draftFlowStatus = draftItem?.enabled
+    ? t('admin.llm.routing.detailedScoring.enabledShort')
+    : t('admin.llm.routing.detailedScoring.disabledShort');
+  const highFlowStatus = highItem?.enabled
+    ? t('admin.llm.routing.detailedScoring.enabledShort')
+    : t('admin.llm.routing.detailedScoring.disabledShort');
+  const humanizerStatus = humanizerItem?.enabled
+    ? t('admin.llm.routing.detailedScoring.enabledShort')
+    : t('admin.llm.routing.detailedScoring.disabledShort');
 
   return [
-    t('admin.llm.routing.capability.defaultModel', {
-      model: resolveModelLabel(item.default?.modelId ?? null)
+    t('admin.llm.routing.coverLetter.capability.draftFlow', { status: draftFlowStatus }),
+    t('admin.llm.routing.coverLetter.capability.draftModel', {
+      model: resolveModelLabel(draftItem?.default?.modelId ?? null)
+    }),
+    t('admin.llm.routing.coverLetter.capability.draftReasoning', {
+      value: resolveReasoningEffortLabel(draftItem?.default?.reasoningEffort)
+    }),
+    t('admin.llm.routing.coverLetter.capability.highFlow', { status: highFlowStatus }),
+    t('admin.llm.routing.coverLetter.capability.highModel', {
+      model: resolveModelLabel(highItem?.default?.modelId ?? null)
+    }),
+    t('admin.llm.routing.coverLetter.capability.highReasoning', {
+      value: resolveReasoningEffortLabel(highItem?.default?.reasoningEffort)
+    }),
+    t('admin.llm.routing.coverLetter.capability.humanizer', { status: humanizerStatus }),
+    t('admin.llm.routing.coverLetter.capability.humanizerModel', {
+      model: resolveModelLabel(humanizerItem?.default?.modelId ?? null)
     })
   ];
 });
@@ -328,7 +364,7 @@ const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
     };
   }
 
-  if (coverLetterItem.value) {
+  if (coverLetterHighItem.value || coverLetterDraftItem.value || coverLetterHumanizerItem.value) {
     cards[LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION] = {
       capabilities: coverLetterCapabilities.value,
       editDisabled: routingSaving.value
@@ -370,7 +406,15 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       tertiaryModelId: '',
       reasoningEffort: '',
       strategyKey: '',
-      flowEnabled: true
+      flowEnabled: true,
+      draftModelId: '',
+      draftReasoningEffort: 'auto',
+      draftFlowEnabled: true,
+      highModelId: '',
+      highReasoningEffort: 'auto',
+      highFlowEnabled: true,
+      highHumanizerEnabled: false,
+      highHumanizerModelId: ''
     };
   }
 
@@ -381,7 +425,15 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       tertiaryModelId: resumeAdaptationItem.value?.default?.retryModelId ?? '',
       reasoningEffort: resumeAdaptationItem.value?.default?.reasoningEffort ?? 'auto',
       strategyKey: resumeAdaptationItem.value?.default?.strategyKey ?? LLM_STRATEGY_KEY_MAP.ECONOMY,
-      flowEnabled: true
+      flowEnabled: true,
+      draftModelId: '',
+      draftReasoningEffort: 'auto',
+      draftFlowEnabled: true,
+      highModelId: '',
+      highReasoningEffort: 'auto',
+      highFlowEnabled: true,
+      highHumanizerEnabled: false,
+      highHumanizerModelId: ''
     };
   }
 
@@ -392,17 +444,33 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       tertiaryModelId: '',
       reasoningEffort: '',
       strategyKey: '',
-      flowEnabled: detailedScoringItem.value?.enabled ?? true
+      flowEnabled: detailedScoringItem.value?.enabled ?? true,
+      draftModelId: '',
+      draftReasoningEffort: 'auto',
+      draftFlowEnabled: true,
+      highModelId: '',
+      highReasoningEffort: 'auto',
+      highFlowEnabled: true,
+      highHumanizerEnabled: false,
+      highHumanizerModelId: ''
     };
   }
 
   return {
-    primaryModelId: coverLetterItem.value?.default?.modelId ?? '',
+    primaryModelId: coverLetterHighItem.value?.default?.modelId ?? '',
     secondaryModelId: '',
     tertiaryModelId: '',
     reasoningEffort: '',
     strategyKey: '',
-    flowEnabled: true
+    flowEnabled: true,
+    draftModelId: coverLetterDraftItem.value?.default?.modelId ?? '',
+    draftReasoningEffort: coverLetterDraftItem.value?.default?.reasoningEffort ?? 'auto',
+    draftFlowEnabled: coverLetterDraftItem.value?.enabled ?? false,
+    highModelId: coverLetterHighItem.value?.default?.modelId ?? '',
+    highReasoningEffort: coverLetterHighItem.value?.default?.reasoningEffort ?? 'auto',
+    highFlowEnabled: coverLetterHighItem.value?.enabled ?? false,
+    highHumanizerEnabled: coverLetterHumanizerItem.value?.enabled ?? false,
+    highHumanizerModelId: coverLetterHumanizerItem.value?.default?.modelId ?? ''
   };
 };
 
@@ -419,7 +487,12 @@ const getModalDescriptionByScenario = (scenarioKey: EditableScenarioKey): string
     return detailedScoringItem.value?.description ?? '';
   }
 
-  return coverLetterItem.value?.description ?? '';
+  return (
+    coverLetterHighItem.value?.description ??
+    coverLetterDraftItem.value?.description ??
+    coverLetterHumanizerItem.value?.description ??
+    ''
+  );
 };
 
 const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<string, unknown> => {
@@ -461,7 +534,18 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
 
   return {
     modelOptions: modelOptions.value,
-    primaryLabel: t('admin.llm.routing.defaultLabel'),
+    reasoningOptions: reasoningOptions.value,
+    draftFlowLabel: t('admin.llm.routing.coverLetter.flow.draft.label'),
+    draftFlowDescription: t('admin.llm.routing.coverLetter.flow.draft.description'),
+    highFlowLabel: t('admin.llm.routing.coverLetter.flow.high.label'),
+    highFlowDescription: t('admin.llm.routing.coverLetter.flow.high.description'),
+    humanizerLabel: t('admin.llm.routing.coverLetter.flow.humanizer.label'),
+    humanizerDescription: t('admin.llm.routing.coverLetter.flow.humanizer.description'),
+    draftModelLabel: t('admin.llm.routing.coverLetter.flow.draft.modelLabel'),
+    draftReasoningLabel: t('admin.llm.routing.coverLetter.flow.draft.reasoningLabel'),
+    highModelLabel: t('admin.llm.routing.coverLetter.flow.high.modelLabel'),
+    highReasoningLabel: t('admin.llm.routing.coverLetter.flow.high.reasoningLabel'),
+    humanizerModelLabel: t('admin.llm.routing.coverLetter.flow.humanizer.modelLabel'),
     disabled: routingSaving.value
   };
 };
@@ -506,7 +590,23 @@ const hasRequiredValuesForScenario = (
     return !draft.flowEnabled || Boolean(draft.primaryModelId);
   }
 
-  return Boolean(draft.primaryModelId);
+  if (!draft.draftFlowEnabled && !draft.highFlowEnabled) {
+    return true;
+  }
+
+  if (draft.draftFlowEnabled && !draft.draftModelId) {
+    return false;
+  }
+
+  if (draft.highFlowEnabled && !draft.highModelId) {
+    return false;
+  }
+
+  if (draft.highFlowEnabled && draft.highHumanizerEnabled && !draft.highHumanizerModelId) {
+    return false;
+  }
+
+  return true;
 };
 
 const { modalScenarioKey, modalDraft, modalCanSave, openScenarioEditor, closeScenarioEditor } =
@@ -573,11 +673,46 @@ async function saveScenario() {
         });
       }
     } else {
-      await updateDefault(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, {
-        modelId: modalDraft.value.primaryModelId,
-        retryModelId: null,
-        strategyKey: null
-      });
+      await updateScenarioEnabled(
+        LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT,
+        modalDraft.value.draftFlowEnabled
+      );
+      if (modalDraft.value.draftFlowEnabled) {
+        await updateDefault(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT, {
+          modelId: modalDraft.value.draftModelId,
+          retryModelId: null,
+          reasoningEffort: normalizeReasoningEffort(modalDraft.value.draftReasoningEffort),
+          strategyKey: null
+        });
+      }
+
+      await updateScenarioEnabled(
+        LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION,
+        modalDraft.value.highFlowEnabled
+      );
+      if (modalDraft.value.highFlowEnabled) {
+        await updateDefault(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, {
+          modelId: modalDraft.value.highModelId,
+          retryModelId: null,
+          reasoningEffort: normalizeReasoningEffort(modalDraft.value.highReasoningEffort),
+          strategyKey: null
+        });
+      }
+
+      const humanizerEnabled =
+        modalDraft.value.highFlowEnabled && modalDraft.value.highHumanizerEnabled;
+
+      await updateScenarioEnabled(
+        LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC,
+        humanizerEnabled
+      );
+      if (humanizerEnabled) {
+        await updateDefault(LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC, {
+          modelId: modalDraft.value.highHumanizerModelId,
+          retryModelId: null,
+          strategyKey: null
+        });
+      }
     }
 
     await fetchRouting();

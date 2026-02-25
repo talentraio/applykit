@@ -2,12 +2,13 @@ import type {
   CoverLetterGenerationSettings,
   CoverLetterLlmResponse,
   LLMProvider,
+  LlmScenarioKey,
   ProviderType,
   ResumeContent,
   Role
 } from '@int/schema';
 import type { CoverLetterCharacterBufferConfig } from '../vacancy/cover-letter-character-limits';
-import type { CoverLetterHumanizerConfig } from '../vacancy/cover-letter-humanizer';
+import type { CoverLetterHumanizerRuntimeConfig } from '../vacancy/cover-letter-humanizer';
 import {
   COVER_LETTER_LENGTH_PRESET_MAP,
   CoverLetterLlmResponseSchema,
@@ -59,6 +60,11 @@ type UsageAccumulator = {
   model: string | null;
 };
 
+export type CoverLetterHumanizerConfig = CoverLetterHumanizerRuntimeConfig & {
+  provider: LLMProvider;
+  model: string;
+};
+
 const AI_DISCLOSURE_PATTERNS = [/\bas an ai\b/i, /\blanguage model\b/i, /\bchatgpt\b/i] as const;
 const LONG_DASH_PATTERN = /[—–]/;
 const URL_OR_CONTACT_PATTERN =
@@ -100,6 +106,7 @@ export type GenerateCoverLetterOptions = {
   userId?: string;
   role?: Role;
   provider?: LLMProvider;
+  scenarioKey?: LlmScenarioKey;
   maxRetries?: number;
   characterBufferConfig?: CoverLetterCharacterBufferConfig;
   humanizerConfig?: CoverLetterHumanizerConfig;
@@ -676,34 +683,28 @@ function trimEdgeBlankLines(lines: string[]): string[] {
 function stripLeadingLetterMetaLines(lines: string[], input: GenerationInput): string[] {
   const fullName = input.resumeContent.personalInfo.fullName.trim().toLowerCase();
   const location = input.resumeContent.personalInfo.location?.trim().toLowerCase() ?? '';
-  let index = 0;
+  const nonEmptyLines = lines
+    .map((line, rawIndex) => ({ rawIndex, line: line.trim() }))
+    .filter(item => item.line.length > 0);
 
-  while (index < lines.length) {
-    const line = lines[index]?.trim() ?? '';
-    if (line.length === 0) {
-      if (index === 0) {
-        index += 1;
-        continue;
-      }
-
-      break;
-    }
-
-    const normalized = line.toLowerCase();
-    const isNameLine = fullName.length > 0 && normalized === fullName;
-    const isLocationLine = location.length > 0 && normalized === location;
-    const isContactLine = hasSenderContactSignal([line]);
-    const isDateLine = isDateLineCandidate(line);
-
-    if (isNameLine || isLocationLine || isContactLine || isDateLine) {
-      index += 1;
-      continue;
-    }
-
-    break;
+  if (nonEmptyLines.length === 0) {
+    return [];
   }
 
-  return lines.slice(index);
+  const firstContentLine = nonEmptyLines.find(item => {
+    const normalized = item.line.toLowerCase();
+    const isNameLine = fullName.length > 0 && normalized === fullName;
+    const isLocationLine = location.length > 0 && normalized === location;
+    const isContactLine = hasSenderContactSignal([item.line]);
+    const isDateLine = isDateLineCandidate(item.line);
+    return !(isNameLine || isLocationLine || isContactLine || isDateLine);
+  });
+
+  if (!firstContentLine) {
+    return [];
+  }
+
+  return lines.slice(firstContentLine.rawIndex);
 }
 
 function stripTrailingLetterMetaLines(lines: string[], input: GenerationInput): string[] {
@@ -1069,7 +1070,7 @@ function shouldRewriteByQuality(
   config: CoverLetterHumanizerConfig,
   quality: CoverLetterQualityEvaluation
 ): boolean {
-  if (config.mode !== 'rewrite' || config.maxRewritePasses < 1) {
+  if (config.maxRewritePasses < 1) {
     return false;
   }
 
@@ -1078,6 +1079,84 @@ function shouldRewriteByQuality(
     quality.naturalnessScore < config.minNaturalnessScore ||
     quality.aiPatternRiskScore > config.maxAiRiskScore
   );
+}
+
+function isCriticParsingError(error: unknown): boolean {
+  if (!(error instanceof CoverLetterGenerationError)) {
+    return false;
+  }
+
+  return error.code === 'INVALID_JSON' || error.code === 'VALIDATION_FAILED';
+}
+
+async function evaluateCoverLetterQuality(
+  input: GenerationInput,
+  normalizedParsed: CoverLetterLlmResponse,
+  options: GenerateCoverLetterOptions,
+  userRole: Role,
+  humanizerConfig: CoverLetterHumanizerConfig,
+  usageAccumulator: UsageAccumulator
+): Promise<CoverLetterQualityEvaluation> {
+  const criticPrimaryMaxTokens = humanizerConfig.model.startsWith('gpt-5') ? 1200 : 600;
+  const criticRetryMaxTokens = humanizerConfig.model.startsWith('gpt-5') ? 2000 : 1200;
+  const basePrompt = createCoverLetterCriticPrompt({
+    settings: input.settings,
+    contentMarkdown: normalizedParsed.contentMarkdown,
+    subjectLine: normalizedParsed.subjectLine ?? null
+  });
+
+  const maxCriticAttempts = 2;
+  let lastParsingError: unknown = null;
+
+  for (let criticAttempt = 0; criticAttempt < maxCriticAttempts; criticAttempt++) {
+    const criticPrompt =
+      criticAttempt === 0
+        ? basePrompt
+        : `${basePrompt}
+
+Critical JSON compliance:
+- Return exactly one JSON object and nothing else.
+- Do not add prose, markdown, comments, or code fences.
+- Use only the keys from the schema.`;
+
+    const criticResponse = await callLLM(
+      {
+        systemMessage: COVER_LETTER_SYSTEM_PROMPT,
+        prompt: criticPrompt,
+        responseFormat: 'json',
+        model: humanizerConfig.model,
+        temperature: 0,
+        maxTokens: criticAttempt === 0 ? criticPrimaryMaxTokens : criticRetryMaxTokens,
+        reasoningEffort: 'low'
+      },
+      {
+        userId: options.userId,
+        role: userRole,
+        provider: humanizerConfig.provider,
+        respectRequestMaxTokens: true,
+        respectRequestReasoningEffort: true
+      }
+    );
+    appendUsage(usageAccumulator, criticResponse);
+
+    try {
+      return parseCoverLetterQualityResponse(criticResponse.content);
+    } catch (error) {
+      if (!isCriticParsingError(error) || criticAttempt >= maxCriticAttempts - 1) {
+        throw error;
+      }
+
+      lastParsingError = error;
+      logHumanizer(humanizerConfig, 'critic parse failed, retrying', {
+        attempt: criticAttempt + 1,
+        model: humanizerConfig.model,
+        message: error instanceof Error ? error.message : 'Unknown parse error',
+        responseChars: criticResponse.content.length
+      });
+    }
+  }
+
+  throw lastParsingError ?? new Error('Critic evaluation failed');
 }
 
 function isCoverLetterValidationDetails(value: unknown): value is CoverLetterValidationDetails {
@@ -1155,6 +1234,13 @@ function appendUsage(
   accumulator.model = llmResponse.model;
 }
 
+function resolveRewriteMaxTokens(contentMarkdown: string): number {
+  // Estimate a safe cap from current plain-text size to prevent very long rewrite passes.
+  const plainTextLength = Math.max(1, getCharacterCount(contentMarkdown));
+  const estimatedTokens = Math.ceil(plainTextLength / 2.5);
+  return Math.min(2200, Math.max(500, estimatedTokens + 200));
+}
+
 function toCoverLetterUsage(accumulator: UsageAccumulator, attemptsUsed: number): CoverLetterUsage {
   if (!accumulator.provider || !accumulator.providerType || !accumulator.model) {
     throw new CoverLetterGenerationError('Missing usage metadata from LLM response', 'LLM_ERROR');
@@ -1195,6 +1281,7 @@ export async function generateCoverLetterWithLLM(
 ): Promise<GenerateCoverLetterResult> {
   const maxRetries = Math.max(0, options.maxRetries ?? DEFAULT_MAX_RETRIES);
   const userRole = toRole(options.role);
+  const scenarioKey = options.scenarioKey ?? LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION;
 
   let lastError: unknown = null;
   let retryValidationFeedback: string | null = null;
@@ -1202,8 +1289,19 @@ export async function generateCoverLetterWithLLM(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const scenarioPhase = attempt === 0 ? 'primary' : 'retry';
     const usageAccumulator = createUsageAccumulator();
+    const attemptStartedAt = Date.now();
+    const humanizerConfig = options.humanizerConfig;
+    let baseGenerationMs = 0;
+
+    logHumanizer(humanizerConfig, 'attempt started', {
+      attempt: attempt + 1,
+      maxAttempts: maxRetries + 1,
+      scenarioKey,
+      scenarioPhase
+    });
 
     try {
+      const baseCallStartedAt = Date.now();
       const llmResponse = await callLLM(
         {
           systemMessage: COVER_LETTER_SYSTEM_PROMPT,
@@ -1224,11 +1322,18 @@ export async function generateCoverLetterWithLLM(
           userId: options.userId,
           role: userRole,
           provider: options.provider,
-          scenario: LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION,
+          scenario: scenarioKey,
           scenarioPhase
         }
       );
+      baseGenerationMs = Date.now() - baseCallStartedAt;
       appendUsage(usageAccumulator, llmResponse);
+
+      logHumanizer(humanizerConfig, 'base generation completed', {
+        attempt: attempt + 1,
+        model: llmResponse.model,
+        baseGenerationMs
+      });
 
       const parsed = parseCoverLetterResponse(llmResponse.content);
       let candidate = parsed;
@@ -1244,7 +1349,7 @@ export async function generateCoverLetterWithLLM(
             userId: options.userId,
             role: userRole,
             provider: options.provider,
-            scenario: LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION,
+            scenario: scenarioKey,
             scenarioPhase
           }
         );
@@ -1259,42 +1364,25 @@ export async function generateCoverLetterWithLLM(
       }
 
       let normalizedParsed = normalizeCandidateForOutput(input, candidate);
-      const humanizerConfig = options.humanizerConfig;
 
-      if (humanizerConfig && humanizerConfig.mode !== 'off') {
+      if (humanizerConfig) {
+        const criticStartedAt = Date.now();
         try {
-          const criticResponse = await callLLM(
-            {
-              systemMessage: COVER_LETTER_SYSTEM_PROMPT,
-              prompt: createCoverLetterCriticPrompt({
-                settings: input.settings,
-                contentMarkdown: normalizedParsed.contentMarkdown,
-                subjectLine: normalizedParsed.subjectLine ?? null
-              }),
-              responseFormat: 'json',
-              model: humanizerConfig.criticModel,
-              temperature: 0.1,
-              maxTokens: 600,
-              reasoningEffort: 'low'
-            },
-            {
-              userId: options.userId,
-              role: userRole,
-              provider: humanizerConfig.criticProvider,
-              respectRequestMaxTokens: true,
-              respectRequestReasoningEffort: true
-            }
+          const quality = await evaluateCoverLetterQuality(
+            input,
+            normalizedParsed,
+            options,
+            userRole,
+            humanizerConfig,
+            usageAccumulator
           );
-          appendUsage(usageAccumulator, criticResponse);
-
-          const quality = parseCoverLetterQualityResponse(criticResponse.content);
+          const criticMs = Date.now() - criticStartedAt;
           const belowNaturalnessThreshold =
             quality.naturalnessScore < humanizerConfig.minNaturalnessScore;
           const aboveAiRiskThreshold = quality.aiPatternRiskScore > humanizerConfig.maxAiRiskScore;
           const shouldRewrite = shouldRewriteByQuality(humanizerConfig, quality);
 
           logHumanizer(humanizerConfig, 'quality evaluated', {
-            mode: humanizerConfig.mode,
             naturalnessScore: quality.naturalnessScore,
             aiPatternRiskScore: quality.aiPatternRiskScore,
             specificityScore: quality.specificityScore,
@@ -1302,12 +1390,15 @@ export async function generateCoverLetterWithLLM(
             rewriteRecommended: quality.rewriteRecommended,
             belowNaturalnessThreshold,
             aboveAiRiskThreshold,
-            shouldRewrite
+            shouldRewrite,
+            criticMs
           });
 
           if (shouldRewrite) {
             let rewriteApplied = false;
             let rewriteFailureMessage: string | null = null;
+            let rewriteMs = 0;
+            let rewriteModel: string | null = null;
 
             for (
               let rewritePass = 0;
@@ -1315,6 +1406,8 @@ export async function generateCoverLetterWithLLM(
               rewritePass++
             ) {
               try {
+                const rewriteStartedAt = Date.now();
+                const rewriteMaxTokens = resolveRewriteMaxTokens(normalizedParsed.contentMarkdown);
                 const rewriteResponse = await callLLM(
                   {
                     systemMessage: COVER_LETTER_SYSTEM_PROMPT,
@@ -1325,16 +1418,22 @@ export async function generateCoverLetterWithLLM(
                       issues: quality.issues,
                       targetedFixes: quality.targetedFixes
                     }),
-                    responseFormat: 'json'
+                    responseFormat: 'json',
+                    maxTokens: rewriteMaxTokens,
+                    reasoningEffort: 'low'
                   },
                   {
                     userId: options.userId,
                     role: userRole,
-                    provider: options.provider,
-                    scenario: LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION,
-                    scenarioPhase: 'retry'
+                    provider: humanizerConfig.provider,
+                    scenario: LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC,
+                    scenarioPhase: rewritePass === 0 ? 'primary' : 'retry',
+                    respectRequestMaxTokens: true,
+                    respectRequestReasoningEffort: true
                   }
                 );
+                rewriteMs = Date.now() - rewriteStartedAt;
+                rewriteModel = rewriteResponse.model;
                 appendUsage(usageAccumulator, rewriteResponse);
 
                 const rewrittenCandidate = parseCoverLetterResponse(rewriteResponse.content);
@@ -1350,18 +1449,31 @@ export async function generateCoverLetterWithLLM(
             logHumanizer(humanizerConfig, 'rewrite pass result', {
               rewriteApplied,
               maxRewritePasses: humanizerConfig.maxRewritePasses,
-              failureMessage: rewriteFailureMessage
+              failureMessage: rewriteFailureMessage,
+              rewriteMs,
+              rewriteModel,
+              attemptTotalMs: Date.now() - attemptStartedAt,
+              baseGenerationMs
             });
           } else {
             logHumanizer(humanizerConfig, 'rewrite pass skipped', {
-              mode: humanizerConfig.mode
+              attemptTotalMs: Date.now() - attemptStartedAt,
+              baseGenerationMs
             });
           }
         } catch (error) {
           logHumanizer(humanizerConfig, 'critic pass failed, using base output', {
-            message: error instanceof Error ? error.message : 'Unknown critic error'
+            message: error instanceof Error ? error.message : 'Unknown critic error',
+            baseGenerationMs,
+            attemptTotalMs: Date.now() - attemptStartedAt
           });
         }
+      } else {
+        logHumanizer(humanizerConfig, 'humanizer skipped', {
+          enabled: false,
+          baseGenerationMs,
+          attemptTotalMs: Date.now() - attemptStartedAt
+        });
       }
 
       return {
@@ -1372,8 +1484,23 @@ export async function generateCoverLetterWithLLM(
     } catch (error) {
       lastError = error;
       retryValidationFeedback = getRetryValidationFeedback(error);
+      const retryable = isRetryableError(error);
 
-      if (!isRetryableError(error) || attempt >= maxRetries) {
+      logHumanizer(humanizerConfig, 'attempt failed', {
+        attempt: attempt + 1,
+        maxAttempts: maxRetries + 1,
+        retryable,
+        errorCode:
+          error instanceof CoverLetterGenerationError
+            ? error.code
+            : error instanceof LLMError
+              ? error.code
+              : null,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        attemptTotalMs: Date.now() - attemptStartedAt
+      });
+
+      if (!retryable || attempt >= maxRetries) {
         break;
       }
     }
