@@ -1,3 +1,11 @@
+type EnumValueMap = Record<string, string>;
+
+const enumValues = <TMap extends EnumValueMap>(
+  valueMap: TMap
+): readonly [TMap[keyof TMap], ...TMap[keyof TMap][]] => {
+  return Object.values(valueMap) as unknown as readonly [TMap[keyof TMap], ...TMap[keyof TMap][]];
+};
+
 export const USER_ROLE_MAP = {
   SUPER_ADMIN: 'super_admin',
   FRIEND: 'friend',
@@ -5,12 +13,7 @@ export const USER_ROLE_MAP = {
   PUBLIC: 'public'
 } as const;
 
-export const USER_ROLE_VALUES = [
-  USER_ROLE_MAP.SUPER_ADMIN,
-  USER_ROLE_MAP.FRIEND,
-  USER_ROLE_MAP.PROMO,
-  USER_ROLE_MAP.PUBLIC
-] as const;
+export const USER_ROLE_VALUES = enumValues(USER_ROLE_MAP);
 
 export const USER_STATUS_MAP = {
   INVITED: 'invited',
@@ -19,12 +22,7 @@ export const USER_STATUS_MAP = {
   DELETED: 'deleted'
 } as const;
 
-export const USER_STATUS_VALUES = [
-  USER_STATUS_MAP.INVITED,
-  USER_STATUS_MAP.ACTIVE,
-  USER_STATUS_MAP.BLOCKED,
-  USER_STATUS_MAP.DELETED
-] as const;
+export const USER_STATUS_VALUES = enumValues(USER_STATUS_MAP);
 
 export const WORK_FORMAT_MAP = {
   REMOTE: 'remote',
@@ -32,28 +30,21 @@ export const WORK_FORMAT_MAP = {
   ONSITE: 'onsite'
 } as const;
 
-export const WORK_FORMAT_VALUES = [
-  WORK_FORMAT_MAP.REMOTE,
-  WORK_FORMAT_MAP.HYBRID,
-  WORK_FORMAT_MAP.ONSITE
-] as const;
+export const WORK_FORMAT_VALUES = enumValues(WORK_FORMAT_MAP);
 
 export const SOURCE_FILE_TYPE_MAP = {
   DOCX: 'docx',
   PDF: 'pdf'
 } as const;
 
-export const SOURCE_FILE_TYPE_VALUES = [
-  SOURCE_FILE_TYPE_MAP.DOCX,
-  SOURCE_FILE_TYPE_MAP.PDF
-] as const;
+export const SOURCE_FILE_TYPE_VALUES = enumValues(SOURCE_FILE_TYPE_MAP);
 
 export const LLM_PROVIDER_MAP = {
   OPENAI: 'openai',
   GEMINI: 'gemini'
 } as const;
 
-export const LLM_PROVIDER_VALUES = [LLM_PROVIDER_MAP.OPENAI, LLM_PROVIDER_MAP.GEMINI] as const;
+export const LLM_PROVIDER_VALUES = enumValues(LLM_PROVIDER_MAP);
 
 export const LLM_MODEL_STATUS_MAP = {
   ACTIVE: 'active',
@@ -61,37 +52,26 @@ export const LLM_MODEL_STATUS_MAP = {
   ARCHIVED: 'archived'
 } as const;
 
-export const LLM_MODEL_STATUS_VALUES = [
-  LLM_MODEL_STATUS_MAP.ACTIVE,
-  LLM_MODEL_STATUS_MAP.DISABLED,
-  LLM_MODEL_STATUS_MAP.ARCHIVED
-] as const;
+export const LLM_MODEL_STATUS_VALUES = enumValues(LLM_MODEL_STATUS_MAP);
 
 export const LLM_SCENARIO_KEY_MAP = {
   RESUME_PARSE: 'resume_parse',
   RESUME_ADAPTATION: 'resume_adaptation',
   RESUME_ADAPTATION_SCORING: 'resume_adaptation_scoring',
   RESUME_ADAPTATION_SCORING_DETAIL: 'resume_adaptation_scoring_detail',
-  COVER_LETTER_GENERATION: 'cover_letter_generation'
+  COVER_LETTER_GENERATION: 'cover_letter_generation',
+  COVER_LETTER_GENERATION_DRAFT: 'cover_letter_generation_draft',
+  COVER_LETTER_HUMANIZER_CRITIC: 'cover_letter_humanizer_critic'
 } as const;
 
-export const LLM_SCENARIO_KEY_VALUES = [
-  LLM_SCENARIO_KEY_MAP.RESUME_PARSE,
-  LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION,
-  LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING,
-  LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL,
-  LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION
-] as const;
+export const LLM_SCENARIO_KEY_VALUES = enumValues(LLM_SCENARIO_KEY_MAP);
 
 export const LLM_RESPONSE_FORMAT_MAP = {
   TEXT: 'text',
   JSON: 'json'
 } as const;
 
-export const LLM_RESPONSE_FORMAT_VALUES = [
-  LLM_RESPONSE_FORMAT_MAP.TEXT,
-  LLM_RESPONSE_FORMAT_MAP.JSON
-] as const;
+export const LLM_RESPONSE_FORMAT_VALUES = enumValues(LLM_RESPONSE_FORMAT_MAP);
 
 export const LLM_REASONING_EFFORT_MAP = {
   AUTO: 'auto',
@@ -100,22 +80,14 @@ export const LLM_REASONING_EFFORT_MAP = {
   HIGH: 'high'
 } as const;
 
-export const LLM_REASONING_EFFORT_VALUES = [
-  LLM_REASONING_EFFORT_MAP.AUTO,
-  LLM_REASONING_EFFORT_MAP.LOW,
-  LLM_REASONING_EFFORT_MAP.MEDIUM,
-  LLM_REASONING_EFFORT_MAP.HIGH
-] as const;
+export const LLM_REASONING_EFFORT_VALUES = enumValues(LLM_REASONING_EFFORT_MAP);
 
 export const LLM_STRATEGY_KEY_MAP = {
   ECONOMY: 'economy',
   QUALITY: 'quality'
 } as const;
 
-export const LLM_STRATEGY_KEY_VALUES = [
-  LLM_STRATEGY_KEY_MAP.ECONOMY,
-  LLM_STRATEGY_KEY_MAP.QUALITY
-] as const;
+export const LLM_STRATEGY_KEY_VALUES = enumValues(LLM_STRATEGY_KEY_MAP);
 
 export const OPERATION_MAP = {
   PARSE: 'parse',
@@ -123,11 +95,7 @@ export const OPERATION_MAP = {
   EXPORT: 'export'
 } as const;
 
-export const OPERATION_VALUES = [
-  OPERATION_MAP.PARSE,
-  OPERATION_MAP.GENERATE,
-  OPERATION_MAP.EXPORT
-] as const;
+export const OPERATION_VALUES = enumValues(OPERATION_MAP);
 
 export const USAGE_CONTEXT_MAP = {
   RESUME_BASE: 'resume_base',
@@ -137,26 +105,20 @@ export const USAGE_CONTEXT_MAP = {
   EXPORT: 'export'
 } as const;
 
-export const USAGE_CONTEXT_VALUES = [
-  USAGE_CONTEXT_MAP.RESUME_BASE,
-  USAGE_CONTEXT_MAP.RESUME_ADAPTATION,
-  USAGE_CONTEXT_MAP.RESUME_ADAPTATION_SCORING,
-  USAGE_CONTEXT_MAP.RESUME_ADAPTATION_SCORING_DETAIL,
-  USAGE_CONTEXT_MAP.EXPORT
-] as const;
+export const USAGE_CONTEXT_VALUES = enumValues(USAGE_CONTEXT_MAP);
 
 export const PROVIDER_TYPE_MAP = {
   PLATFORM: 'platform'
 } as const;
 
-export const PROVIDER_TYPE_VALUES = [PROVIDER_TYPE_MAP.PLATFORM] as const;
+export const PROVIDER_TYPE_VALUES = enumValues(PROVIDER_TYPE_MAP);
 
 export const EXPORT_FORMAT_MAP = {
   ATS: 'ats',
   HUMAN: 'human'
 } as const;
 
-export const EXPORT_FORMAT_VALUES = [EXPORT_FORMAT_MAP.ATS, EXPORT_FORMAT_MAP.HUMAN] as const;
+export const EXPORT_FORMAT_VALUES = enumValues(EXPORT_FORMAT_MAP);
 
 export const VACANCY_STATUS_MAP = {
   CREATED: 'created',
@@ -167,14 +129,110 @@ export const VACANCY_STATUS_MAP = {
   OFFER: 'offer'
 } as const;
 
-export const VACANCY_STATUS_VALUES = [
-  VACANCY_STATUS_MAP.CREATED,
-  VACANCY_STATUS_MAP.GENERATED,
-  VACANCY_STATUS_MAP.SCREENING,
-  VACANCY_STATUS_MAP.REJECTED,
-  VACANCY_STATUS_MAP.INTERVIEW,
-  VACANCY_STATUS_MAP.OFFER
-] as const;
+export const VACANCY_STATUS_VALUES = enumValues(VACANCY_STATUS_MAP);
+
+export const COVER_LETTER_LOCALE_MAP = {
+  EN: 'en',
+  DA_DK: 'da-DK',
+  UK_UA: 'uk-UA'
+} as const;
+
+export const COVER_LETTER_LOCALE_VALUES = enumValues(COVER_LETTER_LOCALE_MAP);
+
+type CoverLetterLocale = (typeof COVER_LETTER_LOCALE_MAP)[keyof typeof COVER_LETTER_LOCALE_MAP];
+
+export const COVER_LETTER_LOCALE_META_MAP = {
+  en: {
+    requiresGrammaticalGender: false
+  },
+  'da-DK': {
+    requiresGrammaticalGender: false
+  },
+  'uk-UA': {
+    requiresGrammaticalGender: true
+  }
+} as const satisfies Record<CoverLetterLocale, { requiresGrammaticalGender: boolean }>;
+
+export const localeRequiresGrammaticalGender = (locale: CoverLetterLocale): boolean => {
+  return COVER_LETTER_LOCALE_META_MAP[locale].requiresGrammaticalGender;
+};
+
+export const COVER_LETTER_MARKET_MAP = {
+  DEFAULT: 'default',
+  DK: 'dk',
+  UA: 'ua'
+} as const;
+
+export const COVER_LETTER_MARKET_VALUES = enumValues(COVER_LETTER_MARKET_MAP);
+
+type CoverLetterMarket = (typeof COVER_LETTER_MARKET_MAP)[keyof typeof COVER_LETTER_MARKET_MAP];
+
+export const COVER_LETTER_DEFAULT_MARKET_BY_LOCALE_MAP = {
+  en: COVER_LETTER_MARKET_MAP.DEFAULT,
+  'da-DK': COVER_LETTER_MARKET_MAP.DK,
+  'uk-UA': COVER_LETTER_MARKET_MAP.UA
+} as const satisfies Record<CoverLetterLocale, CoverLetterMarket>;
+
+export const resolveDefaultCoverLetterMarketByLocale = (
+  locale: CoverLetterLocale
+): CoverLetterMarket => {
+  return COVER_LETTER_DEFAULT_MARKET_BY_LOCALE_MAP[locale];
+};
+
+export const COVER_LETTER_TYPE_MAP = {
+  LETTER: 'letter',
+  MESSAGE: 'message'
+} as const;
+
+export const COVER_LETTER_TYPE_VALUES = enumValues(COVER_LETTER_TYPE_MAP);
+
+export const COVER_LETTER_TONE_MAP = {
+  PROFESSIONAL: 'professional',
+  FRIENDLY: 'friendly',
+  ENTHUSIASTIC: 'enthusiastic',
+  DIRECT: 'direct'
+} as const;
+
+export const COVER_LETTER_TONE_VALUES = enumValues(COVER_LETTER_TONE_MAP);
+
+export const COVER_LETTER_LENGTH_PRESET_MAP = {
+  SHORT: 'short',
+  STANDARD: 'standard',
+  LONG: 'long',
+  MIN_CHARS: 'min_chars',
+  MAX_CHARS: 'max_chars'
+} as const;
+
+export const COVER_LETTER_LENGTH_PRESET_VALUES = enumValues(COVER_LETTER_LENGTH_PRESET_MAP);
+
+export const COVER_LETTER_QUALITY_MODE_MAP = {
+  DRAFT: 'draft',
+  HIGH: 'high'
+} as const;
+
+export const COVER_LETTER_QUALITY_MODE_VALUES = enumValues(COVER_LETTER_QUALITY_MODE_MAP);
+
+export const COVER_LETTER_CHARACTER_LIMIT_DEFAULTS = {
+  MIN: 100,
+  MAX: 3500
+} as const;
+
+export const COVER_LETTER_CHARACTER_BUFFER_DEFAULTS = {
+  TARGET_BUFFER_RATIO: 0.05,
+  TARGET_BUFFER_SMALL_LIMIT_THRESHOLD: 120,
+  TARGET_BUFFER_SMALL_MIN: 5,
+  TARGET_BUFFER_SMALL_MAX: 8,
+  TARGET_BUFFER_MIN: 10,
+  TARGET_BUFFER_MAX: 30
+} as const;
+
+export const GRAMMATICAL_GENDER_MAP = {
+  MASCULINE: 'masculine',
+  FEMININE: 'feminine',
+  NEUTRAL: 'neutral'
+} as const;
+
+export const GRAMMATICAL_GENDER_VALUES = enumValues(GRAMMATICAL_GENDER_MAP);
 
 export const LANGUAGE_LEVEL_MAP = {
   NATIVE: 'Native',
@@ -184,13 +242,7 @@ export const LANGUAGE_LEVEL_MAP = {
   BEGINNER: 'Beginner'
 } as const;
 
-export const LANGUAGE_LEVEL_VALUES = [
-  LANGUAGE_LEVEL_MAP.NATIVE,
-  LANGUAGE_LEVEL_MAP.FLUENT,
-  LANGUAGE_LEVEL_MAP.ADVANCED,
-  LANGUAGE_LEVEL_MAP.INTERMEDIATE,
-  LANGUAGE_LEVEL_MAP.BEGINNER
-] as const;
+export const LANGUAGE_LEVEL_VALUES = enumValues(LANGUAGE_LEVEL_MAP);
 
 export const SUPPRESSION_REASON_MAP = {
   ACCOUNT_DELETED: 'account_deleted',
@@ -198,11 +250,7 @@ export const SUPPRESSION_REASON_MAP = {
   CHARGEBACK: 'chargeback'
 } as const;
 
-export const SUPPRESSION_REASON_VALUES = [
-  SUPPRESSION_REASON_MAP.ACCOUNT_DELETED,
-  SUPPRESSION_REASON_MAP.ABUSE,
-  SUPPRESSION_REASON_MAP.CHARGEBACK
-] as const;
+export const SUPPRESSION_REASON_VALUES = enumValues(SUPPRESSION_REASON_MAP);
 
 export const DEGREE_TYPE_MAP = {
   HIGH_SCHOOL: 'High School',
@@ -218,16 +266,4 @@ export const DEGREE_TYPE_MAP = {
   OTHER: 'Other'
 } as const;
 
-export const DEGREE_TYPE_VALUES = [
-  DEGREE_TYPE_MAP.HIGH_SCHOOL,
-  DEGREE_TYPE_MAP.ASSOCIATE,
-  DEGREE_TYPE_MAP.BACHELOR,
-  DEGREE_TYPE_MAP.MASTER,
-  DEGREE_TYPE_MAP.PHD,
-  DEGREE_TYPE_MAP.MBA,
-  DEGREE_TYPE_MAP.MD,
-  DEGREE_TYPE_MAP.JD,
-  DEGREE_TYPE_MAP.CERTIFICATE,
-  DEGREE_TYPE_MAP.DIPLOMA,
-  DEGREE_TYPE_MAP.OTHER
-] as const;
+export const DEGREE_TYPE_VALUES = enumValues(DEGREE_TYPE_MAP);

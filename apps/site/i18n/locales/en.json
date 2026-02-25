@@ -371,6 +371,27 @@
     "button": "Generate Tailored Resume",
     "inProgress": "Generating...",
     "success": "Resume generated successfully",
+    "statusModal": {
+      "title": {
+        "loading": "Generating {subject}",
+        "success": "{subject} is ready",
+        "error": "Generation failed"
+      },
+      "description": {
+        "loading": "Creating {subject} for your dream job application.",
+        "success": "Generation finished successfully.",
+        "error": "An error occurred during generation."
+      },
+      "message": {
+        "loading": "This process can take up to {waitingTime}.",
+        "success": "Your {subject} is ready. You can review it now.",
+        "error": "Something went wrong. Please try again."
+      },
+      "action": {
+        "success": "Go to {subject}",
+        "error": "OK"
+      }
+    },
     "matchScore": {
       "title": "Match Score",
       "before": "Before: {score}%",
@@ -554,7 +575,16 @@
       "regenerateResume": "Regenerate Tailored Resume",
       "viewResume": "View Resume",
       "generateCoverLetter": "Generate Cover Letter",
-      "lastUpdated": "Last Updated"
+      "viewCoverLetter": "View Cover Letter",
+      "lastUpdated": "Last Updated",
+      "generationModal": {
+        "loading": {
+          "waitingTime": "1 minute",
+          "document": {
+            "resume": "tailored resume"
+          }
+        }
+      }
     },
     "generation": {
       "selectBaseResume": "Select source resume"
@@ -575,7 +605,155 @@
       "regenerateDetails": "Regenerate details",
       "detailsFailed": "Failed to load detailed scoring",
       "detailsFetchFailed": "Failed to load preparation data",
+      "generationModal": {
+        "loading": {
+          "waitingTime": "1 minute",
+          "document": {
+            "scoreDetails": "detailed scoring"
+          }
+        }
+      },
       "dismissAlertFailed": "Failed to dismiss notification"
+    },
+    "cover": {
+      "inputsTitle": "Cover Letter Inputs",
+      "localeProfile": {
+        "label": "Writing profile",
+        "general": {
+          "en": "General (English)"
+        },
+        "denmark": {
+          "en": "Denmark (English)",
+          "da-DK": "Denmark (Danish)"
+        },
+        "ukraine": {
+          "en": "Ukraine (English)",
+          "uk-UA": "Ukraine (Ukrainian)"
+        }
+      },
+      "grammaticalGender": {
+        "label": "Grammatical form",
+        "option": {
+          "masculine": "Masculine",
+          "feminine": "Feminine",
+          "neutral": "Neutral"
+        }
+      },
+      "type": {
+        "label": "Output type",
+        "letter": "Cover letter",
+        "message": "Application message"
+      },
+      "tone": {
+        "label": "Tone",
+        "professional": "Professional",
+        "friendly": "Friendly",
+        "enthusiastic": "Enthusiastic",
+        "direct": "Direct"
+      },
+      "quality": {
+        "label": "Quality",
+        "draft": "Draft",
+        "high": "High",
+        "hint": {
+          "ariaLabel": "Quality mode details",
+          "draft": "Draft mode creates only a base text that you should edit manually.",
+          "high": "High mode generates near-ready text and usually requires only checking key facts.",
+          "warning": "Warning: High mode consumes your daily usage limit several times more than Draft mode."
+        }
+      },
+      "length": {
+        "label": "Length preset",
+        "short": "Short",
+        "standard": "Standard",
+        "long": "Long",
+        "moreThanChars": "More than (characters)",
+        "lessThanChars": "Less than (characters)",
+        "minCharsLabel": "Minimum characters",
+        "maxCharsLabel": "Maximum characters",
+        "minCharsPlaceholder": "Enter minimum character count",
+        "maxCharsPlaceholder": "Enter maximum character count",
+        "charLimitRangeHint": "Allowed range: {min} - {max} characters.",
+        "charLimitRequired": "Character limit is required for this length preset.",
+        "charLimitMinError": "Value must be at least {min}.",
+        "charLimitMaxError": "Value must be at most {max}."
+      },
+      "recipientName": "Recipient name",
+      "recipientNamePlaceholder": "Hiring manager name (optional)",
+      "subject": "Subject line",
+      "includeSubjectLine": "Include subject line",
+      "instructions": "Additional instructions",
+      "instructionsPlaceholder": "Add context or preferences for this draft...",
+      "generate": "Generate cover letter",
+      "regenerate": "Regenerate",
+      "generateResumeFirst": "Generate a tailored resume first to unlock cover letter generation.",
+      "flowDisabledHint": "Cover letter generation is currently disabled for your role.",
+      "backToOverview": "Back to overview",
+      "noCoverLetter": "No generated cover letter",
+      "generateHint": "Configure settings and generate your first tailored draft.",
+      "preview": "Preview",
+      "copy": "Copy",
+      "downloadPdf": "Download PDF",
+      "editorPlaceholder": "Edit markdown content...",
+      "editorLineBreak": "Insert line break (Shift+Enter)",
+      "editorLink": "Add link",
+      "editorUnlink": "Remove link",
+      "editorLinkPrompt": "Enter link URL",
+      "editorLinkPlaceholder": "https://example.com",
+      "editorLinkApply": "Apply",
+      "editorLinkCancel": "Cancel",
+      "editorLinkInvalid": "Invalid link URL",
+      "editorLinkSelectText": "Select text first, then add a link",
+      "editorTextStyle": "Text style",
+      "editorTextStyleParagraph": "Normal text",
+      "editorTextStyleHeading1": "Heading 1",
+      "editorTextStyleHeading2": "Heading 2",
+      "editorTextStyleHeading3": "Heading 3",
+      "editorTextStyleHeading4": "Heading 4",
+      "editorHelp": {
+        "title": "Editor help",
+        "enter": "Enter: new paragraph",
+        "shiftEnter": "Shift+Enter: line break in the same paragraph"
+      },
+      "generationModal": {
+        "loading": {
+          "title": "Generating draft",
+          "description": "Creating your {document} for your dream job application.",
+          "message": "This process can take up to 1 minute.",
+          "waitingTime": "1 minute",
+          "document": {
+            "letter": "cover letter",
+            "message": "application message"
+          }
+        },
+        "success": {
+          "title": "Draft is ready",
+          "description": "Generation finished successfully.",
+          "message": "Your draft is ready. You can review it now.",
+          "action": "Go to {document}"
+        },
+        "error": {
+          "title": "Generation failed",
+          "description": "An error occurred during generation.",
+          "message": "Something went wrong. Please try again.",
+          "action": "OK"
+        }
+      },
+      "formatTitle": "Formatting",
+      "formatDescription": "Adjust formatting for the generated cover letter.",
+      "fontSizeHint": "Base font size in points (10-14pt)",
+      "lineHeightHint": "Line spacing multiplier (1.10-1.50)",
+      "paragraphSpacingLabel": "Paragraph Spacing",
+      "paragraphSpacingHint": "Space between paragraphs (1-9)",
+      "generated": "Cover letter generated",
+      "regenerated": "Cover letter regenerated",
+      "fetchFailed": "Failed to load cover letter",
+      "generateFailed": "Failed to generate cover letter",
+      "saveFailed": "Failed to save cover letter",
+      "copied": "Copied to clipboard",
+      "copyFailed": "Failed to copy content",
+      "pdfReady": "PDF downloaded",
+      "pdfFailed": "Failed to download PDF"
     },
     "preparation": {
       "title": "Preparation Details",
@@ -854,6 +1032,7 @@
       "countryHint": "ISO 3166-1 alpha-2 code (e.g., US, GB, DE)",
       "searchRegion": "Search Region",
       "workFormat": "Work Format",
+      "grammaticalGender": "Writing style",
       "languages": "Languages",
       "phones": "Phone Numbers",
       "language": "Language",
@@ -872,6 +1051,11 @@
         "remote": "Remote",
         "onsite": "On-site",
         "hybrid": "Hybrid"
+      },
+      "grammaticalGenderOptions": {
+        "masculine": "Masculine form",
+        "feminine": "Feminine form",
+        "neutral": "Neutral (avoid gendered forms)"
       },
       "languageLevelOptions": {
         "native": "Native or bilingual proficiency",

@@ -15,11 +15,18 @@ import type { BreadcrumbItem } from '#ui/types';
 
 defineOptions({ name: 'VacancyItemLayoutBreadcrumbs' });
 
-const props = defineProps<{
-  vacancyId: string;
-  company: string;
-  jobPosition?: string | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    vacancyId?: string;
+    company?: string;
+    jobPosition?: string | null;
+  }>(),
+  {
+    vacancyId: '',
+    company: '',
+    jobPosition: null
+  }
+);
 
 const route = useRoute();
 const { t } = useI18n();
@@ -40,6 +47,7 @@ const items = computed<BreadcrumbItem[]>(() => {
   const vacancyLabel = props.jobPosition
     ? `${props.company} – ${props.jobPosition}`
     : props.company;
+  const overviewRoute = props.vacancyId ? `/vacancies/${props.vacancyId}/overview` : '/vacancies';
 
   return [
     {
@@ -51,7 +59,7 @@ const items = computed<BreadcrumbItem[]>(() => {
       ui: {
         linkLabel: 'inline-block max-w-[15ch] truncate align-bottom md:max-w-[40ch]'
       },
-      to: `/vacancies/${props.vacancyId}/overview`
+      to: overviewRoute
     },
     {
       label: t(`vacancy.nav.${activeSection.value.labelKey}`)

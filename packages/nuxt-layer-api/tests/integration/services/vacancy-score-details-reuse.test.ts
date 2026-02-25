@@ -17,6 +17,10 @@ const resumeRepositoryMock = {
   findById: vi.fn()
 };
 
+const userRepositoryMock = {
+  findById: vi.fn()
+};
+
 const resolveScenarioModelMock = vi.fn();
 const generateScoreDetailsWithLLMMock = vi.fn();
 const requireLimitMock = vi.fn(async () => {});
@@ -46,7 +50,8 @@ vi.mock('../../../server/data/repositories', () => ({
   vacancyRepository: vacancyRepositoryMock,
   generationRepository: generationRepositoryMock,
   generationScoreDetailRepository: generationScoreDetailRepositoryMock,
-  resumeRepository: resumeRepositoryMock
+  resumeRepository: resumeRepositoryMock,
+  userRepository: userRepositoryMock
 }));
 
 vi.mock('../../../server/services/llm', () => ({
@@ -71,6 +76,7 @@ beforeEach(() => {
   generationScoreDetailRepositoryMock.findByVacancyAndGeneration.mockReset();
   generationScoreDetailRepositoryMock.upsertByGeneration.mockReset();
   resumeRepositoryMock.findById.mockReset();
+  userRepositoryMock.findById.mockReset();
   resolveScenarioModelMock.mockReset();
   generateScoreDetailsWithLLMMock.mockReset();
   requireLimitMock.mockClear();
@@ -78,6 +84,10 @@ beforeEach(() => {
   requireUserSessionMock.mockClear();
   getRouterParamMock.mockClear();
   getQueryMock.mockClear();
+  userRepositoryMock.findById.mockResolvedValue({
+    id: 'user-1',
+    role: 'friend'
+  });
 
   Object.assign(globalThis, {
     defineEventHandler: (handler: unknown) => handler,

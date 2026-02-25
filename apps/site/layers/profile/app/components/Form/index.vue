@@ -30,8 +30,15 @@
  * TR012 - Decomposed into sub-components
  */
 
-import type { LanguageEntry, PhoneEntry, Profile, ProfileInput, WorkFormat } from '@int/schema';
-import { WORK_FORMAT_MAP } from '@int/schema';
+import type {
+  GrammaticalGender,
+  LanguageEntry,
+  PhoneEntry,
+  Profile,
+  ProfileInput,
+  WorkFormat
+} from '@int/schema';
+import { GRAMMATICAL_GENDER_MAP, WORK_FORMAT_MAP } from '@int/schema';
 
 defineOptions({ name: 'ProfileForm' });
 
@@ -70,6 +77,7 @@ type ProfileFormData = {
   country: string;
   searchRegion: string;
   workFormat: WorkFormat;
+  grammaticalGender: GrammaticalGender;
   languages?: LanguageEntry[];
   phones: PhoneEntry[];
   photoUrl?: string;
@@ -90,6 +98,7 @@ const formData = reactive<ProfileFormData>({
   country: props.profile?.country || '',
   searchRegion: props.profile?.searchRegion || '',
   workFormat: props.profile?.workFormat || WORK_FORMAT_MAP.REMOTE,
+  grammaticalGender: props.profile?.grammaticalGender || GRAMMATICAL_GENDER_MAP.NEUTRAL,
   languages: props.profile?.languages ? [...props.profile.languages] : [],
   phones: props.profile?.phones ? [...props.profile.phones] : [],
   photoUrl: props.profile?.photoUrl
@@ -103,7 +112,8 @@ const basicData = computed({
     email: formData.email,
     country: formData.country,
     searchRegion: formData.searchRegion,
-    workFormat: formData.workFormat
+    workFormat: formData.workFormat,
+    grammaticalGender: formData.grammaticalGender
   }),
   set: value => {
     formData.firstName = value.firstName;
@@ -112,6 +122,7 @@ const basicData = computed({
     formData.country = value.country;
     formData.searchRegion = value.searchRegion;
     formData.workFormat = value.workFormat;
+    formData.grammaticalGender = value.grammaticalGender;
   }
 });
 
@@ -132,6 +143,7 @@ const handleSubmit = () => {
     country: formData.country.trim().toUpperCase(),
     searchRegion: formData.searchRegion.trim(),
     workFormat: formData.workFormat,
+    grammaticalGender: formData.grammaticalGender,
     languages: formData.languages?.filter(l => l.language && l.level),
     phones:
       formData.phones.filter(p => p.number).length > 0
@@ -161,6 +173,7 @@ watch(
       formData.country = newProfile.country;
       formData.searchRegion = newProfile.searchRegion;
       formData.workFormat = newProfile.workFormat;
+      formData.grammaticalGender = newProfile.grammaticalGender;
       formData.languages = newProfile.languages ? [...newProfile.languages] : [];
       formData.phones = newProfile.phones ? [...newProfile.phones] : [];
       formData.photoUrl = newProfile.photoUrl;

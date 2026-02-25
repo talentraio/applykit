@@ -255,6 +255,37 @@
           "enabledShort": "Enabled",
           "disabledShort": "Disabled"
         },
+        "coverLetter": {
+          "flow": {
+            "draft": {
+              "label": "Draft flow",
+              "description": "Fast draft generation for rough structure and manual refinement.",
+              "modelLabel": "Draft model",
+              "reasoningLabel": "Draft reasoning effort"
+            },
+            "high": {
+              "label": "High-quality flow",
+              "description": "Primary generation flow for production-quality cover letters.",
+              "modelLabel": "High-quality model",
+              "reasoningLabel": "High-quality reasoning effort"
+            },
+            "humanizer": {
+              "label": "Humanizer critic",
+              "description": "Optional critic/rewrite pass to improve naturalness and reduce AI patterns.",
+              "modelLabel": "Critic model"
+            }
+          },
+          "capability": {
+            "draftFlow": "Draft flow: {status}",
+            "draftModel": "Draft model: {model}",
+            "draftReasoning": "Draft reasoning effort: {value}",
+            "highFlow": "High-quality flow: {status}",
+            "highModel": "High-quality model: {model}",
+            "highReasoning": "High-quality reasoning effort: {value}",
+            "humanizer": "Humanizer critic: {status}",
+            "humanizerModel": "Critic model: {model}"
+          }
+        },
         "runtimeConfig": {
           "title": "Effective runtime parameters",
           "adaptation": "Adaptation call",
@@ -292,13 +323,17 @@
           "resume_adaptation_scoring": "Resume Adaptation Scoring",
           "resume_adaptation_scoring_detail": "Resume Detailed Scoring",
           "resume_adaptation_with_scoring": "Resume Adaptation + Scoring",
-          "cover_letter_generation": "Cover Letter Generation"
+          "cover_letter_generation": "Cover Letter Generation (High)",
+          "cover_letter_generation_draft": "Cover Letter Generation (Draft)",
+          "cover_letter_humanizer_critic": "Cover Letter Humanizer Critic"
         },
         "scenarioDescriptions": {
           "resume_parse": "Parse uploaded resume into strict structured JSON.",
           "resume_adaptation_with_scoring": "Generate tailored resume and evaluate improvement score.",
           "resume_adaptation_scoring_detail": "Generate extended matched/gaps insights on demand for preparation.",
-          "cover_letter_generation": "Generate a tailored cover letter for the selected vacancy."
+          "cover_letter_generation": "Generate a high-quality tailored cover letter for the selected vacancy.",
+          "cover_letter_generation_draft": "Generate a fast draft cover letter for manual refinement.",
+          "cover_letter_humanizer_critic": "Evaluate and optionally rewrite output to improve naturalness."
         }
       }
     }

@@ -12,6 +12,10 @@ const generationScoreDetailRepositoryMock = {
   findByGenerationId: vi.fn()
 };
 
+const userRepositoryMock = {
+  findById: vi.fn()
+};
+
 const resolveScenarioModelMock = vi.fn();
 
 const requireUserSessionMock = vi.fn(async () => ({
@@ -35,7 +39,8 @@ const createErrorShim = (input: { statusCode: number; message: string }): Error 
 vi.mock('../../../server/data/repositories', () => ({
   vacancyRepository: vacancyRepositoryMock,
   generationRepository: generationRepositoryMock,
-  generationScoreDetailRepository: generationScoreDetailRepositoryMock
+  generationScoreDetailRepository: generationScoreDetailRepositoryMock,
+  userRepository: userRepositoryMock
 }));
 
 vi.mock('../../../server/services/llm', () => ({
@@ -46,9 +51,14 @@ beforeEach(() => {
   vacancyRepositoryMock.findByIdAndUserId.mockReset();
   generationRepositoryMock.findLatestOverviewByVacancyId.mockReset();
   generationScoreDetailRepositoryMock.findByGenerationId.mockReset();
+  userRepositoryMock.findById.mockReset();
   resolveScenarioModelMock.mockReset();
   requireUserSessionMock.mockClear();
   getRouterParamMock.mockClear();
+  userRepositoryMock.findById.mockResolvedValue({
+    id: 'user-1',
+    role: 'friend'
+  });
 
   Object.assign(globalThis, {
     defineEventHandler: (handler: unknown) => handler,

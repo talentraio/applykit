@@ -149,7 +149,16 @@ export function useRoutingScenarioEditor(
       );
     }
 
-    return modalDraft.value.primaryModelId !== savedDraft.value.primaryModelId;
+    return (
+      modalDraft.value.draftModelId !== savedDraft.value.draftModelId ||
+      modalDraft.value.draftReasoningEffort !== savedDraft.value.draftReasoningEffort ||
+      modalDraft.value.draftFlowEnabled !== savedDraft.value.draftFlowEnabled ||
+      modalDraft.value.highModelId !== savedDraft.value.highModelId ||
+      modalDraft.value.highReasoningEffort !== savedDraft.value.highReasoningEffort ||
+      modalDraft.value.highFlowEnabled !== savedDraft.value.highFlowEnabled ||
+      modalDraft.value.highHumanizerEnabled !== savedDraft.value.highHumanizerEnabled ||
+      modalDraft.value.highHumanizerModelId !== savedDraft.value.highHumanizerModelId
+    );
   });
 
   const modalHasRequiredValues = computed(() => {

@@ -32,12 +32,19 @@ import type { DropdownMenuItem } from '#ui/types';
 
 defineOptions({ name: 'VacancyItemLayoutNavDropdown' });
 
-const props = defineProps<{
-  vacancyId: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    vacancyId?: string;
+  }>(),
+  {
+    vacancyId: ''
+  }
+);
 
 const route = useRoute();
 const { t } = useI18n();
+const vacancyStore = useVacancyStore();
+const { getCurrentVacancyMeta } = storeToRefs(vacancyStore);
 
 const sections = [
   { value: 'overview', labelKey: 'overview', icon: 'i-lucide-layout-dashboard' },
@@ -58,16 +65,41 @@ const activeSection = computed<Section>(() => {
   return 'overview';
 });
 
+const showPreparationSection = computed(() => {
+  const meta = getCurrentVacancyMeta.value;
+  if (!meta) return true;
+  if (meta.id !== props.vacancyId) return true;
+  return meta.canRequestScoreDetails;
+});
+
+const visibleSections = computed(() => {
+  return sections.filter(section => {
+    if (section.value !== 'preparation') {
+      return true;
+    }
+
+    return showPreparationSection.value;
+  });
+});
+
 const currentLabel = computed(() => {
   const section = sections.find(item => item.value === activeSection.value) ?? sections[0];
   return t(`vacancy.nav.${section.labelKey}`);
 });
 
+const getSectionRoute = (section: Section): string => {
+  if (!props.vacancyId) {
+    return '/vacancies';
+  }
+
+  return `/vacancies/${props.vacancyId}/${section}`;
+};
+
 const items = computed<DropdownMenuItem[][]>(() => [
-  sections.map(section => ({
+  visibleSections.value.map(section => ({
     label: t(`vacancy.nav.${section.labelKey}`),
     icon: section.icon,
-    to: `/vacancies/${props.vacancyId}/${section.value}`,
+    to: getSectionRoute(section.value),
     exact: true
   }))
 ]);

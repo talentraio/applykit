@@ -4,6 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const callLLMMock = vi.fn();
 const resolveScenarioModelMock = vi.fn();
+const useRuntimeConfigMock = vi.fn(() => ({
+  llm: {
+    debugLogs: false,
+    geminiCache: {
+      enabled: false,
+      ttlSeconds: 300
+    },
+    geminiApiKey: ''
+  }
+}));
 
 vi.mock('../../../server/services/llm/index', () => ({
   callLLM: callLLMMock,
@@ -48,6 +58,11 @@ describe('vacancy generate fallback score integration', () => {
   beforeEach(() => {
     callLLMMock.mockReset();
     resolveScenarioModelMock.mockReset();
+    useRuntimeConfigMock.mockClear();
+
+    Object.assign(globalThis, {
+      useRuntimeConfig: useRuntimeConfigMock
+    });
 
     resolveScenarioModelMock.mockResolvedValue({
       source: 'scenario_default',

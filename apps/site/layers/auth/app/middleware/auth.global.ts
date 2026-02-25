@@ -14,8 +14,9 @@ export default defineNuxtRouteMiddleware(to => {
   const publicRoutes = [redirects.protected.unauthenticated, '/'];
   const token = typeof to.query.token === 'string' ? to.query.token : '';
   const isPdfPreview = to.path === '/pdf/preview' && Boolean(token);
+  const isCoverLetterPdfPreview = to.path === '/cover-letter/pdf/preview' && Boolean(token);
 
-  if (publicRoutes.includes(to.path) || isPdfPreview) {
+  if (publicRoutes.includes(to.path) || isPdfPreview || isCoverLetterPdfPreview) {
     return;
   }
 

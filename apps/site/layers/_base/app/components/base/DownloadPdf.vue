@@ -63,6 +63,7 @@ type FormatSettingsMap = {
 
 const { t } = useI18n();
 const toast = useToast();
+const { downloadPdfFile } = usePdfDownload();
 
 const atsFormat = EXPORT_FORMAT_MAP.ATS;
 const humanFormat = EXPORT_FORMAT_MAP.HUMAN;
@@ -98,28 +99,6 @@ const getErrorMessage = (error: unknown) => {
   return t('export.error.generic');
 };
 
-const downloadPdf = async (url: string, filename: string) => {
-  if (!import.meta.client) return;
-
-  const response = await fetch(url, { credentials: 'include' });
-  if (!response.ok) {
-    throw new Error(`PDF export failed: ${response.status}`);
-  }
-
-  const blob = await response.blob();
-  const objectUrl = URL.createObjectURL(blob);
-
-  const link = document.createElement('a');
-  link.href = objectUrl;
-  link.download = filename;
-  link.rel = 'noopener';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-};
-
 const handleExport = async (format: ExportFormat) => {
   if (isDisabled.value || !props.content) return;
 
@@ -138,7 +117,7 @@ const handleExport = async (format: ExportFormat) => {
     const result = await pdfApi.prepare(payload);
 
     const downloadUrl = `/api/pdf/file?token=${encodeURIComponent(result.token)}`;
-    await downloadPdf(downloadUrl, getFilename(format));
+    await downloadPdfFile(downloadUrl, { fallbackFilename: getFilename(format) });
 
     toast.add({
       title: t('export.success'),

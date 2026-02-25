@@ -2,6 +2,7 @@ import type { Role } from '@int/schema';
 import type { VacancyPreparationResponse } from '@layer/api/types/vacancies';
 import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 import {
+  coverLetterRepository,
   generationRepository,
   generationScoreDetailRepository,
   vacancyRepository
@@ -32,7 +33,10 @@ export default defineEventHandler(async (event): Promise<VacancyPreparationRespo
     });
   }
 
-  const latestGeneration = await generationRepository.findLatestOverviewByVacancyId(vacancyId);
+  const [latestGeneration, latestCoverLetter] = await Promise.all([
+    generationRepository.findLatestOverviewByVacancyId(vacancyId),
+    coverLetterRepository.findLatestByVacancyId(vacancyId)
+  ]);
 
   let scoreDetails = null;
   if (latestGeneration) {
@@ -53,16 +57,29 @@ export default defineEventHandler(async (event): Promise<VacancyPreparationRespo
     userRole,
     LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
   );
-  const detailedScoringEnabled = Boolean(scenarioModel);
+  const canRequestScoreDetails = Boolean(latestGeneration && scenarioModel);
+  const [coverLetterDraftScenarioModel, coverLetterHighScenarioModel] = await Promise.all([
+    resolveScenarioModel(userRole, LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT),
+    resolveScenarioModel(userRole, LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION)
+  ]);
+  const coverLetterDraftEnabled = Boolean(coverLetterDraftScenarioModel);
+  const coverLetterHighEnabled = Boolean(coverLetterHighScenarioModel);
 
   const vacancyVersionMarker = buildVacancyVersionMarker({
     company: vacancy.company,
     jobPosition: vacancy.jobPosition,
     description: vacancy.description
   });
-  const visibleScoreDetails = detailedScoringEnabled ? scoreDetails : null;
+  const visibleScoreDetails = canRequestScoreDetails ? scoreDetails : null;
   const scoreDetailsStale = Boolean(
     visibleScoreDetails && visibleScoreDetails.vacancyVersionMarker !== vacancyVersionMarker
+  );
+  const canRegenerateScoreDetails = Boolean(
+    latestGeneration &&
+    visibleScoreDetails &&
+    scoreDetailsStale &&
+    vacancy.canGenerateResume &&
+    canRequestScoreDetails
   );
 
   return {
@@ -70,26 +87,17 @@ export default defineEventHandler(async (event): Promise<VacancyPreparationRespo
       id: vacancy.id,
       company: vacancy.company,
       jobPosition: vacancy.jobPosition,
-      canRequestScoreDetails: Boolean(latestGeneration && detailedScoringEnabled),
-      canRegenerateScoreDetails: Boolean(
-        latestGeneration &&
-        visibleScoreDetails &&
-        scoreDetailsStale &&
-        vacancy.canGenerateResume &&
-        detailedScoringEnabled
-      )
+      latestGenerationId: latestGeneration?.id ?? null,
+      hasCoverLetter: Boolean(latestCoverLetter),
+      canRequestScoreDetails,
+      canRegenerateScoreDetails,
+      coverLetterDraftEnabled,
+      coverLetterHighEnabled
     },
     latestGeneration,
     scoreDetails: visibleScoreDetails,
-    detailedScoringEnabled,
     scoreDetailsStale,
-    canRequestDetails: Boolean(latestGeneration && detailedScoringEnabled),
-    canRegenerateDetails: Boolean(
-      latestGeneration &&
-      visibleScoreDetails &&
-      scoreDetailsStale &&
-      vacancy.canGenerateResume &&
-      detailedScoringEnabled
-    )
+    canRequestDetails: canRequestScoreDetails,
+    canRegenerateDetails: canRegenerateScoreDetails
   };
 });

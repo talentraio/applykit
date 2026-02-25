@@ -123,8 +123,16 @@ const resumeScoringItem = computed(() => {
   return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING) ?? null;
 });
 
-const coverLetterItem = computed(() => {
+const coverLetterHighItem = computed(() => {
   return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION) ?? null;
+});
+
+const coverLetterDraftItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT) ?? null;
+});
+
+const coverLetterHumanizerItem = computed(() => {
+  return routingByScenario.value.get(LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC) ?? null;
 });
 
 const detailedScoringItem = computed(() => {
@@ -432,12 +440,59 @@ const resumeAdaptationCapabilities = computed<string[]>(() => {
 });
 
 const coverLetterCapabilities = computed<string[]>(() => {
+  const draftFlowStatus = resolveEffectiveFlowEnabled(coverLetterDraftItem.value)
+    ? t('admin.llm.routing.detailedScoring.enabledShort')
+    : t('admin.llm.routing.detailedScoring.disabledShort');
+  const highFlowStatus = resolveEffectiveFlowEnabled(coverLetterHighItem.value)
+    ? t('admin.llm.routing.detailedScoring.enabledShort')
+    : t('admin.llm.routing.detailedScoring.disabledShort');
+  const humanizerStatus = resolveEffectiveFlowEnabled(coverLetterHumanizerItem.value)
+    ? t('admin.llm.routing.detailedScoring.enabledShort')
+    : t('admin.llm.routing.detailedScoring.disabledShort');
+
   return [
+    t('admin.llm.routing.coverLetter.capability.draftFlow', {
+      status: draftFlowStatus
+    }),
     t('admin.roles.routing.currentModel', {
-      model: resolveInheritedModelLabel(currentOverrideModelId(coverLetterItem.value))
+      model: resolveInheritedModelLabel(currentOverrideModelId(coverLetterDraftItem.value))
+    }),
+    t('admin.roles.routing.currentReasoningEffort', {
+      value: resolveInheritedReasoningEffortLabel(
+        currentReasoningEffortOverride(coverLetterDraftItem.value)
+      )
     }),
     t('admin.roles.routing.defaultModel', {
-      model: resolveModelLabel(coverLetterItem.value?.default?.modelId ?? null)
+      model: resolveModelLabel(coverLetterDraftItem.value?.default?.modelId ?? null)
+    }),
+    t('admin.roles.routing.defaultReasoningEffort', {
+      value: resolveReasoningEffortLabel(coverLetterDraftItem.value?.default?.reasoningEffort)
+    }),
+    t('admin.llm.routing.coverLetter.capability.highFlow', {
+      status: highFlowStatus
+    }),
+    t('admin.roles.routing.currentModel', {
+      model: resolveInheritedModelLabel(currentOverrideModelId(coverLetterHighItem.value))
+    }),
+    t('admin.roles.routing.currentReasoningEffort', {
+      value: resolveInheritedReasoningEffortLabel(
+        currentReasoningEffortOverride(coverLetterHighItem.value)
+      )
+    }),
+    t('admin.roles.routing.defaultModel', {
+      model: resolveModelLabel(coverLetterHighItem.value?.default?.modelId ?? null)
+    }),
+    t('admin.roles.routing.defaultReasoningEffort', {
+      value: resolveReasoningEffortLabel(coverLetterHighItem.value?.default?.reasoningEffort)
+    }),
+    t('admin.llm.routing.coverLetter.capability.humanizer', {
+      status: humanizerStatus
+    }),
+    t('admin.roles.routing.currentModel', {
+      model: resolveInheritedModelLabel(currentOverrideModelId(coverLetterHumanizerItem.value))
+    }),
+    t('admin.roles.routing.defaultModel', {
+      model: resolveModelLabel(coverLetterHumanizerItem.value?.default?.modelId ?? null)
     })
   ];
 });
@@ -527,7 +582,7 @@ const scenarioCards = computed<RoutingScenarioCardsConfig>(() => {
     };
   }
 
-  if (coverLetterItem.value) {
+  if (coverLetterHighItem.value || coverLetterDraftItem.value || coverLetterHumanizerItem.value) {
     cards[LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION] = {
       capabilities: coverLetterCapabilities.value,
       editDisabled: isRoutingDisabled.value
@@ -552,7 +607,15 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       tertiaryModelId: '',
       reasoningEffort: '',
       strategyKey: '',
-      flowEnabled: true
+      flowEnabled: true,
+      draftModelId: '',
+      draftReasoningEffort: 'auto',
+      draftFlowEnabled: true,
+      highModelId: '',
+      highReasoningEffort: 'auto',
+      highFlowEnabled: true,
+      highHumanizerEnabled: false,
+      highHumanizerModelId: ''
     };
   }
 
@@ -565,7 +628,15 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
         currentReasoningEffortOverride(resumeAdaptationItem.value)
       ),
       strategyKey: toSelectStrategyKey(currentStrategyOverrideKey(resumeAdaptationItem.value)),
-      flowEnabled: true
+      flowEnabled: true,
+      draftModelId: '',
+      draftReasoningEffort: 'auto',
+      draftFlowEnabled: true,
+      highModelId: '',
+      highReasoningEffort: 'auto',
+      highFlowEnabled: true,
+      highHumanizerEnabled: false,
+      highHumanizerModelId: ''
     };
   }
 
@@ -576,17 +647,37 @@ const getSavedDraftForScenario = (scenarioKey: EditableScenarioKey): RoutingScen
       tertiaryModelId: '',
       reasoningEffort: '',
       strategyKey: '',
-      flowEnabled: resolveEffectiveFlowEnabled(detailedScoringItem.value)
+      flowEnabled: resolveEffectiveFlowEnabled(detailedScoringItem.value),
+      draftModelId: '',
+      draftReasoningEffort: 'auto',
+      draftFlowEnabled: true,
+      highModelId: '',
+      highReasoningEffort: 'auto',
+      highFlowEnabled: true,
+      highHumanizerEnabled: false,
+      highHumanizerModelId: ''
     };
   }
 
   return {
-    primaryModelId: toSelectModelId(currentOverrideModelId(coverLetterItem.value)),
+    primaryModelId: toSelectModelId(currentOverrideModelId(coverLetterHighItem.value)),
     secondaryModelId: '',
     tertiaryModelId: '',
     reasoningEffort: '',
     strategyKey: '',
-    flowEnabled: true
+    flowEnabled: true,
+    draftModelId: toSelectModelId(currentOverrideModelId(coverLetterDraftItem.value)),
+    draftReasoningEffort: toSelectReasoningEffort(
+      currentReasoningEffortOverride(coverLetterDraftItem.value)
+    ),
+    draftFlowEnabled: resolveEffectiveFlowEnabled(coverLetterDraftItem.value),
+    highModelId: toSelectModelId(currentOverrideModelId(coverLetterHighItem.value)),
+    highReasoningEffort: toSelectReasoningEffort(
+      currentReasoningEffortOverride(coverLetterHighItem.value)
+    ),
+    highFlowEnabled: resolveEffectiveFlowEnabled(coverLetterHighItem.value),
+    highHumanizerEnabled: resolveEffectiveFlowEnabled(coverLetterHumanizerItem.value),
+    highHumanizerModelId: toSelectModelId(currentOverrideModelId(coverLetterHumanizerItem.value))
   };
 };
 
@@ -603,7 +694,12 @@ const getModalDescriptionByScenario = (scenarioKey: EditableScenarioKey): string
     return detailedScoringItem.value?.description ?? '';
   }
 
-  return coverLetterItem.value?.description ?? '';
+  return (
+    coverLetterHighItem.value?.description ??
+    coverLetterDraftItem.value?.description ??
+    coverLetterHumanizerItem.value?.description ??
+    ''
+  );
 };
 
 const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<string, unknown> => {
@@ -653,7 +749,18 @@ const getModalFormPropsByScenario = (scenarioKey: EditableScenarioKey): Record<s
 
   return {
     modelOptions: modelOptionsWithInherit.value,
-    primaryLabel: t('admin.roles.routing.overrideLabel'),
+    reasoningOptions: reasoningOptionsWithInherit.value,
+    draftFlowLabel: t('admin.llm.routing.coverLetter.flow.draft.label'),
+    draftFlowDescription: t('admin.llm.routing.coverLetter.flow.draft.description'),
+    highFlowLabel: t('admin.llm.routing.coverLetter.flow.high.label'),
+    highFlowDescription: t('admin.llm.routing.coverLetter.flow.high.description'),
+    humanizerLabel: t('admin.llm.routing.coverLetter.flow.humanizer.label'),
+    humanizerDescription: t('admin.llm.routing.coverLetter.flow.humanizer.description'),
+    draftModelLabel: t('admin.roles.routing.overrideLabel'),
+    draftReasoningLabel: t('admin.llm.routing.coverLetter.flow.draft.reasoningLabel'),
+    highModelLabel: t('admin.roles.routing.overrideLabel'),
+    highReasoningLabel: t('admin.llm.routing.coverLetter.flow.high.reasoningLabel'),
+    humanizerModelLabel: t('admin.roles.routing.overrideLabel'),
     disabled: isRoutingDisabled.value
   };
 };
@@ -767,17 +874,126 @@ async function saveScenario() {
         await deleteRoleOverride(LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL, props.role);
       }
     } else {
-      const selectedPrimary = fromSelectModelId(modalDraft.value.primaryModelId);
-      const existingPrimary = currentOverrideModelId(coverLetterItem.value);
+      const updates: Promise<unknown>[] = [];
 
-      if (selectedPrimary) {
-        await upsertRoleOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, props.role, {
-          modelId: selectedPrimary,
-          retryModelId: null,
-          strategyKey: null
-        });
-      } else if (existingPrimary) {
-        await deleteRoleOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, props.role);
+      const draftDefaultEnabled = coverLetterDraftItem.value?.enabled ?? true;
+      const draftEnabledOverride = findRoleEnabledOverride(coverLetterDraftItem.value);
+      if (modalDraft.value.draftFlowEnabled === draftDefaultEnabled) {
+        if (draftEnabledOverride) {
+          updates.push(
+            deleteRoleEnabledOverride(
+              LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT,
+              props.role
+            )
+          );
+        }
+      } else {
+        updates.push(
+          upsertRoleEnabledOverride(
+            LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT,
+            props.role,
+            modalDraft.value.draftFlowEnabled
+          )
+        );
+      }
+
+      const highDefaultEnabled = coverLetterHighItem.value?.enabled ?? true;
+      const highEnabledOverride = findRoleEnabledOverride(coverLetterHighItem.value);
+      if (modalDraft.value.highFlowEnabled === highDefaultEnabled) {
+        if (highEnabledOverride) {
+          updates.push(
+            deleteRoleEnabledOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, props.role)
+          );
+        }
+      } else {
+        updates.push(
+          upsertRoleEnabledOverride(
+            LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION,
+            props.role,
+            modalDraft.value.highFlowEnabled
+          )
+        );
+      }
+
+      const humanizerDefaultEnabled = coverLetterHumanizerItem.value?.enabled ?? false;
+      const nextHumanizerEnabled =
+        modalDraft.value.highFlowEnabled && modalDraft.value.highHumanizerEnabled;
+      const humanizerEnabledOverride = findRoleEnabledOverride(coverLetterHumanizerItem.value);
+      if (nextHumanizerEnabled === humanizerDefaultEnabled) {
+        if (humanizerEnabledOverride) {
+          updates.push(
+            deleteRoleEnabledOverride(
+              LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC,
+              props.role
+            )
+          );
+        }
+      } else {
+        updates.push(
+          upsertRoleEnabledOverride(
+            LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC,
+            props.role,
+            nextHumanizerEnabled
+          )
+        );
+      }
+
+      const selectedDraftModel = fromSelectModelId(modalDraft.value.draftModelId);
+      const selectedDraftReasoningEffort = fromSelectReasoningEffort(
+        modalDraft.value.draftReasoningEffort
+      );
+      const existingDraftModel = currentOverrideModelId(coverLetterDraftItem.value);
+      if (selectedDraftModel) {
+        updates.push(
+          upsertRoleOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT, props.role, {
+            modelId: selectedDraftModel,
+            retryModelId: null,
+            reasoningEffort: selectedDraftReasoningEffort,
+            strategyKey: null
+          })
+        );
+      } else if (existingDraftModel) {
+        updates.push(
+          deleteRoleOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT, props.role)
+        );
+      }
+
+      const selectedHighModel = fromSelectModelId(modalDraft.value.highModelId);
+      const selectedHighReasoningEffort = fromSelectReasoningEffort(
+        modalDraft.value.highReasoningEffort
+      );
+      const existingHighModel = currentOverrideModelId(coverLetterHighItem.value);
+      if (selectedHighModel) {
+        updates.push(
+          upsertRoleOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, props.role, {
+            modelId: selectedHighModel,
+            retryModelId: null,
+            reasoningEffort: selectedHighReasoningEffort,
+            strategyKey: null
+          })
+        );
+      } else if (existingHighModel) {
+        updates.push(deleteRoleOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION, props.role));
+      }
+
+      const selectedHumanizerModel = fromSelectModelId(modalDraft.value.highHumanizerModelId);
+      const existingHumanizerModel = currentOverrideModelId(coverLetterHumanizerItem.value);
+      if (selectedHumanizerModel) {
+        updates.push(
+          upsertRoleOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC, props.role, {
+            modelId: selectedHumanizerModel,
+            retryModelId: null,
+            strategyKey: null
+          })
+        );
+      } else if (existingHumanizerModel) {
+        updates.push(
+          deleteRoleOverride(LLM_SCENARIO_KEY_MAP.COVER_LETTER_HUMANIZER_CRITIC, props.role)
+        );
+      }
+
+      if (updates.length > 0) {
+        await Promise.all(updates);
       }
     }
 

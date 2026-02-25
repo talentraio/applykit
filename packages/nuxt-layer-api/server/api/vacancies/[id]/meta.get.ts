@@ -2,6 +2,7 @@ import type { Role } from '@int/schema';
 import type { VacancyMeta } from '@layer/api/types/vacancies';
 import { LLM_SCENARIO_KEY_MAP } from '@int/schema';
 import {
+  coverLetterRepository,
   generationRepository,
   generationScoreDetailRepository,
   vacancyRepository
@@ -41,17 +42,26 @@ export default defineEventHandler(async (event): Promise<VacancyMeta> => {
     });
   }
 
-  const latestGeneration = await generationRepository.findLatestOverviewByVacancyId(id);
+  const [latestGeneration, latestCoverLetter] = await Promise.all([
+    generationRepository.findLatestOverviewByVacancyId(id),
+    coverLetterRepository.findLatestByVacancyId(id)
+  ]);
 
   const scenarioModel = await resolveScenarioModel(
     userRole,
     LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL
   );
-  const detailedScoringEnabled = Boolean(scenarioModel);
+  const canRequestScoreDetails = Boolean(latestGeneration && scenarioModel);
+  const [coverLetterDraftScenarioModel, coverLetterHighScenarioModel] = await Promise.all([
+    resolveScenarioModel(userRole, LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT),
+    resolveScenarioModel(userRole, LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION)
+  ]);
+  const coverLetterDraftEnabled = Boolean(coverLetterDraftScenarioModel);
+  const coverLetterHighEnabled = Boolean(coverLetterHighScenarioModel);
 
   let canRegenerateScoreDetails = false;
 
-  if (latestGeneration && detailedScoringEnabled) {
+  if (canRequestScoreDetails && latestGeneration) {
     try {
       const scoreDetails = await generationScoreDetailRepository.findByGenerationId(
         latestGeneration.id
@@ -77,7 +87,11 @@ export default defineEventHandler(async (event): Promise<VacancyMeta> => {
     id: vacancy.id,
     company: vacancy.company,
     jobPosition: vacancy.jobPosition,
-    canRequestScoreDetails: Boolean(latestGeneration && detailedScoringEnabled),
-    canRegenerateScoreDetails
+    latestGenerationId: latestGeneration?.id ?? null,
+    hasCoverLetter: Boolean(latestCoverLetter),
+    canRequestScoreDetails,
+    canRegenerateScoreDetails,
+    coverLetterDraftEnabled,
+    coverLetterHighEnabled
   };
 });

@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { WorkFormatSchema } from './enums';
+import { GrammaticalGenderSchema, WorkFormatSchema } from './enums';
 
-export { type WorkFormat, WorkFormatSchema } from './enums';
+export { type GrammaticalGender, type WorkFormat, WorkFormatSchema } from './enums';
 
 export const LanguageEntrySchema = z.object({
   language: z.string().min(1),
@@ -24,6 +24,7 @@ export const ProfileSchema = z.object({
   country: z.string().length(2), // ISO 3166-1 alpha-2
   searchRegion: z.string().min(1).max(100),
   workFormat: WorkFormatSchema,
+  grammaticalGender: GrammaticalGenderSchema.default('neutral'),
   languages: z.array(LanguageEntrySchema).optional(), // TODO: temporarily optional, restore .min(1) when languages section is re-enabled
   phones: z.array(PhoneEntrySchema).optional(),
   photoUrl: z

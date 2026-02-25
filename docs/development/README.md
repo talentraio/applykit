@@ -11,6 +11,8 @@ This section is a practical onboarding path for new contributors.
 5. [Database and migrations](./database-migrations.md)
 6. [Deployment (Vercel + GitHub Actions)](./deployment.md)
 7. [Maintenance checklist](./maintenance.md)
+8. [Cover-letter locale/market onboarding](./cover-letter-locale-market-onboarding.md)
+9. [Cover-letter locale/market PR checklist](./cover-letter-locale-market-checklist.md)
 
 ## Quick commands
 

@@ -1,6 +1,10 @@
 import type { ResumeFormatSettingsAts, ResumeFormatSettingsHuman } from '@int/schema';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import {
+  COVER_LETTER_CHARACTER_BUFFER_DEFAULTS,
+  COVER_LETTER_CHARACTER_LIMIT_DEFAULTS
+} from '@int/schema';
 
 const createFormatSettingsDefaults = () =>
   ({
@@ -49,6 +53,14 @@ export default defineNuxtConfig({
           output: Number(process.env.NUXT_LLM_FALLBACK_PRICE_OUTPUT ?? '1.6'),
           cache: Number(process.env.NUXT_LLM_FALLBACK_PRICE_CACHE ?? '0')
         }
+      },
+      coverLetterHumanizer: {
+        minNaturalnessScore: Number(
+          process.env.NUXT_LLM_COVER_LETTER_MIN_NATURALNESS_SCORE ?? '75'
+        ),
+        maxAiRiskScore: Number(process.env.NUXT_LLM_COVER_LETTER_MAX_AI_RISK_SCORE ?? '35'),
+        maxRewritePasses: Number(process.env.NUXT_LLM_COVER_LETTER_MAX_REWRITE_PASSES ?? '1'),
+        debugLogs: process.env.NUXT_LLM_COVER_LETTER_HUMANIZER_DEBUG_LOGS !== 'false'
       }
     },
     resume: {
@@ -98,6 +110,18 @@ export default defineNuxtConfig({
       siteUrl: '',
       formatSettings: {
         defaults: createFormatSettingsDefaults()
+      },
+      coverLetter: {
+        minLengthLimitCharacters: COVER_LETTER_CHARACTER_LIMIT_DEFAULTS.MIN,
+        maxLengthLimitCharacters: COVER_LETTER_CHARACTER_LIMIT_DEFAULTS.MAX,
+        additionalInstructionsMaxCharacters: 1000,
+        targetBufferRatio: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_RATIO,
+        targetBufferSmallLimitThreshold:
+          COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_SMALL_LIMIT_THRESHOLD,
+        targetBufferSmallMin: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_SMALL_MIN,
+        targetBufferSmallMax: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_SMALL_MAX,
+        targetBufferMin: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_MIN,
+        targetBufferMax: COVER_LETTER_CHARACTER_BUFFER_DEFAULTS.TARGET_BUFFER_MAX
       }
     }
   },

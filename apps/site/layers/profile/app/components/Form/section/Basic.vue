@@ -79,7 +79,7 @@
       </p>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-3">
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <!-- Country (ISO 3166-1 alpha-2) -->
       <div>
         <label class="mb-2 block text-sm font-medium">
@@ -126,10 +126,29 @@
           :model-value="modelValue.workFormat"
           :items="workFormatOptions"
           value-key="value"
+          :search-input="false"
           size="lg"
           required
           class="w-full"
           @update:model-value="handleWorkFormatUpdate"
+        />
+      </div>
+
+      <!-- Writing style (grammatical gender for generated text) -->
+      <div>
+        <label class="mb-2 block text-sm font-medium">
+          {{ $t('profile.form.grammaticalGender') }}
+          <span class="text-error">*</span>
+        </label>
+        <USelectMenu
+          :model-value="modelValue.grammaticalGender"
+          :items="grammaticalGenderOptions"
+          value-key="value"
+          :search-input="false"
+          size="lg"
+          required
+          class="w-full"
+          @update:model-value="handleGrammaticalGenderUpdate"
         />
       </div>
     </div>
@@ -145,8 +164,8 @@
  * TR012 - Created as part of ProfileForm decomposition
  */
 
-import type { WorkFormat } from '@int/schema';
-import { WORK_FORMAT_MAP } from '@int/schema';
+import type { GrammaticalGender, WorkFormat } from '@int/schema';
+import { GRAMMATICAL_GENDER_MAP, WORK_FORMAT_MAP } from '@int/schema';
 import countries from 'i18n-iso-countries';
 import enLocale from 'i18n-iso-countries/langs/en.json';
 
@@ -192,6 +211,7 @@ type BasicData = {
   country: string;
   searchRegion: string;
   workFormat: WorkFormat;
+  grammaticalGender: GrammaticalGender;
 };
 
 const { t } = useI18n();
@@ -213,6 +233,23 @@ const workFormatOptions = computed<WorkFormatOption[]>(() => [
   { label: t('profile.form.workFormatOptions.remote'), value: WORK_FORMAT_MAP.REMOTE },
   { label: t('profile.form.workFormatOptions.onsite'), value: WORK_FORMAT_MAP.ONSITE },
   { label: t('profile.form.workFormatOptions.hybrid'), value: WORK_FORMAT_MAP.HYBRID }
+]);
+
+type GrammaticalGenderOption = { label: string; value: BasicData['grammaticalGender'] };
+
+const grammaticalGenderOptions = computed<GrammaticalGenderOption[]>(() => [
+  {
+    label: t('profile.form.grammaticalGenderOptions.masculine'),
+    value: GRAMMATICAL_GENDER_MAP.MASCULINE
+  },
+  {
+    label: t('profile.form.grammaticalGenderOptions.feminine'),
+    value: GRAMMATICAL_GENDER_MAP.FEMININE
+  },
+  {
+    label: t('profile.form.grammaticalGenderOptions.neutral'),
+    value: GRAMMATICAL_GENDER_MAP.NEUTRAL
+  }
 ]);
 
 // Search region options (popular job search regions)
@@ -252,15 +289,27 @@ const handleSearchRegionUpdate = (value: unknown) => {
 };
 
 const workFormatValues: ReadonlyArray<WorkFormat> = Object.values(WORK_FORMAT_MAP);
+const grammaticalGenderValues: ReadonlyArray<GrammaticalGender> =
+  Object.values(GRAMMATICAL_GENDER_MAP);
 
 const isValidWorkFormat = (value: unknown): value is WorkFormat => {
   return typeof value === 'string' && workFormatValues.includes(value as WorkFormat);
+};
+
+const isValidGrammaticalGender = (value: unknown): value is GrammaticalGender => {
+  return typeof value === 'string' && grammaticalGenderValues.includes(value as GrammaticalGender);
 };
 
 const handleWorkFormatUpdate = (value: unknown) => {
   // USelectMenu with value-key returns the value directly
   if (isValidWorkFormat(value)) {
     update('workFormat', value);
+  }
+};
+
+const handleGrammaticalGenderUpdate = (value: unknown) => {
+  if (isValidGrammaticalGender(value)) {
+    update('grammaticalGender', value);
   }
 };
 </script>
