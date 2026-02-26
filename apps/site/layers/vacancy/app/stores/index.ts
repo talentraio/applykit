@@ -12,7 +12,9 @@ import type {
   VacancyOverview,
   VacancyOverviewGeneration
 } from '@layer/api/types/vacancies';
+import type { Pinia, Store } from 'pinia';
 import { vacancyApi } from '@site/vacancy/app/infrastructure/vacancy.api';
+import { getActivePinia } from 'pinia';
 
 /**
  * Vacancy Store
@@ -29,6 +31,26 @@ const toOverviewGeneration = (generation: Generation | null): VacancyOverviewGen
     matchScoreAfter: generation.matchScoreAfter,
     expiresAt: generation.expiresAt
   };
+};
+
+type ExtendedPinia = {
+  _s: Map<string, Store>;
+} & Pinia;
+
+const resetStoresByPrefix = (prefix: string, excludedStoreId: string): void => {
+  const pinia = getActivePinia() as ExtendedPinia | undefined;
+
+  if (!pinia) {
+    throw new Error('There is no stores');
+  }
+
+  pinia._s.forEach((store, storeId) => {
+    if (!storeId.startsWith(prefix) || storeId === excludedStoreId) {
+      return;
+    }
+
+    store.$reset();
+  });
 };
 
 export const useVacancyStore = defineStore('VacancyStore', {
@@ -286,6 +308,8 @@ export const useVacancyStore = defineStore('VacancyStore', {
     },
 
     $reset(): void {
+      resetStoresByPrefix('Vacancy', 'VacancyStore');
+
       this.vacancyListResponse = null;
       this.currentVacancyMeta = null;
       this.currentVacancy = null;

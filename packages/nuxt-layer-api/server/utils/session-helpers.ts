@@ -40,7 +40,8 @@ export async function requireSuperAdmin(event: H3Event): Promise<ExtendedUserSes
   if (effectiveRole !== USER_ROLE_MAP.SUPER_ADMIN) {
     throw createError({
       statusCode: 403,
-      message: 'Access denied. Super admin role required.'
+      message: 'Access denied. Super admin role required.',
+      data: { code: 'ACCESS_DENIED' }
     });
   }
 

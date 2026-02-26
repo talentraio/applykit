@@ -13,6 +13,36 @@
       "home": "Go to home",
       "back": "Go back",
       "retry": "Try again"
+    },
+    "api": {
+      "401": {
+        "title": "Session expired",
+        "description": "Please log in again"
+      },
+      "403": {
+        "title": "Access denied",
+        "description": "You don't have permission to access this resource"
+      },
+      "429": {
+        "title": "Too many requests",
+        "description": "Please wait and try again later"
+      },
+      "500": {
+        "title": "Server error",
+        "description": "Something went wrong. Please try again later"
+      },
+      "502": {
+        "title": "Service error",
+        "description": "AI service returned an unexpected response. Please try again"
+      },
+      "503": {
+        "title": "Service unavailable",
+        "description": "This service is temporarily unavailable. Please try again later"
+      },
+      "generic": {
+        "title": "Error",
+        "description": "An unexpected error occurred"
+      }
     }
   },
   "nav": {

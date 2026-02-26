@@ -140,8 +140,7 @@ export function useAuth(): AuthComposable {
 
     await navigateTo('/login');
 
-    // Delay for compensation navigation time
-    setTimeout(store.eraseSessionData, 300);
+    store.resetUserStores();
   };
 
   const loginWithGoogle = (): void => {

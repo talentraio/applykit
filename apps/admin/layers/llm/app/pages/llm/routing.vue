@@ -42,12 +42,6 @@ import { useRoutingScenarioEditor } from '../../composables/useRoutingScenarioEd
 
 defineOptions({ name: 'AdminLlmRoutingPage' });
 
-type ApiErrorWithMessage = {
-  data?: {
-    message?: string;
-  };
-};
-
 const {
   items: routingItems,
   loading: routingLoading,
@@ -622,9 +616,12 @@ const { modalScenarioKey, modalDraft, modalCanSave, openScenarioEditor, closeSce
   });
 
 const errorMessage = (error: unknown): string => {
-  const apiError = error as ApiErrorWithMessage;
-  if (typeof apiError?.data?.message === 'string' && apiError.data.message.length > 0) {
-    return apiError.data.message;
+  if (isApiError(error)) {
+    const data = error.data;
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const msg = (data as Record<string, unknown>).message;
+      if (typeof msg === 'string' && msg.length > 0) return msg;
+    }
   }
 
   if (error instanceof Error && error.message.trim().length > 0) {

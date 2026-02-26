@@ -32,12 +32,6 @@ type Props = {
   role: Role;
 };
 
-type ApiErrorWithMessage = {
-  data?: {
-    message?: string;
-  };
-};
-
 const INHERIT_MODEL_ID = '__inherit__';
 const INHERIT_STRATEGY_KEY = '__inherit_strategy__';
 const INHERIT_REASONING_EFFORT = '__inherit_reasoning_effort__';
@@ -68,13 +62,17 @@ const toast = useToast();
 const notifyError = (error: unknown) => {
   if (!import.meta.client) return;
 
-  const apiError = error as ApiErrorWithMessage;
-  const description =
-    typeof apiError?.data?.message === 'string' && apiError.data.message.length > 0
-      ? apiError.data.message
-      : error instanceof Error && error.message.length > 0
-        ? error.message
-        : undefined;
+  let description: string | undefined;
+
+  if (isApiError(error)) {
+    const data = error.data;
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const msg = (data as Record<string, unknown>).message;
+      if (typeof msg === 'string' && msg.length > 0) description = msg;
+    }
+  } else if (error instanceof Error && error.message.length > 0) {
+    description = error.message;
+  }
 
   toast.add({
     title: t('common.error.generic'),

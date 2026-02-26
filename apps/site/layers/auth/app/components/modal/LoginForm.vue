@@ -156,13 +156,16 @@ const handleSubmit = async () => {
     });
     closeAndRedirect();
   } catch (error: unknown) {
-    const fetchError = error as { data?: { message?: string }; statusCode?: number };
-    if (fetchError.statusCode === 401) {
-      errorMessage.value = t('auth.modal.login.invalidCredentials');
-    } else if (fetchError.statusCode === 403) {
-      errorMessage.value = t('auth.modal.login.accountBlocked');
+    if (isApiError(error)) {
+      // 401 = wrong credentials (show inline, not handled by centralized handler for login)
+      if (error.status === 401) {
+        errorMessage.value = t('auth.modal.login.invalidCredentials');
+      } else {
+        // Other errors (including 403 account restrictions): show generic message
+        errorMessage.value = t('auth.modal.login.error');
+      }
     } else {
-      errorMessage.value = fetchError.data?.message ?? t('auth.modal.login.error');
+      errorMessage.value = t('auth.modal.login.error');
     }
   } finally {
     loading.value = false;

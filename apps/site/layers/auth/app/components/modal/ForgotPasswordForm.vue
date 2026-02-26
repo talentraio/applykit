@@ -86,8 +86,11 @@ const handleSubmit = async () => {
     await forgotPassword(formState.email);
     emailSent.value = true;
   } catch (error: unknown) {
-    const fetchError = error as { data?: { message?: string } };
-    errorMessage.value = fetchError.data?.message ?? t('auth.modal.forgot.error');
+    if (isApiError(error)) {
+      errorMessage.value = t('auth.modal.forgot.error');
+    } else {
+      errorMessage.value = t('auth.modal.forgot.error');
+    }
   } finally {
     loading.value = false;
   }

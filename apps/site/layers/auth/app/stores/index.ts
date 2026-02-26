@@ -1,6 +1,8 @@
 import type { LoginInput, Profile, RegisterInput, Role, UserPublic } from '@int/schema';
+import type { Pinia, Store } from 'pinia';
 import { USER_ROLE_MAP } from '@int/schema';
 import { parse } from 'date-fns';
+import { getActivePinia } from 'pinia';
 import { siteAuthApi } from '../infrastructure/auth.api';
 
 /**
@@ -14,6 +16,22 @@ const getCurrentLegalVersion = (): string => {
   const privacyDate = parse(privacyEffectiveDate, 'dd.MM.yyyy', new Date());
   return termsDate >= privacyDate ? termsEffectiveDate : privacyEffectiveDate;
 };
+
+type ExtendedPinia = {
+  _s: Map<string, Store>;
+} & Pinia;
+
+const getPiniaStoresMap = (): Map<string, Store> => {
+  const pinia = getActivePinia() as ExtendedPinia | undefined;
+
+  if (!pinia) {
+    throw new Error('There is no stores');
+  }
+
+  return pinia._s;
+};
+
+const USER_ROOT_STORE_IDS = ['AuthStore', 'ProfileStore', 'ResumeStore', 'VacancyStore'] as const;
 
 /**
  * Site Auth Store
@@ -99,6 +117,14 @@ export const useAuthStore = defineStore('AuthStore', {
       this.user = null;
       this.profile = null;
       this.isProfileComplete = false;
+    },
+
+    resetUserStores() {
+      const stores = getPiniaStoresMap();
+
+      for (const storeId of USER_ROOT_STORE_IDS) {
+        stores.get(storeId)?.$reset();
+      }
     },
 
     /**

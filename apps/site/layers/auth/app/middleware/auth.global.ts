@@ -10,13 +10,20 @@
 export default defineNuxtRouteMiddleware(to => {
   const { redirects } = useAppConfig();
 
-  // Skip middleware for auth-related routes
-  const publicRoutes = [redirects.protected.unauthenticated, '/'];
+  // Public routes that must stay accessible without authentication.
+  // `/login` remains as a compatibility alias and redirects to `/?auth=login`.
+  const publicRoutes = new Set<string>([
+    redirects.protected.unauthenticated,
+    '/',
+    '/auth/reset-password',
+    '/privacy',
+    '/terms'
+  ]);
   const token = typeof to.query.token === 'string' ? to.query.token : '';
   const isPdfPreview = to.path === '/pdf/preview' && Boolean(token);
   const isCoverLetterPdfPreview = to.path === '/cover-letter/pdf/preview' && Boolean(token);
 
-  if (publicRoutes.includes(to.path) || isPdfPreview || isCoverLetterPdfPreview) {
+  if (publicRoutes.has(to.path) || isPdfPreview || isCoverLetterPdfPreview) {
     return;
   }
 

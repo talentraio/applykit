@@ -14,6 +14,21 @@ import { RESUME_EDITOR_TABS_MAP } from '../constants';
 
 const DEFAULT_RESUME_UPLOAD_TITLE = 'My Resume';
 
+const toDateOrNow = (value: unknown): Date => {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return date;
+    }
+  }
+
+  return new Date();
+};
+
 /**
  * Resume Store
  *
@@ -270,11 +285,13 @@ export const useResumeStore = defineStore('ResumeStore', {
      */
     async updateResumeName(id: string, name: string): Promise<void> {
       const result = await resumeApi.updateName(id, name);
+      const updatedAt = toDateOrNow(result.updatedAt);
 
       // Update in resume list
       const listItem = this.resumeList.find(r => r.id === id);
       if (listItem) {
         listItem.name = result.name;
+        listItem.updatedAt = updatedAt;
       }
 
       // Update in cache
@@ -282,7 +299,8 @@ export const useResumeStore = defineStore('ResumeStore', {
       if (cached) {
         cached.resume = {
           ...cached.resume,
-          name: result.name
+          name: result.name,
+          updatedAt
         };
       }
     },
@@ -483,6 +501,11 @@ export const useResumeStore = defineStore('ResumeStore', {
           ...updated,
           formatSettings: target.resume.formatSettings
         };
+
+        const listItem = this.resumeList.find(item => item.id === resumeId);
+        if (listItem) {
+          listItem.updatedAt = toDateOrNow(updated.updatedAt);
+        }
 
         return target.resume;
       } finally {
