@@ -43,7 +43,8 @@ export default defineEventHandler(async event => {
     throw createError({
       statusCode: 403,
       statusMessage: 'Forbidden',
-      message: 'Super admin access required'
+      message: 'Super admin access required',
+      data: { code: 'ACCESS_DENIED' }
     });
   }
 

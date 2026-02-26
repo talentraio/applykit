@@ -206,11 +206,19 @@ const handleSubmit = async () => {
     });
     closeAndRedirect();
   } catch (error: unknown) {
-    const fetchError = error as { data?: { message?: string }; statusCode?: number };
-    if (fetchError.statusCode === 409) {
-      errorMessage.value = t('auth.modal.register.emailExists');
+    if (isApiError(error)) {
+      // 409 = email already exists (show inline)
+      if (error.status === 409) {
+        errorMessage.value = t('auth.modal.register.emailExists');
+      } else if (error.formErrors.length > 0) {
+        // 422 validation errors — show field-level errors via UForm
+        // (future: add form ref + setErrors when register endpoint returns 422)
+        errorMessage.value = error.formErrors.map(e => e.message).join('. ');
+      } else {
+        errorMessage.value = t('auth.modal.register.error');
+      }
     } else {
-      errorMessage.value = fetchError.data?.message ?? t('auth.modal.register.error');
+      errorMessage.value = t('auth.modal.register.error');
     }
   } finally {
     loading.value = false;

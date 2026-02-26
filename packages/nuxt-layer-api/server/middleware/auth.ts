@@ -58,13 +58,15 @@ export default defineEventHandler(async event => {
       await clearUserSession(event);
       throw createError({
         statusCode: 403,
-        message: 'User is deleted'
+        message: 'User is deleted',
+        data: { code: 'USER_DELETED' }
       });
     }
     if (user?.status === USER_STATUS_MAP.BLOCKED) {
       throw createError({
         statusCode: 403,
-        message: 'User is blocked'
+        message: 'User is blocked',
+        data: { code: 'USER_BLOCKED' }
       });
     }
   }

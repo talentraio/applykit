@@ -37,7 +37,12 @@ export const siteAuthApi = {
   async login(input: LoginInput): Promise<void> {
     await useApi(`${authUrl}/login`, {
       method: 'POST',
-      body: input
+      body: input,
+      // Login form handles errors inline (invalid credentials, etc.).
+      // Bypass global redirect side effects for this endpoint.
+      onResponseError({ response }) {
+        throw new ApiError(response);
+      }
     });
   },
 

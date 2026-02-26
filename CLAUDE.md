@@ -44,8 +44,11 @@ other docs/\* relevant to the task.
   If a composable already exists, prefer using it instead of custom code.
 
 ## Active Technologies
+
 - TypeScript 5.7 (Nuxt 4 / Node.js 20 LTS) + Nuxt 4, NuxtUI v4, Pinia, Zod, Drizzle ORM, date-fns, VueUse (014-multiple-base-resumes)
 - PostgreSQL via Neon (serverless), Drizzle ORM (014-multiple-base-resumes)
+- TypeScript 5.7 (Nuxt 4 / Node.js 20 LTS) + Nuxt 4, NuxtUI v4 (UForm/UFormField/useToast), ofetch (FetchError), Pinia, nuxt-auth-utils (016-errors-handling)
+- N/A (no data model changes) (016-errors-handling)
 
 - TypeScript 5.7 (Nuxt 4 / Node.js 20 LTS) + Vercel CLI (pinned version), GitHub Actions, Neon (serverless PostgreSQL), Drizzle ORM (012-vercel-deploy-setup)
 - PostgreSQL via Neon (free tier: 1 project, 10 branches, 0.5 GB, 190 compute hours) (012-vercel-deploy-setup)

@@ -126,6 +126,12 @@ export default defineNuxtConfig({
     }
   },
 
+  // Auto-import api-errors subdirectory exports (isApiError, ApiError, createApiErrorHandler, etc.)
+  // Nuxt only scans top-level utils/ by default; subdirectories need explicit registration.
+  imports: {
+    dirs: [fileURLToPath(new URL('./app/utils/api-errors', import.meta.url))]
+  },
+
   typescript: {
     strict: true,
     typeCheck: false

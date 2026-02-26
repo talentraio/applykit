@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isSafeHttpUrl } from '../helpers/url';
 import { VacancyStatusSchema } from './enums';
 
 export const VacancySchema = z.object({
@@ -7,7 +8,13 @@ export const VacancySchema = z.object({
   company: z.string().min(1).max(255),
   jobPosition: z.string().max(255).nullable().optional(),
   description: z.string().min(1),
-  url: z.string().url().max(2048).nullable().optional(),
+  url: z
+    .string()
+    .url()
+    .max(2048)
+    .refine(isSafeHttpUrl, { message: 'URL must use http or https protocol' })
+    .nullable()
+    .optional(),
   notes: z.string().nullable().optional(),
   status: VacancyStatusSchema.default('created'),
   createdAt: z.date(),
