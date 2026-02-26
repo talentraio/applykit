@@ -4,13 +4,13 @@ on:
   push:
     branches: [main]
 
-concurrency:
-  group: production-deploy
-  cancel-in-progress: false
-
 jobs:
-  deploy:
+  # --- Migrations MUST complete without interruption ---
+  migrate:
     runs-on: ubuntu-latest
+    concurrency:
+      group: production-db-migrations
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
@@ -35,6 +35,26 @@ jobs:
         run: pnpm db:migrate:prod -- --yes
         env:
           PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+  # --- Build & deploy ---
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       # --- Site: pull → build → deploy ---
 
