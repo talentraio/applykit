@@ -111,15 +111,16 @@
               {{ experience.technologies.join(', ') }}
             </p>
             <div v-if="experience.links?.length" class="flex flex-wrap gap-2">
-              <ULink
-                v-for="link in experience.links"
-                :key="link.link"
-                :to="link.link"
-                target="_blank"
-                class="text-sm text-primary"
-              >
-                {{ link.name }}
-              </ULink>
+              <template v-for="link in experience.links" :key="link.link">
+                <ULink
+                  v-if="isSafeHttpUrl(link.link)"
+                  :to="link.link"
+                  target="_blank"
+                  class="text-sm text-primary"
+                >
+                  {{ link.name }}
+                </ULink>
+              </template>
             </div>
           </div>
         </section>
@@ -214,6 +215,7 @@
  */
 
 import type { ResumeContent } from '@int/schema';
+import { isSafeHttpUrl } from '@int/schema';
 
 defineOptions({ name: 'ResumeHumanViewDesign1' });
 
@@ -259,27 +261,33 @@ const contactItems = computed<ContactItem[]>(() => {
   }
 
   if (props.content.personalInfo.linkedin) {
-    items.push({
-      value: props.content.personalInfo.linkedin,
-      href: props.content.personalInfo.linkedin,
-      external: true
-    });
+    if (isSafeHttpUrl(props.content.personalInfo.linkedin)) {
+      items.push({
+        value: props.content.personalInfo.linkedin,
+        href: props.content.personalInfo.linkedin,
+        external: true
+      });
+    }
   }
 
   if (props.content.personalInfo.website) {
-    items.push({
-      value: props.content.personalInfo.website,
-      href: props.content.personalInfo.website,
-      external: true
-    });
+    if (isSafeHttpUrl(props.content.personalInfo.website)) {
+      items.push({
+        value: props.content.personalInfo.website,
+        href: props.content.personalInfo.website,
+        external: true
+      });
+    }
   }
 
   if (props.content.personalInfo.github) {
-    items.push({
-      value: props.content.personalInfo.github,
-      href: props.content.personalInfo.github,
-      external: true
-    });
+    if (isSafeHttpUrl(props.content.personalInfo.github)) {
+      items.push({
+        value: props.content.personalInfo.github,
+        href: props.content.personalInfo.github,
+        external: true
+      });
+    }
   }
 
   return items;

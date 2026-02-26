@@ -1,10 +1,14 @@
 import { z } from 'zod';
+import { isSafeHttpUrl } from '../helpers/url';
 import { SourceFileTypeSchema } from './enums';
 
 export { type SourceFileType, SourceFileTypeSchema } from './enums';
 
 // Date format: YYYY-MM
 const DateMonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Must be YYYY-MM format');
+const HttpUrlSchema = z.string().url().refine(isSafeHttpUrl, {
+  message: 'URL must use http or https protocol'
+});
 
 export const PersonalInfoSchema = z.object({
   fullName: z.string().min(1),
@@ -12,15 +16,15 @@ export const PersonalInfoSchema = z.object({
   email: z.string().email(),
   phone: z.string().optional(),
   location: z.string().optional(),
-  linkedin: z.string().url().optional(),
-  website: z.string().url().optional(),
-  github: z.string().url().optional()
+  linkedin: HttpUrlSchema.optional(),
+  website: HttpUrlSchema.optional(),
+  github: HttpUrlSchema.optional()
 });
 export type PersonalInfo = z.infer<typeof PersonalInfoSchema>;
 
 export const ExperienceLinkSchema = z.object({
   name: z.string().min(1),
-  link: z.string().url()
+  link: HttpUrlSchema
 });
 export type ExperienceLink = z.infer<typeof ExperienceLinkSchema>;
 

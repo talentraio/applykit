@@ -72,11 +72,13 @@
             Tech: {{ experience.technologies.join(', ') }}
           </p>
           <ul v-if="experience.links?.length" class="space-y-1 text-sm">
-            <li v-for="link in experience.links" :key="link.link">
-              <ULink :to="link.link" target="_blank" class="text-primary">
-                {{ link.name }}
-              </ULink>
-            </li>
+            <template v-for="link in experience.links" :key="link.link">
+              <li v-if="isSafeHttpUrl(link.link)">
+                <ULink :to="link.link" target="_blank" class="text-primary">
+                  {{ link.name }}
+                </ULink>
+              </li>
+            </template>
           </ul>
         </div>
       </section>
@@ -165,6 +167,7 @@
  */
 
 import type { ResumeContent } from '@int/schema';
+import { isSafeHttpUrl } from '@int/schema';
 
 defineOptions({ name: 'ResumeAtsViewDesign1' });
 

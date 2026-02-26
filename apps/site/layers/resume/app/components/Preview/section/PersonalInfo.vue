@@ -19,13 +19,10 @@
         {{ personalInfo.location }}
       </p>
 
-      <div
-        v-if="personalInfo.linkedin || personalInfo.website || personalInfo.github"
-        class="flex flex-wrap gap-4"
-      >
+      <div v-if="safeLinkedin || safeWebsite || safeGithub" class="flex flex-wrap gap-4">
         <a
-          v-if="personalInfo.linkedin"
-          :href="personalInfo.linkedin"
+          v-if="safeLinkedin"
+          :href="safeLinkedin"
           target="_blank"
           rel="noopener noreferrer"
           class="text-primary hover:underline"
@@ -33,8 +30,8 @@
           LinkedIn
         </a>
         <a
-          v-if="personalInfo.website"
-          :href="personalInfo.website"
+          v-if="safeWebsite"
+          :href="safeWebsite"
           target="_blank"
           rel="noopener noreferrer"
           class="text-primary hover:underline"
@@ -42,8 +39,8 @@
           Website
         </a>
         <a
-          v-if="personalInfo.github"
-          :href="personalInfo.github"
+          v-if="safeGithub"
+          :href="safeGithub"
           target="_blank"
           rel="noopener noreferrer"
           class="text-primary hover:underline"
@@ -63,10 +60,26 @@
  */
 
 import type { PersonalInfo } from '@int/schema';
+import { isSafeHttpUrl } from '@int/schema';
 
 defineOptions({ name: 'ResumePreviewSectionPersonalInfo' });
 
-defineProps<{
+const props = defineProps<{
   personalInfo: PersonalInfo;
 }>();
+
+const safeLinkedin = computed(() => {
+  const link = props.personalInfo.linkedin;
+  return link && isSafeHttpUrl(link) ? link : null;
+});
+
+const safeWebsite = computed(() => {
+  const link = props.personalInfo.website;
+  return link && isSafeHttpUrl(link) ? link : null;
+});
+
+const safeGithub = computed(() => {
+  const link = props.personalInfo.github;
+  return link && isSafeHttpUrl(link) ? link : null;
+});
 </script>
