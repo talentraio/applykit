@@ -67,15 +67,35 @@ const acceptLegalConsentIfVisible = async (page: Page): Promise<void> => {
 };
 
 const openUploadModal = async (page: Page) => {
-  const openButton = page.getByRole('button', { name: 'Clear and create new' });
-  await expect(openButton).toBeVisible({ timeout: 15000 });
+  const openMenuItem = async () => {
+    const addNewMenuItem = page.getByRole('menuitem', { name: 'Add new' });
+    if (await addNewMenuItem.isVisible().catch(() => false)) {
+      await addNewMenuItem.click();
+      return;
+    }
+
+    const clearMenuItem = page.getByRole('menuitem', { name: 'Clear and create new' });
+    if (await clearMenuItem.isVisible().catch(() => false)) {
+      await clearMenuItem.click();
+      return;
+    }
+
+    const fallbackButton = page.getByRole('button', { name: /Add new|Clear and create new/i });
+    await expect(fallbackButton).toBeVisible({ timeout: 10000 });
+    await fallbackButton.click();
+  };
+
+  const actionsButton = page.getByRole('button', { name: /resume actions|actions/i }).first();
+  await expect(actionsButton).toBeVisible({ timeout: 15000 });
   await acceptLegalConsentIfVisible(page);
-  await openButton.click();
+  await actionsButton.click();
+  await openMenuItem();
   await acceptLegalConsentIfVisible(page);
 
   const modal = page.getByRole('dialog').filter({ hasText: 'Upload New Resume' }).first();
   if (!(await modal.isVisible().catch(() => false))) {
-    await openButton.click();
+    await actionsButton.click();
+    await openMenuItem();
   }
 
   await expect(modal).toBeVisible({ timeout: 10000 });

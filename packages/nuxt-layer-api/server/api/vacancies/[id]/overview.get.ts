@@ -1,5 +1,9 @@
 import type { VacancyOverview } from '@layer/api/types/vacancies';
-import { generationRepository, vacancyRepository } from '@layer/api/server/data/repositories';
+import {
+  coverLetterRepository,
+  generationRepository,
+  vacancyRepository
+} from '@layer/api/server/data/repositories';
 
 /**
  * GET /api/vacancies/:id/overview
@@ -33,11 +37,15 @@ export default defineEventHandler(async (event): Promise<VacancyOverview> => {
     });
   }
 
-  const latestGeneration = await generationRepository.findLatestOverviewByVacancyId(id);
+  const [latestGeneration, latestCoverLetter] = await Promise.all([
+    generationRepository.findLatestOverviewByVacancyId(id),
+    coverLetterRepository.findLatestByVacancyId(id)
+  ]);
 
   return {
     vacancy,
     latestGeneration,
-    canGenerateResume: vacancy.canGenerateResume
+    canGenerateResume: vacancy.canGenerateResume,
+    hasCoverLetter: Boolean(latestCoverLetter)
   } satisfies VacancyOverview;
 });

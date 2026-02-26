@@ -16,7 +16,8 @@ export async function requireCompleteProfile(userId: string): Promise<void> {
   if (!isComplete) {
     throw createError({
       statusCode: 403,
-      message: 'Profile is incomplete. Please complete your profile before proceeding.'
+      message: 'Profile is incomplete. Please complete your profile before proceeding.',
+      data: { code: 'PROFILE_INCOMPLETE' }
     });
   }
 }

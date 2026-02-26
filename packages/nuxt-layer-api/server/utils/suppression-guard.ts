@@ -12,7 +12,8 @@ export async function assertEmailNotSuppressed(email: string): Promise<void> {
   if (suppressed) {
     throw createError({
       statusCode: 403,
-      message: "This account can't be created right now. Please contact support."
+      message: "This account can't be created right now. Please contact support.",
+      data: { code: 'ACCESS_DENIED' }
     });
   }
 }

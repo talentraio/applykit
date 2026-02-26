@@ -16,6 +16,7 @@
     <VacancyItemOverviewContentActions
       :is-generating="isGenerating"
       :has-generation="hasGeneration"
+      :has-cover-letter="hasCoverLetter"
       :can-generate-resume="canGenerateResume"
       :resume-to="resumeTo"
       :cover-to="coverTo"
@@ -66,13 +67,27 @@ const { t } = useI18n();
 const toast = useToast();
 const route = useRoute();
 const vacancyStore = useVacancyStore();
+const generationStore = useVacancyResumeGenerationStore();
 const resumeStore = useResumeStore();
 const authStore = useAuthStore();
 const { openProfileIncompleteModal } = useProfileIncompleteModal();
-const { getCurrentVacancy, getOverviewLatestGeneration, getCanGenerateResume } =
-  storeToRefs(vacancyStore);
+const {
+  openGenerationStatusModal: openResumeGenerationModal,
+  markGenerationStatusSuccess: markResumeGenerationSuccess,
+  markGenerationStatusError: markResumeGenerationError
+} = useGenerationStatusModal({
+  overlayId: 'site-resume-generation-modal',
+  overlayOpenStateKey: 'site-resume-generation-modal-overlay-open',
+  sessionStateKey: 'site-resume-generation-modal-session'
+});
+const {
+  getCurrentVacancy,
+  getCurrentVacancyMeta,
+  getOverviewLatestGeneration,
+  getCanGenerateResume
+} = storeToRefs(vacancyStore);
+const { getGenerating } = storeToRefs(generationStore);
 const { resumeList } = storeToRefs(resumeStore);
-const isGenerating = ref(false);
 const isUpdatingStatus = ref(false);
 
 const vacancyId = computed(() => {
@@ -83,7 +98,9 @@ const vacancyId = computed(() => {
 const vacancy = computed(() => getCurrentVacancy.value);
 const overviewLatestGeneration = computed(() => getOverviewLatestGeneration.value);
 const hasGeneration = computed(() => overviewLatestGeneration.value !== null);
+const hasCoverLetter = computed(() => getCurrentVacancyMeta.value?.hasCoverLetter ?? false);
 const canGenerateResume = computed(() => getCanGenerateResume.value);
+const isGenerating = computed(() => getGenerating.value);
 const resumeTo = computed(() => `/vacancies/${vacancyId.value}/resume`);
 const coverTo = computed(() => `/vacancies/${vacancyId.value}/cover`);
 const resumePickerItems = computed(() => {
@@ -107,21 +124,32 @@ const handleGenerate = async (selectedResumeId?: string) => {
     return;
   }
 
-  isGenerating.value = true;
+  const subject = t('vacancy.overview.generationModal.loading.document.resume');
+  const { sessionId, completion } = openResumeGenerationModal({
+    titleSubject: subject,
+    readyStatementSubject: subject,
+    descriptionSubject: subject,
+    waitingTime: t('vacancy.overview.generationModal.loading.waitingTime'),
+    errorTitle: t('generation.error.generationFailed'),
+    errorDescription: t('generation.error.generic'),
+    errorMessage: t('generation.error.generic'),
+    errorActionLabel: t('generation.statusModal.action.error')
+  });
 
   try {
-    await vacancyStore.generateResume(
+    await generationStore.generateResume(
       vacancyId.value,
       selectedResumeId ? { resumeId: selectedResumeId } : undefined
     );
-    await navigateTo(`/vacancies/${vacancyId.value}/resume`);
+    markResumeGenerationSuccess(sessionId);
+
+    const closePayload = await completion;
+    if (closePayload?.action === 'acknowledged-success') {
+      await navigateTo(`/vacancies/${vacancyId.value}/resume`);
+    }
   } catch {
-    toast.add({
-      title: t('generation.error.generic'),
-      color: 'error'
-    });
-  } finally {
-    isGenerating.value = false;
+    markResumeGenerationError(sessionId);
+    await completion;
   }
 };
 

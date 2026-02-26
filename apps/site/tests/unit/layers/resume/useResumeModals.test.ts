@@ -7,7 +7,8 @@ vi.mock(
   '#components',
   () => ({
     LazyResumeModalUpload: { name: 'ResumeModalUpload' },
-    LazyResumeModalCreateFromScratch: { name: 'ResumeModalCreateFromScratch' }
+    LazyResumeModalCreateFromScratch: { name: 'ResumeModalCreateFromScratch' },
+    LazyResumeEditorModalDeleteConfirm: { name: 'ResumeEditorModalDeleteConfirm' }
   }),
   { virtual: true }
 );

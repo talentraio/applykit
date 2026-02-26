@@ -26,11 +26,22 @@
 
 defineOptions({ name: 'VacancyItemLayoutHeader' });
 
-defineProps<{
-  vacancyId: string;
-  company: string;
-  jobPosition?: string | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    vacancyId?: string;
+    company?: string;
+    jobPosition?: string | null;
+  }>(),
+  {
+    vacancyId: '',
+    company: '',
+    jobPosition: null
+  }
+);
+
+const vacancyId = computed<string>(() => props.vacancyId ?? '');
+const company = computed<string>(() => props.company ?? '');
+const jobPosition = computed<string | null>(() => props.jobPosition ?? null);
 </script>
 
 <style lang="scss">

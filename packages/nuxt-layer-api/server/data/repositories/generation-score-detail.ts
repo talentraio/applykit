@@ -4,7 +4,7 @@ import type {
   LLMProvider,
   LlmStrategyKey
 } from '@int/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { generationScoreDetails } from '../schema';
 
@@ -31,6 +31,7 @@ export const generationScoreDetailRepository = {
       .select()
       .from(generationScoreDetails)
       .where(eq(generationScoreDetails.generationId, generationId))
+      .orderBy(desc(generationScoreDetails.createdAt), desc(generationScoreDetails.updatedAt))
       .limit(1);
 
     return row ? toEntity(row) : null;
@@ -49,11 +50,13 @@ export const generationScoreDetailRepository = {
           eq(generationScoreDetails.generationId, generationId)
         )
       )
+      .orderBy(desc(generationScoreDetails.createdAt), desc(generationScoreDetails.updatedAt))
       .limit(1);
 
     return row ? toEntity(row) : null;
   },
 
+  // Keep method name for compatibility with existing call sites; behavior is append-only.
   async upsertByGeneration(input: {
     generationId: string;
     vacancyId: string;
@@ -64,31 +67,23 @@ export const generationScoreDetailRepository = {
     strategyKey: LlmStrategyKey | null;
   }): Promise<GenerationScoreDetail> {
     const now = new Date();
-    const values = {
-      generationId: input.generationId,
-      vacancyId: input.vacancyId,
-      vacancyVersionMarker: input.vacancyVersionMarker,
-      details: input.details,
-      provider: input.provider,
-      model: input.model,
-      strategyKey: input.strategyKey,
-      updatedAt: now
-    };
-
     const [row] = await db
       .insert(generationScoreDetails)
       .values({
-        ...values,
-        createdAt: now
-      })
-      .onConflictDoUpdate({
-        target: generationScoreDetails.generationId,
-        set: values
+        generationId: input.generationId,
+        vacancyId: input.vacancyId,
+        vacancyVersionMarker: input.vacancyVersionMarker,
+        details: input.details,
+        provider: input.provider,
+        model: input.model,
+        strategyKey: input.strategyKey,
+        createdAt: now,
+        updatedAt: now
       })
       .returning();
 
     if (!row) {
-      throw new Error('Failed to upsert generation score details');
+      throw new Error('Failed to create generation score details');
     }
 
     return toEntity(row);

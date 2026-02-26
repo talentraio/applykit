@@ -52,7 +52,9 @@ export default defineEventHandler(async event => {
         ? (validation.data.retryModelId ?? null)
         : null,
     reasoningEffort:
-      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION
+      scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION ||
+      scenarioKey === LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION ||
+      scenarioKey === LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT
         ? (validation.data.reasoningEffort ?? null)
         : null,
     strategyKey:

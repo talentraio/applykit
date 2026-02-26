@@ -11,7 +11,10 @@ const normalizeRoutingInputForScenario = (
     scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION ||
     scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION_SCORING_DETAIL;
   const supportsStrategy = scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
-  const supportsReasoningEffort = scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION;
+  const supportsReasoningEffort =
+    scenarioKey === LLM_SCENARIO_KEY_MAP.RESUME_ADAPTATION ||
+    scenarioKey === LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION ||
+    scenarioKey === LLM_SCENARIO_KEY_MAP.COVER_LETTER_GENERATION_DRAFT;
 
   return {
     ...input,

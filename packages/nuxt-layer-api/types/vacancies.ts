@@ -1,4 +1,5 @@
 import type {
+  CoverLetter,
   Generation,
   GenerationScoreDetail,
   GenerationScoreDetailPayload,
@@ -8,8 +9,12 @@ import type {
 } from '@int/schema';
 
 export type VacancyMeta = Pick<Vacancy, 'id' | 'company' | 'jobPosition'> & {
+  latestGenerationId: string | null;
+  hasCoverLetter: boolean;
   canRequestScoreDetails: boolean;
   canRegenerateScoreDetails: boolean;
+  coverLetterDraftEnabled: boolean;
+  coverLetterHighEnabled: boolean;
 };
 
 export type VacancyOverviewGeneration = Pick<
@@ -21,6 +26,7 @@ export type VacancyOverview = {
   vacancy: Vacancy;
   latestGeneration: VacancyOverviewGeneration | null;
   canGenerateResume: boolean;
+  hasCoverLetter: boolean;
 };
 
 export type VacanciesResumeGeneration = {
@@ -44,8 +50,11 @@ export type VacancyPreparationResponse = {
   vacancy: VacancyMeta;
   latestGeneration: VacancyOverviewGeneration | null;
   scoreDetails: GenerationScoreDetail | null;
-  detailedScoringEnabled: boolean;
   scoreDetailsStale: boolean;
   canRequestDetails: boolean;
   canRegenerateDetails: boolean;
+};
+
+export type VacancyCoverLetterResponse = {
+  coverLetter: CoverLetter | null;
 };

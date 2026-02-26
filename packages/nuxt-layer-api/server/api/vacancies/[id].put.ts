@@ -61,9 +61,10 @@ export default defineEventHandler(async event => {
   const validationResult = VacancyInputSchema.partial().safeParse(body);
   if (!validationResult.success) {
     throw createError({
-      statusCode: 400,
+      statusCode: 422,
+      statusMessage: 'Validation Error',
       message: 'Invalid vacancy data',
-      data: validationResult.error.format()
+      data: { issues: validationResult.error.issues }
     });
   }
 

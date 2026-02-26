@@ -4,7 +4,7 @@
     <BasePageLoading v-if="pageLoading" show-text wrapper-class="vacancy-resume-page__loading" />
 
     <!-- No Generation -->
-    <div v-else-if="!generation" class="vacancy-resume-page__empty">
+    <div v-else-if="!generation && !resumeGenerating" class="vacancy-resume-page__empty">
       <UIcon name="i-lucide-file-text" class="h-16 w-16 text-muted" />
 
       <h2 class="mt-4 text-xl font-semibold">{{ $t('vacancy.resume.noGeneration') }}</h2>
@@ -16,11 +16,16 @@
       </UButton>
     </div>
 
+    <div v-else-if="!generation && resumeGenerating" class="vacancy-resume-page__sheet-loading">
+      <BasePaperSheet :loading="true" />
+    </div>
+
     <!-- Has Generation: Show Editor Layout (T036-T037) -->
     <ResumeEditorLayout
       v-else
       v-model:preview-type="previewType"
       :preview-content="content"
+      :preview-loading="resumeGenerating"
       :preview-settings="currentSettings"
       :export-settings="{ ats: atsSettings, human: humanSettings }"
       :can-undo="canUndo"
@@ -87,6 +92,8 @@ definePageMeta({
 const route = useRoute();
 const { t } = useI18n();
 const toast = useToast();
+const generationStore = useVacancyResumeGenerationStore();
+const { getGenerating } = storeToRefs(generationStore);
 
 // Extract vacancy ID
 const vacancyId = computed(() => {
@@ -116,6 +123,7 @@ const {
 
 // UI State
 const activeTab = ref('edit');
+const resumeGenerating = computed(() => getGenerating.value);
 const previewType = computed<PreviewType>({
   get: () => composablePreviewType.value,
   set: value => setPreviewType(value)
@@ -229,6 +237,14 @@ const pageLoading = computed(() => !generation.value && pending.value);
     min-height: 400px;
     text-align: center;
     padding: 2rem;
+  }
+
+  &__sheet-loading {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 400px;
+    padding: 1.5rem;
   }
 }
 </style>

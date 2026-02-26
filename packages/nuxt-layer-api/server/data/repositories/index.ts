@@ -4,6 +4,7 @@
  * Central export point for all data access repositories
  */
 
+export { coverLetterRepository } from './cover-letter';
 export { formatSettingsRepository } from './format-settings';
 export { generationRepository } from './generation';
 export { generationFormatSettingsRepository } from './generation-format-settings';

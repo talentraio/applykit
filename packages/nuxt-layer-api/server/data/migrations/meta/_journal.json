@@ -183,6 +183,90 @@
       "when": 1772025600000,
       "tag": "0026_generation_format_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1772100000000,
+      "tag": "0027_cover_letters",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1772186400000,
+      "tag": "0028_cover_letter_locale",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1771781177049,
+      "tag": "0029_tearful_black_cat",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1771813707289,
+      "tag": "0030_milky_vengeance",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1773000000000,
+      "tag": "0031_drop_legacy_cover_letter_uniques",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1771865292062,
+      "tag": "0032_cover_letter_uk_locale",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1774800001000,
+      "tag": "0033_profile_grammatical_gender",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1774800002000,
+      "tag": "0034_serious_zarek",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1774800003000,
+      "tag": "0035_lush_gabe_jones",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1774800004000,
+      "tag": "0036_heavy_vermin",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1774800005000,
+      "tag": "0037_sleepy_blazing_skull",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1774900000000,
+      "tag": "0038_repair_preview_cover_letters",
+      "breakpoints": true
     }
   ]
 }

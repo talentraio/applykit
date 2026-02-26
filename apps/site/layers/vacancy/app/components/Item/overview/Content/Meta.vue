@@ -21,13 +21,13 @@
       />
 
       <UButton
-        v-if="vacancy.url"
+        v-if="safeVacancyUrl"
         class="order-2 sm:order-1"
         variant="link"
         color="primary"
         size="xs"
         icon="i-lucide-external-link"
-        :to="vacancy.url"
+        :to="safeVacancyUrl"
         target="_blank"
       >
         {{ t('vacancy.detail.url') }}
@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import type { Vacancy, VacancyStatus } from '@int/schema';
+import { isSafeHttpUrl } from '@int/schema';
 
 defineOptions({ name: 'VacancyItemOverviewContentMeta' });
 
@@ -61,6 +62,10 @@ const formattedUpdatedAt = computed(() => {
 });
 
 const formattedCreatedAt = computed(() => dateBaseFormat(resolveIsoDate(props.vacancy.createdAt)));
+const safeVacancyUrl = computed(() => {
+  const url = props.vacancy.url;
+  return url && isSafeHttpUrl(url) ? url : null;
+});
 </script>
 
 <style lang="scss">

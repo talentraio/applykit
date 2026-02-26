@@ -1,7 +1,7 @@
 <template>
   <div class="vacancy-detail-layout">
     <VacancyItemLayoutHeader
-      :vacancy-id="vacancyId"
+      :vacancy-id="vacancyId || ''"
       :company="getCurrentVacancyMeta?.company ?? ''"
       :job-position="getCurrentVacancyMeta?.jobPosition"
     />
@@ -35,10 +35,10 @@ const { t } = useI18n();
 const vacancyStore = useVacancyStore();
 const { getCurrentVacancyMeta } = storeToRefs(vacancyStore);
 
-const vacancyId = computed(() => {
+const vacancyId = computed<string>(() => {
   const id = route.params.id;
-  if (Array.isArray(id)) return id[0] ?? '';
-  return id ?? '';
+  const resolvedId = Array.isArray(id) ? (id[0] ?? '') : id;
+  return typeof resolvedId === 'string' ? resolvedId : '';
 });
 
 // Fetch vacancy meta at layout level for title and detail header

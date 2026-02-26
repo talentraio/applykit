@@ -125,11 +125,10 @@ const handleSubmit = async () => {
     await resetPassword(token.value, formState.password);
     success.value = true;
   } catch (error: unknown) {
-    const fetchError = error as { data?: { message?: string }; statusCode?: number };
-    if (fetchError.statusCode === 400) {
+    if (isApiError(error) && error.status === 400) {
       tokenError.value = true;
     } else {
-      errorMessage.value = fetchError.data?.message ?? t('auth.resetPassword.error');
+      errorMessage.value = t('auth.resetPassword.error');
     }
   } finally {
     loading.value = false;

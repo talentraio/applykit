@@ -38,16 +38,17 @@
 
         <!-- Links -->
         <div v-if="exp.links?.length" class="mt-2 flex flex-wrap gap-3 text-sm">
-          <a
-            v-for="link in exp.links"
-            :key="link.link"
-            :href="link.link"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-primary hover:underline"
-          >
-            {{ link.name }}
-          </a>
+          <template v-for="link in exp.links" :key="link.link">
+            <a
+              v-if="isSafeHttpUrl(link.link)"
+              :href="link.link"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-primary hover:underline"
+            >
+              {{ link.name }}
+            </a>
+          </template>
         </div>
       </div>
     </div>
@@ -62,6 +63,7 @@
  */
 
 import type { ExperienceEntry } from '@int/schema';
+import { isSafeHttpUrl } from '@int/schema';
 
 defineOptions({ name: 'ResumePreviewSectionExperience' });
 

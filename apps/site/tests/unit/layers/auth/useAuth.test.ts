@@ -52,6 +52,7 @@ type StoreStub = {
   fetchMe: ReturnType<typeof vi.fn>;
   acceptTerms: ReturnType<typeof vi.fn>;
   eraseSessionData: ReturnType<typeof vi.fn>;
+  resetUserStores: ReturnType<typeof vi.fn>;
 };
 
 type SetupUseAuthOptions = {
@@ -93,7 +94,8 @@ function createStoreStub(): StoreStub {
     login: vi.fn(async () => undefined),
     fetchMe: vi.fn(async () => undefined),
     acceptTerms: vi.fn(async () => undefined),
-    eraseSessionData: vi.fn()
+    eraseSessionData: vi.fn(),
+    resetUserStores: vi.fn()
   };
 }
 

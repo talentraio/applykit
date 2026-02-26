@@ -46,7 +46,7 @@ export type UseVacancyGenerationReturn = {
   content: ComputedRef<ResumeContent | null>;
   isDirty: ComputedRef<boolean>;
 
-  // Settings (from generation format settings store)
+  // Settings (from resume generation store)
   previewType: ComputedRef<ExportFormat>;
   currentSettings: ComputedRef<ResumeFormatSettingsAts | ResumeFormatSettingsHuman>;
   atsSettings: ComputedRef<ResumeFormatSettingsAts>;
@@ -83,19 +83,23 @@ export function useVacancyGeneration(
   const { autoSave = true, autoSaveDelay = appConfig.resume.autosaveDelay } = options;
   const settingsAutoSaveDelay = 200;
 
-  const store = useVacancyStore();
+  const generationStore = useVacancyResumeGenerationStore();
   const {
     getCurrentGeneration,
     getCurrentGenerationId,
     getDisplayGenerationContent,
-    getSavingGeneration
-  } = storeToRefs(store);
-  const generationFormatSettingsStore = useGenerationFormatSettingsStore();
-  const { saveGenerationContent, updateGenerationContent, invalidateGenerationSaves } = store;
-  const { getPreviewType, getCurrentSettings, getAtsSettings, getHumanSettings } = storeToRefs(
-    generationFormatSettingsStore
-  );
-  const { setPreviewType } = generationFormatSettingsStore;
+    getSavingGeneration,
+    getPreviewType,
+    getCurrentSettings,
+    getAtsSettings,
+    getHumanSettings
+  } = storeToRefs(generationStore);
+  const {
+    saveGenerationContent,
+    updateGenerationContent,
+    invalidateGenerationSaves,
+    setPreviewType
+  } = generationStore;
 
   // =========================================
   // Undo/Redo + Auto-save via shared history
@@ -109,28 +113,28 @@ export function useVacancyGeneration(
 
   const history = useResumeEditHistory({
     resumeId: () => getCurrentGenerationId.value,
-    getContent: () => store.getDisplayGenerationContent,
+    getContent: () => generationStore.getDisplayGenerationContent,
     getSettings: () => ({
       ats: getAtsSettings.value,
       human: getHumanSettings.value
     }),
-    setContent: newContent => store.updateGenerationContent(newContent),
-    setSettings: newSettings => generationFormatSettingsStore.setFullSettings(newSettings),
+    setContent: newContent => generationStore.updateGenerationContent(newContent),
+    setSettings: newSettings => generationStore.setFullSettings(newSettings),
     debounceDelay: autoSaveDelay,
     settingsDebounceDelay: settingsAutoSaveDelay,
     autoSnapshot: autoSave,
     autoSave: autoSave
       ? {
-          save: () => store.saveGenerationContent(vacancyId),
+          save: () => generationStore.saveGenerationContent(vacancyId),
           saveSettingsPatch: partial => {
             const generationId = getCurrentGenerationId.value;
             if (!generationId) return Promise.resolve();
-            return generationFormatSettingsStore.patchSettings(vacancyId, generationId, partial);
+            return generationStore.patchSettings(vacancyId, generationId, partial);
           },
           saveSettingsFull: () => {
             const generationId = getCurrentGenerationId.value;
             if (!generationId) return Promise.resolve();
-            return generationFormatSettingsStore.putSettings(vacancyId, generationId);
+            return generationStore.putSettings(vacancyId, generationId);
           },
           isSaving: () => getSavingGeneration.value,
           onError: error => {
@@ -152,17 +156,15 @@ export function useVacancyGeneration(
    * Fetch generation from server and set as current
    */
   async function fetchGeneration(): Promise<VacanciesResumeGeneration> {
-    const payload = await store.fetchLatestGeneration(vacancyId);
+    const payload = await generationStore.fetchLatestGeneration(vacancyId);
     const generation = payload.generation;
 
     if (!generation || !payload.formatSettings) {
-      store.setCurrentGeneration(null);
-      generationFormatSettingsStore.resetSettings();
+      generationStore.resetSettings();
       return payload;
     }
 
-    store.setCurrentGeneration(generation);
-    generationFormatSettingsStore.setFullSettings(payload.formatSettings);
+    generationStore.setFullSettings(payload.formatSettings);
     return payload;
   }
 
@@ -179,7 +181,7 @@ export function useVacancyGeneration(
   };
 
   const updateSettings = (partial: PatchFormatSettingsBody): void => {
-    generationFormatSettingsStore.updateSettings(partial);
+    generationStore.updateSettings(partial);
     history.queueSettingsAutosave(partial);
   };
 
@@ -195,10 +197,8 @@ export function useVacancyGeneration(
     if (restored) {
       const generationId = getCurrentGenerationId.value;
       const results = await Promise.allSettled([
-        store.saveGenerationContent(vacancyId),
-        generationId
-          ? generationFormatSettingsStore.putSettings(vacancyId, generationId)
-          : Promise.resolve()
+        generationStore.saveGenerationContent(vacancyId),
+        generationId ? generationStore.putSettings(vacancyId, generationId) : Promise.resolve()
       ]);
 
       const rejectedResult = results.find(
@@ -208,7 +208,7 @@ export function useVacancyGeneration(
         throw rejectedResult.reason;
       }
     } else {
-      await store.discardGenerationChanges(vacancyId);
+      await generationStore.discardGenerationChanges(vacancyId);
     }
 
     history.clearHistory();
@@ -220,7 +220,7 @@ export function useVacancyGeneration(
     content: getDisplayGenerationContent,
     isDirty: history.isDirty,
 
-    // Settings (from generation format settings store)
+    // Settings (from resume generation store)
     previewType: getPreviewType,
     currentSettings: getCurrentSettings,
     atsSettings: getAtsSettings,

@@ -14,7 +14,7 @@ import { userRepository } from '../data/repositories';
 /**
  * Public routes that don't require authentication
  */
-const publicRoutes = ['/api/health', '/api/pdf/payload'];
+const publicRoutes = ['/api/health', '/api/pdf/payload', '/api/cover-letter/pdf/payload'];
 
 /**
  * Route patterns that don't require authentication (regex)
@@ -58,13 +58,15 @@ export default defineEventHandler(async event => {
       await clearUserSession(event);
       throw createError({
         statusCode: 403,
-        message: 'User is deleted'
+        message: 'User is deleted',
+        data: { code: 'USER_DELETED' }
       });
     }
     if (user?.status === USER_STATUS_MAP.BLOCKED) {
       throw createError({
         statusCode: 403,
-        message: 'User is blocked'
+        message: 'User is blocked',
+        data: { code: 'USER_BLOCKED' }
       });
     }
   }

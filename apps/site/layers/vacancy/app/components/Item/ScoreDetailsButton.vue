@@ -3,8 +3,8 @@
     <UButton
       v-if="canRequestDetails"
       size="sm"
-      :loading="loading && actionType === 'details'"
-      :disabled="loading"
+      :loading="isLoading && actionType === 'details'"
+      :disabled="isLoading"
       icon="i-lucide-list-checks"
       @click="handleOpenDetails(false)"
     >
@@ -15,8 +15,8 @@
       v-if="canRegenerateDetails"
       size="sm"
       variant="outline"
-      :loading="loading && actionType === 'regenerate'"
-      :disabled="loading"
+      :loading="isLoading && actionType === 'regenerate'"
+      :disabled="isLoading"
       icon="i-lucide-refresh-cw"
       @click="handleOpenDetails(true)"
     >
@@ -35,7 +35,17 @@ const props = defineProps<{
 
 const { t } = useI18n();
 const vacancyStore = useVacancyStore();
-const { getCurrentVacancyMeta, getScoreDetailsLoading } = storeToRefs(vacancyStore);
+const vacancyPreparationStore = useVacancyPreparationStore();
+const {
+  openGenerationStatusModal: openScoreDetailsGenerationModal,
+  markGenerationStatusSuccess: markScoreDetailsGenerationSuccess,
+  markGenerationStatusError: markScoreDetailsGenerationError
+} = useGenerationStatusModal({
+  overlayId: 'site-score-details-generation-modal',
+  overlayOpenStateKey: 'site-score-details-generation-modal-overlay-open',
+  sessionStateKey: 'site-score-details-generation-modal-session'
+});
+const { getCurrentVacancyMeta } = storeToRefs(vacancyStore);
 
 const canRequestDetails = computed(
   () => getCurrentVacancyMeta.value?.canRequestScoreDetails ?? false
@@ -43,24 +53,59 @@ const canRequestDetails = computed(
 const canRegenerateDetails = computed(
   () => getCurrentVacancyMeta.value?.canRegenerateScoreDetails ?? false
 );
-const loading = computed(() => getScoreDetailsLoading.value);
+const latestGenerationId = computed(
+  () => getCurrentVacancyMeta.value?.latestGenerationId ?? props.generationId
+);
 
 const actionType = ref<'details' | 'regenerate' | null>(null);
+const isLoading = ref(false);
 
 const handleOpenDetails = async (regenerate: boolean): Promise<void> => {
+  if (isLoading.value) return;
+
+  const generationId = latestGenerationId.value;
+  vacancyPreparationStore.setActiveContext(props.vacancyId, generationId);
+
   actionType.value = regenerate ? 'regenerate' : 'details';
+  isLoading.value = true;
 
   try {
-    await vacancyStore.fetchScoreDetails(props.vacancyId, props.generationId, { regenerate });
-    await navigateTo(`/vacancies/${props.vacancyId}/preparation`);
-  } catch {
-    const toast = useToast();
-    toast.add({
-      title: t('vacancy.resume.detailsFailed'),
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
+    if (!regenerate) {
+      const cached = vacancyPreparationStore.getCachedScoreDetails(props.vacancyId, generationId);
+      if (cached) {
+        await navigateTo(`/vacancies/${props.vacancyId}/preparation`);
+        return;
+      }
+    }
+
+    const subject = t('vacancy.resume.generationModal.loading.document.scoreDetails');
+    const { sessionId, completion } = openScoreDetailsGenerationModal({
+      titleSubject: subject,
+      readyStatementSubject: subject,
+      descriptionSubject: subject,
+      waitingTime: t('vacancy.resume.generationModal.loading.waitingTime'),
+      errorTitle: t('vacancy.resume.detailsFailed'),
+      errorDescription: t('generation.error.generic'),
+      errorMessage: t('generation.error.generic'),
+      errorActionLabel: t('generation.statusModal.action.error')
     });
+
+    try {
+      await vacancyPreparationStore.fetchScoreDetails(props.vacancyId, generationId, {
+        regenerate
+      });
+      markScoreDetailsGenerationSuccess(sessionId);
+
+      const closePayload = await completion;
+      if (closePayload?.action === 'acknowledged-success') {
+        await navigateTo(`/vacancies/${props.vacancyId}/preparation`);
+      }
+    } catch {
+      markScoreDetailsGenerationError(sessionId);
+      await completion;
+    }
   } finally {
+    isLoading.value = false;
     actionType.value = null;
   }
 };

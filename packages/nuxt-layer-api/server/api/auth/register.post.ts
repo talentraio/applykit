@@ -1,5 +1,10 @@
 import type { FormatSettingsConfig } from '../../types/format-settings-config';
-import { RegisterInputSchema, USER_STATUS_MAP, WORK_FORMAT_MAP } from '@int/schema';
+import {
+  GRAMMATICAL_GENDER_MAP,
+  RegisterInputSchema,
+  USER_STATUS_MAP,
+  WORK_FORMAT_MAP
+} from '@int/schema';
 import {
   formatSettingsRepository,
   profileRepository,
@@ -104,6 +109,7 @@ export default defineEventHandler(async event => {
           country: '',
           searchRegion: '',
           workFormat: WORK_FORMAT_MAP.REMOTE,
+          grammaticalGender: GRAMMATICAL_GENDER_MAP.NEUTRAL,
           languages: []
         });
       }
@@ -154,6 +160,7 @@ export default defineEventHandler(async event => {
     country: '', // Will be filled by user in profile form
     searchRegion: '', // Will be filled by user in profile form
     workFormat: WORK_FORMAT_MAP.REMOTE, // Default value
+    grammaticalGender: GRAMMATICAL_GENDER_MAP.NEUTRAL, // Default neutral style
     languages: [] // Will be filled by user in profile form
   });
 

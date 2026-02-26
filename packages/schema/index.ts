@@ -1,7 +1,12 @@
 export * from './constants/enums';
+export * from './helpers/url';
 
 // Auth
 export * from './schemas/auth';
+
+// Cover Letter
+export * from './schemas/cover-letter';
+
 // Enums
 export * from './schemas/enums';
 

@@ -1,9 +1,15 @@
 <template>
   <UModal v-model:open="isModalOpen" :title="modalTitle" :description="modalDescription">
     <template #body>
-      <AuthModalLoginForm v-if="view === 'login'" @switch-view="handleSwitchView" />
-      <AuthModalRegisterForm v-else-if="view === 'register'" @switch-view="handleSwitchView" />
-      <AuthModalForgotPasswordForm v-else-if="view === 'forgot'" @switch-view="handleSwitchView" />
+      <AuthModalLoginForm v-if="activeView === 'login'" @switch-view="handleSwitchView" />
+      <AuthModalRegisterForm
+        v-else-if="activeView === 'register'"
+        @switch-view="handleSwitchView"
+      />
+      <AuthModalForgotPasswordForm
+        v-else-if="activeView === 'forgot'"
+        @switch-view="handleSwitchView"
+      />
     </template>
   </UModal>
 </template>
@@ -24,6 +30,7 @@ defineOptions({ name: 'AuthModal' });
 
 const { t } = useI18n();
 const { isOpen, view, close, switchView } = useAuthModal();
+const activeView = computed<AuthModalView>(() => view.value ?? 'login');
 
 // Sync modal open state with composable
 const isModalOpen = computed({
@@ -34,7 +41,7 @@ const isModalOpen = computed({
 });
 
 const modalTitle = computed(() => {
-  switch (view.value) {
+  switch (activeView.value) {
     case 'login':
       return t('auth.modal.login.title');
     case 'register':
@@ -42,12 +49,12 @@ const modalTitle = computed(() => {
     case 'forgot':
       return t('auth.modal.forgot.title');
     default:
-      return '';
+      return t('auth.modal.login.title');
   }
 });
 
 const modalDescription = computed(() => {
-  switch (view.value) {
+  switch (activeView.value) {
     case 'login':
       return t('auth.login.description');
     case 'register':
@@ -55,7 +62,7 @@ const modalDescription = computed(() => {
     case 'forgot':
       return t('auth.modal.forgot.description');
     default:
-      return '';
+      return t('auth.login.description');
   }
 });
 

@@ -5,15 +5,13 @@ on:
     types: [opened, synchronize, reopened]
     branches: [main]
 
-concurrency:
-  group: preview-shared-environment
-  cancel-in-progress: true
-
 jobs:
-  deploy:
+  # --- Migrations MUST complete without interruption ---
+  migrate:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
+    concurrency:
+      group: preview-db-migrations
+      cancel-in-progress: false # NEVER cancel mid-migration
     steps:
       - uses: actions/checkout@v4
 
@@ -27,12 +25,39 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # --- Lint migration files (catch pitfalls before running) ---
+
+      - name: Lint migration files
+        run: bash scripts/deploy/lint-migrations.sh
+
       # --- Database migrations (preview DB) ---
 
       - name: Run database migrations (preview)
         run: pnpm db:migrate:preview
         env:
           PREVIEW_DATABASE_URL: ${{ secrets.PREVIEW_DATABASE_URL }}
+
+  # --- Build & deploy (safe to cancel) ---
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    concurrency:
+      group: preview-deploy
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       # --- Site: pull → build → deploy ---
 

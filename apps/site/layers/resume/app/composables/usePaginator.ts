@@ -15,9 +15,9 @@ import { A4_HEIGHT_PX, MM_TO_PX } from '../types/preview';
  */
 export type PaginatorOptions = {
   /** Vertical padding (top/bottom) in mm (default: 15) */
-  paddingYMm?: MaybeRef<number>;
+  paddingYMm?: MaybeRefOrGetter<number>;
   /** Block spacing in px (default: 10) */
-  blockSpacingPx?: MaybeRef<number>;
+  blockSpacingPx?: MaybeRefOrGetter<number>;
 };
 
 /**
@@ -91,9 +91,9 @@ export function usePaginator(
     if (blocks.length === 0) return [];
 
     // Calculate usable page height (A4 height minus top and bottom padding)
-    const paddingPx = unref(paddingYMm) * MM_TO_PX;
+    const paddingPx = toValue(paddingYMm) * MM_TO_PX;
     const usableHeight = A4_HEIGHT_PX - paddingPx * 2;
-    const spacing = unref(blockSpacingPx);
+    const spacing = toValue(blockSpacingPx);
 
     const result: PageModel[] = [];
     let currentPage: PageModel = { index: 0, blocks: [] };

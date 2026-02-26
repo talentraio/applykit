@@ -61,16 +61,13 @@ const { openCreateModelFormModal, openEditModelFormModal } = useLlmModelFormModa
 
 const hasItems = computed(() => items.value.length > 0);
 
-type ApiErrorWithMessage = {
-  data?: {
-    message?: string;
-  };
-};
-
 const errorMessage = (error: unknown): string => {
-  const apiError = error as ApiErrorWithMessage;
-  if (typeof apiError?.data?.message === 'string' && apiError.data.message.length > 0) {
-    return apiError.data.message;
+  if (isApiError(error)) {
+    const data = error.data;
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const msg = (data as Record<string, unknown>).message;
+      if (typeof msg === 'string' && msg.length > 0) return msg;
+    }
   }
 
   if (error instanceof Error && error.message.trim().length > 0) {
