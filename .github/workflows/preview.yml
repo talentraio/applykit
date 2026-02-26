@@ -27,6 +27,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # --- Lint migration files (catch pitfalls before running) ---
+
+      - name: Lint migration files
+        run: bash scripts/deploy/lint-migrations.sh
+
       # --- Database migrations (preview DB) ---
 
       - name: Run database migrations (preview)
